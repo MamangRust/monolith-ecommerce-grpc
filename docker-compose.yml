@@ -462,7 +462,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+      - ./observability/prometheus.yaml:/etc/prometheus/prometheus.yml
     networks:
       - app_network
     depends_on:
