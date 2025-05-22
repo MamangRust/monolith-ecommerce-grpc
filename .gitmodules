@@ -1,0 +1,6 @@
+[submodule "pkg"]
+	path = pkg
+	url = https://github.com/MamangRust/monolith-ecommerce-shared.git
+[submodule "shared"]
+	path = shared
+	url = https://github.com/MamangRust/monolith-ecommerce-shared.git

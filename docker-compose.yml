@@ -1,0 +1,516 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: DRAGON
+      POSTGRES_PASSWORD: DRAGON
+      POSTGRES_DB: PAYMENT_GATEWAY
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U DRAGON -d PAYMENT_GATEWAY"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  migrate:
+    image: migrate-ecommerce:1.0
+    container_name: migrate
+    volumes:
+      - ./docker.env:/app/docker.env
+      - ./pkg/database/migrations:/app/pkg/database/migrations
+    env_file: ./docker.env
+    environment:
+      APP_ENV: docker
+      DB_URL: postgres://DRAGON:DRAGON@postgres/PAYMENT_GATEWAY
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+  
+  auth:
+    image: auth-ecommerce-service:1.0
+    container_name: auth
+    env_file: ./docker.env 
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50051:50051"
+      - "8081:8081"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+
+  role:
+    image: role-ecommerce-service:1.0
+    container_name: role
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50052:50052"
+      - "8082:8082"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+  
+  user:
+    image: user-ecommerce-service:1.0
+    container_name: user
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50055:50053"
+      - "8085:8083"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+
+  category:
+    image: category-ecommerce-service:1.0
+    container_name: category
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50056:50054"
+      - "8086:8084"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+
+  merchant:
+    image: merchant-ecommerce-service:1.0
+    container_name: merchant
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50054:50055"
+      - "8084:8085"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+
+  order-item:
+    image: order-item-ecommerce-service:1.0
+    container_name: order-item
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50058:50056"
+      - "8088:8086"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+
+  order:
+    image: order-ecommerce-service:1.0
+    container_name: order
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50059:50057"
+      - "8089:8087"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+  
+  product:
+    image: product-ecommerce-service:1.0
+    container_name: product
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50060:50058"
+      - "8090:8088"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+
+  transaction:
+    image: transaction-ecommerce-service:1.0
+    container_name: transaction
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50061:50059"
+      - "8091:8089"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+
+  cart:
+    image: cart-ecommerce-service:1.0
+    container_name: cart
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50062:50060"
+      - "8092:8090"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+
+  review:
+    image: review-ecommerce-service:1.0
+    container_name: review
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50063:50061"
+      - "8093:8091"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+  
+  slider:
+    image: slider-ecommerce-service:1.0
+    container_name: slider
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50064:50062"
+      - "8094:8092"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+  
+  shipping:
+    image: shipping-ecommerce-service:1.0
+    container_name: shipping
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50065:50063"
+      - "8095:8093"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+  
+  banner:
+    image: banner-ecommerce-service:1.0
+    container_name: banner
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50066:50064"
+      - "8096:8094"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+
+  merchant_award:
+    image: merchant_award-ecommerce-service:1.0
+    container_name: merchant_award
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50067:50065"
+      - "8097:8095"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+  
+  merchant_business:
+    image: merchant_business-ecommerce-service:1.0
+    container_name: merchant_business
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50068:50066"
+      - "8098:8096"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+
+  merchant_detail:
+    image: merchant_detail-ecommerce-service:1.0
+    container_name: merchant_detail
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50069:50067"
+      - "8099:8097"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+
+  merchant_policy:
+    image: merchant_policy-ecommerce-service:1.0
+    container_name: merchant_policy
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50070:50068"
+      - "8100:8098"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+  
+  review_detail:
+    image: review_detail-ecommerce-service:1.0
+    container_name: review_detail
+    env_file: ./docker.env
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "50071:50069"
+      - "8101:8099"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    container_name: my-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "echo stat | nc localhost 2181 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: bitnami/kafka:latest
+    container_name: my-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_KRAFT_CLUSTER_ID=kraft-cluster-01
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    volumes:
+      - kafka_data:/bitnami/kafka
+    networks:
+      - app_network
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --list --bootstrap-server kafka:9092 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+    networks:
+      - app_network
+    depends_on:
+      - otel-collector
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - app_network
+    depends_on:
+      - prometheus
+      - jaeger
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./observability/otel-collector.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"     
+      - "4318:4318"      
+      - "13133:13133"
+      - "8889:8889"
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    container_name: jaeger
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686"
+    networks:
+      - app_network
+
+
+volumes:
+  postgres_data:
+  kafka_data:
+
+networks:
+  app_network:
+    driver: bridge
