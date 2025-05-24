@@ -1,8 +1,8 @@
 package services
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
+	"github.com/MamangRust/monolith-point-of-sale-shared/domain/requests"
+	"github.com/MamangRust/monolith-point-of-sale-shared/domain/response"
 )
 
 type MerchantQueryService interface {

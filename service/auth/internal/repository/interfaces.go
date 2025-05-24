@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	"github.com/MamangRust/monolith-point-of-sale-shared/pb/domain/record"
+	"github.com/MamangRust/monolith-point-of-sale-shared/pb/domain/requests"
 )
 
 type UserRepository interface {

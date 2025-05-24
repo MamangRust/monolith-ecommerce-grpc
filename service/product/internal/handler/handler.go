@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-product/internal/service"
+	"github.com/MamangRust/monolith-point-of-sale-grpc-product/internal/service"
 )
 
 type Deps struct {

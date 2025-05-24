@@ -6,12 +6,12 @@ import (
 	"log"
 	"math"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-order/internal/service"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors/order_errors"
-	protomapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/proto"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/MamangRust/monolith-point-of-sale-grpc-order/internal/service"
+	"github.com/MamangRust/monolith-point-of-sale-shared/domain/requests"
+	"github.com/MamangRust/monolith-point-of-sale-shared/domain/response"
+	"github.com/MamangRust/monolith-point-of-sale-shared/errors/order_errors"
+	protomapper "github.com/MamangRust/monolith-point-of-sale-shared/mapper/proto"
+	"github.com/MamangRust/monolith-point-of-sale-shared/pb"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 

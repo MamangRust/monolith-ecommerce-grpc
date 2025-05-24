@@ -32,6 +32,42 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+  apigateway:
+    image: apigateway-ecommerce:1.0
+    container_name: apigateway
+    env_file: ./docker.env 
+    volumes:
+      - ./docker.env:/app/docker.env
+    ports:
+      - "5000:5000"
+    networks:
+      - app_network
+    depends_on:
+      - postgres
+      - kafka
+      - auth
+      - role
+      - user
+      - category
+      - merchant
+      - orderitem
+      - order
+      - product
+      - transaction
+      - cart
+      - review
+      - slider
+      - shipping_address
+      - banner
+      - merchant_award
+      - merchant_business
+      - merchant_detail
+      - merchant_policy
+      - review_detail
+    environment:
+      - APP_ENV=docker
+
   
   auth:
     image: auth-ecommerce-service:1.0
