@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/MamangRust/monolith-ecommerce-auth/internal/service"
-	"github.com/MamangRust/monolith-point-of-sale-shared/pb/domain/requests"
-	"github.com/MamangRust/monolith-point-of-sale-shared/pb/domain/response"
-	protomapper "github.com/MamangRust/monolith-point-of-sale-shared/pb/mapper/proto"
-	"github.com/MamangRust/monolith-point-of-sale-shared/pb/pb"
+	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
+	protomapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/proto"
+	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 )
 
 type authHandleGrpc struct {

@@ -3,8 +3,8 @@ module github.com/MamangRust/monolith-ecommerce-auth
 go 1.23.4
 
 require (
-	github.com/MamangRust/monolith-ecommerce-pkg v1.0.4
-	github.com/MamangRust/monolith-ecommerce-shared v1.0.5
+	github.com/MamangRust/monolith-ecommerce-pkg v1.0.6
+	github.com/MamangRust/monolith-ecommerce-shared v1.0.7
 	github.com/prometheus/client_golang v1.22.0
 	github.com/spf13/viper v1.20.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0

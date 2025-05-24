@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 
-	db "github.com/MamangRust/monolith-point-of-sale-pkg/database/schema"
-	recordmapper "github.com/MamangRust/monolith-point-of-sale-shared/mapper/record"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type Repositories struct {

@@ -1,6 +1,6 @@
 package main
 
-import "github.com/MamangRust/monolith-point-of-sale-grpc-product/internal/apps"
+import "github.com/MamangRust/monolith-ecommerce-grpc-product/internal/apps"
 
 func main() {
 	server, err := apps.NewServer()

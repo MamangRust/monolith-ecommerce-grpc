@@ -5,10 +5,10 @@ import (
 	"database/sql"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-point-of-sale-shared/domain/record"
-	"github.com/MamangRust/monolith-point-of-sale-shared/domain/requests"
-	merchantdocument_errors "github.com/MamangRust/monolith-point-of-sale-shared/errors/merchant_document_errors"
-	recordmapper "github.com/MamangRust/monolith-point-of-sale-shared/mapper/record"
+	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
+	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	merchantdocument_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant_document_errors"
+	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type merchantDocumentCommandRepository struct {

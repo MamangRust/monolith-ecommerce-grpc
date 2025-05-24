@@ -3,10 +3,10 @@ package repository
 import (
 	"context"
 
-	db "github.com/MamangRust/monolith-point-of-sale-pkg/database/schema"
-	"github.com/MamangRust/monolith-point-of-sale-shared/domain/record"
-	orderitem_errors "github.com/MamangRust/monolith-point-of-sale-shared/errors/order_item_errors"
-	recordmapper "github.com/MamangRust/monolith-point-of-sale-shared/mapper/record"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
+	orderitem_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/order_item_errors"
+	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type orderItemQueryRepository struct {
