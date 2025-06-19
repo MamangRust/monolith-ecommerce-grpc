@@ -13,7 +13,29 @@ jobs:
 
     strategy:
       matrix:
-        service: [apigateway migrate auth user role banner cart category email merchant merchant_award merchant_business merchant_detail merchant_policy order order_item product review review_detail shipping_address slider transaction]
+        service:
+          - apigateway
+          - migrate
+          - auth
+          - user
+          - role
+          - banner
+          - cart
+          - category
+          - email
+          - merchant
+          - merchant_award
+          - merchant_business
+          - merchant_detail
+          - merchant_policy
+          - order
+          - order_item
+          - product
+          - review
+          - review_detail
+          - shipping_address
+          - slider
+          - transaction
 
     steps:
       - name: Checkout
