@@ -1,0 +1,66 @@
+groups:
+  - name: otel-collector-alerts
+    rules:
+      - alert: OTelCollectorDown
+        expr: up{job=~"otel-collector.*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "OpenTelemetry Collector is down on {{ $labels.instance }}"
+          description: "OTel Collector {{ $labels.job }} is not reachable for more than 2 minutes."
+
+      - alert: OTelCollectorScrapeFailed
+        expr: rate(otelcol_exporter_enqueue_failed_log_records[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "OTel Collector exporter failed to enqueue logs"
+          description: "Exporter failed to enqueue log records consistently for 5 minutes. Check exporters in {{ $labels.job }}."
+
+      - alert: OTelCollectorQueueDroppedSpans
+        expr: rate(otelcol_exporter_send_failed_spans[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "OTel Collector dropped spans due to queue overflow"
+          description: "Collector {{ $labels.job }} is dropping spans due to queue issues."
+
+      - alert: OTelCollectorHighLatency
+        expr: rate(otelcol_processor_batch_send_latency_sum[5m]) / rate(otelcol_processor_batch_send_latency_count[5m]) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency in OTel Collector processing pipeline"
+          description: "Collector {{ $labels.job }} has a processing latency > 0.5s for more than 2 minutes."
+
+      - alert: OTelCollectorHighCPU
+        expr: process_cpu_seconds_total{job=~"otel-collector.*"} > 0.8
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage by OTel Collector"
+          description: "OTel Collector {{ $labels.job }} is using >80% CPU."
+
+      - alert: OTelCollectorHighMemory
+        expr: process_resident_memory_bytes{job=~"otel-collector.*"} > (0.9 * 1073741824)  
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage by OTel Collector"
+          description: "OTel Collector {{ $labels.job }} is using more than 900MB memory."
+
+
+      - alert: OTelCollectorExporterPermanentFailure
+        expr: rate(otelcol_exporter_send_failed_metric_points[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "OTel Collector failed to export metrics"
+          description: "OTel Collector {{ $labels.job }} failed exporting metrics to destination continuously."

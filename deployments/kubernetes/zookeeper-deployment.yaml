@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper
+  namespace: ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      containers:
+      - name: zookeeper
+        image: bitnami/zookeeper:latest
+        env:
+        - name: ALLOW_ANONYMOUS_LOGIN
+          value: "yes"
+        ports:
+        - containerPort: 2181
+          name: client
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - echo stat | nc localhost 2181
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - echo stat | nc localhost 2181
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - echo stat | nc localhost 2181
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 30
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: zookeeper-data
+          mountPath: /bitnami/zookeeper
+      volumes:
+      - name: zookeeper-data
+        persistentVolumeClaim:
+          claimName: zookeeper

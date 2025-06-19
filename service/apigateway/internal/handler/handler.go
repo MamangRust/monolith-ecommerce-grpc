@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"strconv"
+
 	"github.com/MamangRust/monolith-ecommerce-pkg/auth"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
@@ -60,4 +62,12 @@ func NewHandler(deps Deps) {
 	NewHandlerMerchantDetail(deps.E, clientMerchantDetail, deps.Logger, deps.Mapping.MerchantDetailResponseMapper, deps.Mapping.MerchantResponseMapper, deps.Image)
 	NewHandlerMerchantPolicies(deps.E, clientMerchantPolicy, deps.Logger, deps.Mapping.MerchantPolicyResponseMapper, deps.Mapping.MerchantResponseMapper)
 	NewHandlerReviewDetail(deps.E, clientReviewDetail, deps.Logger, deps.Mapping.ReviewDetailResponseMapper, deps.Mapping.ReviewMapper, deps.Image)
+}
+
+func parseQueryInt(c echo.Context, key string, defaultValue int) int {
+	val, err := strconv.Atoi(c.QueryParam(key))
+	if err != nil || val <= 0 {
+		return defaultValue
+	}
+	return val
 }

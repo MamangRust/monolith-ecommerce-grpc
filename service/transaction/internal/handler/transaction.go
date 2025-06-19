@@ -24,7 +24,7 @@ type transactionHandleGrpc struct {
 }
 
 func NewTransactionHandleGrpc(
-	service service.Service,
+	service *service.Service,
 ) *transactionHandleGrpc {
 	return &transactionHandleGrpc{
 		transactionQuery:           service.TransactionQuery,

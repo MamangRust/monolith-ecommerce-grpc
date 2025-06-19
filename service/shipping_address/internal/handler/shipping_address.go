@@ -20,7 +20,7 @@ type shippingAddressHandleGrpc struct {
 	mapping                       protomapper.ShippingAddresProtoMapper
 }
 
-func NewShippingAddressHandleGrpc(service service.Service) *shippingAddressHandleGrpc {
+func NewShippingAddressHandleGrpc(service *service.Service) *shippingAddressHandleGrpc {
 	return &shippingAddressHandleGrpc{
 		shippingAddressQueryService:   service.ShippingAddressQuery,
 		shippingAddressCommandService: service.ShippingAddressCommand,

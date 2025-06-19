@@ -3,9 +3,10 @@ package services
 import (
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-merchant/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	merchantdocument_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant_document_errors"
@@ -21,6 +22,8 @@ import (
 
 type merchantDocumentQueryService struct {
 	ctx                             context.Context
+	errorhandler                    errorhandler.MerchantDocumentQueryErrorHandler
+	mencache                        mencache.MerchantDocumentQueryCache
 	trace                           trace.Tracer
 	merchantDocumentQueryRepository repository.MerchantDocumentQueryRepository
 	logger                          logger.LoggerInterface
@@ -31,6 +34,8 @@ type merchantDocumentQueryService struct {
 
 func NewMerchantDocumentQueryService(
 	ctx context.Context,
+	errorhandler errorhandler.MerchantDocumentQueryErrorHandler,
+	mencache mencache.MerchantDocumentQueryCache,
 	merchantDocumentQueryRepository repository.MerchantDocumentQueryRepository,
 	logger logger.LoggerInterface,
 	mapping response_service.MerchantDocumentResponseMapper,
@@ -50,6 +55,8 @@ func NewMerchantDocumentQueryService(
 
 	return &merchantDocumentQueryService{
 		ctx:                             ctx,
+		errorhandler:                    errorhandler,
+		mencache:                        mencache,
 		trace:                           otel.Tracer("merchant-document-query-service"),
 		merchantDocumentQueryRepository: merchantDocumentQueryRepository,
 		logger:                          logger,
@@ -60,240 +67,178 @@ func NewMerchantDocumentQueryService(
 }
 
 func (s *merchantDocumentQueryService) FindAll(req *requests.FindAllMerchantDocuments) ([]*response.MerchantDocumentResponse, *int, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindAll"
 
-	defer func() {
-		s.recordMetrics("FindAll", status, startTime)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindAll")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
-	s.logger.Debug("Fetching all merchant document records",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
-	if page <= 0 {
-		page = 1
-	}
-	if pageSize <= 0 {
-		pageSize = 10
+	if data, total, found := s.mencache.GetCachedMerchantDocuments(req); found {
+		logSuccess("Successfully fetched merchant documents from cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
+
+		return data, total, nil
 	}
 
 	merchantDocuments, total, err := s.merchantDocumentQueryRepository.FindAllDocuments(req)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ALL_MERCHANT_DOCUMENTS")
-
-		s.logger.Error("Failed to find all merchant documents",
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to find all merchant documents")
-
-		status = "failed_to_find_all_merchant_documents"
-
-		return nil, nil, merchantdocument_errors.ErrFailedFindAllMerchantDocuments
+		return s.errorhandler.HandleRepositoryPaginationError(err, method, "FAILED_FIND_ALL_MERCHANT_DOCUMENT", span, &status, zap.Error(err))
 	}
 
 	merchantResponse := s.mapping.ToMerchantDocumentsResponse(merchantDocuments)
 
-	s.logger.Debug("Merchant document records found",
-		zap.Int("total", *total),
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	s.mencache.SetCachedMerchantDocuments(req, merchantResponse, total)
+
+	logSuccess("Successfully fetched merchant documents from database", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return merchantResponse, total, nil
 }
 
 func (s *merchantDocumentQueryService) FindById(merchant_id int) (*response.MerchantDocumentResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindById"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchantDocument.id", merchant_id))
 
 	defer func() {
-		s.recordMetrics("FindById", status, startTime)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "FindById")
-	defer span.End()
+	if data, found := s.mencache.GetCachedMerchantDocument(merchant_id); found {
+		logSuccess("Successfully fetched merchant document from cache", zap.Int("merchantDocument.id", merchant_id))
 
-	span.SetAttributes(
-		attribute.Int("merchant_id", merchant_id),
-	)
-
-	s.logger.Debug("Finding merchant document by ID", zap.Int("merchant_id", merchant_id))
+		return data, nil
+	}
 
 	merchantDocument, err := s.merchantDocumentQueryRepository.FindById(merchant_id)
+
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MERCHANT_DOCUMENT_BY_ID")
-
-		s.logger.Error("Failed to find merchant document by ID",
-			zap.Error(err),
-			zap.Int("merchant_id", merchant_id),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to find merchant document by ID")
-
-		status = "failed_to_find_merchant_document_by_id"
-
-		return nil, merchantdocument_errors.ErrFailedFindMerchantDocumentById
+		return errorhandler.HandleRepositorySingleError[*response.MerchantDocumentResponse](s.logger, err, method, "FAILED_FIND_MERCHANT_DOCUMENT_BY_ID", span, &status, merchantdocument_errors.ErrMerchantDocumentNotFoundRes, zap.Int("merchantDocument.id", merchant_id))
 	}
 
 	merchantResponse := s.mapping.ToMerchantDocumentResponse(merchantDocument)
 
-	s.logger.Debug("Merchant document found by ID", zap.Int("merchant_id", merchant_id))
+	s.mencache.SetCachedMerchantDocument(merchantResponse)
+
+	logSuccess("Successfully fetched merchant document from database", zap.Int("merchantDocument.id", merchant_id))
 
 	return merchantResponse, nil
 }
 
 func (s *merchantDocumentQueryService) FindByActive(req *requests.FindAllMerchantDocuments) ([]*response.MerchantDocumentResponse, *int, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindByActive"
 
-	defer func() {
-		s.recordMetrics("FindByActive", status, startTime)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindByActive")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
-	s.logger.Debug("Fetching all merchant document active",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
-	if page <= 0 {
-		page = 1
-	}
-	if pageSize <= 0 {
-		pageSize = 10
+	if data, total, found := s.mencache.GetCachedMerchantDocuments(req); found {
+		logSuccess("Successfully fetched merchant documents from cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
+
+		return data, total, nil
 	}
 
 	merchantDocuments, total, err := s.merchantDocumentQueryRepository.FindByActive(req)
+
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_BY_ACTIVE_MERCHANT_DOCUMENTS")
-
-		s.logger.Error("Failed to find by active merchant documents",
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to find by active merchant documents")
-
-		status = "failed_to_find_by_active_merchant_documents"
-
-		return nil, nil, merchantdocument_errors.ErrFailedFindActiveMerchantDocuments
+		return s.errorhandler.HandleRepositoryPaginationError(err, method, "FAILED_FIND_BY_ACTIVE_MERCHANT_DOCUMENTS", span, &status, zap.Error(err))
 	}
 
 	merchantResponse := s.mapping.ToMerchantDocumentsResponse(merchantDocuments)
 
-	s.logger.Debug("Merchant document records found",
-		zap.Int("total", *total),
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	s.mencache.SetCachedMerchantDocuments(req, merchantResponse, total)
+
+	logSuccess("Successfully fetched merchant documents from database", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return merchantResponse, total, nil
 }
 
 func (s *merchantDocumentQueryService) FindByTrashed(req *requests.FindAllMerchantDocuments) ([]*response.MerchantDocumentResponseDeleteAt, *int, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindByTrashed"
 
-	defer func() {
-		s.recordMetrics("FindByTrashed", status, startTime)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindByTrashed")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
-	s.logger.Debug("Fetching fetched trashed merchant documents",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
+	if data, total, found := s.mencache.GetCachedMerchantDocumentsTrashed(req); found {
+		logSuccess("Successfully fetched merchant documents from cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
+
+		return data, total, nil
+	}
+
+	merchantDocuments, total, err := s.merchantDocumentQueryRepository.FindByTrashed(req)
+
+	if err != nil {
+		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_TRASHED_MERCHANT_DOCUMENTS", span, &status, merchantdocument_errors.ErrFailedFindTrashedMerchantDocuments, zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
+	}
+
+	merchantResponse := s.mapping.ToMerchantDocumentsResponseDeleteAt(merchantDocuments)
+
+	s.mencache.SetCachedMerchantDocumentsTrashed(req, merchantResponse, total)
+
+	logSuccess("Successfully fetched merchant documents from database", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
+
+	return merchantResponse, total, nil
+}
+
+func (s *merchantDocumentQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
+}
+
+func (s *merchantDocumentQueryService) normalizePagination(page, pageSize int) (int, int) {
 	if page <= 0 {
 		page = 1
 	}
 	if pageSize <= 0 {
 		pageSize = 10
 	}
-
-	merchantDocuments, total, err := s.merchantDocumentQueryRepository.FindByTrashed(req)
-	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_BY_TRASHED_MERCHANT_DOCUMENTS")
-
-		s.logger.Error("Failed to find by trashed merchant documents",
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to find by trashed merchant documents")
-
-		status = "failed_to_find_by_trashed_merchant_documents"
-
-		return nil, nil, merchantdocument_errors.ErrFailedFindTrashedMerchantDocuments
-	}
-
-	merchantResponse := s.mapping.ToMerchantDocumentsResponseDeleteAt(merchantDocuments)
-
-	s.logger.Debug("Merchant document records found",
-		zap.Int("total", *total),
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
-
-	return merchantResponse, total, nil
+	return page, pageSize
 }
 
 func (s *merchantDocumentQueryService) recordMetrics(method string, status string, start time.Time) {

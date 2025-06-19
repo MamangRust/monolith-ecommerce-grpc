@@ -1,0 +1,62 @@
+groups:
+  - name: user-services-alerts
+    rules:
+      - alert: HighFailureRate_UserCommandService
+        expr: increase(user_command_service_requests_total{status="error"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: user_command_service
+        annotations:
+          summary: "High failure rate on user_command_service"
+          description: "More than 5 error requests in the last 5 minutes."
+
+      - alert: HighLatency_UserCommandService
+        expr: histogram_quantile(0.95, rate(user_command_service_request_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: user_command_service
+        annotations:
+          summary: "High latency on user_command_service"
+          description: "P95 latency is greater than 1 second."
+
+      - alert: NoTraffic_UserCommandService
+        expr: rate(user_command_service_requests_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: user_command_service
+        annotations:
+          summary: "No traffic on user_command_service"
+          description: "No requests received in the last 5 minutes."
+
+      - alert: HighFailureRate_UserQueryService
+        expr: increase(user_query_service_request_total{status="error"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: user_query_service
+        annotations:
+          summary: "High failure rate on user_query_service"
+          description: "More than 5 error requests in the last 5 minutes."
+
+      - alert: HighLatency_UserQueryService
+        expr: histogram_quantile(0.95, rate(user_query_service_request_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: user_query_service
+        annotations:
+          summary: "High latency on user_query_service"
+          description: "P95 latency is greater than 1 second."
+
+      - alert: NoTraffic_UserQueryService
+        expr: rate(user_query_service_request_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: user_query_service
+        annotations:
+          summary: "No traffic on user_query_service"
+          description: "No requests received in the last 5 minutes."

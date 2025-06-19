@@ -20,25 +20,208 @@ receivers:
   prometheus:
     config:
       scrape_configs:
-        - job_name: "otel-collector"
-          scrape_interval: 5s
+        - job_name: 'otel-collector'
           static_configs:
-            - targets: ["localhost:8888"]
-        - job_name: "movie-service"
-          scrape_interval: 15s
+            - targets: ['opentelemetry-collector:8888']
+  
+        - job_name: 'kafka'
           static_configs:
-            - targets: ["server:8080"]
+            - targets: ['kafka:9092']
+
+
+        - job_name: 'auth-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['auth:8081']
               labels:
-                application: "movie-grpc-service"
+                application: 'Auth Service'
+                environment: 'production'
+
+
+        - job_name: 'email-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['email:8080']
+              labels:
+                application: 'Email Service'
+                environment: 'production'
+
+        - job_name: 'role-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['role:8082']
+              labels:
+                application: 'Role Service'
+                environment: 'production'
+
+        - job_name: 'user-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['user:8083']
+              labels:
+                application: 'User Service'
+                environment: 'production'
+
+        - job_name: 'category-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['category:8084']
+              labels:
+                application: 'Category Service'
+                environment: 'production'
+
+        - job_name: 'merchant-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['merchant:8085']
+              labels:
+                application: 'Merchant Service'
+                environment: 'production'
+
+        - job_name: 'order-item-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['order-item:8086']
+              labels:
+                application: 'Order Item Service'
+                environment: 'production'
+
+        - job_name: 'order-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['order:8087']
+              labels:
+                application: 'Order Service'
+                environment: 'production'
+
+        - job_name: 'product-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['product:8088']
+              labels:
+                application: 'Product Service'
+                environment: 'production'
+
+        - job_name: 'transaction-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['transaction:8089']
+              labels:
+                application: 'Transaction Service'
+                environment: 'production'
+
+        - job_name: 'cart-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['cart:8090']
+              labels:
+                application: 'Cart Service'
+                environment: 'production'
+
+        - job_name: 'review-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['review:8091']
+              labels:
+                application: 'Review Service'
+                environment: 'production'
+
+        - job_name: 'slider-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['slider:8092']
+              labels:
+                application: 'Slider Service'
+                environment: 'production'
+
+        - job_name: 'shipping-address-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['shipping-address:8093']
+              labels:
+                application: 'Shipping Address Service'
+                environment: 'production'
+
+        - job_name: 'banner-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['banner:8094']
+              labels:
+                application: 'Banner Service'
+                environment: 'production'
+
+        - job_name: 'merchant-award-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['merchant-award:8095']
+              labels:
+                application: 'Merchant Award Service'
+                environment: 'production'
+
+        - job_name: 'merchant-business-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['merchant-business:8096']
+              labels:
+                application: 'Merchant Business Service'
+                environment: 'production'
+
+        - job_name: 'merchant-detail-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['merchant-detail:8097']
+              labels:
+                application: 'Merchant Detail Service'
+                environment: 'production'
+
+        - job_name: 'merchant-policy-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['merchant-policy:8098']
+              labels:
+                application: 'Merchant Policy Service'
+                environment: 'production'
+
+        - job_name: 'review-detail-service'
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['review-detail:8099']
+              labels:
+                application: 'Review Detail Service'
+                environment: 'production'
+
 
 processors:
   batch:
 
+  resource:
+    attributes:
+      - key: service.name
+        from_attribute: service_name
+        action: insert
+      - key: environment
+        value: production
+        action: insert
+
 exporters:
   otlp:
-    endpoint: "otelcol:4317"
+    endpoint: "jaeger:4317"
+    tls:
+      insecure: true
+
   prometheus:
-    endpoint: "0.0.0.0:8889"          
+    endpoint: "0.0.0.0:8889"
+
+  otlphttp/loki:
+    endpoint: "http://loki:3100/otlp"
+    tls:
+      insecure: true
+    timeout: 10s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
 
 extensions:
   health_check:
@@ -49,16 +232,16 @@ service:
   extensions: [health_check, pprof, zpages]
   pipelines:
     traces:
-      receivers: [otlp, jaeger]
+      receivers: [otlp]
       processors: [batch]
       exporters: [otlp]
 
     metrics:
       receivers: [otlp, prometheus]
       processors: [batch]
-      exporters: [otlp, prometheus]   
+      exporters: [prometheus]
 
     logs:
       receivers: [otlp]
-      processors: [batch]
-      exporters: [otlp]
+      processors: [batch, resource]
+      exporters: [otlphttp/loki]

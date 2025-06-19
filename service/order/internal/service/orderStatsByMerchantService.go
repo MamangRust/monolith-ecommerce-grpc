@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-order/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-order/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-order/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors/order_errors"
 	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -21,6 +21,8 @@ import (
 
 type orderStatsByMerchantService struct {
 	ctx                            context.Context
+	mencache                       mencache.OrderStatsByMerchantCache
+	errorhandler                   errorhandler.OrderStatsByMerchantError
 	trace                          trace.Tracer
 	orderStatsByMerchantRepository repository.OrderStatsByMerchantRepository
 	mapping                        response_service.OrderResponseMapper
@@ -31,6 +33,8 @@ type orderStatsByMerchantService struct {
 
 func NewOrderStatsByMerchantService(
 	ctx context.Context,
+	mencache mencache.OrderStatsByMerchantCache,
+	errorhandler errorhandler.OrderStatsByMerchantError,
 	orderStatsByMerchantRepository repository.OrderStatsByMerchantRepository,
 	logger logger.LoggerInterface,
 	mapping response_service.OrderResponseMapper,
@@ -56,6 +60,8 @@ func NewOrderStatsByMerchantService(
 
 	return &orderStatsByMerchantService{
 		ctx:                            ctx,
+		mencache:                       mencache,
+		errorhandler:                   errorhandler,
 		trace:                          otel.Tracer("order-stats-by-merchant-service"),
 		orderStatsByMerchantRepository: orderStatsByMerchantRepository,
 		logger:                         logger,
@@ -66,208 +72,169 @@ func NewOrderStatsByMerchantService(
 }
 
 func (s *orderStatsByMerchantService) FindMonthlyTotalRevenueByMerchant(req *requests.MonthTotalRevenueMerchant) ([]*response.OrderMonthlyTotalRevenueResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "FindMonthlyTotalRevenueByMerchant"
 
-	defer func() {
-		s.recordMetrics("FindMonthlyTotalRevenueByMerchant", status, start)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindMonthlyTotalRevenueByMerchant")
-	defer span.End()
-
+	merchantId := req.MerchantID
 	year := req.Year
 	month := req.Month
 
-	span.SetAttributes(
-		attribute.Int("year", year),
-		attribute.Int("month", month),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchant.id", merchantId), attribute.Int("year", year), attribute.Int("month", month))
 
-	s.logger.Debug("find monthly total revenue",
-		zap.Int("year", year),
-		zap.Int("month", month))
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.mencache.GetMonthlyTotalRevenueByMerchantCache(req); found {
+		logSuccess("Successfully fetched monthly total revenue from cache", zap.Int("year", year), zap.Int("month", month))
+
+		return data, nil
+	}
 
 	res, err := s.orderStatsByMerchantRepository.GetMonthlyTotalRevenueByMerchant(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MONTHLY_TOTAL_REVENUE_BY_MERCHANT")
-
-		s.logger.Error("failed to get monthly total revenue",
-			zap.Int("year", year),
-			zap.Int("month", month),
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-
-		span.SetStatus(codes.Error, "failed to get monthly total revenue")
-
-		status = "failed_find_monthly_total_revenue_by_merchant"
-
-		return nil, order_errors.ErrFailedFindMonthlyTotalRevenueByMerchant
+		return s.errorhandler.HandleMonthTotalRevenueByMerchantError(err, method, "FAILED_FIND_MONTHLY_TOTAL_REVENUE_BY_MERCHANT", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToOrderMonthlyTotalRevenues(res), nil
+	so := s.mapping.ToOrderMonthlyTotalRevenues(res)
+	s.mencache.SetMonthlyTotalRevenueByMerchantCache(req, so)
+
+	logSuccess("Successfully fetched monthly total revenue", zap.Int("year", year), zap.Int("month", month))
+
+	return so, nil
 }
 
 func (s *orderStatsByMerchantService) FindYearlyTotalRevenueByMerchant(req *requests.YearTotalRevenueMerchant) ([]*response.OrderYearlyTotalRevenueResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
-
-	defer func() {
-		s.recordMetrics("FindYearlyTotalRevenueByMerchant", status, start)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindYearlyTotalRevenueByMerchant")
-	defer span.End()
+	const method = "FindYearlyTotalRevenueByMerchant"
 
 	year := req.Year
 	merchantId := req.MerchantID
 
-	span.SetAttributes(
-		attribute.Int("year", year),
-		attribute.Int("merchant_id", merchantId),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchant.id", merchantId), attribute.Int("year", year))
 
-	s.logger.Debug("find yearly total revenue",
-		zap.Int("year", year),
-		zap.Int("merchant_id", merchantId))
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.mencache.GetYearlyTotalRevenueByMerchantCache(req); found {
+		logSuccess("Successfully fetched yearly total revenue from cache", zap.Int("year", year))
+
+		return data, nil
+	}
 
 	res, err := s.orderStatsByMerchantRepository.GetYearlyTotalRevenueByMerchant(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_YEARLY_TOTAL_REVENUE_BY_MERCHANT")
-
-		s.logger.Error("failed to get yearly total revenue",
-			zap.Int("year", year),
-			zap.Int("merchant_id", merchantId),
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-		span.RecordError(err)
-
-		span.SetStatus(codes.Error, "failed to get yearly total revenue")
-
-		status = "failed_find_yearly_total_revenue_by_merchant"
-
-		return nil, order_errors.ErrFailedFindYearlyTotalRevenueByMerchant
+		return s.errorhandler.HandleYearTotalRevenueByMerchantError(err, method, "FAILED_FIND_YEARLY_TOTAL_REVENUE_BY_MERCHANT", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToOrderYearlyTotalRevenues(res), nil
+	so := s.mapping.ToOrderYearlyTotalRevenues(res)
+	s.mencache.SetYearlyTotalRevenueByMerchantCache(req, so)
+
+	logSuccess("Successfully fetched yearly total revenue", zap.Int("year", year))
+
+	return so, nil
 }
 
 func (s *orderStatsByMerchantService) FindMonthlyOrderByMerchant(req *requests.MonthOrderMerchant) ([]*response.OrderMonthlyResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
-
-	defer func() {
-		s.recordMetrics("FindMonthlyOrderByMerchant", status, start)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindMonthlyOrderByMerchant")
-	defer span.End()
+	const method = "FindMonthlyOrderByMerchant"
 
 	year := req.Year
 	merchant_id := req.MerchantID
 
-	span.SetAttributes(
-		attribute.Int("year", year),
-		attribute.Int("merchant_id", merchant_id),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchant.id", merchant_id), attribute.Int("year", year))
 
-	s.logger.Debug("find monthly orders by merchant",
-		zap.Int("year", year),
-		zap.Int("merchant_id", merchant_id))
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.mencache.GetMonthlyOrderByMerchantCache(req); found {
+		logSuccess("Successfully fetched monthly orders from cache", zap.Int("year", year), zap.Int("merchant.id", merchant_id))
+
+		return data, nil
+	}
 
 	res, err := s.orderStatsByMerchantRepository.GetMonthlyOrderByMerchant(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MONTHLY_ORDER_BY_MERCHANT")
-
-		s.logger.Error("failed to get monthly orders by merchant",
-			zap.Int("year", year),
-			zap.Int("merchant_id", merchant_id),
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-
-		span.SetStatus(
-			codes.Error,
-			"failed to get monthly orders by merchant",
-		)
-
-		status = "failed_find_monthly_order_by_merchant"
-
-		return nil, order_errors.ErrFailedFindMonthlyOrderByMerchant
+		return s.errorhandler.HandleMonthOrderStatsByMerchantError(err, method, "FAILED_FIND_MONTHLY_ORDER_BY_MERCHANT", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToOrderMonthlyPrices(res), nil
+	so := s.mapping.ToOrderMonthlyPrices(res)
+	s.mencache.SetMonthlyOrderByMerchantCache(req, so)
+
+	logSuccess("Successfully fetched monthly orders", zap.Int("year", year), zap.Int("merchant.id", merchant_id))
+
+	return so, nil
 }
 
 func (s *orderStatsByMerchantService) FindYearlyOrderByMerchant(req *requests.YearOrderMerchant) ([]*response.OrderYearlyResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
-
-	defer func() {
-		s.recordMetrics("FindYearlyOrderByMerchant", status, start)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindYearlyOrderByMerchant")
-	defer span.End()
+	const method = "FindYearlyOrderByMerchant"
 
 	year := req.Year
 	merchant_id := req.MerchantID
 
-	span.SetAttributes(
-		attribute.Int("year", year),
-		attribute.Int("merchant_id", merchant_id),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchant.id", merchant_id), attribute.Int("year", year))
 
-	s.logger.Debug("find yearly orders by merchant",
-		zap.Int("year", year),
-		zap.Int("merchant_id", merchant_id))
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.mencache.GetYearlyOrderByMerchantCache(req); found {
+		logSuccess("Successfully fetched yearly orders from cache", zap.Int("year", year), zap.Int("merchant.id", merchant_id))
+
+		return data, nil
+	}
 
 	res, err := s.orderStatsByMerchantRepository.GetYearlyOrderByMerchant(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_YEARLY_ORDER_BY_MERCHANT")
-
-		s.logger.Error("failed to get yearly orders by merchant",
-			zap.Int("year", year),
-			zap.Int("merchant_id", merchant_id),
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-
-		span.SetStatus(
-			codes.Error,
-			"Failed to get yearly orders by merchant",
-		)
-
-		status = "failed_find_yearly_order_by_merchant"
-
-		return nil, order_errors.ErrFailedFindYearlyOrderByMerchant
+		return s.errorhandler.HandleYearOrderStatsByMerchantError(err, "FindYearlyOrderByMerchant", "FAILED_FIND_YEARLY_ORDER_BY_MERCHANT", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToOrderYearlyPrices(res), nil
+	so := s.mapping.ToOrderYearlyPrices(res)
+	s.mencache.SetYearlyOrderByMerchantCache(req, so)
+
+	logSuccess("Successfully fetched yearly orders", zap.Int("year", year), zap.Int("merchant.id", merchant_id))
+
+	return so, nil
+}
+
+func (s *orderStatsByMerchantService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
 }
 
 func (s *orderStatsByMerchantService) recordMetrics(method string, status string, start time.Time) {

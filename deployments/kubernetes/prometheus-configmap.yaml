@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: ecommerce
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 10s
+      evaluation_interval: 10s
+
+    scrape_configs:
+      - job_name: 'otel-collector'
+        static_configs:
+          - targets: ['otel-collector.ecommerce.svc.cluster.local:8889']
+      
+      - job_name: 'kafka-exporter'
+        static_configs:
+          - targets: ['kafka-exporter.ecommerce.svc.cluster.local:9308']
+
+      - job_name: 'node-exporter'
+        static_configs:
+          - targets: ['node-exporter.ecommerce.svc.cluster.local:9100']
+
+      - job_name: 'auth-service'
+        metrics_path: '/metrics'
+        static_configs:
+          - targets: ['auth.ecommerce.svc.cluster.local:8081']
+            labels:
+              application: 'Auth Service'
+              environment: 'production'
+
+      - job_name: 'merchant-service'
+        metrics_path: '/metrics'
+        static_configs:
+          - targets: ['merchant.ecommerce.svc.cluster.local:8084']
+            labels:
+              application: 'Merchant Service'
+              environment: 'production'
+
+      - job_name: 'card-service'
+        metrics_path: '/metrics'
+        static_configs:
+          - targets: ['card.ecommerce.svc.cluster.local:8083']
+            labels:
+              application: 'Card Service'
+              environment: 'production'
+
+
+      - job_name: 'saldo-service'
+        metrics_path: '/metrics'
+        static_configs:
+          - targets: ['saldo.ecommerce.svc.cluster.local:8086']
+            labels:
+              application: 'Saldo Service'
+              environment: 'production'
+
+
+      - job_name: 'role-service'
+        metrics_path: '/metrics'
+        static_configs:
+          - targets: ['role.ecommerce.svc.cluster.local:8082']
+            labels:
+              application: 'Role Service'
+              environment: 'production'
+
+
+      - job_name: 'topup-service'
+        metrics_path: '/metrics'
+        static_configs:
+          - targets: ['topup.ecommerce.svc.cluster.local:8087']
+            labels:
+              application: 'Topup Service'
+              environment: 'production'
+
+      - job_name: 'transaction-service'
+        metrics_path: '/metrics'
+        static_configs:
+          - targets: ['transaction.ecommerce.svc.cluster.local:8088']
+            labels:
+              application: 'Transaction Service'
+              environment: 'production'
+
+      - job_name: 'transfer-service'
+        metrics_path: '/metrics'
+        static_configs:
+          - targets: ['transfer.ecommerce.svc.cluster.local:8089']
+            labels:
+              application: 'Transfer Service'
+              environment: 'production'
+
+      - job_name: 'user-service'
+        metrics_path: '/metrics'
+        static_configs:
+          - targets: ['user.ecommerce.svc.cluster.local:8085']
+            labels:
+              application: 'User Service'
+              environment: 'production'
+
+      - job_name: 'email-service'
+        metrics_path: '/metrics'
+        static_configs:
+          - targets: ['email.ecommerce.svc.cluster.local:8080']
+            labels:
+              application: 'Email Service'
+              environment: 'production'
+
+
+      - job_name: 'withdraw-service'
+        metrics_path: '/metrics'
+        static_configs:
+          - targets: ['withdraw.ecommerce.svc.cluster.local:8090']
+            labels:
+              application: 'Withdraw Service'
+              environment: 'production'

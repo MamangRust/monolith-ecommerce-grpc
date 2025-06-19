@@ -4,15 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-auth/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-auth/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-auth/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/auth"
 	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	refreshtoken_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/refresh_token_errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors/user_errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -23,6 +22,10 @@ import (
 
 type loginService struct {
 	ctx             context.Context
+	errorPassword   errorhandler.PasswordErrorHandler
+	errorToken      errorhandler.TokenErrorHandler
+	errorHandler    errorhandler.LoginErrorHandler
+	mencache        mencache.LoginCache
 	logger          logger.LoggerInterface
 	hash            hash.HashPassword
 	user            repository.UserRepository
@@ -36,6 +39,10 @@ type loginService struct {
 
 func NewLoginService(
 	ctx context.Context,
+	errorPassword errorhandler.PasswordErrorHandler,
+	errorToken errorhandler.TokenErrorHandler,
+	errorHandler errorhandler.LoginErrorHandler,
+	mencache mencache.LoginCache,
 	logger logger.LoggerInterface,
 	hash hash.HashPassword,
 	userRepository repository.UserRepository,
@@ -63,6 +70,10 @@ func NewLoginService(
 
 	return &loginService{
 		ctx:             ctx,
+		errorPassword:   errorPassword,
+		errorToken:      errorToken,
+		errorHandler:    errorHandler,
+		mencache:        mencache,
 		logger:          logger,
 		hash:            hash,
 		user:            userRepository,
@@ -76,83 +87,86 @@ func NewLoginService(
 }
 
 func (s *loginService) Login(request *requests.AuthRequest) (*response.TokenResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "Login"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.String("email", request.Email))
+
 	defer func() {
-		s.recordMetrics("Login", status, startTime)
+		end(status)
 	}()
 
-	ctx, span := s.trace.Start(s.ctx, "LoginService.Login")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.String("user.email", request.Email),
-	)
-
-	s.logger.Debug("Starting login process",
-		zap.String("email", request.Email),
-	)
-
-	res, err := s.user.FindByEmail(request.Email)
-	if err != nil {
-		traceID := traceunic.GenerateTraceID("EMAIL_NOT_FOUND")
-
-		s.logger.Error("Failed to get user", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "User not found")
-		status = "user_not_found"
-		return nil, user_errors.ErrUserNotFoundRes
+	if cachedToken, found := s.mencache.GetCachedLogin(request.Email); found {
+		logSuccess("Successfully logged in", zap.String("email", request.Email))
+		return cachedToken, nil
 	}
 
-	span.SetAttributes(
-		attribute.Int("user.id", res.ID),
-	)
+	res, err := s.user.FindByEmailAndVerify(request.Email)
+	if err != nil {
+		return s.errorHandler.HandleFindEmailError(err, method, "LOGIN_ERR", span, &status, zap.Error(err))
+	}
 
 	err = s.hash.ComparePassword(res.Password, request.Password)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("PASSWORD_MISMATCH")
-		s.logger.Error("Failed to compare password", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Password mismatch")
-		status = "password_mismatch"
-		return nil, user_errors.ErrUserPassword
+		return s.errorPassword.HandleComparePasswordError(err, method, "COMPARE_PASSWORD_ERR", span, &status, zap.Error(err))
 	}
 
-	token, err := s.tokenService.createAccessToken(ctx, res.ID)
+	token, err := s.tokenService.createAccessToken(res.ID)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("ACCESS_TOKEN_FAILED")
-
-		s.logger.Error("Failed to generate JWT token", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to create access token")
-		status = "access_token_failed"
-		return nil, refreshtoken_errors.ErrFailedCreateAccess
+		return s.errorToken.HandleCreateAccessTokenError(err, method, "CREATE_ACCESS_TOKEN_ERR", span, &status, zap.Error(err))
 	}
 
-	refreshToken, err := s.tokenService.createRefreshToken(ctx, res.ID)
+	refreshToken, err := s.tokenService.createRefreshToken(res.ID)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("REFRESH_TOKEN_FAILED")
-		s.logger.Error("Failed to generate refresh token", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to create refresh token")
-		status = "refresh_token_failed"
-		return nil, refreshtoken_errors.ErrFailedCreateRefresh
+		return s.errorToken.HandleCreateRefreshTokenError(err, method, "CREATE_REFRESH_TOKEN_ERR", span, &status, zap.Error(err))
 	}
 
-	s.logger.Debug("User logged in successfully",
-		zap.String("email", request.Email),
-		zap.Int("userID", res.ID),
-	)
-	span.SetStatus(codes.Ok, "Login successful")
-
-	return &response.TokenResponse{
+	tokenResp := &response.TokenResponse{
 		AccessToken:  token,
 		RefreshToken: refreshToken,
-	}, nil
+	}
+
+	s.mencache.SetCachedLogin(request.Email, tokenResp, time.Minute)
+
+	logSuccess("Successfully logged in", zap.String("email", request.Email))
+
+	return tokenResp, nil
+}
+
+func (s *loginService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Info("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
 }
 
 func (s *loginService) recordMetrics(method string, status string, start time.Time) {

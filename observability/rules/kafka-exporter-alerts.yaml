@@ -1,0 +1,14 @@
+groups:
+  - name: Kafka Exporter Alerts
+    rules:
+
+      - alert: KafkaUnderReplicatedPartitions
+        expr: sum(kafka_topic_partition_under_replicated_partition) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kafka topic has under-replicated partitions"
+          description: |
+            One or more Kafka topics have under-replicated partitions for more than 2 minutes.
+            This can indicate potential replication or broker issues.

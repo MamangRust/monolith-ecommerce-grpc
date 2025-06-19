@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
@@ -12,15 +14,23 @@ import (
 	response_api "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/api"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	otelcode "go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type sliderHandleApi struct {
-	client       pb.SliderServiceClient
-	logger       logger.LoggerInterface
-	mapping      response_api.SliderResponseMapper
-	upload_image upload_image.ImageUploads
+	client          pb.SliderServiceClient
+	logger          logger.LoggerInterface
+	mapping         response_api.SliderResponseMapper
+	upload_image    upload_image.ImageUploads
+	trace           trace.Tracer
+	requestCounter  *prometheus.CounterVec
+	requestDuration *prometheus.HistogramVec
 }
 
 func NewHandlerSlider(
@@ -30,11 +40,33 @@ func NewHandlerSlider(
 	mapping response_api.SliderResponseMapper,
 	upload_image upload_image.ImageUploads,
 ) *sliderHandleApi {
+	requestCounter := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "slider_handler_requests_total",
+			Help: "Total number of slider requests",
+		},
+		[]string{"method", "status"},
+	)
+
+	requestDuration := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "slider_handler_request_duration_seconds",
+			Help:    "Duration of slider requests",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"method", "status"},
+	)
+
+	prometheus.MustRegister(requestCounter)
+
 	sliderHandler := &sliderHandleApi{
-		client:       client,
-		logger:       logger,
-		mapping:      mapping,
-		upload_image: upload_image,
+		client:          client,
+		logger:          logger,
+		mapping:         mapping,
+		upload_image:    upload_image,
+		trace:           otel.Tracer("slider-handler"),
+		requestCounter:  requestCounter,
+		requestDuration: requestDuration,
 	}
 
 	routerSlider := router.Group("/api/slider")
@@ -70,19 +102,29 @@ func NewHandlerSlider(
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve slider data"
 // @Router /api/slider [get]
 func (h *sliderHandleApi) FindAllSlider(c echo.Context) error {
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if err != nil || page <= 0 {
-		page = 1
-	}
+	const (
+		defaultPage     = 1
+		defaultPageSize = 10
+		method          = "FindAllSlider"
+	)
 
-	pageSize, err := strconv.Atoi(c.QueryParam("page_size"))
-	if err != nil || pageSize <= 0 {
-		pageSize = 10
-	}
-
+	page := parseQueryInt(c, "page", defaultPage)
+	pageSize := parseQueryInt(c, "page_size", defaultPageSize)
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+		attribute.Int("page", page),
+		attribute.Int("page_size", pageSize),
+		attribute.String("search", search),
+	)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	req := &pb.FindAllSliderRequest{
 		Page:     int32(page),
@@ -93,12 +135,16 @@ func (h *sliderHandleApi) FindAllSlider(c echo.Context) error {
 	res, err := h.client.FindAll(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to fetch sliders", zap.Error(err))
+		status = "error"
+
+		logError("Failed to retrieve slider data", err, zap.Error(err))
 
 		return slider_errors.ErrApiFailedFindAllSliders(c)
 	}
 
 	so := h.mapping.ToApiResponsePaginationSlider(res)
+
+	logSuccess("Successfully retrieve slider data", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -116,19 +162,29 @@ func (h *sliderHandleApi) FindAllSlider(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve slider data"
 // @Router /api/slider/active [get]
 func (h *sliderHandleApi) FindByActive(c echo.Context) error {
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if err != nil || page <= 0 {
-		page = 1
-	}
+	const (
+		defaultPage     = 1
+		defaultPageSize = 10
+		method          = "FindByActive"
+	)
 
-	pageSize, err := strconv.Atoi(c.QueryParam("page_size"))
-	if err != nil || pageSize <= 0 {
-		pageSize = 10
-	}
-
+	page := parseQueryInt(c, "page", defaultPage)
+	pageSize := parseQueryInt(c, "page_size", defaultPageSize)
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+		attribute.Int("page", page),
+		attribute.Int("page_size", pageSize),
+		attribute.String("search", search),
+	)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	req := &pb.FindAllSliderRequest{
 		Page:     int32(page),
@@ -139,12 +195,16 @@ func (h *sliderHandleApi) FindByActive(c echo.Context) error {
 	res, err := h.client.FindByActive(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to fetch active sliders", zap.Error(err))
+		status = "error"
+
+		logError("Failed to retrieve slider data", err, zap.Error(err))
 
 		return slider_errors.ErrApiFailedFindActiveSliders(c)
 	}
 
 	so := h.mapping.ToApiResponsePaginationSliderDeleteAt(res)
+
+	logSuccess("Successfully retrieve slider data", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -163,19 +223,29 @@ func (h *sliderHandleApi) FindByActive(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve slider data"
 // @Router /api/slider/trashed [get]
 func (h *sliderHandleApi) FindByTrashed(c echo.Context) error {
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if err != nil || page <= 0 {
-		page = 1
-	}
+	const (
+		defaultPage     = 1
+		defaultPageSize = 10
+		method          = "FindByTrashed"
+	)
 
-	pageSize, err := strconv.Atoi(c.QueryParam("page_size"))
-	if err != nil || pageSize <= 0 {
-		pageSize = 10
-	}
-
+	page := parseQueryInt(c, "page", defaultPage)
+	pageSize := parseQueryInt(c, "page_size", defaultPageSize)
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+		attribute.Int("page", page),
+		attribute.Int("page_size", pageSize),
+		attribute.String("search", search),
+	)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	req := &pb.FindAllSliderRequest{
 		Page:     int32(page),
@@ -186,11 +256,16 @@ func (h *sliderHandleApi) FindByTrashed(c echo.Context) error {
 	res, err := h.client.FindByTrashed(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to fetch archived sliders", zap.Error(err))
+		status = "error"
+
+		logError("Failed to retrieve trashed slider data", err, zap.Error(err))
+
 		return slider_errors.ErrApiFailedFindTrashedSliders(c)
 	}
 
 	so := h.mapping.ToApiResponsePaginationSliderDeleteAt(res)
+
+	logSuccess("Successfully retrieve trashed slider data", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -209,12 +284,24 @@ func (h *sliderHandleApi) FindByTrashed(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to create slider"
 // @Router /api/slider/create [post]
 func (h *sliderHandleApi) Create(c echo.Context) error {
-	formData, err := h.parseSliderForm(c, true)
-	if err != nil {
-		return slider_errors.ErrApiFailedCreateSlider(c)
-	}
+	const method = "Create"
 
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
+	formData, err := h.parseSliderForm(c, true)
+	if err != nil {
+		status = "error"
+
+		logError("Failed to create slider", err, zap.Error(err))
+
+		return slider_errors.ErrApiFailedCreateSlider(c)
+	}
 
 	req := &pb.CreateSliderRequest{
 		Name:  formData.Nama,
@@ -224,15 +311,18 @@ func (h *sliderHandleApi) Create(c echo.Context) error {
 	res, err := h.client.Create(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Slider creation failed",
-			zap.Error(err),
-			zap.Any("request", req),
-		)
+		status = "error"
+
+		logError("Failed to create slider", err, zap.Error(err))
 
 		return slider_errors.ErrApiFailedCreateSlider(c)
 	}
 
-	return c.JSON(http.StatusOK, res)
+	so := h.mapping.ToApiResponseSlider(res)
+
+	logSuccess("Successfully created slider", zap.Bool("success", true))
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -250,17 +340,35 @@ func (h *sliderHandleApi) Create(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to update slider"
 // @Router /api/slider/update [post]
 func (h *sliderHandleApi) Update(c echo.Context) error {
+	const method = "Update"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	sliderID, err := strconv.Atoi(c.Param("id"))
+
 	if err != nil {
+		status = "error"
+
+		logError("Failed to update slider", err, zap.Error(err))
+
 		return slider_errors.ErrApiInvalidId(c)
 	}
 
 	formData, err := h.parseSliderForm(c, true)
+
 	if err != nil {
+		status = "error"
+
+		logError("Failed to update slider", err, zap.Error(err))
+
 		return slider_errors.ErrApiInvalidBody(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.UpdateSliderRequest{
 		Id:    int32(sliderID),
@@ -271,15 +379,18 @@ func (h *sliderHandleApi) Update(c echo.Context) error {
 	res, err := h.client.Update(ctx, req)
 
 	if err != nil {
-		h.logger.Error("slider update failed",
-			zap.Error(err),
-			zap.Any("request", req),
-		)
+		status = "error"
+
+		logError("Failed to update slider", err, zap.Error(err))
 
 		return slider_errors.ErrApiFailedUpdateSlider(c)
 	}
 
-	return c.JSON(http.StatusOK, res)
+	so := h.mapping.ToApiResponseSlider(res)
+
+	logSuccess("Successfully updated slider", zap.Bool("success", true))
+
+	return c.JSON(http.StatusOK, so)
 }
 
 // @Security Bearer
@@ -295,14 +406,25 @@ func (h *sliderHandleApi) Update(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve trashed slider"
 // @Router /api/slider/trashed/{id} [get]
 func (h *sliderHandleApi) TrashedSlider(c echo.Context) error {
+	const method = "TrashedSlider"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		h.logger.Debug("Invalid slider ID format", zap.Error(err))
+		status = "error"
+
+		logError("Failed to archive slider", err, zap.Error(err))
+
 		return slider_errors.ErrApiInvalidId(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.FindByIdSliderRequest{
 		Id: int32(id),
@@ -311,11 +433,16 @@ func (h *sliderHandleApi) TrashedSlider(c echo.Context) error {
 	res, err := h.client.TrashedSlider(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to archive slider", zap.Error(err))
+		status = "error"
+
+		logError("Failed to archive slider", err, zap.Error(err))
+
 		return slider_errors.ErrApiFailedTrashSlider(c)
 	}
 
 	so := h.mapping.ToApiResponseSliderDeleteAt(res)
+
+	logSuccess("Successfully trashed slider", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -333,14 +460,25 @@ func (h *sliderHandleApi) TrashedSlider(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to restore slider"
 // @Router /api/slider/restore/{id} [post]
 func (h *sliderHandleApi) RestoreSlider(c echo.Context) error {
+	const method = "RestoreSlider"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		h.logger.Debug("Invalid slider ID format", zap.Error(err))
+		status = "error"
+
+		logError("Failed to restore slider", err, zap.Error(err))
+
 		return slider_errors.ErrApiInvalidId(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.FindByIdSliderRequest{
 		Id: int32(id),
@@ -349,11 +487,16 @@ func (h *sliderHandleApi) RestoreSlider(c echo.Context) error {
 	res, err := h.client.RestoreSlider(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to restore slider", zap.Error(err))
+		status = "error"
+
+		logError("Failed to restore slider", err, zap.Error(err))
+
 		return slider_errors.ErrApiFailedRestoreSlider(c)
 	}
 
 	so := h.mapping.ToApiResponseSliderDeleteAt(res)
+
+	logSuccess("Successfully restored slider", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -371,14 +514,25 @@ func (h *sliderHandleApi) RestoreSlider(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to delete slider:"
 // @Router /api/slider/delete/{id} [delete]
 func (h *sliderHandleApi) DeleteSliderPermanent(c echo.Context) error {
+	const method = "DeleteSliderPermanent"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		h.logger.Debug("Invalid slider ID format", zap.Error(err))
+		status = "error"
+
+		logError("Failed to permanently delete slider", err, zap.Error(err))
+
 		return slider_errors.ErrApiInvalidId(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.FindByIdSliderRequest{
 		Id: int32(id),
@@ -387,11 +541,16 @@ func (h *sliderHandleApi) DeleteSliderPermanent(c echo.Context) error {
 	res, err := h.client.DeleteSliderPermanent(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to permanently delete slider", zap.Error(err))
+		status = "error"
+
+		logError("Failed to permanently delete slider", err, zap.Error(err))
+
 		return slider_errors.ErrApiFailedDeleteSliderPermanent(c)
 	}
 
 	so := h.mapping.ToApiResponseSliderDelete(res)
+
+	logSuccess("Successfully deleted slider record permanently", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -409,18 +568,29 @@ func (h *sliderHandleApi) DeleteSliderPermanent(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to restore slider"
 // @Router /api/slider/restore/all [post]
 func (h *sliderHandleApi) RestoreAllSlider(c echo.Context) error {
+	const method = "RestoreAllSlider"
+
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	res, err := h.client.RestoreAllSlider(ctx, &emptypb.Empty{})
 
 	if err != nil {
-		h.logger.Error("Bulk slider restoration failed", zap.Error(err))
+		status = "error"
+
+		logError("Failed to restore all slider", err, zap.Error(err))
+
 		return slider_errors.ErrApiFailedRestoreAllSliders(c)
 	}
 
 	so := h.mapping.ToApiResponseSliderAll(res)
 
-	h.logger.Debug("Successfully restored all slider")
+	logSuccess("Successfully restored all slider", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -438,18 +608,29 @@ func (h *sliderHandleApi) RestoreAllSlider(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to delete slider:"
 // @Router /api/slider/delete/all [post]
 func (h *sliderHandleApi) DeleteAllSliderPermanent(c echo.Context) error {
+	const method = "DeleteAllSliderPermanent"
+
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	res, err := h.client.DeleteAllSliderPermanent(ctx, &emptypb.Empty{})
 
 	if err != nil {
-		h.logger.Error("Bulk slider deletion failed", zap.Error(err))
+		status = "error"
+
+		logError("Failed to permanently delete all slider", err, zap.Error(err))
+
 		return slider_errors.ErrApiFailedDeleteAllPermanentSliders(c)
 	}
 
 	so := h.mapping.ToApiResponseSliderAll(res)
 
-	h.logger.Debug("Successfully deleted all slider permanently")
+	logSuccess("Successfully deleted all slider record permanently", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -478,4 +659,50 @@ func (h *sliderHandleApi) parseSliderForm(c echo.Context, requireImage bool) (re
 
 	formData.FilePath = imagePath
 	return formData, nil
+}
+
+func (s *sliderHandleApi) startTracingAndLogging(
+	ctx context.Context,
+	method string,
+	attrs ...attribute.KeyValue,
+) (func(string), func(string, ...zap.Field), func(string, error, ...zap.Field)) {
+	start := time.Now()
+	_, span := s.trace.Start(ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := otelcode.Ok
+		if status != "success" {
+			code = otelcode.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	logError := func(msg string, err error, fields ...zap.Field) {
+		span.RecordError(err)
+		span.SetStatus(otelcode.Error, msg)
+		span.AddEvent(msg)
+		allFields := append([]zap.Field{zap.Error(err)}, fields...)
+		s.logger.Error(msg, allFields...)
+	}
+
+	return end, logSuccess, logError
+}
+
+func (s *sliderHandleApi) recordMetrics(method string, status string, start time.Time) {
+	s.requestCounter.WithLabelValues(method, status).Inc()
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

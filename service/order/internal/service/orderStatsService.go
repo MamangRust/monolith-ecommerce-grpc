@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-order/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-order/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-order/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors/order_errors"
 	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -21,6 +21,8 @@ import (
 
 type orderStatsService struct {
 	ctx                  context.Context
+	errorhandler         errorhandler.OrderStatsError
+	mencache             mencache.OrderStatsCache
 	trace                trace.Tracer
 	orderStatsRepository repository.OrderStatsRepository
 	logger               logger.LoggerInterface
@@ -31,6 +33,8 @@ type orderStatsService struct {
 
 func NewOrderStatsService(
 	ctx context.Context,
+	errorhandler errorhandler.OrderStatsError,
+	mencache mencache.OrderStatsCache,
 	orderStatsRepository repository.OrderStatsRepository,
 	logger logger.LoggerInterface,
 	mapping response_service.OrderResponseMapper,
@@ -56,6 +60,8 @@ func NewOrderStatsService(
 
 	return &orderStatsService{
 		ctx:                  ctx,
+		errorhandler:         errorhandler,
+		mencache:             mencache,
 		trace:                otel.Tracer("order-stats-service"),
 		orderStatsRepository: orderStatsRepository,
 		logger:               logger,
@@ -66,174 +72,163 @@ func NewOrderStatsService(
 }
 
 func (s *orderStatsService) FindMonthlyTotalRevenue(req *requests.MonthTotalRevenue) ([]*response.OrderMonthlyTotalRevenueResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
-
-	defer func() {
-		s.recordMetrics("FindMonthlyTotalRevenue", status, start)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindMonthlyTotalRevenue")
-	defer span.End()
+	const method = "FindMonthlyTotalRevenue"
 
 	year := req.Year
 	month := req.Month
 
-	span.SetAttributes(
-		attribute.Int("year", year),
-		attribute.Int("month", month),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year), attribute.Int("month", month))
 
-	s.logger.Debug("find monthly total revenue",
-		zap.Int("year", year),
-		zap.Int("month", month))
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.mencache.GetMonthlyTotalRevenueCache(req); found {
+		logSuccess("Successfully fetched monthly total revenue from cache", zap.Int("year", year), zap.Int("month", month))
+
+		return data, nil
+	}
 
 	res, err := s.orderStatsRepository.GetMonthlyTotalRevenue(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MONTHLY_TOTAL_REVENUE")
-
-		s.logger.Error("failed to get monthly total revenue",
-			zap.Int("year", year),
-			zap.Int("month", month),
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-
-		span.SetStatus(codes.Error, "Failed to get monthly total revenue")
-
-		status = "failed_find_monthly_total_revenue"
-
-		return nil, order_errors.ErrFailedFindMonthlyTotalRevenue
+		return s.errorhandler.HandleMonthlyTotalRevenueError(err, method, "FAILED_FIND_MONTHLY_TOTAL_REVENUE", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToOrderMonthlyTotalRevenues(res), nil
+	so := s.mapping.ToOrderMonthlyTotalRevenues(res)
+
+	s.mencache.SetMonthlyTotalRevenueCache(req, so)
+
+	logSuccess("Successfully fetched monthly total revenue", zap.Int("year", year), zap.Int("month", month))
+
+	return so, nil
 }
 
 func (s *orderStatsService) FindYearlyTotalRevenue(year int) ([]*response.OrderYearlyTotalRevenueResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "FindYearlyTotalRevenue"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year))
 
 	defer func() {
-		s.recordMetrics("FindYearlyTotalRevenue", status, start)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "FindYearlyTotalRevenue")
-	defer span.End()
+	if data, found := s.mencache.GetYearlyTotalRevenueCache(year); found {
+		logSuccess("Successfully fetched yearly total revenue from cache", zap.Int("year", year))
 
-	span.SetAttributes(
-		attribute.Int("year", year),
-	)
+		return data, nil
+	}
 
 	res, err := s.orderStatsRepository.GetYearlyTotalRevenue(year)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_YEARLY_TOTAL_REVENUE")
-
-		s.logger.Error("failed to get yearly total revenue",
-			zap.Int("year", year),
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-
-		span.SetStatus(codes.Error, "Failed to get yearly total revenue")
-
-		status = "failed_find_yearly_total_revenue"
-
-		return nil, order_errors.ErrFailedFindYearlyTotalRevenue
+		return s.errorhandler.HandleYearlyTotalRevenueError(err, method, "FAILED_FIND_YEARLY_TOTAL_REVENUE", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToOrderYearlyTotalRevenues(res), nil
+	so := s.mapping.ToOrderYearlyTotalRevenues(res)
+
+	s.mencache.SetYearlyTotalRevenueCache(year, so)
+
+	logSuccess("Successfully fetched yearly total revenue", zap.Int("year", year))
+
+	return so, nil
 }
 
 func (s *orderStatsService) FindMonthlyOrder(year int) ([]*response.OrderMonthlyResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "FindMonthlyOrder"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year))
 
 	defer func() {
-		s.recordMetrics("FindMonthlyOrder", status, start)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "FindMonthlyOrder")
-	defer span.End()
+	if data, found := s.mencache.GetMonthlyOrderCache(year); found {
+		logSuccess("Successfully fetched monthly orders from cache", zap.Int("year", year))
+
+		return data, nil
+	}
 
 	res, err := s.orderStatsRepository.GetMonthlyOrder(year)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MONTHLY_ORDER")
-
-		s.logger.Error("failed to get monthly orders",
-			zap.Int("year", year),
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-
-		span.SetStatus(codes.Error, "Failed to get monthly orders")
-
-		status = "failed_find_monthly_order"
-
-		return nil, order_errors.ErrFailedFindMonthlyOrder
+		return s.errorhandler.HandleMonthOrderStatsError(err, method, "FAILED_FIND_MONTHLY_ORDER", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToOrderMonthlyPrices(res), nil
+	so := s.mapping.ToOrderMonthlyPrices(res)
+
+	s.mencache.SetMonthlyOrderCache(year, so)
+
+	logSuccess("Successfully fetched monthly orders", zap.Int("year", year))
+
+	return so, nil
 }
 
 func (s *orderStatsService) FindYearlyOrder(year int) ([]*response.OrderYearlyResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "FindYearlyOrder"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year))
 
 	defer func() {
-		s.recordMetrics("FindYearlyOrder", status, start)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "FindYearlyOrder")
-	defer span.End()
+	if data, found := s.mencache.GetYearlyOrderCache(year); found {
+		logSuccess("Successfully fetched yearly orders from cache", zap.Int("year", year))
 
-	span.SetAttributes(
-		attribute.Int("year", year),
-	)
+		return data, nil
+	}
 
 	res, err := s.orderStatsRepository.GetYearlyOrder(year)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_YEARLY_ORDER")
-
-		s.logger.Error("failed to get yearly orders",
-			zap.Int("year", year),
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-
-		span.SetStatus(codes.Error, "Failed to get yearly orders")
-
-		span.SetStatus(codes.Error, "Failed to get yearly orders")
-
-		status = "failed_find_yearly_order"
-
-		return nil, order_errors.ErrFailedFindYearlyOrder
+		return s.errorhandler.HandleYearOrderStatsError(err, method, "FAILED_FIND_YEARLY_ORDER", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToOrderYearlyPrices(res), nil
+	so := s.mapping.ToOrderYearlyPrices(res)
+
+	s.mencache.SetYearlyOrderCache(year, so)
+
+	logSuccess("Successfully fetched yearly orders", zap.Int("year", year))
+
+	return so, nil
+}
+
+func (s *orderStatsService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
 }
 
 func (s *orderStatsService) recordMetrics(method string, status string, start time.Time) {

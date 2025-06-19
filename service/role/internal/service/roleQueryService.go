@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-role/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/role_errors"
@@ -21,6 +22,8 @@ import (
 
 type roleQueryService struct {
 	ctx             context.Context
+	errorhandler    errorhandler.RoleQueryErrorHandler
+	mencache        mencache.RoleQueryCache
 	trace           trace.Tracer
 	roleQuery       repository.RoleQueryRepository
 	logger          logger.LoggerInterface
@@ -29,7 +32,10 @@ type roleQueryService struct {
 	requestDuration *prometheus.HistogramVec
 }
 
-func NewRoleQueryService(ctx context.Context, roleQuery repository.RoleQueryRepository, logger logger.LoggerInterface, mapping response_service.RoleResponseMapper) *roleQueryService {
+func NewRoleQueryService(ctx context.Context,
+	errorhandler errorhandler.RoleQueryErrorHandler,
+	mencache mencache.RoleQueryCache,
+	roleQuery repository.RoleQueryRepository, logger logger.LoggerInterface, mapping response_service.RoleResponseMapper) *roleQueryService {
 	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "role_query_service_request_total",
@@ -51,6 +57,8 @@ func NewRoleQueryService(ctx context.Context, roleQuery repository.RoleQueryRepo
 
 	return &roleQueryService{
 		ctx:             ctx,
+		errorhandler:    errorhandler,
+		mencache:        mencache,
 		trace:           otel.Tracer("role-query-service"),
 		roleQuery:       roleQuery,
 		logger:          logger,
@@ -61,274 +69,212 @@ func NewRoleQueryService(ctx context.Context, roleQuery repository.RoleQueryRepo
 }
 
 func (s *roleQueryService) FindAll(req *requests.FindAllRole) ([]*response.RoleResponse, *int, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindAll"
 
-	defer func() {
-		s.recordMetrics("FindAll", status, startTime)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindAll")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
-	s.logger.Debug("Fetching role",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
-	if page <= 0 {
-		page = 1
-	}
-	if pageSize <= 0 {
-		pageSize = 10
+	if data, total, found := s.mencache.GetCachedRoles(req); found {
+		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
+
+		return data, total, nil
 	}
 
 	res, totalRecords, err := s.roleQuery.FindAllRoles(req)
+
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ALL_ROLE")
-
-		s.logger.Error("Failed to fetch role",
-			zap.Error(err),
-			zap.Int("page", page),
-			zap.Int("pageSize", pageSize),
-			zap.String("search", search),
-			zap.String("traceID", traceID))
-
-		status = "failed"
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to fetch role")
-		status = "failed_to_fetch_role"
-
-		return nil, nil, role_errors.ErrFailedFindAll
+		return s.errorhandler.HandleRepositoryPaginationError(
+			err, "FindAll", "FAILED_FIND_ALL_ROLE", span, &status, zap.Error(err))
 	}
 
-	s.logger.Debug("Successfully fetched role",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize))
-
 	so := s.mapping.ToRolesResponse(res)
+
+	s.mencache.SetCachedRoles(req, so, totalRecords)
+
+	logSuccess("Successfully fetched roles", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
 func (s *roleQueryService) FindById(id int) (*response.RoleResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindById"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("role.id", id))
 
 	defer func() {
-		s.recordMetrics("FindById", status, startTime)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "FindById")
-	defer span.End()
+	if data, found := s.mencache.GetCachedRoleById(id); found {
+		logSuccess("Data found in cache", zap.Int("role.id", id))
 
-	span.SetAttributes(
-		attribute.Int("id", id),
-	)
-
-	s.logger.Debug("Fetching role by ID", zap.Int("id", id))
+		return data, nil
+	}
 
 	res, err := s.roleQuery.FindById(id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ROLE_BY_ID")
-
-		s.logger.Error("Failed to retrieve role by ID",
-			zap.Int("id", id),
-			zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve role by ID")
-		status = "failed_to_retrieve_role_by_id"
-
-		return nil, role_errors.ErrRoleNotFoundRes
+		return s.errorhandler.HandleRepositorySingleError(
+			err, method, "FAILED_FIND_ROLE_BY_ID", span, &status, role_errors.ErrRoleNotFoundRes, zap.Error(err))
 	}
 
-	s.logger.Debug("Successfully fetched role", zap.Int("id", id))
-
 	so := s.mapping.ToRoleResponse(res)
+
+	s.mencache.SetCachedRoleById(so)
+
+	logSuccess("Successfully fetched role", zap.Int("role.id", id), zap.Bool("success", true))
 
 	return so, nil
 }
 
 func (s *roleQueryService) FindByUserId(id int) ([]*response.RoleResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindByUserId"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("user.id", id))
 
 	defer func() {
-		s.recordMetrics("FindByUserId", status, startTime)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "FindByUserId")
-	defer span.End()
+	if data, found := s.mencache.GetCachedRoleByUserId(id); found {
+		logSuccess("Data found in cache", zap.Int("user.id", id))
 
-	span.SetAttributes(
-		attribute.Int("id", id),
-	)
-
-	s.logger.Debug("Fetching role by user ID", zap.Int("id", id))
+		return data, nil
+	}
 
 	res, err := s.roleQuery.FindByUserId(id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ROLE_BY_USER_ID")
-
-		s.logger.Error("Failed to retrieve role by user ID",
-			zap.Int("id", id),
-			zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve role by user ID")
-		status = "failed_to_retrieve_role_by_user_id"
-
-		return nil, role_errors.ErrRoleNotFoundRes
+		return s.errorhandler.HandleRepositoryListError(err, method, "FAILED_FIND_ROLE_BY_USER_ID", span, &status, zap.Error(err))
 	}
 
-	s.logger.Debug("Successfully fetched role by user ID", zap.Int("id", id))
-
 	so := s.mapping.ToRolesResponse(res)
+
+	s.mencache.SetCachedRoleByUserId(id, so)
+
+	logSuccess("Successfully fetched role by user ID", zap.Int("user.id", id), zap.Bool("success", true))
 
 	return so, nil
 }
 
 func (s *roleQueryService) FindByActiveRole(req *requests.FindAllRole) ([]*response.RoleResponseDeleteAt, *int, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindByActiveRole"
 
-	defer func() {
-		s.recordMetrics("FindByActiveRole", status, startTime)
-	}()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	_, span := s.trace.Start(s.ctx, "FindByActiveRole")
-	defer span.End()
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	defer func() {
+		end(status)
+	}()
 
-	s.logger.Debug("Fetching active role",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	if data, total, found := s.mencache.GetCachedRoleActive(req); found {
+		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
-	if page <= 0 {
-		page = 1
-	}
-	if pageSize <= 0 {
-		pageSize = 10
+		return data, total, nil
 	}
 
 	res, totalRecords, err := s.roleQuery.FindByActiveRole(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ACTIVE_ROLE")
-
-		s.logger.Error("Failed to fetch active role",
-			zap.Error(err),
-			zap.Int("page", page),
-			zap.Int("pageSize", pageSize),
-			zap.String("search", search),
-			zap.String("traceID", traceID))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to fetch active role")
-		status = "failed_to_fetch_active_role"
-
-		return nil, nil, role_errors.ErrFailedFindActive
+		return s.errorhandler.HandleRepositoryPaginationDeletedError(err, method, "FAILED_FIND_BY_ACTIVE_ROLE", span, &status, role_errors.ErrRoleNotFoundRes, zap.Error(err))
 	}
 
-	s.logger.Debug("Successfully fetched active role",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize))
-
 	so := s.mapping.ToRolesResponseDeleteAt(res)
+
+	s.mencache.SetCachedRoleActive(req, so, totalRecords)
+
+	logSuccess("Successfully fetched active role", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
 func (s *roleQueryService) FindByTrashedRole(req *requests.FindAllRole) ([]*response.RoleResponseDeleteAt, *int, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindByTrashedRole"
 
-	defer func() {
-		s.recordMetrics("FindByTrashedRole", status, startTime)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindByTrashedRole")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
-	s.logger.Debug("Fetching trashed role",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
+	if data, total, found := s.mencache.GetCachedRoleTrashed(req); found {
+		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
+
+		return data, total, nil
+	}
+
+	res, totalRecords, err := s.roleQuery.FindByTrashedRole(req)
+
+	if err != nil {
+		return s.errorhandler.HandleRepositoryPaginationDeletedError(err, "FindByTrashedRole", "FAILED_FIND_BY_TRASHED_ROLE", span, &status, role_errors.ErrRoleNotFoundRes)
+	}
+	so := s.mapping.ToRolesResponseDeleteAt(res)
+
+	s.mencache.SetCachedRoleTrashed(req, so, totalRecords)
+
+	logSuccess("Successfully fetched trashed role", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
+
+	return so, totalRecords, nil
+}
+
+func (s *roleQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
+}
+
+func (s *roleQueryService) normalizePagination(page, pageSize int) (int, int) {
 	if page <= 0 {
 		page = 1
 	}
 	if pageSize <= 0 {
 		pageSize = 10
 	}
-
-	res, totalRecords, err := s.roleQuery.FindByTrashedRole(req)
-
-	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_TRASHED_ROLE")
-
-		s.logger.Error("Failed to fetch trashed role",
-			zap.Error(err),
-			zap.Int("page", page),
-			zap.Int("pageSize", pageSize),
-			zap.String("search", search),
-			zap.String("traceID", traceID))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to fetch trashed role")
-		status = "failed_to_fetch_trashed_role"
-
-		return nil, nil, role_errors.ErrFailedFindTrashed
-	}
-
-	s.logger.Debug("Successfully fetched trashed role",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize))
-
-	so := s.mapping.ToRolesResponseDeleteAt(res)
-
-	return so, totalRecords, nil
+	return page, pageSize
 }
+
 func (s *roleQueryService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
 	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())

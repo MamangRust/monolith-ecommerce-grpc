@@ -7,19 +7,23 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
-	"github.com/MamangRust/monolith-point-of-sale-grpc-merchant/internal/handler"
-	"github.com/MamangRust/monolith-point-of-sale-grpc-merchant/internal/repository"
-	"github.com/MamangRust/monolith-point-of-sale-grpc-merchant/internal/services"
-	"github.com/MamangRust/monolith-point-of-sale-pkg/database"
-	db "github.com/MamangRust/monolith-point-of-sale-pkg/database/schema"
-	"github.com/MamangRust/monolith-point-of-sale-pkg/dotenv"
-	"github.com/MamangRust/monolith-point-of-sale-pkg/kafka"
-	"github.com/MamangRust/monolith-point-of-sale-pkg/logger"
-	otel_pkg "github.com/MamangRust/monolith-point-of-sale-pkg/otel"
-	recordmapper "github.com/MamangRust/monolith-point-of-sale-shared/mapper/record"
-	"github.com/MamangRust/monolith-point-of-sale-shared/pb"
+	"github.com/MamangRust/monolith-ecommerce-grpc-merchant/internal/errorhandler"
+	"github.com/MamangRust/monolith-ecommerce-grpc-merchant/internal/handler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant/internal/redis"
+	"github.com/MamangRust/monolith-ecommerce-grpc-merchant/internal/repository"
+	"github.com/MamangRust/monolith-ecommerce-grpc-merchant/internal/services"
+	"github.com/MamangRust/monolith-ecommerce-pkg/database"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	"github.com/MamangRust/monolith-ecommerce-pkg/dotenv"
+	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
+	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	otel_pkg "github.com/MamangRust/monolith-ecommerce-pkg/otel"
+	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
+	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
@@ -34,7 +38,7 @@ var (
 func init() {
 	port = viper.GetInt("GRPC_MERCHANT_ADDR")
 	if port == 0 {
-		port = 50054
+		port = 50055
 	}
 
 	flag.IntVar(&port, "port", port, "gRPC server port")
@@ -48,12 +52,13 @@ type Server struct {
 	Ctx      context.Context
 }
 
-func NewServer() (*Server, error) {
+func NewServer() (*Server, func(context.Context) error, error) {
 	flag.Parse()
 
 	logger, err := logger.NewLogger()
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize logger: %w", err)
+		return nil, nil, fmt.Errorf("failed to initialize logger: %w", err)
 	}
 
 	if err := dotenv.Viper(); err != nil {
@@ -61,16 +66,18 @@ func NewServer() (*Server, error) {
 	}
 
 	conn, err := database.NewClient(logger)
+
 	if err != nil {
 		logger.Fatal("Failed to connect to database", zap.Error(err))
 	}
+
 	DB := db.New(conn)
 
 	ctx := context.Background()
 
 	mapperRecord := recordmapper.NewRecordMapper()
 
-	depsRepo := repository.Deps{
+	depsRepo := &repository.Deps{
 		DB:           DB,
 		Ctx:          ctx,
 		MapperRecord: mapperRecord,
@@ -81,6 +88,7 @@ func NewServer() (*Server, error) {
 	myKafka := kafka.NewKafka(logger, []string{viper.GetString("KAFKA_BROKERS")})
 
 	shutdownTracerProvider, err := otel_pkg.InitTracerProvider("Merchant-service", ctx)
+
 	if err != nil {
 		logger.Fatal("Failed to initialize tracer provider", zap.Error(err))
 	}
@@ -91,15 +99,41 @@ func NewServer() (*Server, error) {
 		}
 	}()
 
-	services := services.NewService(services.Deps{
-		Kafka:        *myKafka,
+	myredis := redis.NewClient(&redis.Options{
+		Addr:         fmt.Sprintf("%s:%s", viper.GetString("REDIS_HOST"), viper.GetString("REDIS_PORT")),
+		Password:     viper.GetString("REDIS_PASSWORD"),
+		DB:           viper.GetInt("REDIS_DB_MERCHANT"),
+		DialTimeout:  5 * time.Second,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
+		PoolSize:     10,
+		MinIdleConns: 3,
+	})
+
+	if err := myredis.Ping(ctx).Err(); err != nil {
+		logger.Fatal("Failed to connect to Redis", zap.Error(err))
+		return nil, nil, err
+	}
+
+	mencache := mencache.NewMencache(&mencache.Deps{
+		Ctx:    ctx,
+		Redis:  myredis,
+		Logger: logger,
+	})
+
+	errorhandler := errorhandler.NewErrorHandler(logger)
+
+	services := services.NewService(&services.Deps{
+		Mencache:     mencache,
+		ErrorHander:  errorhandler,
+		Kafka:        myKafka,
 		Ctx:          ctx,
 		Repositories: repositories,
 		Logger:       logger,
 	})
 
-	handlers := handler.NewHandler(handler.Deps{
-		Service: *services,
+	handlers := handler.NewHandler(&handler.Deps{
+		Service: services,
 	})
 
 	return &Server{
@@ -108,7 +142,7 @@ func NewServer() (*Server, error) {
 		Services: services,
 		Handlers: handlers,
 		Ctx:      ctx,
-	}, nil
+	}, shutdownTracerProvider, nil
 }
 
 func (s *Server) Run() {
@@ -148,7 +182,7 @@ func (s *Server) Run() {
 
 	go func() {
 		defer wg.Done()
-		s.Logger.Info("Metrics server listening on :8084")
+		s.Logger.Info("Metrics server listening on :8085")
 		if err := http.Serve(metricsLis, metricsServer); err != nil {
 			s.Logger.Fatal("Metrics server error", zap.Error(err))
 		}
@@ -156,7 +190,7 @@ func (s *Server) Run() {
 
 	go func() {
 		defer wg.Done()
-		s.Logger.Info("gRPC server listening on :50054")
+		s.Logger.Info("gRPC server listening on :50055")
 		if err := grpcServer.Serve(lis); err != nil {
 			s.Logger.Fatal("gRPC server error", zap.Error(err))
 		}

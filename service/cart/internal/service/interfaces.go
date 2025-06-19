@@ -11,6 +11,6 @@ type CartQueryService interface {
 
 type CartCommandService interface {
 	CreateCart(req *requests.CreateCartRequest) (*response.CartResponse, *response.ErrorResponse)
-	DeletePermanent(cart_id int) (bool, *response.ErrorResponse)
-	DeleteAllPermanently(req *requests.DeleteCartRequest) (bool, *response.ErrorResponse)
+	DeletePermanent(req *requests.DeleteCartRequest) (bool, *response.ErrorResponse)
+	DeleteAllPermanently(req *requests.DeleteAllCartRequest) (bool, *response.ErrorResponse)
 }

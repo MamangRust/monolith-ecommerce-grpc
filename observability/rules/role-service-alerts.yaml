@@ -1,0 +1,62 @@
+groups:
+  - name: role-service-alerts
+    rules:
+      - alert: HighFailureRate_RoleCommandService
+        expr: increase(role_command_service_request_total{status="error"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: role_command_service
+        annotations:
+          summary: "High failure rate on role_command_service"
+          description: "More than 5 error requests in the last 5 minutes for role_command_service."
+
+      - alert: HighLatency_RoleCommandService
+        expr: histogram_quantile(0.95, rate(role_command_service_request_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: role_command_service
+        annotations:
+          summary: "High latency detected on role_command_service"
+          description: "P95 latency for role_command_service is greater than 1 second in the last 5 minutes."
+
+      - alert: NoTraffic_RoleCommandService
+        expr: rate(role_command_service_request_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: role_command_service
+        annotations:
+          summary: "No traffic detected on role_command_service"
+          description: "No traffic detected on role_command_service in the last 5 minutes."
+
+      - alert: HighFailureRate_RoleQueryService
+        expr: increase(role_query_service_request_total{status="error"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: role_query_service
+        annotations:
+          summary: "High failure rate on role_query_service"
+          description: "More than 5 error requests in the last 5 minutes for role_query_service."
+
+      - alert: HighLatency_RoleQueryService
+        expr: histogram_quantile(0.95, rate(role_query_service_request_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: role_query_service
+        annotations:
+          summary: "High latency detected on role_query_service"
+          description: "P95 latency for role_query_service is greater than 1 second in the last 5 minutes."
+
+      - alert: NoTraffic_RoleQueryService
+        expr: rate(role_query_service_request_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: role_query_service
+        annotations:
+          summary: "No traffic detected on role_query_service"
+          description: "No traffic detected on role_query_service in the last 5 minutes."

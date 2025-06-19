@@ -17,7 +17,7 @@ type Deps struct {
 	Ctx context.Context
 }
 
-func NewRepositories(deps Deps) *Repositories {
+func NewRepositories(deps *Deps) *Repositories {
 	roleMapper := recordmapper.NewRoleRecordMapper()
 
 	return &Repositories{

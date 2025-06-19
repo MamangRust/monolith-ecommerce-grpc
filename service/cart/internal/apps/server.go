@@ -7,8 +7,11 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/handler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/database"
@@ -18,6 +21,7 @@ import (
 	otel_pkg "github.com/MamangRust/monolith-ecommerce-pkg/otel"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
@@ -32,7 +36,7 @@ var (
 func init() {
 	port = viper.GetInt("GRPC_CART_ADDR")
 	if port == 0 {
-		port = 50052
+		port = 50060
 	}
 
 	flag.IntVar(&port, "port", port, "gRPC server port")
@@ -65,7 +69,7 @@ func NewServer() (*Server, error) {
 
 	ctx := context.Background()
 
-	depsRepo := repository.Deps{
+	depsRepo := &repository.Deps{
 		DB:  DB,
 		Ctx: ctx,
 	}
@@ -82,14 +86,39 @@ func NewServer() (*Server, error) {
 		}
 	}()
 
-	services := service.NewService(service.Deps{
+	myredis := redis.NewClient(&redis.Options{
+		Addr:         fmt.Sprintf("%s:%s", viper.GetString("REDIS_HOST"), viper.GetString("REDIS_PORT")),
+		Password:     viper.GetString("REDIS_PASSWORD"),
+		DB:           viper.GetInt("REDIS_DB_CART"),
+		DialTimeout:  5 * time.Second,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
+		PoolSize:     10,
+		MinIdleConns: 3,
+	})
+
+	if err := myredis.Ping(ctx).Err(); err != nil {
+		logger.Fatal("Failed to ping redis", zap.Error(err))
+	}
+
+	mencache := mencache.NewMencache(&mencache.Deps{
+		Ctx:    ctx,
+		Redis:  myredis,
+		Logger: logger,
+	})
+
+	errorhandler := errorhandler.NewErrorHandler(logger)
+
+	services := service.NewService(&service.Deps{
 		Ctx:          ctx,
+		Mencached:    mencache,
+		ErrorHandler: errorhandler,
 		Repositories: repositories,
 		Logger:       logger,
 	})
 
-	handlers := handler.NewHandler(handler.Deps{
-		Service: *services,
+	handlers := handler.NewHandler(&handler.Deps{
+		Service: services,
 	})
 
 	return &Server{
@@ -137,7 +166,7 @@ func (s *Server) Run() {
 
 	go func() {
 		defer wg.Done()
-		s.Logger.Info("Metrics server listening on :8082")
+		s.Logger.Info("Metrics server listening on :8090")
 		if err := http.Serve(metricsLis, metricsServer); err != nil {
 			s.Logger.Fatal("Metrics server error", zap.Error(err))
 		}
@@ -145,7 +174,7 @@ func (s *Server) Run() {
 
 	go func() {
 		defer wg.Done()
-		s.Logger.Info("gRPC server listening on :50052")
+		s.Logger.Info("gRPC server listening on :50061")
 		if err := grpcServer.Serve(lis); err != nil {
 			s.Logger.Fatal("gRPC server error", zap.Error(err))
 		}

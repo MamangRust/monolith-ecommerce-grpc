@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+  namespace: ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+        - name: kafka
+          image: bitnami/kafka:latest
+          env:
+            - name: KAFKA_CFG_PROCESS_ROLES
+              value: "broker,controller"
+            - name: KAFKA_CFG_NODE_ID
+              value: "1"
+            - name: KAFKA_CFG_CONTROLLER_QUORUM_VOTERS
+              value: "1@localhost:9093"
+            - name: KAFKA_CFG_CONTROLLER_LISTENER_NAMES
+              value: "CONTROLLER"
+            - name: KAFKA_CFG_LISTENERS
+              value: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+            - name: KAFKA_CFG_ADVERTISED_LISTENERS
+              value: "PLAINTEXT://kafka.ecommerce.svc.cluster.local:9092"
+            - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
+            - name: KAFKA_KRAFT_CLUSTER_ID
+              value: "kraft-cluster-01"
+            - name: ALLOW_PLAINTEXT_LISTENER
+              value: "yes"
+            - name: KAFKA_CFG_LOG_LEVEL
+              value: "INFO"
+            - name: BITNAMI_DEBUG
+              value: "true"
+          ports:
+            - containerPort: 9092
+            - containerPort: 9093
+          volumeMounts:
+            - name: kafka-data
+              mountPath: /bitnami/kafka
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          readinessProbe:
+            tcpSocket:
+              port: 9092
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 9092
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          startupProbe:
+            tcpSocket:
+              port: 9092
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+      volumes:
+        - name: kafka-data
+          persistentVolumeClaim:
+            claimName: kafka

@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-transaction/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors/transaction_errors"
 	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -21,6 +21,8 @@ import (
 
 type transactionStatsService struct {
 	ctx                        context.Context
+	errorhandler               errorhandler.TransactionStatsError
+	mencache                   mencache.TransactionStatsCache
 	trace                      trace.Tracer
 	transactionStatsRepository repository.TransactionStatsRepository
 	mapping                    response_service.TransactionResponseMapper
@@ -31,6 +33,8 @@ type transactionStatsService struct {
 
 func NewTransactionStatsService(
 	ctx context.Context,
+	errorhandler errorhandler.TransactionStatsError,
+	mencache mencache.TransactionStatsCache,
 	transactionStatsRepository repository.TransactionStatsRepository,
 	mapping response_service.TransactionResponseMapper,
 	logger logger.LoggerInterface,
@@ -56,6 +60,8 @@ func NewTransactionStatsService(
 
 	return &transactionStatsService{
 		ctx:                        ctx,
+		errorhandler:               errorhandler,
+		mencache:                   mencache,
 		trace:                      otel.Tracer("transaction-stats-service"),
 		transactionStatsRepository: transactionStatsRepository,
 		mapping:                    mapping,
@@ -66,363 +72,271 @@ func NewTransactionStatsService(
 }
 
 func (s *transactionStatsService) FindMonthlyAmountSuccess(req *requests.MonthAmountTransaction) ([]*response.TransactionMonthlyAmountSuccessResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
-
-	defer func() {
-		s.recordMetrics("FindMonthlyAmountSuccess", status, start)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindMonthlyAmountSuccess")
-	defer span.End()
+	const method = "FindMonthlyAmountSuccess"
 
 	year := req.Year
 	month := req.Month
 
-	span.SetAttributes(
-		attribute.Int("year", year),
-		attribute.Int("month", month),
-	)
+	span, end, status, logSuccess := s.startTraceWithLogging(method, year, &month)
 
-	s.logger.Debug("find monthly successful transaction amounts",
-		zap.Int("year", year),
-		zap.Int("month", month))
+	defer end()
+
+	if data, found := s.mencache.GetCachedMonthAmountSuccessCached(req); found {
+		logSuccess("Successfully fetched monthly successful transaction amounts from cache", zap.Int("year", year), zap.Int("month", month))
+
+		return data, nil
+	}
 
 	res, err := s.transactionStatsRepository.GetMonthlyAmountSuccess(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MONTHLY_AMOUNT_SUCCESS")
-
-		s.logger.Error("failed to get monthly successful transaction amounts",
-			zap.Int("year", year),
-			zap.Int("month", month),
-			zap.String("trace_id", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to get monthly successful transaction amounts")
-
-		status = "failed_find_monthly_amount_success"
-
-		return nil, transaction_errors.ErrFailedFindMonthlyAmountSuccess
+		return s.errorhandler.HandleMonthlyAmountSuccessError(err, method, "FAILED_FIND_MONTHLY_AMOUNT_SUCCESS", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToTransactionMonthlyAmountSuccess(res), nil
+	so := s.mapping.ToTransactionMonthlyAmountSuccess(res)
+
+	s.mencache.SetCachedMonthAmountSuccessCached(req, so)
+
+	logSuccess("Successfully fetched monthly successful transaction amounts", zap.Int("year", year), zap.Int("month", month))
+
+	return so, nil
 }
 
 func (s *transactionStatsService) FindYearlyAmountSuccess(year int) ([]*response.TransactionYearlyAmountSuccessResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "FindYearlyAmountSuccess"
 
-	defer func() {
-		s.recordMetrics("FindYearlyAmountSuccess", status, start)
-	}()
+	span, end, status, logSuccess := s.startTraceWithLogging(method, year, nil)
 
-	_, span := s.trace.Start(s.ctx, "FindYearlyAmountSuccess")
-	defer span.End()
+	defer end()
 
-	span.SetAttributes(
-		attribute.Int("year", year),
-	)
+	if data, found := s.mencache.GetCachedYearAmountSuccessCached(year); found {
+		logSuccess("Successfully fetched yearly successful transaction amounts from cache", zap.Int("year", year))
 
-	s.logger.Debug("find yearly successful transaction amounts",
-		zap.Int("year", year))
+		return data, nil
+	}
 
 	res, err := s.transactionStatsRepository.GetYearlyAmountSuccess(year)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_YEARLY_AMOUNT_SUCCESS")
-
-		s.logger.Error("failed to get yearly successful transaction amounts",
-			zap.Int("year", year),
-			zap.String("trace_id", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to get yearly successful transaction amounts")
-
-		status = "failed_find_yearly_amount_success"
-
-		return nil, transaction_errors.ErrFailedFindYearlyAmountSuccess
+		return s.errorhandler.HandleYearlyAmountSuccessError(err, method, "FAILED_FIND_YEARLY_AMOUNT_SUCCESS", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToTransactionYearlyAmountSuccess(res), nil
+	so := s.mapping.ToTransactionYearlyAmountSuccess(res)
+
+	s.mencache.SetCachedYearAmountSuccessCached(year, so)
+
+	logSuccess("Successfully fetched yearly successful transaction amounts", zap.Int("year", year))
+
+	return so, nil
 }
 
 func (s *transactionStatsService) FindMonthlyAmountFailed(req *requests.MonthAmountTransaction) ([]*response.TransactionMonthlyAmountFailedResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
-
-	defer func() {
-		s.recordMetrics("FindMonthlyAmountFailed", status, start)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindMonthlyAmountFailed")
-	defer span.End()
+	const method = "FindMonthlyAmountFailed"
 
 	year := req.Year
 	month := req.Month
 
-	span.SetAttributes(
-		attribute.Int("year", year),
-		attribute.Int("month", month),
-	)
+	span, end, status, logSuccess := s.startTraceWithLogging(method, year, &month)
 
-	s.logger.Debug("find monthly failed transaction amounts",
-		zap.Int("year", year),
-		zap.Int("month", month))
+	defer end()
+
+	if data, found := s.mencache.GetCachedMonthAmountFailedCached(req); found {
+		logSuccess("Successfully fetched monthly failed transaction amounts from cache", zap.Int("year", year), zap.Int("month", month))
+
+		return data, nil
+	}
 
 	res, err := s.transactionStatsRepository.GetMonthlyAmountFailed(req)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MONTHLY_AMOUNT_FAILED")
-
-		s.logger.Error("failed to get monthly failed transaction amounts",
-			zap.Int("year", year),
-			zap.Int("month", month),
-			zap.String("trace_id", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to get monthly failed transaction amounts")
-
-		status = "failed_find_monthly_amount_failed"
-
-		return nil, transaction_errors.ErrFailedFindMonthlyAmountFailed
+		return s.errorhandler.HandleMonthlyAmountFailedError(err, method, "FAILED_FIND_MONTHLY_AMOUNT_FAILED", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToTransactionMonthlyAmountFailed(res), nil
+	so := s.mapping.ToTransactionMonthlyAmountFailed(res)
+
+	s.mencache.SetCachedMonthAmountFailedCached(req, so)
+
+	logSuccess("Successfully fetched monthly failed transaction amounts", zap.Int("year", year), zap.Int("month", month))
+
+	return so, nil
 }
 
 func (s *transactionStatsService) FindYearlyAmountFailed(year int) ([]*response.TransactionYearlyAmountFailedResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "FindYearlyAmountFailed"
 
-	defer func() {
-		s.recordMetrics("FindYearlyAmountFailed", status, start)
-	}()
+	span, end, status, logSuccess := s.startTraceWithLogging(method, year, nil)
 
-	_, span := s.trace.Start(s.ctx, "FindYearlyAmountFailed")
-	defer span.End()
+	defer end()
 
-	span.SetAttributes(
-		attribute.Int("year", year),
-	)
+	if data, found := s.mencache.GetCachedYearAmountFailedCached(year); found {
+		logSuccess("Successfully fetched yearly failed transaction amounts from cache", zap.Int("year", year))
 
-	s.logger.Debug("find yearly failed transaction amounts",
-		zap.Int("year", year))
+		return data, nil
+	}
 
 	res, err := s.transactionStatsRepository.GetYearlyAmountFailed(year)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_YEARLY_AMOUNT_FAILED")
-
-		s.logger.Error("failed to get yearly failed transaction amounts",
-			zap.Int("year", year),
-			zap.String("trace_id", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to get yearly failed transaction amounts")
-
-		status = "failed_find_yearly_amount_failed"
-
-		return nil, transaction_errors.ErrFailedFindYearlyAmountFailed
+		return s.errorhandler.HandleYearlyAmountFailedError(err, method, "FAILED_FIND_YEARLY_AMOUNT_FAILED", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToTransactionYearlyAmountFailed(res), nil
+	so := s.mapping.ToTransactionYearlyAmountFailed(res)
+
+	s.mencache.SetCachedYearAmountFailedCached(year, so)
+
+	logSuccess("Successfully fetched yearly failed transaction amounts", zap.Int("year", year))
+
+	return so, nil
 }
 
 func (s *transactionStatsService) FindMonthlyMethodSuccess(req *requests.MonthMethodTransaction) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "FindMonthlyMethodSuccess"
 
-	defer func() {
-		s.recordMetrics("FindMonthlyMethodSuccess", status, start)
-	}()
+	span, end, status, logSuccess := s.startTraceWithLogging(method, req.Year, &req.Month)
 
-	_, span := s.trace.Start(s.ctx, "FindMonthlyMethodSuccess")
-	defer span.End()
+	defer end()
 
-	span.SetAttributes(
-		attribute.Int("year", req.Year),
-		attribute.Int("month", req.Month),
-	)
+	if data, found := s.mencache.GetCachedMonthMethodSuccessCached(req); found {
+		logSuccess("Successfully fetched monthly successful transaction methods from cache", zap.Int("year", req.Year), zap.Int("month", req.Month))
 
-	s.logger.Debug("find monthly successful transaction methods",
-		zap.Int("year", req.Year),
-		zap.Int("month", req.Month))
+		return data, nil
+	}
 
 	res, err := s.transactionStatsRepository.GetMonthlyTransactionMethodSuccess(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MONTHLY_METHOD_SUCCESS")
-
-		s.logger.Error("failed to get monthly transaction methods",
-			zap.Int("year", req.Year),
-			zap.Int("month", req.Month),
-			zap.String("trace_id", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to get monthly transaction methods")
-
-		status = "failed_find_monthly_method_success"
-
-		return nil, transaction_errors.ErrFailedFindMonthlyMethod
+		return s.errorhandler.HandleMonthlyMethodSuccessError(err, method, "FAILED_FIND_MONTHLY_METHOD_SUCCESS", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToTransactionMonthlyMethod(res), nil
+	so := s.mapping.ToTransactionMonthlyMethod(res)
+
+	s.mencache.SetCachedMonthMethodSuccessCached(req, so)
+
+	logSuccess("Successfully fetched monthly successful transaction methods", zap.Int("year", req.Year), zap.Int("month", req.Month))
+
+	return so, nil
 }
 
 func (s *transactionStatsService) FindYearlyMethodSuccess(year int) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "FindYearlyMethodSuccess"
 
-	defer func() {
-		s.recordMetrics("FindYearlyMethodSuccess", status, start)
-	}()
+	span, end, status, logSuccess := s.startTraceWithLogging(method, year, nil)
 
-	_, span := s.trace.Start(s.ctx, "FindYearlyMethodSuccess")
-	defer span.End()
+	defer end()
 
-	span.SetAttributes(
-		attribute.Int("year", year),
-	)
+	if data, found := s.mencache.GetCachedYearMethodSuccessCached(year); found {
+		logSuccess("Successfully fetched yearly successful transaction methods from cache", zap.Int("year", year))
 
-	s.logger.Debug("find yearly successful transaction methods",
-		zap.Int("year", year))
+		return data, nil
+	}
 
 	res, err := s.transactionStatsRepository.GetYearlyTransactionMethodSuccess(year)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_YEARLY_METHOD_SUCCESS")
-
-		s.logger.Error("failed to get yearly transaction methods",
-			zap.Int("year", year),
-			zap.String("trace_id", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to get yearly transaction methods")
-
-		status = "failed_find_yearly_method_success"
-
-		return nil, transaction_errors.ErrFailedFindYearlyMethod
+		return s.errorhandler.HandleYearlyMethodSuccessError(err, method, "FAILED_FIND_YEARLY_METHOD_SUCCESS", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToTransactionYearlyMethod(res), nil
+	so := s.mapping.ToTransactionYearlyMethod(res)
+
+	s.mencache.SetCachedYearMethodSuccessCached(year, so)
+
+	logSuccess("Successfully fetched yearly successful transaction methods", zap.Int("year", year))
+
+	return so, nil
 }
 
 func (s *transactionStatsService) FindMonthlyMethodFailed(req *requests.MonthMethodTransaction) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "FindMonthlyMethodFailed"
 
-	defer func() {
-		s.recordMetrics("FindMonthlyMethodFailed", status, start)
-	}()
+	span, end, status, logSuccess := s.startTraceWithLogging(method, req.Year, &req.Month)
 
-	_, span := s.trace.Start(s.ctx, "FindMonthlyMethodFailed")
-	defer span.End()
+	defer end()
 
-	span.SetAttributes(
-		attribute.Int("year", req.Year),
-		attribute.Int("month", req.Month),
-	)
+	if data, found := s.mencache.GetCachedMonthMethodFailedCached(req); found {
+		logSuccess("Successfully fetched monthly failed transaction methods from cache", zap.Int("year", req.Year), zap.Int("month", req.Month))
 
-	s.logger.Debug("find monthly failed transaction methods",
-		zap.Int("year", req.Year),
-		zap.Int("month", req.Month))
+		return data, nil
+	}
 
 	res, err := s.transactionStatsRepository.GetMonthlyTransactionMethodFailed(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MONTHLY_METHOD_FAILED")
-
-		s.logger.Error("failed to get monthly transaction methods",
-			zap.Int("year", req.Year),
-			zap.Int("month", req.Month),
-			zap.String("trace_id", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to get monthly transaction methods")
-
-		status = "failed_find_monthly_method_failed"
-
-		return nil, transaction_errors.ErrFailedFindMonthlyMethod
+		return s.errorhandler.HandleMonthlyMethodFailedError(err, method, "FAILED_FIND_MONTHLY_METHOD_FAILED", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToTransactionMonthlyMethod(res), nil
+	so := s.mapping.ToTransactionMonthlyMethod(res)
+
+	s.mencache.SetCachedMonthMethodFailedCached(req, so)
+
+	logSuccess("Successfully fetched monthly failed transaction methods", zap.Int("year", req.Year), zap.Int("month", req.Month))
+
+	return so, nil
 }
 
 func (s *transactionStatsService) FindYearlyMethodFailed(year int) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "FindYearlyMethodFailed"
 
-	defer func() {
-		s.recordMetrics("FindYearlyMethodFailed", status, start)
-	}()
+	span, end, status, logSuccess := s.startTraceWithLogging(method, year, nil)
 
-	_, span := s.trace.Start(s.ctx, "FindYearlyMethodFailed")
-	defer span.End()
+	defer end()
 
-	span.SetAttributes(
-		attribute.Int("year", year),
-	)
+	if data, found := s.mencache.GetCachedYearMethodFailedCached(year); found {
+		logSuccess("Successfully fetched yearly failed transaction methods from cache", zap.Int("year", year))
 
-	s.logger.Debug("find yearly failed transaction methods",
-		zap.Int("year", year))
+		return data, nil
+	}
 
 	res, err := s.transactionStatsRepository.GetYearlyTransactionMethodFailed(year)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_YEARLY_METHOD_FAILED")
-
-		s.logger.Error("failed to get yearly transaction methods",
-			zap.Int("year", year),
-			zap.String("trace_id", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to get yearly transaction methods")
-
-		status = "failed_find_yearly_method_failed"
-
-		return nil, transaction_errors.ErrFailedFindYearlyMethod
+		return s.errorhandler.HandleYearlyMethodFailedError(err, method, "FAILED_FIND_YEARLY_METHOD_FAILED", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToTransactionYearlyMethod(res), nil
+	so := s.mapping.ToTransactionYearlyMethod(res)
+
+	s.mencache.SetCachedYearMethodFailedCached(year, so)
+
+	logSuccess("Successfully fetched yearly failed transaction methods", zap.Int("year", year))
+
+	return so, nil
+}
+
+func (s *transactionStatsService) startTraceWithLogging(method string, year int, month *int) (trace.Span, func(), string, func(string, ...zap.Field)) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	attrs := []attribute.KeyValue{
+		attribute.String("method", method),
+		attribute.Int("year", year),
+	}
+
+	logFields := []zap.Field{
+		zap.String("method", method),
+		zap.Int("year", year),
+	}
+
+	if month != nil {
+		attrs = append(attrs, attribute.Int("month", *month))
+		logFields = append(logFields, zap.Int("month", *month))
+	}
+
+	span.SetAttributes(attrs...)
+	msg := "Start " + method
+	s.logger.Debug(msg, logFields...)
+	span.AddEvent(msg)
+
+	end := func() {
+		span.SetStatus(codes.Ok, status)
+		s.recordMetrics(method, status, start)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
 }
 
 func (s *transactionStatsService) recordMetrics(method string, status string, start time.Time) {

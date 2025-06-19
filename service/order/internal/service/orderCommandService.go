@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-order/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-order/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-order/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	merchant_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant"
@@ -26,6 +27,8 @@ import (
 
 type orderCommandService struct {
 	ctx                              context.Context
+	errorhandler                     errorhandler.OrderCommandError
+	mencache                         mencache.OrderCommandCache
 	trace                            trace.Tracer
 	userQueryRepository              repository.UserQueryRepository
 	productQueryRepository           repository.ProductQueryRepository
@@ -44,6 +47,8 @@ type orderCommandService struct {
 
 func NewOrderCommandService(
 	ctx context.Context,
+	errorhandler errorhandler.OrderCommandError,
+	mencache mencache.OrderCommandCache,
 	userQueryRepository repository.UserQueryRepository,
 	productQueryRepository repository.ProductQueryRepository,
 	productCommandRepository repository.ProductCommandRepository,
@@ -78,6 +83,8 @@ func NewOrderCommandService(
 
 	return &orderCommandService{
 		ctx:                              ctx,
+		errorhandler:                     errorhandler,
+		mencache:                         mencache,
 		trace:                            otel.Tracer("order-command-service"),
 		userQueryRepository:              userQueryRepository,
 		productQueryRepository:           productQueryRepository,
@@ -96,67 +103,24 @@ func NewOrderCommandService(
 }
 
 func (s *orderCommandService) CreateOrder(req *requests.CreateOrderRequest) (*response.OrderResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "CreateOrder"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchant.id", req.MerchantID), attribute.Int("user.id", req.UserID))
 
 	defer func() {
-		s.recordMetrics("CreateOrder", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "CreateOrder")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("merchantID", req.MerchantID),
-		attribute.Int("userID", req.UserID),
-	)
-
-	s.logger.Debug("Creating new order with items", zap.Int("merchantID", req.MerchantID), zap.Int("userID", req.UserID))
 
 	_, err := s.merchantQueryRepository.FindById(req.MerchantID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MERCHANT_BY_ID")
-
-		s.logger.Error("Failed to find merchant by ID",
-			zap.Error(err),
-			zap.Int("merchant_id", req.MerchantID),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("merchant_id", req.MerchantID),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to find merchant by ID")
-
-		status = "failed_find_merchant_by_id"
-
-		return nil, merchant_errors.ErrFailedFindMerchantById
+		return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_FIND_MERCHANT_BY_ID", span, &status, merchant_errors.ErrFailedFindMerchantById, zap.Error(err))
 	}
 
 	_, err = s.userQueryRepository.FindById(req.UserID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("USER_NOT_FOUND")
-
-		s.logger.Error("User not found",
-			zap.Error(err),
-			zap.Int("user_id", req.UserID),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("user_id", req.UserID),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "User not found")
-
-		status = "user_not_found"
-
-		return nil, user_errors.ErrUserNotFoundRes
+		return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_FIND_USER_BY_ID", span, &status, user_errors.ErrUserNotFoundRes, zap.Error(err))
 	}
 
 	order, err := s.orderCommandRepository.CreateOrder(&requests.CreateOrderRecordRequest{
@@ -165,71 +129,18 @@ func (s *orderCommandService) CreateOrder(req *requests.CreateOrderRequest) (*re
 	})
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_CREATE_ORDER")
-
-		s.logger.Error("Failed to create order",
-			zap.Error(err),
-			zap.Int("merchant_id", req.MerchantID),
-			zap.Int("user_id", req.UserID),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("merchant_id", req.MerchantID),
-			attribute.Int("user_id", req.UserID),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to create order")
-
-		status = "failed_create_order"
-
-		return nil, order_errors.ErrFailedCreateOrder
+		return s.errorhandler.HandleCreateOrderError(err, method, "FAILED_CREATE_ORDER", span, &status, zap.Error(err))
 	}
 
 	for _, item := range req.Items {
 		product, err := s.productQueryRepository.FindById(item.ProductID)
 
 		if err != nil {
-			traceID := traceunic.GenerateTraceID("FAILED_FIND_PRODUCT_BY_ID")
-
-			s.logger.Error("Failed to find product by ID",
-				zap.Error(err),
-				zap.Int("product_id", item.ProductID),
-				zap.String("traceID", traceID))
-
-			span.SetAttributes(
-				attribute.Int("product_id", item.ProductID),
-				attribute.String("traceID", traceID),
-			)
-
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "Failed to find product by ID")
-
-			status = "failed_find_product_by_id"
-
-			return nil, product_errors.ErrFailedFindProductById
+			return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_FIND_PRODUCT_BY_ID", span, &status, product_errors.ErrFailedFindProductById, zap.Error(err))
 		}
 
 		if product.CountInStock < item.Quantity {
-			traceID := traceunic.GenerateTraceID("INSUFFICIENT_PRODUCT_STOCK")
-
-			s.logger.Error("Insufficient product stock",
-				zap.Error(err),
-				zap.Int("product_id", item.ProductID),
-				zap.String("traceID", traceID))
-
-			span.SetAttributes(
-				attribute.Int("product_id", item.ProductID),
-				attribute.String("traceID", traceID),
-			)
-
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "Insufficient product stock")
-
-			status = "insufficient_product_stock"
-
-			return nil, order_errors.ErrInsufficientProductStock
+			return s.errorhandler.HandleErrorInsufficientStockTemplate(err, method, "FAILED_INSUFFICIENT_STOCK", span, &status, order_errors.ErrInsufficientProductStock, zap.Error(err))
 		}
 
 		_, err = s.orderItemCommandRepositroy.CreateOrderItem(&requests.CreateOrderItemRecordRequest{
@@ -240,50 +151,14 @@ func (s *orderCommandService) CreateOrder(req *requests.CreateOrderRequest) (*re
 		})
 
 		if err != nil {
-			traceID := traceunic.GenerateTraceID("FAILED_CREATE_ORDER_ITEM")
-
-			s.logger.Error("Failed to create order item",
-				zap.Error(err),
-				zap.Int("order_id", order.ID),
-				zap.Int("product_id", item.ProductID),
-				zap.String("traceID", traceID))
-
-			span.SetAttributes(
-				attribute.Int("order_id", order.ID),
-				attribute.Int("product_id", item.ProductID),
-				attribute.String("traceID", traceID),
-			)
-
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "Failed to create order item")
-
-			status = "failed_create_order_item"
-
-			return nil, orderitem_errors.ErrFailedCreateOrderItem
+			return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_CREATE_ORDER_ITEM", span, &status, orderitem_errors.ErrFailedCreateOrderItem, zap.Error(err))
 		}
 
 		product.CountInStock -= item.Quantity
 		_, err = s.productCommandRepository.UpdateProductCountStock(product.ID, product.CountInStock)
 
 		if err != nil {
-			traceID := traceunic.GenerateTraceID("FAILED_COUNT_STOCK")
-
-			s.logger.Error("Failed to count stock",
-				zap.Error(err),
-				zap.Int("product_id", product.ID),
-				zap.String("traceID", traceID))
-
-			span.SetAttributes(
-				attribute.Int("product_id", product.ID),
-				attribute.String("traceID", traceID),
-			)
-
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "Failed to count stock")
-
-			status = "failed_count_stock"
-
-			return nil, product_errors.ErrFailedCountStock
+			return s.errorhandler.HandleErrorInvalidCountStockTemplate(err, method, "FAILED_UPDATE_PRODUCT_COUNT_STOCK", span, &status, product_errors.ErrFailedCountStock, zap.Error(err))
 		}
 	}
 
@@ -299,47 +174,13 @@ func (s *orderCommandService) CreateOrder(req *requests.CreateOrderRequest) (*re
 	})
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_CREATE_SHIPPING_ADDRESS")
-
-		s.logger.Error("Failed to create shipping address",
-			zap.Error(err),
-			zap.Int("order_id", order.ID),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("order_id", order.ID),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to create shipping address")
-
-		status = "failed_create_shipping_address"
-
-		return nil, shippingaddress_errors.ErrFailedCreateShippingAddress
+		return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_CREATE_SHIPPING_ADDRESS", span, &status, shippingaddress_errors.ErrFailedCreateShippingAddress, zap.Error(err))
 	}
 
 	totalPrice, err := s.orderItemQueryRepository.CalculateTotalPrice(order.ID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_CALCULATE_TOTAL_PRICE")
-
-		s.logger.Error("Failed to calculate total price",
-			zap.Error(err),
-			zap.Int("order_id", order.ID),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("order_id", order.ID),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to calculate total price")
-
-		status = "failed_calculate_total_price"
-
-		return nil, orderitem_errors.ErrFailedCalculateTotal
+		return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_CALCULATE_TOTAL_PRICE", span, &status, orderitem_errors.ErrFailedCalculateTotal, zap.Error(err))
 	}
 
 	_, err = s.orderCommandRepository.UpdateOrder(&requests.UpdateOrderRecordRequest{
@@ -349,113 +190,41 @@ func (s *orderCommandService) CreateOrder(req *requests.CreateOrderRequest) (*re
 	})
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_UPDATE_ORDER")
-
-		s.logger.Error("Failed to update order",
-			zap.Error(err),
-			zap.Int("order_id", order.ID),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("order_id", order.ID),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to update order")
-
-		status = "failed_update_order"
-
-		return nil, order_errors.ErrFailedUpdateOrder
+		return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_UPDATE_ORDER", span, &status, order_errors.ErrFailedUpdateOrder, zap.Error(err))
 	}
 
-	return s.mapping.ToOrderResponse(order), nil
+	so := s.mapping.ToOrderResponse(order)
+
+	logSuccess("Successfully create order", zap.Int("order.id", order.ID))
+
+	return so, nil
 }
 
 func (s *orderCommandService) UpdateOrder(req *requests.UpdateOrderRequest) (*response.OrderResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "UpdateOrder"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("order.id", *req.OrderID), attribute.Int("user.id", req.UserID))
 
 	defer func() {
-		s.recordMetrics("UpdateOrder", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "UpdateOrder")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("orderID", *req.OrderID),
-	)
-
-	s.logger.Debug("Updating order with items", zap.Int("orderID", *req.OrderID))
 
 	existingOrder, err := s.orderQueryRepository.FindById(*req.OrderID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ORDER_BY_ID")
-
-		s.logger.Error("Failed to retrieve order details",
-			zap.Error(err),
-			zap.Int("order_id", *req.OrderID),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("order_id", *req.OrderID),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve order details")
-
-		status = "failed_find_order_by_id"
-
-		return nil, order_errors.ErrFailedFindOrderById
+		return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_FIND_ORDER_BY_ID", span, &status, order_errors.ErrFailedFindOrderById, zap.Error(err))
 	}
 
 	_, err = s.userQueryRepository.FindById(req.UserID)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_USER_BY_ID")
-
-		s.logger.Error("Failed to retrieve user details",
-			zap.Error(err),
-			zap.Int("user_id", req.UserID),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("user_id", req.UserID),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve user details")
-
-		status = "failed_find_user_by_id"
-
-		return nil, user_errors.ErrUserNotFoundRes
+		return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_FIND_USER_BY_ID", span, &status, user_errors.ErrUserNotFoundRes, zap.Error(err))
 	}
 
 	for _, item := range req.Items {
 		product, err := s.productQueryRepository.FindById(item.ProductID)
 
 		if err != nil {
-			traceID := traceunic.GenerateTraceID("FAILED_FIND_PRODUCT_BY_ID")
-
-			s.logger.Error("Failed to retrieve product details",
-				zap.Error(err),
-				zap.Int("product_id", item.ProductID),
-				zap.String("traceID", traceID))
-
-			span.SetAttributes(
-				attribute.Int("product_id", item.ProductID),
-				attribute.String("traceID", traceID),
-			)
-
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "Failed to retrieve product details")
-
-			status = "failed_find_product_by_id"
-
-			return nil, product_errors.ErrFailedFindProductById
+			return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_FIND_PRODUCT_BY_ID", span, &status, product_errors.ErrFailedFindProductById, zap.Error(err))
 		}
 
 		if item.OrderItemID > 0 {
@@ -467,45 +236,11 @@ func (s *orderCommandService) UpdateOrder(req *requests.UpdateOrderRequest) (*re
 			})
 
 			if err != nil {
-				traceID := traceunic.GenerateTraceID("FAILED_UPDATE_ORDER_ITEM")
-
-				s.logger.Error("Failed to update order item",
-					zap.Error(err),
-					zap.Int("order_item_id", item.OrderItemID),
-					zap.String("traceID", traceID))
-
-				span.SetAttributes(
-					attribute.Int("order_item_id", item.OrderItemID),
-					attribute.String("traceID", traceID),
-				)
-
-				span.RecordError(err)
-				span.SetStatus(codes.Error, "Failed to update order item")
-
-				status = "failed_update_order_item"
-
-				return nil, orderitem_errors.ErrFailedUpdateOrderItem
+				return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_UPDATE_ORDER_ITEM", span, &status, orderitem_errors.ErrFailedUpdateOrderItem, zap.Error(err))
 			}
 		} else {
 			if product.CountInStock < item.Quantity {
-				traceID := traceunic.GenerateTraceID("INSUFFICIENT_STOCK")
-
-				s.logger.Error("Insufficient product stock",
-					zap.Error(err),
-					zap.Int("product_id", item.ProductID),
-					zap.String("traceID", traceID))
-
-				span.SetAttributes(
-					attribute.Int("product_id", item.ProductID),
-					attribute.String("traceID", traceID),
-				)
-
-				span.RecordError(err)
-				span.SetStatus(codes.Error, "Insufficient product stock")
-
-				status = "insufficient_stock"
-
-				return nil, order_errors.ErrInsufficientProductStock
+				return s.errorhandler.HandleErrorInsufficientStockTemplate(err, method, "FAILED_INSUFFICIENT_STOCK", span, &status, order_errors.ErrInsufficientProductStock, zap.Error(err))
 			}
 
 			_, err := s.orderItemCommandRepositroy.CreateOrderItem(&requests.CreateOrderItemRecordRequest{
@@ -516,48 +251,14 @@ func (s *orderCommandService) UpdateOrder(req *requests.UpdateOrderRequest) (*re
 			})
 
 			if err != nil {
-				traceID := traceunic.GenerateTraceID("FAILED_CREATE_ORDER_ITEM")
-
-				s.logger.Error("Failed to create order item",
-					zap.Error(err),
-					zap.Int("order_id", *req.OrderID),
-					zap.String("traceID", traceID))
-
-				span.SetAttributes(
-					attribute.Int("order_id", *req.OrderID),
-					attribute.String("traceID", traceID),
-				)
-
-				span.RecordError(err)
-				span.SetStatus(codes.Error, "Failed to create order item")
-
-				status = "failed_create_order_item"
-
-				return nil, orderitem_errors.ErrFailedCreateOrderItem
+				return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_CREATE_ORDER_ITEM", span, &status, orderitem_errors.ErrFailedCreateOrderItem, zap.Error(err))
 			}
 
 			product.CountInStock -= item.Quantity
 			_, err = s.productCommandRepository.UpdateProductCountStock(product.ID, product.CountInStock)
 
 			if err != nil {
-				traceID := traceunic.GenerateTraceID("FAILED_COUNT_STOCK")
-
-				s.logger.Error("Failed to count stock",
-					zap.Error(err),
-					zap.Int("product_id", item.ProductID),
-					zap.String("traceID", traceID))
-
-				span.SetAttributes(
-					attribute.Int("product_id", item.ProductID),
-					attribute.String("traceID", traceID),
-				)
-
-				span.RecordError(err)
-				span.SetStatus(codes.Error, "Failed to count stock")
-
-				status = "failed_count_stock"
-
-				return nil, product_errors.ErrFailedCountStock
+				return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_UPDATE_PRODUCT_COUNT_STOCK", span, &status, product_errors.ErrFailedCountStock, zap.Error(err))
 			}
 		}
 	}
@@ -575,47 +276,13 @@ func (s *orderCommandService) UpdateOrder(req *requests.UpdateOrderRequest) (*re
 	})
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_UPDATE_SHIPPING_ADDRESS")
-
-		s.logger.Error("Failed to update shipping address",
-			zap.Error(err),
-			zap.Int("shipping_id", *req.ShippingAddress.ShippingID),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("shipping_id", *req.ShippingAddress.ShippingID),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to update shipping address")
-
-		status = "failed_update_shipping_address"
-
-		return nil, shippingaddress_errors.ErrFailedUpdateShippingAddress
+		return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_UPDATE_SHIPPING_ADDRESS", span, &status, shippingaddress_errors.ErrFailedUpdateShippingAddress, zap.Error(err))
 	}
 
 	totalPrice, err := s.orderItemQueryRepository.CalculateTotalPrice(*req.OrderID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_CALCULATE_TOTAL")
-
-		s.logger.Error("Failed to calculate total price",
-			zap.Error(err),
-			zap.Int("order_id", *req.OrderID),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("order_id", *req.OrderID),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to calculate total price")
-
-		status = "failed_calculate_total"
-
-		return nil, orderitem_errors.ErrFailedCalculateTotal
+		return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_CALCULATE_TOTAL_PRICE", span, &status, orderitem_errors.ErrFailedCalculateTotal, zap.Error(err))
 	}
 
 	_, err = s.orderCommandRepository.UpdateOrder(&requests.UpdateOrderRecordRequest{
@@ -625,153 +292,52 @@ func (s *orderCommandService) UpdateOrder(req *requests.UpdateOrderRequest) (*re
 	})
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_UPDATE_ORDER")
-
-		s.logger.Error("Failed to update order",
-			zap.Error(err),
-			zap.Int("order_id", *req.OrderID),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("order_id", *req.OrderID),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to update order")
-
-		status = "failed_update_order"
-
-		return nil, order_errors.ErrFailedUpdateOrder
+		return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_UPDATE_ORDER", span, &status, order_errors.ErrFailedUpdateOrder, zap.Error(err))
 	}
 
-	return s.mapping.ToOrderResponse(existingOrder), nil
+	so := s.mapping.ToOrderResponse(existingOrder)
+
+	s.mencache.DeleteOrderCache(*req.OrderID)
+
+	logSuccess("Successfully updated order", zap.Int("order.id", *req.OrderID))
+
+	return so, nil
 }
 
 func (s *orderCommandService) TrashedOrder(order_id int) (*response.OrderResponseDeleteAt, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "TrashedOrder"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("order.id", order_id))
 
 	defer func() {
-		s.recordMetrics("TrashedOrder", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "TrashedOrder")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("order_id", order_id),
-	)
-
-	s.logger.Debug("Moving order to trash",
-		zap.Int("order_id", order_id))
 
 	order, err := s.orderQueryRepository.FindById(order_id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ORDER_BY_ID")
-
-		s.logger.Error("Failed to retrieve order details",
-			zap.Error(err),
-			zap.Int("order_id", order_id),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("order_id", order_id),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve order details")
-
-		status = "failed_find_order_by_id"
-
-		return nil, order_errors.ErrFailedFindOrderById
+		return errorhandler.HandleRepositorySingleError[*response.OrderResponseDeleteAt](s.logger, err, method, "FAILED_FIND_ORDER_BY_ID", span, &status, order_errors.ErrFailedFindOrderById, zap.Error(err))
 	}
 
 	if order.DeletedAt != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_NOT_DELETE_AT_ORDER")
-
-		s.logger.Error("Order already trashed",
-			zap.Int("order_id", order_id),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("order_id", order_id),
-			attribute.String("traceID", traceID),
-		)
-
-		span.SetStatus(codes.Error, "Order already trashed")
-
-		status = "failed_not_delete_at_order"
-
-		return nil, order_errors.ErrFailedNotDeleteAtOrder
+		return errorhandler.HandleRepositorySingleError[*response.OrderResponseDeleteAt](s.logger, err, method, "FAILED_NOT_DELETE_AT_ORDER", span, &status, order_errors.ErrFailedNotDeleteAtOrder, zap.Error(err))
 	}
 
 	orderItems, err := s.orderItemQueryRepository.FindOrderItemByOrder(order_id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ORDER_ITEM_BY_ORDER")
-
-		s.logger.Error("Failed to retrieve order items",
-			zap.Error(err),
-			zap.Int("order_id", order_id),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("order_id", order_id),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve order items")
-
-		status = "failed_find_order_item_by_order"
-
-		return nil, order_errors.ErrFailedNotDeleteAtOrder
+		return errorhandler.HandleRepositorySingleError[*response.OrderResponseDeleteAt](s.logger, err, method, "FAILED_FIND_ORDER_ITEM_BY_ORDER", span, &status, orderitem_errors.ErrFailedFindOrderItemByOrder, zap.Error(err))
 	}
 
 	for _, item := range orderItems {
 		if item.DeletedAt != nil {
-			traceID := traceunic.GenerateTraceID("FAILED_NOT_DELETE_AT_ORDER_ITEM")
-
-			s.logger.Error("Order item already trashed",
-				zap.Int("order_item_id", item.ID),
-				zap.String("traceID", traceID))
-
-			span.SetAttributes(
-				attribute.Int("order_item_id", item.ID),
-				attribute.String("traceID", traceID),
-			)
-
-			span.SetStatus(codes.Error, "Order item already trashed")
-
-			status = "failed_not_delete_at_order_item"
-
-			return nil, orderitem_errors.ErrFailedNotDeleteAtOrderItem
+			return errorhandler.HandleRepositorySingleError[*response.OrderResponseDeleteAt](s.logger, err, method, "FAILED_NOT_DELETE_AT_ORDER_ITEM", span, &status, orderitem_errors.ErrFailedNotDeleteAtOrderItem, zap.Error(err))
 		}
 
 		trashedItem, err := s.orderItemCommandRepositroy.TrashedOrderItem(item.ID)
 
 		if err != nil {
-			traceID := traceunic.GenerateTraceID("FAILED_TRASHED_ORDER_ITEM")
-
-			s.logger.Error("Failed to move order item to trash",
-				zap.Int("order_item_id", item.ID),
-				zap.Error(err),
-				zap.String("traceID", traceID))
-
-			span.SetAttributes(
-				attribute.Int("order_item_id", item.ID),
-				attribute.String("traceID", traceID),
-			)
-
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "Failed to move order item to trash")
-
-			status = "failed_trashed_order_item"
-
-			return nil, orderitem_errors.ErrFailedTrashedOrderItem
+			return errorhandler.HandleRepositorySingleError[*response.OrderResponseDeleteAt](s.logger, err, method, "FAILED_TRASH_ORDER_ITEM", span, &status, orderitem_errors.ErrFailedTrashedOrderItem, zap.Error(err))
 		}
 
 		s.logger.Debug("Order item trashed successfully",
@@ -782,162 +348,67 @@ func (s *orderCommandService) TrashedOrder(order_id int) (*response.OrderRespons
 	trashedOrder, err := s.orderCommandRepository.TrashedOrder(order_id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_TRASHED_ORDER")
-
-		s.logger.Error("Failed to move order to trash",
-			zap.Int("order_id", order_id),
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("order_id", order_id),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to move order to trash")
-
-		status = "failed_create_order"
-
-		return nil, order_errors.ErrFailedCreateOrder
+		return errorhandler.HandleRepositorySingleError[*response.OrderResponseDeleteAt](s.logger, err, method, "FAILED_TRASH_ORDER", span, &status, order_errors.ErrFailedTrashOrder, zap.Error(err))
 	}
 
-	s.logger.Debug("Order moved to trash successfully",
-		zap.Int("order_id", order_id),
-		zap.String("deleted_at", *trashedOrder.DeletedAt))
+	so := s.mapping.ToOrderResponseDeleteAt(trashedOrder)
 
-	return s.mapping.ToOrderResponseDeleteAt(trashedOrder), nil
+	s.mencache.DeleteOrderCache(order_id)
+
+	logSuccess("Successfully trashed order", zap.Int("order.id", order_id))
+
+	return so, nil
 }
 
 func (s *orderCommandService) RestoreOrder(order_id int) (*response.OrderResponseDeleteAt, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "RestoreOrder"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("order.id", order_id))
 
 	defer func() {
-		s.recordMetrics("RestoreOrder", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "RestoreOrder")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("order_id", order_id),
-	)
-
-	s.logger.Debug("Restoring order and related order items", zap.Int("order_id", order_id))
 
 	orderItems, err := s.orderItemQueryRepository.FindOrderItemByOrder(order_id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ORDER_ITEM_BY_ORDER")
-
-		s.logger.Error("Failed to retrieve order items",
-			zap.Error(err),
-			zap.Int("order_id", order_id),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("order_id", order_id),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve order items")
-
-		status = "failed_find_order_item_by_order"
-
-		return nil, orderitem_errors.ErrFailedFindOrderItemByOrder
+		return errorhandler.HandleRepositorySingleError[*response.OrderResponseDeleteAt](s.logger, err, method, "FAILED_FIND_ORDER_ITEM_BY_ORDER", span, &status, orderitem_errors.ErrFailedFindOrderItemByOrder, zap.Error(err))
 	}
 
 	for _, item := range orderItems {
 		_, err := s.orderItemCommandRepositroy.RestoreOrderItem(item.ID)
 
 		if err != nil {
-			traceID := traceunic.GenerateTraceID("FAILED_RESTORE_ORDER_ITEM")
-
-			s.logger.Error("Failed to restore order item from trash",
-				zap.Int("order_item_id", item.ID),
-				zap.Error(err),
-				zap.String("traceID", traceID))
-
-			span.SetAttributes(
-				attribute.Int("order_item_id", item.ID),
-				attribute.String("traceID", traceID),
-			)
-
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "Failed to restore order item from trash")
-
-			status = "failed_restore_order_item"
-
-			return nil, orderitem_errors.ErrFailedRestoreOrderItem
+			return errorhandler.HandleRepositorySingleError[*response.OrderResponseDeleteAt](s.logger, err, method, "FAILED_RESTORE_ORDER_ITEM", span, &status, orderitem_errors.ErrFailedRestoreOrderItem, zap.Error(err))
 		}
 	}
 
 	order, err := s.orderCommandRepository.RestoreOrder(order_id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_RESTORE_ORDER")
-
-		s.logger.Error("Failed to restore order from trash",
-			zap.Int("order_id", order_id),
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("order_id", order_id),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to restore order from trash")
-
-		status = "failed_restore_order"
-
-		return nil, order_errors.ErrFailedRestoreOrder
+		return s.errorhandler.HandleRestoreOrderError(err, method, "FAILED_RESTORE_ORDER", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToOrderResponseDeleteAt(order), nil
+	so := s.mapping.ToOrderResponseDeleteAt(order)
+
+	logSuccess("Successfully restored order", zap.Int("order.id", order_id))
+
+	return so, nil
 }
 
 func (s *orderCommandService) DeleteOrderPermanent(order_id int) (bool, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "DeleteOrderPermanent"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("order.id", order_id))
 
 	defer func() {
-		s.recordMetrics("DeleteOrderPermanent", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "DeleteOrderPermanent")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("order_id", order_id),
-	)
-
-	s.logger.Debug("Permanently deleting order and related order items", zap.Int("order_id", order_id))
 
 	orderItems, err := s.orderItemQueryRepository.FindOrderItemByOrder(order_id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ORDER_ITEM_BY_ORDER")
-
-		s.logger.Error("Failed to retrieve order items",
-			zap.Error(err),
-			zap.Int("order_id", order_id),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("order_id", order_id),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve order items")
-
-		status = "failed_find_order_item_by_order"
-
-		return false, orderitem_errors.ErrFailedFindOrderItemByOrder
+		return errorhandler.HandleRepositorySingleError[bool](s.logger, err, method, "FAILED_FIND_ORDER_ITEM_BY_ORDER", span, &status, orderitem_errors.ErrFailedFindOrderItemByOrder, zap.Error(err))
 	}
 
 	for _, item := range orderItems {
@@ -945,166 +416,107 @@ func (s *orderCommandService) DeleteOrderPermanent(order_id int) (bool, *respons
 			DeleteOrderItemPermanent(item.ID)
 
 		if err != nil {
-			traceID := traceunic.GenerateTraceID("FAILED_DELETE_ORDER_ITEM_PERMANENT")
-
-			s.logger.Error("Failed to permanently delete order item",
-				zap.Int("order_item_id", item.ID),
-				zap.Error(err),
-				zap.String("traceID", traceID))
-
-			span.SetAttributes(
-				attribute.Int("order_item_id", item.ID),
-				attribute.String("traceID", traceID),
-			)
-
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "Failed to permanently delete order item")
-
-			status = "failed_delete_order_item_permanent"
-
-			return false, orderitem_errors.ErrFailedDeleteOrderItem
+			return errorhandler.HandleRepositorySingleError[bool](s.logger, err, method, "FAILED_DELETE_ORDER_ITEM_PERMANENT", span, &status, orderitem_errors.ErrFailedDeleteOrderItem, zap.Error(err))
 		}
 	}
 
 	success, err := s.orderCommandRepository.DeleteOrderPermanent(order_id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_DELETE_ORDER_PERMANENT")
-
-		s.logger.Error("Failed to permanently delete order",
-			zap.Int("order_id", order_id),
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("order_id", order_id),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to permanently delete order")
-
-		status = "failed_delete_order_permanent"
-
-		return false, order_errors.ErrFailedDeleteOrderPermanent
+		return s.errorhandler.HandleDeleteOrderError(err, method, "FAILED_DELETE_ORDER_PERMANENT", span, &status, zap.Error(err))
 	}
+
+	logSuccess("Successfully deleted order permanently", zap.Int("order.id", order_id))
 
 	return success, nil
 }
 
 func (s *orderCommandService) RestoreAllOrder() (bool, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "RestoreAllOrder"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("RestoreAllOrder", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "RestoreAllOrder")
-	defer span.End()
-
-	s.logger.Debug("Restoring all trashed orders and related order items")
 
 	successItems, err := s.orderItemCommandRepositroy.RestoreAllOrderItem()
 
 	if err != nil || !successItems {
-		traceID := traceunic.GenerateTraceID("FAILED_RESTORE_ALL_ORDER_ITEM")
-
-		s.logger.Error("Failed to restore all order items",
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to restore all order items")
-
-		status = "failed_restore_all_order_item"
-
-		return false, orderitem_errors.ErrFailedRestoreAllOrderItem
+		return errorhandler.HandleRepositorySingleError[bool](s.logger, err, method, "FAILED_RESTORE_ALL_ORDER_ITEM", span, &status, orderitem_errors.ErrFailedRestoreAllOrderItem, zap.Error(err))
 	}
 
 	success, err := s.orderCommandRepository.RestoreAllOrder()
 	if err != nil || !success {
-		traceID := traceunic.GenerateTraceID("FAILED_RESTORE_ALL_ORDER")
-
-		s.logger.Error("Failed to restore all orders",
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to restore all orders")
-
-		status = "failed_restore_all_order"
-
-		return false, order_errors.ErrFailedRestoreAllOrder
+		return errorhandler.HandleRepositorySingleError[bool](s.logger, err, method, "FAILED_RESTORE_ALL_ORDER", span, &status, order_errors.ErrFailedRestoreAllOrder, zap.Error(err))
 	}
+
+	logSuccess("Successfully restored all orders", zap.Bool("success", success))
 
 	return success, nil
 }
 
 func (s *orderCommandService) DeleteAllOrderPermanent() (bool, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "DeleteAllOrderPermanent"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("DeleteAllOrderPermanent", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "DeleteAllOrderPermanent")
-	defer span.End()
-
-	s.logger.Debug("Permanently deleting all orders and related order items")
 
 	successItems, err := s.orderItemCommandRepositroy.DeleteAllOrderPermanent()
 
 	if err != nil || !successItems {
-		traceID := traceunic.GenerateTraceID("FAILED_DELETE_ALL_ORDER_ITEM_PERMANENT")
-
-		s.logger.Error("Failed to permanently delete all order items",
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to permanently delete all order items")
-
-		status = "failed_delete_all_order_item_permanent"
-
-		return false, orderitem_errors.ErrFailedDeleteAllOrderItem
+		return errorhandler.HandleRepositorySingleError[bool](s.logger, err, method, "FAILED_DELETE_ALL_ORDER_ITEM_PERMANENT", span, &status, orderitem_errors.ErrFailedDeleteAllOrderItem, zap.Error(err))
 	}
 
 	success, err := s.orderCommandRepository.DeleteAllOrderPermanent()
 
 	if err != nil || !success {
-		traceID := traceunic.GenerateTraceID("FAILED_DELETE_ALL_ORDER_PERMANENT")
-
-		s.logger.Error("Failed to permanently delete all orders",
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to permanently delete all orders")
-
-		status = "failed_delete_all_order_permanent"
-
-		return false, order_errors.ErrFailedDeleteAllOrderPermanent
+		return s.errorhandler.HandleDeleteAllOrderError(err, method, "FAILED_DELETE_ALL_ORDER_PERMANENT", span, &status, zap.Error(err))
 	}
 
+	logSuccess("Successfully deleted all orders permanently", zap.Bool("success", success))
+
 	return success, nil
+}
+
+func (s *orderCommandService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
 }
 
 func (s *orderCommandService) recordMetrics(method string, status string, start time.Time) {

@@ -6,14 +6,14 @@ import (
 )
 
 type Deps struct {
-	Service service.Service
+	Service *service.Service
 }
 
 type Handler struct {
 	OrderItem OrderItemHandlerGrpc
 }
 
-func NewHandler(deps Deps) *Handler {
+func NewHandler(deps *Deps) *Handler {
 	return &Handler{
 		OrderItem: NewOrderItemHandleGrpc(deps.Service.OrderItemQuery, protomapper.NewOrderItemProtoMapper()),
 	}

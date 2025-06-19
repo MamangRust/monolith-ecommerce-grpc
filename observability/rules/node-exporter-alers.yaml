@@ -1,0 +1,56 @@
+groups:
+  - name: node-exporter-alerts
+    rules:
+      - alert: HighCpuUsage
+        expr: 100 - (avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 90% for more than 2 minutes."
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 90% for more than 2 minutes."
+
+      - alert: HighDiskUsage
+        expr: (node_filesystem_size_bytes{fstype!~"tmpfs|overlay"} - node_filesystem_free_bytes{fstype!~"tmpfs|overlay"}) / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"} > 0.9
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk usage on {{ $labels.instance }}"
+          description: "Disk usage is above 90% on mountpoint {{ $labels.mountpoint }} for more than 2 minutes."
+
+      - alert: HighDiskIOLatency
+        expr: rate(node_disk_io_time_seconds_total[5m]) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk IO latency on {{ $labels.instance }}"
+          description: "Disk IO latency is over 50% of the time during the last 5 minutes."
+
+      - alert: NodeDown
+        expr: up{job="node-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node exporter down on {{ $labels.instance }}"
+          description: "Node exporter is not reachable for more than 1 minute."
+
+      - alert: FilesystemReadOnly
+        expr: node_filesystem_readonly{fstype!~"tmpfs"} == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Filesystem is read-only on {{ $labels.instance }}"
+          description: "Mountpoint {{ $labels.mountpoint }} is in read-only mode."

@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-category/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-category/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-category/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors/category_errors"
 	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -21,6 +21,8 @@ import (
 
 type categoryStatsService struct {
 	ctx                     context.Context
+	mencache                mencache.CategoryStatsCache
+	errorHandler            errorhandler.CategoryStatsError
 	trace                   trace.Tracer
 	categoryStatsRepository repository.CategoryStatsRepository
 	logger                  logger.LoggerInterface
@@ -29,7 +31,10 @@ type categoryStatsService struct {
 	requestDuration         *prometheus.HistogramVec
 }
 
-func NewCategoryStatsService(ctx context.Context, categoryStatsRepository repository.CategoryStatsRepository, logger logger.LoggerInterface, mapping response_service.CategoryResponseMapper) *categoryStatsService {
+func NewCategoryStatsService(ctx context.Context,
+	mencache mencache.CategoryStatsCache,
+	errorHandler errorhandler.CategoryStatsError,
+	categoryStatsRepository repository.CategoryStatsRepository, logger logger.LoggerInterface, mapping response_service.CategoryResponseMapper) *categoryStatsService {
 	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "category_stats_service_request_total",
@@ -51,6 +56,8 @@ func NewCategoryStatsService(ctx context.Context, categoryStatsRepository reposi
 
 	return &categoryStatsService{
 		ctx:                     ctx,
+		mencache:                mencache,
+		errorHandler:            errorHandler,
 		trace:                   otel.Tracer("category-stats-service"),
 		categoryStatsRepository: categoryStatsRepository,
 		logger:                  logger,
@@ -61,147 +68,163 @@ func NewCategoryStatsService(ctx context.Context, categoryStatsRepository reposi
 }
 
 func (s *categoryStatsService) FindMonthlyTotalPrice(req *requests.MonthTotalPrice) ([]*response.CategoriesMonthlyTotalPriceResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
-
-	defer func() {
-		s.recordMetrics("FindMonthlyTotalPrice", status, start)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindMonthlyTotalPrice")
-	defer span.End()
+	const method = "FindMonthlyTotalPrice"
 
 	year := req.Year
 	month := req.Month
 
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year), attribute.Int("month", month))
+
+	defer func() {
+		end(status)
+	}()
+
+	if data, found := s.mencache.GetCachedMonthTotalPriceCache(req); found {
+		logSuccess("Successfully fetched monthly total price from cache", zap.Int("year", year), zap.Int("month", month))
+
+		return data, nil
+	}
+
 	res, err := s.categoryStatsRepository.GetMonthlyTotalPrice(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MONTHLY_TOTAL_PRICE")
-
-		s.logger.Error("failed to get monthly total sales",
-			zap.Int("year", year),
-			zap.Int("month", month),
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "failed to get monthly total sales")
-
-		status = "failed_find_monthly_total_price"
-
-		return nil, category_errors.ErrFailedFindMonthlyTotalPrice
+		return s.errorHandler.HandleMonthTotalPriceError(err, method, "FAILED_FIND_MONTHLY_TOTAL_PRICE", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToCategoryMonthlyTotalPrices(res), nil
+	so := s.mapping.ToCategoryMonthlyTotalPrices(res)
+
+	s.mencache.SetCachedMonthTotalPriceCache(req, so)
+
+	logSuccess("Successfully fetched monthly total price", zap.Int("year", year), zap.Int("month", month))
+
+	return so, nil
 }
 
 func (s *categoryStatsService) FindYearlyTotalPrice(year int) ([]*response.CategoriesYearlyTotalPriceResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindYearlyTotalPrice"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year))
 
 	defer func() {
-		s.recordMetrics("FindYearlyTotalPrice", status, startTime)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "FindYearlyTotalPrice")
-	defer span.End()
+	if data, found := s.mencache.GetCachedYearTotalPriceCache(year); found {
+		logSuccess("Successfully fetched yearly total price from cache", zap.Int("year", year))
+
+		return data, nil
+	}
 
 	res, err := s.categoryStatsRepository.GetYearlyTotalPrices(year)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_YEARLY_TOTAL_PRICE")
-
-		s.logger.Error("failed to get yearly total sales",
-			zap.Int("year", year),
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "failed to get yearly total sales")
-
-		status = "failed_find_yearly_total_price"
-
-		return nil, category_errors.ErrFailedFindYearlyTotalPrice
+		return s.errorHandler.HandleYearTotalPriceError(err, method, "FAILED_FIND_YEARLY_TOTAL_PRICE", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToCategoryYearlyTotalPrices(res), nil
+	so := s.mapping.ToCategoryYearlyTotalPrices(res)
+
+	s.mencache.SetCachedYearTotalPriceCache(year, so)
+
+	logSuccess("Successfully fetched yearly total price", zap.Int("year", year))
+
+	return so, nil
 }
 
 func (s *categoryStatsService) FindMonthPrice(year int) ([]*response.CategoryMonthPriceResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindMonthPrice"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year))
 
 	defer func() {
-		s.recordMetrics("FindMonthPrice", status, startTime)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "FindMonthPrice")
-	defer span.End()
+	if data, found := s.mencache.GetCachedMonthPriceCache(year); found {
+		logSuccess("Successfully fetched monthly category prices from cache", zap.Int("year", year))
+
+		return data, nil
+	}
 
 	res, err := s.categoryStatsRepository.GetMonthPrice(year)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MONTH_PRICE")
-
-		s.logger.Error("failed to get monthly category prices",
-			zap.Int("year", year),
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "failed to get monthly category prices")
-
-		status = "failed_find_month_price"
-
-		return nil, category_errors.ErrFailedFindMonthPrice
+		return s.errorHandler.HandleMonthPrice(err, method, "FAILED_FIND_MONTH_PRICE", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToCategoryMonthlyPrices(res), nil
+	so := s.mapping.ToCategoryMonthlyPrices(res)
+
+	s.mencache.SetCachedMonthPriceCache(year, so)
+
+	logSuccess("Successfully fetched monthly category prices", zap.Int("year", year))
+
+	return so, nil
 }
 
 func (s *categoryStatsService) FindYearPrice(year int) ([]*response.CategoryYearPriceResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindYearPrice"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year))
 
 	defer func() {
-		s.recordMetrics("FindYearPrice", status, startTime)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "FindYearPrice")
-	defer span.End()
+	if data, found := s.mencache.GetCachedYearPriceCache(year); found {
+		logSuccess("Successfully fetched yearly category prices from cache", zap.Int("year", year))
+
+		return data, nil
+	}
 
 	res, err := s.categoryStatsRepository.GetYearPrice(year)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_YEAR_PRICE")
-
-		s.logger.Error("failed to get yearly category prices",
-			zap.Int("year", year),
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "failed to get yearly category prices")
-
-		status = "failed_find_year_price"
-
-		return nil, category_errors.ErrFailedFindYearPrice
+		return s.errorHandler.HandleYearPrice(err, method, "FAILED_FIND_YEAR_PRICE", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToCategoryYearlyPrices(res), nil
+	so := s.mapping.ToCategoryYearlyPrices(res)
+
+	s.mencache.SetCachedYearPriceCache(year, so)
+
+	logSuccess("Successfully fetched yearly category prices", zap.Int("year", year))
+
+	return so, nil
+}
+
+func (s *categoryStatsService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
 }
 
 func (s *categoryStatsService) recordMetrics(method string, status string, start time.Time) {

@@ -22,7 +22,7 @@ type merchantDocumentHandleGrpc struct {
 }
 
 func NewMerchantDocumentHandleGrpc(
-	service services.Service,
+	service *services.Service,
 	mapping protomapper.MerchantDocumentProtoMapper,
 ) pb.MerchantDocumentServiceServer {
 	return &merchantDocumentHandleGrpc{

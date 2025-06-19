@@ -20,7 +20,7 @@ type Deps struct {
 	Ctx context.Context
 }
 
-func NewRepositories(deps Deps) *Repositories {
+func NewRepositories(deps *Deps) *Repositories {
 	categoryMapper := recordmapper.NewCategoryRecordMapper()
 
 	return &Repositories{

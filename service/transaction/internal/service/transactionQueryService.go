@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-transaction/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/transaction_errors"
@@ -21,6 +22,8 @@ import (
 
 type transactionQueryService struct {
 	ctx                        context.Context
+	mencache                   mencache.TransactionQueryCache
+	errorhandler               errorhandler.TransactionQueryError
 	trace                      trace.Tracer
 	transactionQueryRepository repository.TransactionQueryRepository
 	mapping                    response_service.TransactionResponseMapper
@@ -31,6 +34,8 @@ type transactionQueryService struct {
 
 func NewTransactionQueryService(
 	ctx context.Context,
+	mencache mencache.TransactionQueryCache,
+	errorhandler errorhandler.TransactionQueryError,
 	transactionQueryRepository repository.TransactionQueryRepository,
 	mapping response_service.TransactionResponseMapper,
 	logger logger.LoggerInterface,
@@ -56,6 +61,8 @@ func NewTransactionQueryService(
 
 	return &transactionQueryService{
 		ctx:                        ctx,
+		mencache:                   mencache,
+		errorhandler:               errorhandler,
 		trace:                      otel.Tracer("transaction-query-service"),
 		transactionQueryRepository: transactionQueryRepository,
 		mapping:                    mapping,
@@ -66,328 +73,242 @@ func NewTransactionQueryService(
 }
 
 func (s *transactionQueryService) FindAllTransactions(req *requests.FindAllTransaction) ([]*response.TransactionResponse, *int, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "FindAllTransactions"
 
-	defer func() {
-		s.recordMetrics("FindAllTransactions", status, start)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindAllTransactions")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
-	s.logger.Debug("Fetching transactions",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
-	if page <= 0 {
-		page = 1
-	}
+	if data, total, found := s.mencache.GetCachedTransactionsCache(req); found {
+		logSuccess("Successfully fetched transactions from cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
-	if pageSize <= 0 {
-		pageSize = 10
+		return data, total, nil
 	}
 
 	transactions, totalRecords, err := s.transactionQueryRepository.FindAllTransactions(req)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ALL_TRANSACTIONS")
-
-		s.logger.Error("Failed to retrieve transactions from database",
-			zap.String("traceID", traceID),
-			zap.String("search", search),
-			zap.Int("page", page),
-			zap.Int("page_size", pageSize),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve transactions from database")
-
-		status = "failed_find_all_transactions"
-
-		return nil, nil, transaction_errors.ErrFailedFindAllTransactions
+		return s.errorhandler.HandleRepositoryPaginationError(err, method, "FAILED_TO_FIND_ALL_TRANSACTIONS", span, &status, zap.Error(err))
 	}
 
-	s.logger.Debug("Successfully fetched transactions",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize))
+	so := s.mapping.ToTransactionsResponse(transactions)
 
-	return s.mapping.ToTransactionsResponse(transactions), totalRecords, nil
+	s.mencache.SetCachedTransactionsCache(req, so, totalRecords)
+
+	logSuccess("Successfully fetched all transactions", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
+
+	return so, totalRecords, nil
 }
 
 func (s *transactionQueryService) FindByMerchant(req *requests.FindAllTransactionByMerchant) ([]*response.TransactionResponse, *int, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "FindByMerchant"
 
-	defer func() {
-		s.recordMetrics("FindByMerchant", status, start)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindByMerchant")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 	merchant_id := req.MerchantID
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-		attribute.Int("merchant_id", merchant_id),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search), attribute.Int("merchant_id", merchant_id))
 
-	s.logger.Debug("Fetching transactions",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
-	if page <= 0 {
-		page = 1
-	}
+	if data, total, found := s.mencache.GetCachedTransactionByMerchant(req); found {
+		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
-	if pageSize <= 0 {
-		pageSize = 10
+		return data, total, nil
 	}
 
 	transactions, totalRecords, err := s.transactionQueryRepository.FindByMerchant(req)
 
 	if err != nil {
-		s.logger.Error("Failed to retrieve merchant's transactions from database",
-			zap.Int("merchant_id", merchant_id),
-			zap.String("search", search),
-			zap.Int("page", page),
-			zap.Int("page_size", pageSize),
-			zap.Error(err))
-		return nil, nil, transaction_errors.ErrFailedFindTransactionsByMerchant
+		return s.errorhandler.HandleRepositoryPaginationError(err, method, "FAILED_TO_FIND_BY_MERCHANT", span, &status, zap.Error(err))
 	}
 
-	s.logger.Debug("Successfully fetched transactions",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize))
+	so := s.mapping.ToTransactionsResponse(transactions)
 
-	return s.mapping.ToTransactionsResponse(transactions), totalRecords, nil
+	s.mencache.SetCachedTransactionByMerchant(req, so, totalRecords)
+
+	logSuccess("Successfully fetched all transactions", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
+
+	return so, totalRecords, nil
 }
 
 func (s *transactionQueryService) FindByActive(req *requests.FindAllTransaction) ([]*response.TransactionResponseDeleteAt, *int, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
-	defer func() {
-		s.recordMetrics("FindByActive", status, start)
-	}()
+	const method = "FindByActive"
 
-	_, span := s.trace.Start(s.ctx, "FindByActive")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
-	s.logger.Debug("Fetching transactions",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
-	if page <= 0 {
-		page = 1
-		span.SetAttributes(attribute.Int("adjusted.page", page))
-	}
+	if data, total, found := s.mencache.GetCachedTransactionActiveCache(req); found {
+		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
-	if pageSize <= 0 {
-		pageSize = 10
-		span.SetAttributes(attribute.Int("adjusted.pageSize", pageSize))
+		return data, total, nil
 	}
 
 	transactions, totalRecords, err := s.transactionQueryRepository.FindByActive(req)
+
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_TRANSACTIONS_BY_ACTIVE")
-
-		s.logger.Error("Failed to retrieve active transactions from database",
-			zap.String("search", search),
-			zap.Int("page", page),
-			zap.Int("page_size", pageSize),
-			zap.String("trace_id", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve active transactions")
-
-		status = "failed_find_by_active"
-		return nil, nil, transaction_errors.ErrFailedFindTransactionsByActive
+		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_TRANSACTIONS_BY_ACTIVE", span, &status, transaction_errors.ErrFailedFindTransactionsByActive, zap.Error(err))
 	}
 
-	span.SetAttributes(attribute.Int("totalRecords", *totalRecords))
-	s.logger.Debug("Successfully fetched transactions",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize))
+	so := s.mapping.ToTransactionsResponseDeleteAt(transactions)
 
-	return s.mapping.ToTransactionsResponseDeleteAt(transactions), totalRecords, nil
+	s.mencache.SetCachedTransactionActiveCache(req, so, totalRecords)
+
+	logSuccess("Successfully fetched active transactions", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
+
+	return so, totalRecords, nil
 }
 
 func (s *transactionQueryService) FindByTrashed(req *requests.FindAllTransaction) ([]*response.TransactionResponseDeleteAt, *int, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
-	defer func() {
-		s.recordMetrics("FindByTrashed", status, start)
-	}()
+	const method = "FindByTrashed"
 
-	_, span := s.trace.Start(s.ctx, "FindByTrashed")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
-	s.logger.Debug("Fetching transactions",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
-	if page <= 0 {
-		page = 1
-		span.SetAttributes(attribute.Int("adjusted.page", page))
-	}
+	if data, total, found := s.mencache.GetCachedTransactionTrashedCache(req); found {
+		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
-	if pageSize <= 0 {
-		pageSize = 10
-		span.SetAttributes(attribute.Int("adjusted.pageSize", pageSize))
+		return data, total, nil
 	}
 
 	transactions, totalRecords, err := s.transactionQueryRepository.FindByTrashed(req)
+
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_TRANSACTIONS_BY_TRASHED")
-
-		s.logger.Error("Failed to retrieve trashed transactions",
-			zap.String("search", search),
-			zap.Int("page", page),
-			zap.Int("page_size", pageSize),
-			zap.String("trace_id", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve trashed transactions")
-
-		status = "failed_find_by_trashed"
-		return nil, nil, transaction_errors.ErrFailedFindTransactionsByTrashed
+		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_TRANSACTIONS_BY_TRASHED", span, &status, transaction_errors.ErrFailedFindTransactionsByTrashed, zap.Error(err))
 	}
 
-	span.SetAttributes(attribute.Int("totalRecords", *totalRecords))
-	s.logger.Debug("Successfully fetched transactions",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize))
+	so := s.mapping.ToTransactionsResponseDeleteAt(transactions)
 
-	return s.mapping.ToTransactionsResponseDeleteAt(transactions), totalRecords, nil
+	s.mencache.SetCachedTransactionTrashedCache(req, so, totalRecords)
+
+	logSuccess("Successfully fetched trashed transactions", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
+
+	return so, totalRecords, nil
 }
 
 func (s *transactionQueryService) FindById(transactionID int) (*response.TransactionResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "FindById"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("transaction.id", transactionID))
+
 	defer func() {
-		s.recordMetrics("FindById", status, start)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "FindById")
-	defer span.End()
+	if data, found := s.mencache.GetCachedTransactionCache(transactionID); found {
+		logSuccess("Successfully fetched transaction from cache", zap.Int("transaction.id", transactionID))
 
-	span.SetAttributes(attribute.Int("transaction.id", transactionID))
-
-	s.logger.Debug("Fetching transaction by ID",
-		zap.Int("transactionID", transactionID))
-
-	transaction, err := s.transactionQueryRepository.FindById(transactionID)
-	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_TRANSACTION_BY_ID")
-
-		s.logger.Error("Failed to retrieve transaction details",
-			zap.Int("transaction_id", transactionID),
-			zap.String("trace_id", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve transaction by ID")
-
-		status = "failed_find_by_id"
-		return nil, transaction_errors.ErrFailedFindTransactionById
+		return data, nil
 	}
 
-	return s.mapping.ToTransactionResponse(transaction), nil
+	transaction, err := s.transactionQueryRepository.FindById(transactionID)
+
+	if err != nil {
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_TRANSACTION_BY_ID", span, &status, transaction_errors.ErrFailedFindTransactionById, zap.Error(err))
+	}
+
+	so := s.mapping.ToTransactionResponse(transaction)
+
+	s.mencache.SetCachedTransactionCache(so)
+
+	logSuccess("Successfully fetched transaction", zap.Int("transaction.id", transactionID))
+
+	return so, nil
 }
 
 func (s *transactionQueryService) FindByOrderId(orderID int) (*response.TransactionResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "FindByOrderId"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("order.id", orderID))
+
 	defer func() {
-		s.recordMetrics("FindByOrderId", status, start)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "FindByOrderId")
-	defer span.End()
+	if data, found := s.mencache.GetCachedTransactionByOrderId(orderID); found {
+		logSuccess("Successfully fetched transaction from cache", zap.Int("order.id", orderID))
 
-	span.SetAttributes(attribute.Int("order.id", orderID))
-
-	s.logger.Debug("Fetching transaction by Order ID",
-		zap.Int("orderID", orderID))
-
-	transaction, err := s.transactionQueryRepository.FindByOrderId(orderID)
-	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_TRANSACTION_BY_ORDER_ID")
-
-		s.logger.Error("Failed to retrieve transaction by order ID",
-			zap.Int("order_id", orderID),
-			zap.String("trace_id", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve transaction by order ID")
-
-		status = "failed_find_by_order_id"
-		return nil, transaction_errors.ErrFailedFindTransactionByOrderId
+		return data, nil
 	}
 
-	return s.mapping.ToTransactionResponse(transaction), nil
+	transaction, err := s.transactionQueryRepository.FindByOrderId(orderID)
+
+	if err != nil {
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_TRANSACTION_BY_ORDER_ID", span, &status, transaction_errors.ErrFailedFindTransactionByOrderId, zap.Error(err))
+	}
+
+	so := s.mapping.ToTransactionResponse(transaction)
+
+	s.mencache.SetCachedTransactionByOrderId(orderID, so)
+
+	logSuccess("Successfully fetched transaction", zap.Int("order.id", orderID))
+
+	return so, nil
+}
+
+func (s *transactionQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
+}
+
+func (s *transactionQueryService) normalizePagination(page, pageSize int) (int, int) {
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	return page, pageSize
 }
 
 func (s *transactionQueryService) recordMetrics(method string, status string, start time.Time) {

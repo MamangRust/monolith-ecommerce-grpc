@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-category/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-category/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-category/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/category_errors"
@@ -21,6 +22,8 @@ import (
 
 type categoryQueryService struct {
 	ctx                     context.Context
+	errorhandler            errorhandler.CategoryQueryError
+	mencache                mencache.CategoryQueryCache
 	trace                   trace.Tracer
 	categoryQueryRepository repository.CategoryQueryRepository
 	logger                  logger.LoggerInterface
@@ -29,7 +32,10 @@ type categoryQueryService struct {
 	requestDuration         *prometheus.HistogramVec
 }
 
-func NewCategoryQueryService(ctx context.Context, categoryQueryRepository repository.CategoryQueryRepository, logger logger.LoggerInterface, mapping response_service.CategoryResponseMapper) *categoryQueryService {
+func NewCategoryQueryService(ctx context.Context,
+	errorhandler errorhandler.CategoryQueryError,
+	mencache mencache.CategoryQueryCache,
+	categoryQueryRepository repository.CategoryQueryRepository, logger logger.LoggerInterface, mapping response_service.CategoryResponseMapper) *categoryQueryService {
 	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "category_query_service_request_total",
@@ -51,6 +57,8 @@ func NewCategoryQueryService(ctx context.Context, categoryQueryRepository reposi
 
 	return &categoryQueryService{
 		ctx:                     ctx,
+		errorhandler:            errorhandler,
+		mencache:                mencache,
 		trace:                   otel.Tracer("category-query-service"),
 		categoryQueryRepository: categoryQueryRepository,
 		logger:                  logger,
@@ -61,237 +69,178 @@ func NewCategoryQueryService(ctx context.Context, categoryQueryRepository reposi
 }
 
 func (s *categoryQueryService) FindAll(req *requests.FindAllCategory) ([]*response.CategoryResponse, *int, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindAll"
 
-	defer func() {
-		s.recordMetrics("FindAll", status, startTime)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindAll")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
-	s.logger.Debug("Fetching all categories",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
-	if page <= 0 {
-		page = 1
-	}
-
-	if pageSize <= 0 {
-		pageSize = 10
+	if data, total, found := s.mencache.GetCachedCategoriesCache(req); found {
+		logSuccess("Successfully fetched categories from cache", zap.Int("totalRecords", *total), zap.Int("page", page), zap.Int("pageSize", pageSize))
+		return data, total, nil
 	}
 
 	category, totalRecords, err := s.categoryQueryRepository.FindAllCategory(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ALL_CATEGORIES")
-
-		s.logger.Error("Failed to fetch categories",
-			zap.Error(err),
-			zap.Int("page", req.Page),
-			zap.Int("pageSize", req.PageSize),
-			zap.String("search", req.Search),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to fetch categories")
-
-		status = "failed_find_all_categories"
-
-		return nil, nil, category_errors.ErrFailedFindAllCategories
+		return s.errorhandler.HandleRepositoryPaginationError(err, method, "FAILED_FIND_ALL_CATEGORY", span, &status, zap.Error(err))
 	}
 
 	categoriesResponse := s.mapping.ToCategorysResponse(category)
 
-	s.logger.Debug("Successfully fetched category",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", req.Page),
-		zap.Int("pageSize", req.PageSize))
+	s.mencache.SetCachedCategoriesCache(req, categoriesResponse, totalRecords)
+
+	logSuccess("Successfully fetched categories", zap.Int("totalRecords", *totalRecords), zap.Int("page", page), zap.Int("pageSize", pageSize))
 
 	return categoriesResponse, totalRecords, nil
 }
 
 func (s *categoryQueryService) FindByActive(req *requests.FindAllCategory) ([]*response.CategoryResponseDeleteAt, *int, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindByActive"
 
-	defer func() {
-		s.recordMetrics("FindByActive", status, startTime)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindByActive")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
-	s.logger.Debug("Fetching categories active",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
-	if page <= 0 {
-		page = 1
-	}
+	if data, total, found := s.mencache.GetCachedCategoryActiveCache(req); found {
+		logSuccess("Successfully fetched categories from cache", zap.Int("totalRecords", *total), zap.Int("page", page), zap.Int("pageSize", pageSize))
 
-	if pageSize <= 0 {
-		pageSize = 10
+		return data, total, nil
 	}
 
 	category, totalRecords, err := s.categoryQueryRepository.FindByActive(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ACTIVE_CATEGORIES")
-
-		s.logger.Error("Failed to fetch categories",
-			zap.Error(err),
-			zap.Int("page", req.Page),
-			zap.Int("pageSize", req.PageSize),
-			zap.String("search", req.Search),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to fetch categories")
-
-		status = "failed_find_active_categories"
-
-		return nil, nil, category_errors.ErrFailedFindActiveCategories
+		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_BY_ACTIVE_CATEGORY", span, &status, category_errors.ErrFailedFindActiveCategories, zap.Error(err))
 	}
 
-	s.logger.Debug("Successfully fetched categories",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", req.Page),
-		zap.Int("pageSize", req.PageSize))
+	so := s.mapping.ToCategorysResponseDeleteAt(category)
 
-	return s.mapping.ToCategorysResponseDeleteAt(category), totalRecords, nil
+	s.mencache.SetCachedCategoryActiveCache(req, so, totalRecords)
+
+	logSuccess("Successfully fetched categories", zap.Int("totalRecords", *totalRecords), zap.Int("page", page), zap.Int("pageSize", pageSize))
+
+	return so, totalRecords, nil
 }
 
 func (s *categoryQueryService) FindByTrashed(req *requests.FindAllCategory) ([]*response.CategoryResponseDeleteAt, *int, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindByTrashed"
 
-	defer func() {
-		s.recordMetrics("FindByTrashed", status, startTime)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindByTrashed")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
-	s.logger.Debug("Fetching categories trashed",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
-	if page <= 0 {
-		page = 1
-	}
+	if data, total, found := s.mencache.GetCachedCategoryTrashedCache(req); found {
+		logSuccess("Successfully fetched categories from cache", zap.Int("totalRecords", *total), zap.Int("page", page), zap.Int("pageSize", pageSize))
 
-	if pageSize <= 0 {
-		pageSize = 10
+		return data, total, nil
 	}
 
 	categories, totalRecords, err := s.categoryQueryRepository.FindByTrashed(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_TRASHED_CATEGORIES")
-
-		s.logger.Error("Failed to fetch categories",
-			zap.Error(err),
-			zap.Int("page", req.Page),
-			zap.Int("pageSize", req.PageSize),
-			zap.String("search", req.Search),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to fetch categories")
-
-		status = "failed_find_trashed_categories"
-
-		return nil, nil, category_errors.ErrFailedFindTrashedCategories
+		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_BY_TRASHED_CATEGORY", span, &status, category_errors.ErrFailedFindTrashedCategories, zap.Error(err))
 	}
 
-	s.logger.Debug("Successfully fetched categories",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", req.Page),
-		zap.Int("pageSize", req.PageSize))
+	so := s.mapping.ToCategorysResponseDeleteAt(categories)
 
-	return s.mapping.ToCategorysResponseDeleteAt(categories), totalRecords, nil
+	s.mencache.SetCachedCategoryTrashedCache(req, so, totalRecords)
+
+	logSuccess("Successfully fetched categories", zap.Int("totalRecords", *totalRecords), zap.Int("page", page), zap.Int("pageSize", pageSize))
+
+	return so, totalRecords, nil
 }
 
 func (s *categoryQueryService) FindById(category_id int) (*response.CategoryResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindById"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("category.id", category_id))
 
 	defer func() {
-		s.recordMetrics("FindById", status, startTime)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "FindById")
-	defer span.End()
+	if data, found := s.mencache.GetCachedCategoryCache(category_id); found {
+		logSuccess("Successfully fetched category from cache", zap.Int("category.id", category_id))
 
-	s.logger.Debug("Fetching category by ID", zap.Int("category_id", category_id))
+		return data, nil
+	}
 
 	category, err := s.categoryQueryRepository.FindById(category_id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_CATEGORY_BY_ID")
-
-		s.logger.Error("Failed to fetch category by ID",
-			zap.Error(err),
-			zap.Int("category_id", category_id),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to fetch category by ID")
-
-		status = "failed_find_category_by_id"
-
-		return nil, category_errors.ErrFailedFindCategoryById
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_CATEGORY_BY_ID", span, &status, category_errors.ErrFailedFindCategoryById, zap.Error(err))
 	}
 
-	return s.mapping.ToCategoryResponse(category), nil
+	so := s.mapping.ToCategoryResponse(category)
+
+	s.mencache.SetCachedCategoryCache(so)
+
+	logSuccess("Successfully fetched category", zap.Int("category.id", category_id))
+
+	return so, nil
+}
+
+func (s *categoryQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Info("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
+}
+
+func (s *categoryQueryService) normalizePagination(page, pageSize int) (int, int) {
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	return page, pageSize
 }
 
 func (s *categoryQueryService) recordMetrics(method string, status string, start time.Time) {

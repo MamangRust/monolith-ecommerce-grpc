@@ -22,7 +22,7 @@ type merchantAwardHandleGrpc struct {
 }
 
 func NewMerchantAwardHandleGrpc(
-	service service.Service,
+	service *service.Service,
 	mapping protomapper.MerchantAwardProtoMapper,
 	mappingMerchant protomapper.MerchantProtoMapper,
 ) *merchantAwardHandleGrpc {

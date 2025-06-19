@@ -4,10 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-user/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-user/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-user/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/role_errors"
@@ -23,6 +24,8 @@ import (
 
 type userCommandService struct {
 	ctx                   context.Context
+	errorhandler          errorhandler.UserCommandError
+	mencache              mencache.UserCommandCache
 	trace                 trace.Tracer
 	userQueryRepository   repository.UserQueryRepository
 	userCommandRepository repository.UserCommandRepository
@@ -36,6 +39,8 @@ type userCommandService struct {
 
 func NewUserCommandService(
 	ctx context.Context,
+	errorhandler errorhandler.UserCommandError,
+	mencache mencache.UserCommandCache,
 	userQueryRepository repository.UserQueryRepository,
 	userCommandRepository repository.UserCommandRepository,
 	roleRepository repository.RoleRepository,
@@ -64,6 +69,8 @@ func NewUserCommandService(
 
 	return &userCommandService{
 		ctx:                   ctx,
+		mencache:              mencache,
+		errorhandler:          errorhandler,
 		trace:                 otel.Tracer("user-command-service"),
 		userQueryRepository:   userQueryRepository,
 		userCommandRepository: userCommandRepository,
@@ -77,139 +84,70 @@ func NewUserCommandService(
 }
 
 func (s *userCommandService) CreateUser(request *requests.CreateUserRequest) (*response.UserResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "CreateUser"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("CreateUser", status, start)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "CreateUser")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.String("email", request.Email),
-	)
-
-	s.logger.Debug("Creating new user", zap.String("email", request.Email), zap.Any("request", request))
-
 	existingUser, err := s.userQueryRepository.FindByEmail(request.Email)
+
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("EMAIL_NOT_FOUND")
-
-		s.logger.Error("Failed to find user by email", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "User not found")
-		status = "user_not_found"
-
-		return nil, user_errors.ErrUserEmailAlready
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_USER_BY_EMAIL", span, &status, user_errors.ErrUserEmailAlready, zap.String("email", request.Email), zap.Error(err))
 
 	} else if existingUser != nil {
-		traceID := traceunic.GenerateTraceID("EMAIL_ALREADY_EXISTS")
-
-		s.logger.Error("Email already exists", zap.String("trace_id", traceID))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Email already exists")
-		status = "email_already_exists"
-
-		return nil, user_errors.ErrUserEmailAlready
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_USER_BY_EMAIL", span, &status, user_errors.ErrUserEmailAlready, zap.String("email", request.Email), zap.Int("user.id", existingUser.ID), zap.Error(err))
 	}
 
 	hash, err := s.hashing.HashPassword(request.Password)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("PASSWORD_HASH_ERR")
-
-		s.logger.Error("Failed to hash password", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to hash password")
-		status = "password_hash_err"
-
-		return nil, user_errors.ErrUserPassword
+		return errorhandler.HandleErrorPasswordOperation[*response.UserResponse](s.logger, err, method, "FAILED_HASH_PASSWORD", span, &status, user_errors.ErrUserPassword, zap.String("email", request.Email), zap.Error(err))
 	}
 
 	request.Password = hash
 
 	const defaultRoleName = "Admin Access 1"
+
 	role, err := s.roleRepository.FindByName(defaultRoleName)
+
 	if err != nil || role == nil {
-		traceID := traceunic.GenerateTraceID("ROLE_NOT_FOUND")
-
-		s.logger.Error("Failed to find role by name", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Role not found")
-		status = "role_not_found"
-
-		return nil, role_errors.ErrRoleNotFoundRes
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_ROLE", span, &status, role_errors.ErrRoleNotFoundRes, zap.String("name", defaultRoleName), zap.Error(err))
 	}
 
 	res, err := s.userCommandRepository.CreateUser(request)
+
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_CREATE_USER")
-
-		s.logger.Error("Failed to create user", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to create user")
-		status = "failed_create_user"
-
-		return nil, user_errors.ErrFailedCreateUser
+		return s.errorhandler.HandleCreateUserError(err, method, "FAILED_CREATE_USER", span, &status, zap.String("email", request.Email), zap.Error(err))
 	}
 
 	so := s.mapping.ToUserResponse(res)
 
-	s.logger.Debug("Successfully created new user", zap.String("email", so.Email), zap.Int("user", so.ID))
+	logSuccess("Successfully created user", zap.Int("user.id", res.ID), zap.Bool("success", true))
 
 	return so, nil
 }
 
 func (s *userCommandService) UpdateUser(request *requests.UpdateUserRequest) (*response.UserResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "UpdateUser"
 
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 	defer func() {
-		s.recordMetrics("UpdateUser", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "UpdateUser")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("user_id", *request.UserID),
-	)
-
-	s.logger.Debug("Updating user", zap.Int("user_id", *request.UserID), zap.Any("request", request))
 
 	existingUser, err := s.userQueryRepository.FindById(*request.UserID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("USER_NOT_FOUND")
-
-		s.logger.Error("Failed to find user by id", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "User not found")
-		status = "user_not_found"
-
-		return nil, user_errors.ErrUserNotFoundRes
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_USER", span, &status, user_errors.ErrUserNotFoundRes)
 	}
 
 	if request.Email != "" && request.Email != existingUser.Email {
 		duplicateUser, _ := s.userQueryRepository.FindByEmail(request.Email)
 
 		if duplicateUser != nil {
-			traceID := traceunic.GenerateTraceID("EMAIL_ALREADY_EXISTS")
-
-			s.logger.Error("Email already exists", zap.String("trace_id", traceID))
-			span.SetAttributes(attribute.String("trace.id", traceID))
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "Email already exists")
-			status = "email_already_exists"
-
-			return nil, user_errors.ErrUserEmailAlready
+			return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_EMAIL_ALREADY", span, &status, user_errors.ErrUserEmailAlready, zap.String("email", request.Email), zap.Int("user.id", duplicateUser.ID), zap.Error(err))
 		}
 
 		existingUser.Email = request.Email
@@ -218,228 +156,174 @@ func (s *userCommandService) UpdateUser(request *requests.UpdateUserRequest) (*r
 	if request.Password != "" {
 		hash, err := s.hashing.HashPassword(request.Password)
 		if err != nil {
-			traceID := traceunic.GenerateTraceID("PASSWORD_HASH_ERR")
-
-			s.logger.Error("Failed to hash password", zap.String("trace_id", traceID), zap.Error(err))
-			span.SetAttributes(attribute.String("trace.id", traceID))
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "Failed to hash password")
-			status = "password_hash_err"
-
-			return nil, user_errors.ErrUserPassword
+			return errorhandler.HandleErrorPasswordOperation[*response.UserResponse](s.logger, err, method, "FAILED_HASH_PASSWORD", span, &status, user_errors.ErrUserPassword, zap.Int("user.id", *request.UserID), zap.Error(err))
 		}
 		existingUser.Password = hash
 	}
 
 	const defaultRoleName = "Admin Access 1"
+
 	role, err := s.roleRepository.FindByName(defaultRoleName)
+
 	if err != nil || role == nil {
-		traceID := traceunic.GenerateTraceID("ROLE_NOT_FOUND")
-
-		s.logger.Error("Failed to find role by name", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Role not found")
-		status = "role_not_found"
-
-		return nil, role_errors.ErrRoleNotFoundRes
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_ROLE", span, &status, role_errors.ErrRoleNotFoundRes)
 	}
 
 	res, err := s.userCommandRepository.UpdateUser(request)
+
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_UPDATE_USER")
-
-		s.logger.Error("Failed to update user", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to update user")
-		status = "failed_update_user"
-
-		return nil, user_errors.ErrFailedUpdateUser
+		return s.errorhandler.HandleUpdateUserError(err, method, "FAILED_UPDATE_USER", span, &status, zap.Int("user.id", *request.UserID), zap.Error(err))
 	}
 
 	so := s.mapping.ToUserResponse(res)
+	s.mencache.DeleteUserCache(so.ID)
 
-	s.logger.Debug("Successfully updated user", zap.Int("user_id", so.ID))
+	logSuccess("Successfully updated user", zap.Int("user.id", res.ID), zap.Bool("success", true))
 
 	return so, nil
 }
 
 func (s *userCommandService) TrashedUser(user_id int) (*response.UserResponseDeleteAt, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "TrashedUser"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("TrashedUser", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "TrashedUser")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("user_id", user_id),
-	)
-
-	s.logger.Debug("Trashing user", zap.Int("user_id", user_id))
 
 	res, err := s.userCommandRepository.TrashedUser(user_id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_TRASHED_USER")
-
-		s.logger.Error("Failed to trashed user", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to trashed user")
-		status = "failed_trashed_user"
-
-		return nil, user_errors.ErrFailedTrashedUser
+		return s.errorhandler.HandleTrashedUserError(err, method, "FAILED_TO_TRASH_USER", span, &status, zap.Int("user.id", user_id), zap.Error(err))
 	}
 
 	so := s.mapping.ToUserResponseDeleteAt(res)
 
-	s.logger.Debug("Successfully trashed user", zap.Int("user_id", user_id))
+	s.mencache.DeleteUserCache(so.ID)
+
+	logSuccess("Successfully trashed user", zap.Int("user.id", res.ID), zap.Bool("success", true))
 
 	return so, nil
 }
 
 func (s *userCommandService) RestoreUser(user_id int) (*response.UserResponseDeleteAt, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "RestoreUser"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("RestoreUser", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "RestoreUser")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("user_id", user_id),
-	)
-
-	s.logger.Debug("Restoring user", zap.Int("user_id", user_id))
 
 	res, err := s.userCommandRepository.RestoreUser(user_id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_RESTORE_USER")
-
-		s.logger.Error("Failed to restore user", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to restore user")
-		status = "failed_restore_user"
-
-		return nil, user_errors.ErrFailedRestoreUser
+		return s.errorhandler.HandleRestoreUserError(err, method, "FAILED_TO_RESTORE_USER", span, &status, zap.Int("user.id", user_id), zap.Error(err))
 	}
 
 	so := s.mapping.ToUserResponseDeleteAt(res)
 
-	s.logger.Debug("Successfully restored user", zap.Int("user_id", user_id))
+	logSuccess("Successfully restored user", zap.Int("user.id", res.ID), zap.Bool("success", true))
 
 	return so, nil
 }
 
 func (s *userCommandService) DeleteUserPermanent(user_id int) (bool, *response.ErrorResponse) {
-	start := time.Now()
+	const method = "DeleteUserPermanent"
 
-	status := "success"
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("DeleteUserPermanent", status, start)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "DeleteUserPermanent")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("user_id", user_id),
-	)
-
-	s.logger.Debug("Deleting user permanently", zap.Int("user_id", user_id))
-
-	_, err := s.userCommandRepository.DeleteUserPermanent(user_id)
+	success, err := s.userCommandRepository.DeleteUserPermanent(user_id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_DELETE_USER_PERMANENT")
-
-		s.logger.Error("Failed to permanently delete user", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to permanently delete user")
-		status = "failed_delete_user_permanent"
-
-		return false, user_errors.ErrFailedDeletePermanent
+		return s.errorhandler.HandleDeleteUserError(err, method, "FAILED_TO_DELETE_USER", span, &status, zap.Int("user.id", user_id), zap.Error(err))
 	}
 
-	s.logger.Debug("Successfully deleted user permanently", zap.Int("user_id", user_id))
+	logSuccess("Successfully deleted user", zap.Int("user.id", user_id), zap.Bool("success", success))
 
 	return true, nil
 }
 
 func (s *userCommandService) RestoreAllUser() (bool, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "RestoreAllUser"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("RestoreAllUser", status, start)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "RestoreAllUser")
-	defer span.End()
-
-	s.logger.Debug("Restoring all users")
-
-	_, err := s.userCommandRepository.RestoreAllUser()
+	success, err := s.userCommandRepository.RestoreAllUser()
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_RESTORE_ALL_USER")
-
-		s.logger.Error("Failed to restore all users", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to restore all users")
-		status = "failed_restore_all_user"
-
-		return false, user_errors.ErrFailedRestoreAll
+		return s.errorhandler.HandleRestoreAllUserError(err, method, "FAILED_RESTORE_ALL_USER", span, &status, zap.Error(err))
 	}
 
-	s.logger.Debug("Successfully restored all users")
+	logSuccess("Successfully restored all users", zap.Bool("success", success))
 
 	return true, nil
 }
 
 func (s *userCommandService) DeleteAllUserPermanent() (bool, *response.ErrorResponse) {
+	const method = "DeleteAllUserPermanent"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
+
+	defer func() {
+		end(status)
+	}()
+
+	success, err := s.userCommandRepository.DeleteAllUserPermanent()
+
+	if err != nil {
+		return s.errorhandler.HandleDeleteAllUserError(err, method, "FAILED_DELETE_ALL_USER", span, &status)
+	}
+
+	logSuccess("Successfully deleted all users", zap.Bool("success", success))
+
+	return true, nil
+}
+
+func (s *userCommandService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
 	start := time.Now()
 	status := "success"
 
-	defer func() {
-		s.recordMetrics("DeleteAllUserPermanent", status, start)
-	}()
+	_, span := s.trace.Start(s.ctx, method)
 
-	_, span := s.trace.Start(s.ctx, "DeleteAllUserPermanent")
-	defer span.End()
-
-	s.logger.Debug("Permanently deleting all users")
-
-	_, err := s.userCommandRepository.DeleteAllUserPermanent()
-
-	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_DELETE_ALL_USER_PERMANENT")
-
-		s.logger.Error("Failed to permanently delete all users", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to permanently delete all users")
-		status = "failed_delete_all_user_permanent"
-
-		return false, user_errors.ErrFailedDeleteAll
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
 	}
 
-	s.logger.Debug("Successfully deleted all users permanently")
+	span.AddEvent("Start: " + method)
 
-	return true, nil
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
 }
 
 func (s *userCommandService) recordMetrics(method string, status string, start time.Time) {

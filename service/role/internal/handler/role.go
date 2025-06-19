@@ -20,7 +20,7 @@ type roleHandleGrpc struct {
 	mapping     protomapper.RoleProtoMapper
 }
 
-func NewRoleHandleGrpc(service service.Service) *roleHandleGrpc {
+func NewRoleHandleGrpc(service *service.Service) *roleHandleGrpc {
 	return &roleHandleGrpc{
 		roleQuery:   service.RoleQuery,
 		roleCommand: service.RoleCommand,

@@ -19,7 +19,7 @@ type Deps struct {
 	MapperRecord *recordmapper.RecordMapper
 }
 
-func NewRepositories(deps Deps) *Repositories {
+func NewRepositories(deps *Deps) *Repositories {
 	return &Repositories{
 		UserCommand: NewUserCommandRepository(deps.DB, deps.Ctx, deps.MapperRecord.UserRecordMapper),
 		UserQuery:   NewUserQueryRepository(deps.DB, deps.Ctx, deps.MapperRecord.UserRecordMapper),

@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-review/internal/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-grpc-review/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/product_errors"
@@ -23,6 +23,7 @@ import (
 
 type reviewCommandService struct {
 	ctx                     context.Context
+	errorhandler            errorhandler.ReviewCommandError
 	trace                   trace.Tracer
 	productQueryRepository  repository.ProductQueryRepository
 	userQueryRepository     repository.UserQueryRepository
@@ -34,7 +35,9 @@ type reviewCommandService struct {
 	requestDuration         *prometheus.HistogramVec
 }
 
-func NewReviewCommandService(ctx context.Context, productQueryRepository repository.ProductQueryRepository, userQueryRepository repository.UserQueryRepository,
+func NewReviewCommandService(ctx context.Context,
+	errorhandler errorhandler.ReviewCommandError,
+	productQueryRepository repository.ProductQueryRepository, userQueryRepository repository.UserQueryRepository,
 	reviewQueryRepository repository.ReviewQueryRepository,
 	reviewCommandRepository repository.ReviewCommandRepository, mapping response_service.ReviewResponseMapper, logger logger.LoggerInterface) *reviewCommandService {
 	requestCounter := prometheus.NewCounterVec(
@@ -58,6 +61,7 @@ func NewReviewCommandService(ctx context.Context, productQueryRepository reposit
 
 	return &reviewCommandService{
 		ctx:                     ctx,
+		errorhandler:            errorhandler,
 		trace:                   otel.Tracer("review-command-service"),
 		productQueryRepository:  productQueryRepository,
 		userQueryRepository:     userQueryRepository,
@@ -70,335 +74,208 @@ func NewReviewCommandService(ctx context.Context, productQueryRepository reposit
 	}
 }
 func (s *reviewCommandService) CreateReview(req *requests.CreateReviewRequest) (*response.ReviewResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "CreateReview"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("user.id", req.UserID), attribute.Int("product.id", req.ProductID))
 
 	defer func() {
-		s.recordMetrics("CreateReview", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "CreateReview")
-	defer span.End()
-
-	s.logger.Debug("Creating new cashier")
 
 	_, err := s.userQueryRepository.FindById(req.UserID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_USER_BY_ID")
-
-		s.logger.Error("User not found for review creation",
-			zap.Int("user_id", req.UserID),
-			zap.Error(err),
-			zap.String("trace_id", traceID))
-
-		span.SetAttributes(
-			attribute.String("trace_id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "User not found for review creation")
-		status = "failed_find_user_by_id"
-
-		return nil, user_errors.ErrUserNotFoundRes
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_USER_BY_ID", span, &status, user_errors.ErrUserNotFoundRes)
 	}
 
 	_, err = s.productQueryRepository.FindById(req.ProductID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_PRODUCT_BY_ID")
-
-		s.logger.Error("Product not found for review creation",
-			zap.Int("product_id", req.ProductID),
-			zap.Error(err),
-			zap.String("trace_id", traceID))
-
-		span.SetAttributes(
-			attribute.String("trace_id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Product not found for review creation")
-		status = "failed_find_product_by_id"
-
-		return nil, product_errors.ErrFailedFindProductById
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_PRODUCT_BY_ID", span, &status, product_errors.ErrFailedFindProductById, zap.Error(err))
 	}
 
 	review, err := s.reviewCommandRepository.CreateReview(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_CREATE_REVIEW")
-
-		s.logger.Error("Failed to create review",
-			zap.Error(err),
-			zap.Any("request", req),
-			zap.String("trace_id", traceID))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to create review")
-		status = "failed_create_review"
-
-		return nil, review_errors.ErrFailedCreateReview
+		return s.errorhandler.HandleCreateReviewError(err, method, "FAILED_CREATE_REVIEW", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToReviewResponse(review), nil
+	so := s.mapping.ToReviewResponse(review)
+
+	logSuccess("Successfully created review", zap.Int("review.id", review.ID), zap.Bool("success", true))
+
+	return so, nil
 }
 
 func (s *reviewCommandService) UpdateReview(req *requests.UpdateReviewRequest) (*response.ReviewResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "UpdateReview"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("review.id", *req.ReviewID))
 
 	defer func() {
-		s.recordMetrics("UpdateReview", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "UpdateReview")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("review_id", *req.ReviewID),
-	)
-
-	s.logger.Debug("Updating review", zap.Int("review_id", *req.ReviewID))
 
 	_, err := s.reviewQueryRepository.FindById(*req.ReviewID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_REVIEW_BY_ID")
-
-		s.logger.Error("Review not found for review update",
-			zap.Int("review_id", *req.ReviewID),
-			zap.Error(err),
-			zap.String("trace_id", traceID))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Review not found for review update")
-		status = "failed_find_review_by_id"
-
-		return nil, review_errors.ErrFailedReviewNotFound
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_REVIEW_BY_ID", span, &status, review_errors.ErrFailedReviewNotFound, zap.Error(err))
 	}
 
 	review, err := s.reviewCommandRepository.UpdateReview(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_UPDATE_REVIEW")
-
-		s.logger.Error("Failed to update review",
-			zap.Error(err),
-			zap.Any("request", req),
-			zap.String("trace_id", traceID))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to update review")
-		status = "failed_update_review"
-
-		return nil, review_errors.ErrFailedUpdateReview
+		return s.errorhandler.HandleUpdateReviewError(err, method, "FAILED_UPDATE_REVIEW", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToReviewResponse(review), nil
+	so := s.mapping.ToReviewResponse(review)
+
+	logSuccess("Successfully updated review", zap.Int("review.id", review.ID), zap.Bool("success", true))
+
+	return so, nil
 }
 
 func (s *reviewCommandService) TrashedReview(reviewID int) (*response.ReviewResponseDeleteAt, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "TrashedReview"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("review.id", reviewID))
 
 	defer func() {
-		s.recordMetrics("TrashedReview", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "TrashedReview")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("reviewID", reviewID),
-	)
-
-	s.logger.Debug("Trashing review", zap.Int("reviewID", reviewID))
 
 	review, err := s.reviewCommandRepository.TrashReview(reviewID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_TRASH_REVIEW")
-
-		s.logger.Error("Failed to trash review",
-			zap.Error(err),
-			zap.Int("reviewID", reviewID),
-			zap.String("trace_id", traceID))
-
-		span.SetAttributes(
-			attribute.Int("reviewID", reviewID),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to trash review")
-		status = "failed_trash_review"
-
-		return nil, review_errors.ErrFailedTrashedReview
+		return s.errorhandler.HandleTrashedReviewError(err, method, "FAILED_TRASH_REVIEW", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToReviewResponseDeleteAt(review), nil
+	so := s.mapping.ToReviewResponseDeleteAt(review)
+
+	msgSuccess := "Successfully trashed Review"
+
+	logSuccess(msgSuccess, zap.Int("review.id", review.ID), zap.Bool("success", true))
+
+	return so, nil
 }
 
 func (s *reviewCommandService) RestoreReview(reviewID int) (*response.ReviewResponseDeleteAt, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "RestoreReview"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("review.id", reviewID))
 
 	defer func() {
-		s.recordMetrics("RestoreReview", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "RestoreReview")
-	defer span.End()
-
-	s.logger.Debug("Restoring review", zap.Int("reviewID", reviewID))
 
 	review, err := s.reviewCommandRepository.RestoreReview(reviewID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_RESTORE_REVIEW")
-
-		s.logger.Error("Failed to restore review",
-			zap.Error(err),
-			zap.Int("reviewID", reviewID),
-			zap.String("trace_id", traceID))
-
-		span.SetAttributes(
-			attribute.Int("reviewID", reviewID),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to restore review")
-		status = "failed_restore_review"
-
-		return nil, review_errors.ErrFailedRestoreReview
+		return s.errorhandler.HandleRestoreReviewError(err, method, "FAILED_RESTORE_REVIEW", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToReviewResponseDeleteAt(review), nil
+	so := s.mapping.ToReviewResponseDeleteAt(review)
+
+	logSuccess("Successfully restored review", zap.Int("review.id", review.ID), zap.Bool("success", true))
+
+	return so, nil
 }
 
 func (s *reviewCommandService) DeleteReviewPermanent(reviewID int) (bool, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "DeleteReviewPermanent"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("review.id", reviewID))
 
 	defer func() {
-		s.recordMetrics("DeleteReviewPermanent", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "DeleteReviewPermanent")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("reviewID", reviewID),
-	)
-
-	s.logger.Debug("Permanently deleting review", zap.Int("reviewID", reviewID))
 
 	success, err := s.reviewCommandRepository.DeleteReviewPermanently(reviewID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_DELETE_PERMANENT_REVIEW")
-
-		s.logger.Error("Failed to permanently delete review",
-			zap.Error(err),
-			zap.Int("reviewID", reviewID),
-			zap.String("trace_id", traceID))
-
-		span.SetAttributes(
-			attribute.Int("reviewID", reviewID),
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to permanently delete review")
-		status = "failed_delete_permanent_review"
-
-		return false, review_errors.ErrFailedDeletePermanentReview
+		return s.errorhandler.HandleDeleteReviewError(err, method, "FAILED_DELETE_PERMANENT_REVIEW", span, &status, zap.Error(err))
 	}
+
+	logSuccess("Successfully deleted review permanently", zap.Int("review.id", reviewID), zap.Bool("success", success))
+
 	return success, nil
 }
 
 func (s *reviewCommandService) RestoreAllReviews() (bool, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "RestoreAllReviews"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("RestoreAllReviews", status, start)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "RestoreAllReviews")
-	defer span.End()
-
-	s.logger.Debug("Restoring all trashed reviews")
-
 	success, err := s.reviewCommandRepository.RestoreAllReview()
+
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_RESTORE_ALL_REVIEW")
-
-		s.logger.Error("Failed to restore all trashed reviews",
-			zap.Error(err),
-			zap.String("trace_id", traceID))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to restore all trashed reviews")
-		status = "failed_restore_all_reviews"
-
-		return false, review_errors.ErrFailedRestoreAllReviews
+		return s.errorhandler.HandleRestoreAllReviewError(err, method, "FAILED_RESTORE_ALL_REVIEW", span, &status, zap.Error(err))
 	}
+
+	logSuccess("Successfully restored all reviews", zap.Bool("success", success))
 
 	return success, nil
 }
 
 func (s *reviewCommandService) DeleteAllReviewsPermanent() (bool, *response.ErrorResponse) {
+	const method = "DeleteAllReviewsPermanent"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
+
+	defer func() {
+		end(status)
+	}()
+
+	success, err := s.reviewCommandRepository.DeleteAllPermanentReview()
+
+	if err != nil {
+		return s.errorhandler.HandleDeleteAllReviewError(err, method, "FAILED_DELETE_ALL_PERMANENT_REVIEW", span, &status, zap.Error(err))
+	}
+
+	logSuccess("Successfully deleted all reviews permanently", zap.Bool("success", success))
+
+	return success, nil
+}
+
+func (s *reviewCommandService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
 	start := time.Now()
 	status := "success"
 
-	defer func() {
-		s.recordMetrics("DeleteAllReviewsPermanent", status, start)
-	}()
+	_, span := s.trace.Start(s.ctx, method)
 
-	_, span := s.trace.Start(s.ctx, "DeleteAllReviewsPermanent")
-	defer span.End()
-
-	s.logger.Debug("Permanently deleting all reviews")
-
-	success, err := s.reviewCommandRepository.DeleteAllPermanentReview()
-	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_DELETE_ALL_REVIEW_PERMANENT")
-
-		s.logger.Error("Failed to permanently delete all reviews",
-			zap.Error(err),
-			zap.String("trace_id", traceID))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to permanently delete all reviews")
-		status = "failed_delete_all_permanent_reviews"
-
-		return false, review_errors.ErrFailedDeleteAllPermanentReviews
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
 	}
 
-	return success, nil
+	span.AddEvent("Start: " + method)
+
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
 }
 
 func (s *reviewCommandService) recordMetrics(method string, status string, start time.Time) {

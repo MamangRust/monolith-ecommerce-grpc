@@ -21,7 +21,7 @@ type merchantHandleGrpc struct {
 	mapping protomapper.MerchantProtoMapper
 }
 
-func NewMerchantHandleGrpc(service services.Service, mapping protomapper.MerchantProtoMapper) *merchantHandleGrpc {
+func NewMerchantHandleGrpc(service *services.Service, mapping protomapper.MerchantProtoMapper) *merchantHandleGrpc {
 	return &merchantHandleGrpc{
 		merchantQuery:   service.MerchantQuery,
 		merchantCommand: service.MerchantCommand,

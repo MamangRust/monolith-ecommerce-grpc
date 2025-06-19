@@ -7,11 +7,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-transaction/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/email"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	merchant_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant"
@@ -31,8 +32,9 @@ import (
 
 type transactionCommandService struct {
 	ctx                            context.Context
+	mencache                       mencache.TransactionCommandCache
+	errorhandler                   errorhandler.TransactionCommandError
 	trace                          trace.Tracer
-	kafka                          kafka.Kafka
 	userQueryRepository            repository.UserQueryRepository
 	merchantQueryRepository        repository.MerchantQueryRepository
 	transactionQueryRepository     repository.TransactionQueryRepository
@@ -42,13 +44,16 @@ type transactionCommandService struct {
 	shippingAddressQueryRepository repository.ShippingAddressQueryRepository
 	mapping                        response_service.TransactionResponseMapper
 	logger                         logger.LoggerInterface
+	kafka                          *kafka.Kafka
 	requestCounter                 *prometheus.CounterVec
 	requestDuration                *prometheus.HistogramVec
 }
 
 func NewTransactionCommandService(
 	ctx context.Context,
-	kafka kafka.Kafka,
+	mencache mencache.TransactionCommandCache,
+	errorhandler errorhandler.TransactionCommandError,
+	kafka *kafka.Kafka,
 	userQueryRepository repository.UserQueryRepository,
 	merchantQueryRepository repository.MerchantQueryRepository,
 	transactionQueryRepository repository.TransactionQueryRepository,
@@ -80,6 +85,8 @@ func NewTransactionCommandService(
 
 	return &transactionCommandService{
 		ctx:                            ctx,
+		mencache:                       mencache,
+		errorhandler:                   errorhandler,
 		kafka:                          kafka,
 		trace:                          otel.Tracer("transaction-command-service"),
 		userQueryRepository:            userQueryRepository,
@@ -97,103 +104,44 @@ func NewTransactionCommandService(
 }
 
 func (s *transactionCommandService) CreateTransaction(req *requests.CreateTransactionRequest) (*response.TransactionResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "CreateTransaction"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("user.id", req.UserID), attribute.Int("merchant.id", req.MerchantID), attribute.Int("order.id", req.OrderID))
 
 	defer func() {
-		s.recordMetrics("CreateTransaction", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "CreateTransaction")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("order.id", req.OrderID),
-		attribute.Int("merchant.id", req.MerchantID),
-		attribute.Int("request.amount", req.Amount),
-	)
-
-	s.logger.Debug("Creating new transaction", zap.Int("orderID", req.OrderID))
 
 	user, err := s.userQueryRepository.FindById(req.UserID)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_USER")
-
-		s.logger.Error("Failed to fetch user", zap.Int("userID", req.UserID), zap.String("trace_id", traceID), zap.Error(err))
-
-		span.SetAttributes(attribute.String("trace.id", traceID))
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to fetch user")
-
-		status = "failed_fetch_user"
-		return nil, user_errors.ErrUserNotFoundRes
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_USER_BY_ID", span, &status, user_errors.ErrUserNotFoundRes, zap.Error(err))
 	}
 
 	_, err = s.merchantQueryRepository.FindById(req.MerchantID)
+
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MERCHANT")
-		s.logger.Error("Merchant not found", zap.Int("merchantId", req.MerchantID), zap.String("trace_id", traceID), zap.Error(err))
-
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Merchant not found")
-
-		status = "failed_find_merchant"
-		return nil, merchant_errors.ErrFailedFindMerchantById
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_MERCHANT_BY_ID", span, &status, merchant_errors.ErrFailedFindMerchantById, zap.Error(err))
 	}
 
 	_, err = s.orderQueryRepository.FindById(req.OrderID)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ORDER")
-		s.logger.Error("Order not found", zap.Int("orderID", req.OrderID), zap.String("trace_id", traceID), zap.Error(err))
-
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Order not found")
-
-		status = "failed_find_order"
-		return nil, order_errors.ErrFailedFindOrderById
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_ORDER_BY_ID", span, &status, order_errors.ErrFailedFindOrderById, zap.Error(err))
 	}
 
 	orderItems, err := s.orderItemQueryRepository.FindOrderItemByOrder(req.OrderID)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ORDER_ITEM_BY_ORDER")
-		s.logger.Error("Failed to fetch order items", zap.Int("orderID", req.OrderID), zap.String("trace_id", traceID), zap.Error(err))
-
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to fetch order items")
-
-		status = "failed_fetch_order_items"
-		return nil, orderitem_errors.ErrFailedFindOrderItemByOrder
-	}
-	if len(orderItems) == 0 {
-		status = "empty_order_items"
-		span.SetStatus(codes.Error, "No order items found")
-		return nil, orderitem_errors.ErrFailedFindOrderItemByOrder
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_ORDER_ITEM_BY_ORDER", span, &status, orderitem_errors.ErrFailedFindOrderItemByOrder, zap.Error(err))
 	}
 
 	shipping, err := s.shippingAddressQueryRepository.FindByOrder(req.OrderID)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_SHIPPING_ADDRESS")
-
-		s.logger.Error("Failed to fetch shipping address", zap.Int("orderID", req.OrderID), zap.String("trace_id", traceID), zap.Error(err))
-
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to fetch shipping address")
-
-		status = "failed_fetch_shipping"
-		return nil, shippingaddress_errors.ErrFailedFindShippingAddressByOrder
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_SHIPPING_ADDRESS_BY_ORDER", span, &status, shippingaddress_errors.ErrFailedFindShippingAddressByOrder, zap.Error(err))
 	}
 
 	var totalAmount int
 	for _, item := range orderItems {
 		if item.Quantity <= 0 {
-			status = "invalid_item_quantity"
-			span.SetStatus(codes.Error, "Invalid item quantity")
-			return nil, orderitem_errors.ErrFailedFindOrderItemByOrder
+			return s.errorhandler.HandleInvalidOrderItem(err, method, "FAILED_INVALID_ORDER_ITEM", span, &status, zap.Error(err))
 		}
 		totalAmount += item.Price*item.Quantity + shipping.ShippingCost
 	}
@@ -205,13 +153,14 @@ func (s *transactionCommandService) CreateTransaction(req *requests.CreateTransa
 		attribute.Int("calculated.amount", totalAmountWithTax),
 	)
 
+	s.logger.Debug("Calculated amount", zap.Int("amount", totalAmountWithTax))
+
 	var paymentStatus string
 	if req.Amount >= totalAmountWithTax {
 		paymentStatus = "success"
 	} else {
-		status = "insufficient_balance"
-		span.SetStatus(codes.Error, "Insufficient balance for transaction")
-		return nil, transaction_errors.ErrFailedPaymentInsufficientBalance
+		paymentStatus = "failed"
+		return s.errorhandler.HandleInsufficientBalance(err, method, "FAILED_INSUFFICIENT_BALANCE", span, &status, zap.Error(err))
 	}
 
 	req.Amount = totalAmountWithTax
@@ -219,15 +168,7 @@ func (s *transactionCommandService) CreateTransaction(req *requests.CreateTransa
 
 	transaction, err := s.transactionCommandRepository.CreateTransaction(req)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_CREATE_TRANSACTION")
-		s.logger.Error("Failed to create transaction record", zap.String("trace_id", traceID), zap.Error(err))
-
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to create transaction")
-
-		status = "failed_create_transaction"
-		return nil, transaction_errors.ErrFailedCreateTransaction
+		return s.errorhandler.HandleCreateTransactionError(err, method, "FAILED_CREATE_TRANSACTION", span, &status, zap.Error(err))
 	}
 
 	htmlBody := email.GenerateEmailHTML(map[string]string{
@@ -245,125 +186,63 @@ func (s *transactionCommandService) CreateTransaction(req *requests.CreateTransa
 
 	payloadBytes, err := json.Marshal(emailPayload)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("TransactionErr")
-		s.logger.Error("Failed to marshal transaction email payload", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to marshal transaction email payload")
-		return nil, transaction_errors.ErrFailedSendEmail
+		return errorhandler.HandleErrorJSONMarshal[*response.TransactionResponse](s.logger, err, method, "FAILED_CREATE_TRANSACTION", span, &status, transaction_errors.ErrFailedSendEmail, zap.Error(err))
 	}
 
 	err = s.kafka.SendMessage("email-service-topic-transaction-create", strconv.Itoa(transaction.ID), payloadBytes)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("TransactionErr")
-		s.logger.Error("Failed to send transaction email message", zap.String("trace_id", traceID), zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to send transaction email")
-		return nil, transaction_errors.ErrFailedSendEmail
+		return errorhandler.HandleErrorKafkaSend[*response.TransactionResponse](s.logger, err, method, "FAILED_CREATE_TRANSACTION", span, &status, transaction_errors.ErrFailedSendEmail, zap.Error(err))
 	}
 
-	s.logger.Debug("Successfully created transaction", zap.Any("transaction", transaction))
+	so := s.mapping.ToTransactionResponse(transaction)
 
-	return s.mapping.ToTransactionResponse(transaction), nil
+	logSuccess("Successfully created transaction", zap.Int("transaction.id", transaction.ID), zap.Bool("success", true))
+
+	return so, nil
 }
+
 func (s *transactionCommandService) UpdateTransaction(req *requests.UpdateTransactionRequest) (*response.TransactionResponse, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "UpdateTransaction"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("transaction.id", *req.TransactionID), attribute.Int("merchant.id", req.MerchantID), attribute.Int("order.id", req.OrderID))
 
 	defer func() {
-		s.recordMetrics("UpdateTransaction", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "UpdateTransaction")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("transaction.id", *req.TransactionID),
-		attribute.Int("merchant.id", req.MerchantID),
-		attribute.Int("order.id", req.OrderID),
-		attribute.Int("request.amount", req.Amount),
-	)
-
-	s.logger.Debug("Updating transaction", zap.Int("transactionID", *req.TransactionID))
 
 	existingTx, err := s.transactionQueryRepository.FindById(*req.TransactionID)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_TRANSACTION")
-		s.logger.Error("Transaction not found", zap.Int("transactionID", *req.TransactionID), zap.String("trace_id", traceID), zap.Error(err))
-
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Transaction not found")
-
-		status = "failed_find_transaction"
-		return nil, transaction_errors.ErrFailedFindTransactionById
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_TRANSACTION_BY_ID", span, &status, transaction_errors.ErrFailedFindTransactionById, zap.Error(err))
 	}
 
 	if existingTx.PaymentStatus == "success" || existingTx.PaymentStatus == "refunded" {
-		span.SetStatus(codes.Error, "Payment status cannot be modified")
-		status = "invalid_payment_status"
-		return nil, transaction_errors.ErrFailedPaymentStatusCannotBeModified
+		return s.errorhandler.HandleCannotModifiedStatus(err, method, "FAILED_PAYMENT_STATUS_CANNOT_BE_MODIFIED", span, &status, zap.Error(err))
 	}
 
 	_, err = s.merchantQueryRepository.FindById(req.MerchantID)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MERCHANT")
-		s.logger.Error("Merchant not found", zap.Int("merchantId", req.MerchantID), zap.String("trace_id", traceID), zap.Error(err))
-
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Merchant not found")
-
-		status = "failed_find_merchant"
-		return nil, merchant_errors.ErrFailedFindMerchantById
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_MERCHANT_BY_ID", span, &status, merchant_errors.ErrFailedFindMerchantById, zap.Error(err))
 	}
 
 	_, err = s.orderQueryRepository.FindById(req.OrderID)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ORDER")
-		s.logger.Error("Order not found", zap.Int("orderID", req.OrderID), zap.String("trace_id", traceID), zap.Error(err))
-
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Order not found")
-
-		status = "failed_find_order"
-		return nil, order_errors.ErrFailedFindOrderById
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_ORDER_BY_ID", span, &status, order_errors.ErrFailedFindOrderById, zap.Error(err))
 	}
 
 	orderItems, err := s.orderItemQueryRepository.FindOrderItemByOrder(req.OrderID)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FETCH_ORDER_ITEMS")
-		s.logger.Error("Failed to retrieve order items", zap.Int("orderID", req.OrderID), zap.String("trace_id", traceID), zap.Error(err))
-
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve order items")
-
-		status = "failed_fetch_order_items"
-		return nil, orderitem_errors.ErrFailedFindOrderItemByOrder
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_ORDER_ITEM_BY_ORDER", span, &status, orderitem_errors.ErrFailedFindOrderItemByOrder, zap.Error(err))
 	}
 
 	shipping, err := s.shippingAddressQueryRepository.FindByOrder(req.OrderID)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FETCH_SHIPPING")
-		s.logger.Error("Failed to retrieve shipping address", zap.Int("orderID", req.OrderID), zap.String("trace_id", traceID), zap.Error(err))
-
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve shipping address")
-
-		status = "failed_fetch_shipping"
-		return nil, shippingaddress_errors.ErrFailedFindShippingAddressByOrder
+		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_SHIPPING_ADDRESS_BY_ORDER", span, &status, shippingaddress_errors.ErrFailedFindShippingAddressByOrder, zap.Error(err))
 	}
 
 	var totalAmount int
 	for _, item := range orderItems {
 		if item.Quantity <= 0 {
-			status = "invalid_item_quantity"
-			span.SetStatus(codes.Error, "Invalid order item quantity")
-			return nil, orderitem_errors.ErrFailedFindOrderItemByOrder
+			return s.errorhandler.HandleInsufficientBalance(err, method, "FAILED_UPDATE_TRANSACTION", span, &status, zap.Error(err))
 		}
 		totalAmount += item.Price*item.Quantity + shipping.ShippingCost
 	}
@@ -372,14 +251,14 @@ func (s *transactionCommandService) UpdateTransaction(req *requests.UpdateTransa
 	totalAmountWithTax := totalAmount + ppn + shipping.ShippingCost
 
 	span.SetAttributes(attribute.Int("calculated.amount", totalAmountWithTax))
+	s.logger.Debug("Calculated amount", zap.Int("amount", totalAmountWithTax))
 
 	var paymentStatus string
 	if req.Amount >= totalAmountWithTax {
 		paymentStatus = "success"
 	} else {
-		status = "insufficient_balance"
-		span.SetStatus(codes.Error, "Insufficient balance")
-		return nil, transaction_errors.ErrFailedPaymentInsufficientBalance
+		paymentStatus = "failed"
+		return s.errorhandler.HandleInvalidOrderItem(err, method, "FAILED_UPDATE_TRANSACTION", span, &status, zap.Error(err))
 	}
 
 	req.Amount = totalAmountWithTax
@@ -387,152 +266,161 @@ func (s *transactionCommandService) UpdateTransaction(req *requests.UpdateTransa
 
 	transaction, err := s.transactionCommandRepository.UpdateTransaction(req)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_UPDATE_TRANSACTION")
-		s.logger.Error("Failed to update transaction", zap.String("trace_id", traceID), zap.Error(err))
-
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to update transaction")
-
-		status = "failed_update_transaction"
-		return nil, transaction_errors.ErrFailedUpdateTransaction
+		return s.errorhandler.HandleUpdateTransactionError(err, method, "FAILED_UPDATE_TRANSACTION", span, &status, zap.Error(err))
 	}
 
-	s.logger.Debug("Successfully updated transaction", zap.Any("transaction", transaction))
-	return s.mapping.ToTransactionResponse(transaction), nil
+	so := s.mapping.ToTransactionResponse(transaction)
+
+	s.mencache.DeleteTransactionCache(*req.TransactionID)
+
+	logSuccess("Successfully updated transaction", zap.Int("transaction.id", transaction.ID), zap.Bool("success", true))
+
+	return so, nil
 }
 
 func (s *transactionCommandService) TrashedTransaction(transactionID int) (*response.TransactionResponseDeleteAt, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
-	defer func() { s.recordMetrics("TrashedTransaction", status, start) }()
+	const method = "TrashedTransaction"
 
-	_, span := s.trace.Start(s.ctx, "TrashedTransaction")
-	defer span.End()
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("transaction.id", transactionID))
 
-	span.SetAttributes(attribute.Int("transaction.id", transactionID))
-	s.logger.Debug("Trashing transaction", zap.Int("transaction_id", transactionID))
+	defer func() {
+		end(status)
+	}()
 
 	res, err := s.transactionCommandRepository.TrashTransaction(transactionID)
-	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_TRASH_TRANSACTION")
-		s.logger.Error("Failed to move transaction to trash",
-			zap.Int("transaction_id", transactionID), zap.String("trace_id", traceID), zap.Error(err))
 
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to trash transaction")
-		status = "failed_trash"
-		return nil, transaction_errors.ErrFailedTrashedTransaction
+	if err != nil {
+		return s.errorhandler.HandleTrashedTransactionError(err, method, "FAILED_TRASH_TRANSACTION", span, &status, zap.Error(err))
 	}
 
-	span.SetStatus(codes.Ok, "Transaction trashed")
-	s.logger.Debug("Successfully trashed transaction", zap.Int("transaction_id", transactionID))
-	return s.mapping.ToTransactionResponseDeleteAt(res), nil
+	so := s.mapping.ToTransactionResponseDeleteAt(res)
+
+	s.mencache.DeleteTransactionCache(transactionID)
+
+	logSuccess("Successfully trashed transaction", zap.Int("transaction.id", transactionID), zap.Bool("success", true))
+
+	return so, nil
 }
 
 func (s *transactionCommandService) RestoreTransaction(transactionID int) (*response.TransactionResponseDeleteAt, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
-	defer func() { s.recordMetrics("RestoreTransaction", status, start) }()
+	const method = "RestoreTransaction"
 
-	_, span := s.trace.Start(s.ctx, "RestoreTransaction")
-	defer span.End()
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("transaction.id", transactionID))
 
-	span.SetAttributes(attribute.Int("transaction.id", transactionID))
-	s.logger.Debug("Restoring transaction", zap.Int("transaction_id", transactionID))
+	defer func() {
+		end(status)
+	}()
 
 	res, err := s.transactionCommandRepository.RestoreTransaction(transactionID)
-	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_RESTORE_TRANSACTION")
-		s.logger.Error("Failed to restore transaction",
-			zap.Int("transaction_id", transactionID), zap.String("trace_id", traceID), zap.Error(err))
 
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to restore transaction")
-		status = "failed_restore"
-		return nil, transaction_errors.ErrFailedRestoreTransaction
+	if err != nil {
+		return s.errorhandler.HandleRestoreTransactionError(err, method, "FAILED_RESTORE_TRANSACTION", span, &status, zap.Error(err))
 	}
 
-	span.SetStatus(codes.Ok, "Transaction restored")
-	s.logger.Debug("Successfully restored transaction", zap.Int("transaction_id", transactionID))
-	return s.mapping.ToTransactionResponseDeleteAt(res), nil
+	so := s.mapping.ToTransactionResponseDeleteAt(res)
+
+	logSuccess("Successfully restored transaction", zap.Int("transaction.id", transactionID), zap.Bool("success", true))
+
+	return so, nil
 }
 
 func (s *transactionCommandService) DeleteTransactionPermanently(transactionID int) (bool, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
-	defer func() { s.recordMetrics("DeleteTransactionPermanently", status, start) }()
+	const method = "DeleteTransactionPermanently"
 
-	_, span := s.trace.Start(s.ctx, "DeleteTransactionPermanently")
-	defer span.End()
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("transaction.id", transactionID))
 
-	span.SetAttributes(attribute.Int("transaction.id", transactionID))
-	s.logger.Debug("Permanently deleting transaction", zap.Int("transactionID", transactionID))
+	defer func() {
+		end(status)
+	}()
 
 	success, err := s.transactionCommandRepository.DeleteTransactionPermanently(transactionID)
-	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_DELETE_TRANSACTION")
-		s.logger.Error("Failed to permanently delete transaction",
-			zap.Int("transaction_id", transactionID), zap.String("trace_id", traceID), zap.Error(err))
 
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to delete transaction")
-		status = "failed_delete"
-		return false, transaction_errors.ErrFailedDeleteTransactionPermanently
+	if err != nil {
+		return s.errorhandler.HandleDeleteTransactionPermanentError(err, method, "FAILED_DELETE_TRANSACTION_PERMANENTLY", span, &status, zap.Error(err))
 	}
 
-	span.SetStatus(codes.Ok, "Transaction permanently deleted")
+	logSuccess("Successfully permanently deleted transaction", zap.Int("transaction.id", transactionID), zap.Bool("success", success))
+
 	return success, nil
 }
 
 func (s *transactionCommandService) RestoreAllTransactions() (bool, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
-	defer func() { s.recordMetrics("RestoreAllTransactions", status, start) }()
+	const method = "RestoreAllTransactions"
 
-	_, span := s.trace.Start(s.ctx, "RestoreAllTransactions")
-	defer span.End()
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
-	s.logger.Debug("Restoring all trashed transactions")
+	defer func() {
+		end(status)
+	}()
 
 	success, err := s.transactionCommandRepository.RestoreAllTransactions()
-	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_RESTORE_ALL")
-		s.logger.Error("Failed to restore all trashed transactions", zap.String("trace_id", traceID), zap.Error(err))
 
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to restore all transactions")
-		status = "failed_restore_all"
-		return false, transaction_errors.ErrFailedRestoreAllTransactions
+	if err != nil {
+		return s.errorhandler.HandleRestoreAllTransactionError(
+			err, method, "FAILED_RESTORE_ALL_TRANSACTIONS", span, &status, zap.Error(err),
+		)
 	}
 
-	span.SetStatus(codes.Ok, "All transactions restored")
+	logSuccess("All trashed transactions restored successfully", zap.Bool("success", success))
+
 	return success, nil
 }
 
 func (s *transactionCommandService) DeleteAllTransactionPermanent() (bool, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
-	defer func() { s.recordMetrics("DeleteAllTransactionPermanent", status, start) }()
+	const method = "DeleteAllTransactionPermanent"
 
-	_, span := s.trace.Start(s.ctx, "DeleteAllTransactionPermanent")
-	defer span.End()
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
-	s.logger.Debug("Permanently deleting all transactions")
+	defer func() {
+		end(status)
+	}()
 
 	success, err := s.transactionCommandRepository.DeleteAllTransactionPermanent()
-	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_DELETE_ALL")
-		s.logger.Error("Failed to permanently delete all transactions", zap.String("trace_id", traceID), zap.Error(err))
 
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to delete all transactions")
-		status = "failed_delete_all"
-		return false, transaction_errors.ErrFailedDeleteAllTransactionPermanent
+	if err != nil {
+		return s.errorhandler.HandleDeleteAllTransactionPermanentError(err, method, "FAILED_DELETE_ALL_TRANSACTION_PERMANENT", span, &status, zap.Error(err))
 	}
 
-	span.SetStatus(codes.Ok, "All transactions permanently deleted")
+	logSuccess("Successfully permanently deleted all trashed transactions", zap.Bool("success", success))
+
 	return success, nil
+}
+
+func (s *transactionCommandService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
 }
 
 func (s *transactionCommandService) recordMetrics(method string, status string, start time.Time) {

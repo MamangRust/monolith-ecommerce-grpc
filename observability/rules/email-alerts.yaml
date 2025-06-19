@@ -1,0 +1,11 @@
+groups:
+  - name: email-service-alerts
+    rules:
+      - alert: HighEmailFailureRate
+        expr: increase(email_service_requests_total{method="ConsumeClaim",status="failed_send_email"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High email failure rate on EmailService"
+          description: "More than 5 failed email attempts in the last 5 minutes for method 'ConsumeClaim'."

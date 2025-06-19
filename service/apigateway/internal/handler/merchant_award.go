@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -10,6 +12,11 @@ import (
 	response_api "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/api"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	otelcode "go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -19,6 +26,9 @@ type merchantAwardHandleApi struct {
 	logger          logger.LoggerInterface
 	mapping         response_api.MerchantAwardResponseMapper
 	mappingMerchant response_api.MerchantResponseMapper
+	trace           trace.Tracer
+	requestCounter  *prometheus.CounterVec
+	requestDuration *prometheus.HistogramVec
 }
 
 func NewHandlerMerchantAward(
@@ -28,11 +38,33 @@ func NewHandlerMerchantAward(
 	mapping response_api.MerchantAwardResponseMapper,
 	mappingMerchant response_api.MerchantResponseMapper,
 ) *merchantAwardHandleApi {
+	requestCounter := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "merchant_award_handler_requests_total",
+			Help: "Total number of banner requests",
+		},
+		[]string{"method", "status"},
+	)
+
+	requestDuration := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "merchant_award_handler_request_duration_seconds",
+			Help:    "Duration of banner requests",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"method", "status"},
+	)
+
+	prometheus.MustRegister(requestCounter)
+
 	merchantAwardHandler := &merchantAwardHandleApi{
 		client:          client,
 		logger:          logger,
 		mapping:         mapping,
 		mappingMerchant: mappingMerchant,
+		trace:           otel.Tracer("merchant-award-handler"),
+		requestCounter:  requestCounter,
+		requestDuration: requestDuration,
 	}
 
 	routercategory := router.Group("/api/merchant-certification")
@@ -68,19 +100,28 @@ func NewHandlerMerchantAward(
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve merchant data"
 // @Router /api/merchant-certification [get]
 func (h *merchantAwardHandleApi) FindAllMerchantAward(c echo.Context) error {
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if err != nil || page <= 0 {
-		page = 1
-	}
+	const (
+		defaultPage     = 1
+		defaultPageSize = 10
+		method          = "FindAllMerchantAward"
+	)
 
-	pageSize, err := strconv.Atoi(c.QueryParam("page_size"))
-	if err != nil || pageSize <= 0 {
-		pageSize = 10
-	}
-
+	page := parseQueryInt(c, "page", defaultPage)
+	pageSize := parseQueryInt(c, "page_size", defaultPageSize)
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+		attribute.Int("page", page),
+		attribute.Int("page_size", pageSize),
+		attribute.String("search", search),
+	)
+
+	status := "success"
+	defer func() { end(status) }()
 
 	req := &pb.FindAllMerchantRequest{
 		Page:     int32(page),
@@ -91,11 +132,16 @@ func (h *merchantAwardHandleApi) FindAllMerchantAward(c echo.Context) error {
 	res, err := h.client.FindAll(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to fetch merchants", zap.Error(err))
+		status = "error"
+
+		logError("Failed to find all merchant", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedFindAllMerchantAward(c)
 	}
 
 	so := h.mapping.ToApiResponsePaginationMerchantAward(res)
+
+	logSuccess("Successfully find all merchant", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -112,14 +158,25 @@ func (h *merchantAwardHandleApi) FindAllMerchantAward(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve merchant data"
 // @Router /api/merchant-certification/{id} [get]
 func (h *merchantAwardHandleApi) FindById(c echo.Context) error {
+	const method = "FindById"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		h.logger.Debug("Invalid merchant ID format", zap.Error(err))
+		status = "error"
+
+		logError("Invalid merchant ID", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedInvalidMerchantAwardId(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.FindByIdMerchantAwardRequest{
 		Id: int32(id),
@@ -128,11 +185,16 @@ func (h *merchantAwardHandleApi) FindById(c echo.Context) error {
 	res, err := h.client.FindById(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to fetch merchant details", zap.Error(err))
+		status = "error"
+
+		logError("Failed to find merchant by ID", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedFindMerchantAwardById(c)
 	}
 
 	so := h.mapping.ToApiResponseMerchantAward(res)
+
+	logSuccess("Successfully find merchant by ID", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -150,19 +212,28 @@ func (h *merchantAwardHandleApi) FindById(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve merchant data"
 // @Router /api/merchant-certification/active [get]
 func (h *merchantAwardHandleApi) FindByActive(c echo.Context) error {
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if err != nil || page <= 0 {
-		page = 1
-	}
+	const (
+		defaultPage     = 1
+		defaultPageSize = 10
+		method          = "FindByActive"
+	)
 
-	pageSize, err := strconv.Atoi(c.QueryParam("page_size"))
-	if err != nil || pageSize <= 0 {
-		pageSize = 10
-	}
-
+	page := parseQueryInt(c, "page", defaultPage)
+	pageSize := parseQueryInt(c, "page_size", defaultPageSize)
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+		attribute.Int("page", page),
+		attribute.Int("page_size", pageSize),
+		attribute.String("search", search),
+	)
+
+	status := "success"
+	defer func() { end(status) }()
 
 	req := &pb.FindAllMerchantRequest{
 		Page:     int32(page),
@@ -173,11 +244,16 @@ func (h *merchantAwardHandleApi) FindByActive(c echo.Context) error {
 	res, err := h.client.FindByActive(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to fetch active merchants", zap.Error(err))
+		status = "error"
+
+		logError("Failed to find active merchant", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedFindActiveMerchantAward(c)
 	}
 
 	so := h.mapping.ToApiResponsePaginationMerchantAwardDeleteAt(res)
+
+	logSuccess("Successfully find active merchant", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -193,19 +269,28 @@ func (h *merchantAwardHandleApi) FindByActive(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve merchant data"
 // @Router /api/merchant-certification/trashed [get]
 func (h *merchantAwardHandleApi) FindByTrashed(c echo.Context) error {
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if err != nil || page <= 0 {
-		page = 1
-	}
+	const (
+		defaultPage     = 1
+		defaultPageSize = 10
+		method          = "FindByTrashed"
+	)
 
-	pageSize, err := strconv.Atoi(c.QueryParam("page_size"))
-	if err != nil || pageSize <= 0 {
-		pageSize = 10
-	}
-
+	page := parseQueryInt(c, "page", defaultPage)
+	pageSize := parseQueryInt(c, "page_size", defaultPageSize)
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+		attribute.Int("page", page),
+		attribute.Int("page_size", pageSize),
+		attribute.String("search", search),
+	)
+
+	status := "success"
+	defer func() { end(status) }()
 
 	req := &pb.FindAllMerchantRequest{
 		Page:     int32(page),
@@ -216,11 +301,16 @@ func (h *merchantAwardHandleApi) FindByTrashed(c echo.Context) error {
 	res, err := h.client.FindByTrashed(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to fetch archived merchants", zap.Error(err))
+		status = "error"
+
+		logError("Failed to find trashed merchant", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedFindTrashedMerchantAward(c)
 	}
 
 	so := h.mapping.ToApiResponsePaginationMerchantAwardDeleteAt(res)
+
+	logSuccess("Successfully find trashed merchant", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -238,19 +328,33 @@ func (h *merchantAwardHandleApi) FindByTrashed(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to create merchant certification or award"
 // @Router /api/merchant-certification/create [post]
 func (h *merchantAwardHandleApi) Create(c echo.Context) error {
+	const method = "Create"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	var body requests.CreateMerchantCertificationOrAwardRequest
 
 	if err := c.Bind(&body); err != nil {
-		h.logger.Debug("Invalid request format", zap.Error(err))
+		status = "error"
+
+		logError("Invalid request body", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiBindCreateMerchantAward(c)
 	}
 
 	if err := body.Validate(); err != nil {
-		h.logger.Debug("Validation failed", zap.Error(err))
+		status = "error"
+
+		logError("Invalid request body", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiValidateCreateMerchantAward(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.CreateMerchantAwardRequest{
 		MerchantId:     int32(body.MerchantID),
@@ -263,12 +367,19 @@ func (h *merchantAwardHandleApi) Create(c echo.Context) error {
 	}
 
 	res, err := h.client.Create(ctx, req)
+
 	if err != nil {
-		h.logger.Error("Merchant award creation failed", zap.Error(err))
+		status = "error"
+
+		logError("Failed to create merchant", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedCreateMerchantAward(c)
 	}
 
 	so := h.mapping.ToApiResponseMerchantAward(res)
+
+	logSuccess("Successfully create merchant", zap.Bool("success", true))
+
 	return c.JSON(http.StatusOK, so)
 }
 
@@ -286,27 +397,45 @@ func (h *merchantAwardHandleApi) Create(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to update merchant certification or award"
 // @Router /api/merchant-certification/update/{id} [post]
 func (h *merchantAwardHandleApi) Update(c echo.Context) error {
+	const method = "Update"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id := c.Param("id")
 
 	idInt, err := strconv.Atoi(id)
+
 	if err != nil {
-		h.logger.Debug("Invalid id parameter", zap.Error(err))
+		status = "error"
+
+		logError("Invalid merchant award ID", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedInvalidMerchantAwardId(c)
 	}
 
 	var body requests.UpdateMerchantCertificationOrAwardRequest
 
 	if err := c.Bind(&body); err != nil {
-		h.logger.Debug("Invalid request format", zap.Error(err))
+		status = "error"
+
+		logError("Invalid request format", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiBindUpdateMerchantAward(c)
 	}
 
 	if err := body.Validate(); err != nil {
-		h.logger.Debug("Validation failed", zap.Error(err))
+		status = "error"
+
+		logError("Validation failed", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiValidateUpdateMerchantAward(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.UpdateMerchantAwardRequest{
 		MerchantCertificationId: int32(idInt),
@@ -320,11 +449,17 @@ func (h *merchantAwardHandleApi) Update(c echo.Context) error {
 
 	res, err := h.client.Update(ctx, req)
 	if err != nil {
-		h.logger.Error("Merchant award update failed", zap.Error(err))
+		status = "error"
+
+		logError("Merchant award update failed", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedUpdateMerchantAward(c)
 	}
 
 	so := h.mapping.ToApiResponseMerchantAward(res)
+
+	logSuccess("Successfully updated merchant award", zap.Bool("success", true))
+
 	return c.JSON(http.StatusOK, so)
 }
 
@@ -341,14 +476,25 @@ func (h *merchantAwardHandleApi) Update(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve trashed merchant"
 // @Router /api/merchant-certification/trashed/{id} [get]
 func (h *merchantAwardHandleApi) TrashedMerchant(c echo.Context) error {
+	const method = "TrashedMerchant"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		h.logger.Debug("Invalid merchant ID format", zap.Error(err))
+		status = "error"
+
+		logError("failed to archive merchant", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedInvalidMerchantAwardId(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.FindByIdMerchantAwardRequest{
 		Id: int32(id),
@@ -357,11 +503,16 @@ func (h *merchantAwardHandleApi) TrashedMerchant(c echo.Context) error {
 	res, err := h.client.TrashedMerchantAward(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to archive merchant", zap.Error(err))
+		status = "error"
+
+		logError("failed to archive merchant", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedTrashedMerchantAward(c)
 	}
 
 	so := h.mapping.ToApiResponseMerchantAwardDeleteAt(res)
+
+	logSuccess("successfully retrieved trashed merchant", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -379,14 +530,25 @@ func (h *merchantAwardHandleApi) TrashedMerchant(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to restore merchant"
 // @Router /api/merchant-certification/restore/{id} [post]
 func (h *merchantAwardHandleApi) RestoreMerchant(c echo.Context) error {
+	const method = "RestoreMerchant"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		h.logger.Debug("Invalid merchant ID format", zap.Error(err))
+		status = "error"
+
+		logError("Invalid merchant ID format", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedInvalidMerchantAwardId(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.FindByIdMerchantAwardRequest{
 		Id: int32(id),
@@ -395,11 +557,16 @@ func (h *merchantAwardHandleApi) RestoreMerchant(c echo.Context) error {
 	res, err := h.client.RestoreMerchantAward(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to restore merchant", zap.Error(err))
+		status = "error"
+
+		logError("Failed to restore merchant", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedRestoreMerchantAward(c)
 	}
 
 	so := h.mapping.ToApiResponseMerchantAwardDeleteAt(res)
+
+	logSuccess("Successfully restored merchant", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -417,14 +584,25 @@ func (h *merchantAwardHandleApi) RestoreMerchant(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to delete merchant:"
 // @Router /api/merchant-certification/delete/{id} [delete]
 func (h *merchantAwardHandleApi) DeleteMerchantPermanent(c echo.Context) error {
+	const method = "RestoreAllMerchant"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		h.logger.Debug("Invalid merchant ID format", zap.Error(err))
+		status = "error"
+
+		logError("Invalid merchant ID format", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedInvalidMerchantAwardId(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.FindByIdMerchantAwardRequest{
 		Id: int32(id),
@@ -433,11 +611,16 @@ func (h *merchantAwardHandleApi) DeleteMerchantPermanent(c echo.Context) error {
 	res, err := h.client.DeleteMerchantAwardPermanent(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to delete merchant", zap.Error(err))
+		status = "error"
+
+		logError("Failed to permanently delete merchant", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedDeleteMerchantAwardPermanent(c)
 	}
 
 	so := h.mappingMerchant.ToApiResponseMerchantDelete(res)
+
+	logSuccess("Successfully deleted merchant permanently", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -455,18 +638,29 @@ func (h *merchantAwardHandleApi) DeleteMerchantPermanent(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to restore merchant"
 // @Router /api/merchant-certification/restore/all [post]
 func (h *merchantAwardHandleApi) RestoreAllMerchant(c echo.Context) error {
+	const method = "RestoreAllMerchant"
+
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	res, err := h.client.RestoreAllMerchantAward(ctx, &emptypb.Empty{})
 
 	if err != nil {
-		h.logger.Error("Bulk merchant restoration failed", zap.Error(err))
+		status = "error"
+
+		logError("Failed to restore all merchant", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedRestoreAllMerchantAward(c)
 	}
 
 	so := h.mappingMerchant.ToApiResponseMerchantAll(res)
 
-	h.logger.Debug("Successfully restored all merchant")
+	logSuccess("Successfully restored all merchant", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -484,18 +678,75 @@ func (h *merchantAwardHandleApi) RestoreAllMerchant(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to delete merchant:"
 // @Router /api/merchant-certification/delete/all [post]
 func (h *merchantAwardHandleApi) DeleteAllMerchantPermanent(c echo.Context) error {
+	const method = "DeleteAllMerchantPermanent"
+
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	res, err := h.client.DeleteAllMerchantAwardPermanent(ctx, &emptypb.Empty{})
 
 	if err != nil {
-		h.logger.Error("Bulk merchant deletion failed", zap.Error(err))
+		status = "error"
+
+		logError("Bulk merchant deletion failed", err, zap.Error(err))
+
 		return merchantaward_errors.ErrApiFailedDeleteAllMerchantAwardPermanent(c)
 	}
 
 	so := h.mappingMerchant.ToApiResponseMerchantAll(res)
 
-	h.logger.Debug("Successfully deleted all merchant permanently")
+	logSuccess("Successfully deleted all merchant permanently", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
+}
+
+func (s *merchantAwardHandleApi) startTracingAndLogging(
+	ctx context.Context,
+	method string,
+	attrs ...attribute.KeyValue,
+) (func(string), func(string, ...zap.Field), func(string, error, ...zap.Field)) {
+	start := time.Now()
+	_, span := s.trace.Start(ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := otelcode.Ok
+		if status != "success" {
+			code = otelcode.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	logError := func(msg string, err error, fields ...zap.Field) {
+		span.RecordError(err)
+		span.SetStatus(otelcode.Error, msg)
+		span.AddEvent(msg)
+		allFields := append([]zap.Field{zap.Error(err)}, fields...)
+		s.logger.Error(msg, allFields...)
+	}
+
+	return end, logSuccess, logError
+}
+
+func (s *merchantAwardHandleApi) recordMetrics(method string, status string, start time.Time) {
+	s.requestCounter.WithLabelValues(method, status).Inc()
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

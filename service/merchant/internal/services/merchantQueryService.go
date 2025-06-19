@@ -3,9 +3,10 @@ package services
 import (
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-merchant/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	merchant_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant"
@@ -21,6 +22,8 @@ import (
 
 type merchantQueryService struct {
 	ctx                     context.Context
+	errorhandler            errorhandler.MerchantQueryErrorHandler
+	mencache                mencache.MerchantQueryCache
 	trace                   trace.Tracer
 	merchantQueryRepository repository.MerchantQueryRepository
 	logger                  logger.LoggerInterface
@@ -29,7 +32,10 @@ type merchantQueryService struct {
 	requestDuration         *prometheus.HistogramVec
 }
 
-func NewMerchantQueryService(ctx context.Context, merchantQueryRepository repository.MerchantQueryRepository, logger logger.LoggerInterface, mapping response_service.MerchantResponseMapper) *merchantQueryService {
+func NewMerchantQueryService(ctx context.Context,
+	errorhandler errorhandler.MerchantQueryErrorHandler,
+	mencache mencache.MerchantQueryCache,
+	merchantQueryRepository repository.MerchantQueryRepository, logger logger.LoggerInterface, mapping response_service.MerchantResponseMapper) *merchantQueryService {
 	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "merchant_query_service_requests_total",
@@ -51,6 +57,8 @@ func NewMerchantQueryService(ctx context.Context, merchantQueryRepository reposi
 
 	return &merchantQueryService{
 		ctx:                     ctx,
+		errorhandler:            errorhandler,
+		mencache:                mencache,
 		trace:                   otel.Tracer("merchant-query-service"),
 		merchantQueryRepository: merchantQueryRepository,
 		logger:                  logger,
@@ -61,248 +69,177 @@ func NewMerchantQueryService(ctx context.Context, merchantQueryRepository reposi
 }
 
 func (s *merchantQueryService) FindAll(req *requests.FindAllMerchant) ([]*response.MerchantResponse, *int, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindAll"
 
-	defer func() {
-		s.recordMetrics("FindAll", status, startTime)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindAll")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
-	s.logger.Debug("Fetching all merchant records",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
-	if page <= 0 {
-		page = 1
-	}
+	if data, total, found := s.mencache.GetCachedMerchants(req); found {
+		logSuccess("Successfully fetched merchants from cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
-	if pageSize <= 0 {
-		pageSize = 10
+		return data, total, nil
 	}
 
 	merchants, totalRecords, err := s.merchantQueryRepository.FindAllMerchants(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ALL_MERCHANTS")
-
-		s.logger.Error("Failed to retrieve all merchants",
-			zap.Error(err),
-			zap.Int("page", req.Page),
-			zap.Int("pageSize", req.PageSize),
-			zap.String("search", req.Search),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve all merchants")
-		status = "failed_to_find_all_merchants"
-
-		return nil, nil, merchant_errors.ErrFailedFindAllMerchants
+		return s.errorhandler.HandleRepositoryPaginationError(err, "FindAll", "FAILED_FIND_ALL_MERCHANTS", span, &status, zap.Error(err))
 	}
 
 	merchantResponses := s.mapping.ToMerchantsResponse(merchants)
 
-	s.logger.Debug("Successfully all merchant records",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize))
+	s.mencache.SetCachedMerchants(req, merchantResponses, totalRecords)
+
+	logSuccess("Successfully fetched merchants from database", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return merchantResponses, totalRecords, nil
 }
 
 func (s *merchantQueryService) FindById(merchant_id int) (*response.MerchantResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindById"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchant.id", merchant_id))
 
 	defer func() {
-		s.recordMetrics("FindById", status, startTime)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "FindById")
-	defer span.End()
+	if data, found := s.mencache.GetCachedMerchant(merchant_id); found {
+		logSuccess("Successfully fetched merchant from cache", zap.Int("merchant.id", merchant_id))
 
-	span.SetAttributes(
-		attribute.Int("merchant_id", merchant_id),
-	)
-
-	s.logger.Debug("Finding merchant by ID", zap.Int("merchant_id", merchant_id))
+		return data, nil
+	}
 
 	res, err := s.merchantQueryRepository.FindById(merchant_id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MERCHANT_BY_ID")
-
-		s.logger.Error("Failed to find merchant by ID",
-			zap.Error(err),
-			zap.Int("merchant_id", merchant_id),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to find merchant by ID")
-		status = "failed_to_find_merchant_by_id"
-
-		return nil, merchant_errors.ErrFailedFindMerchantById
+		return errorhandler.HandleRepositorySingleError[*response.MerchantResponse](s.logger, err, method, "FAILED_FIND_MERCHANT_BY_ID", span, &status, merchant_errors.ErrFailedFindMerchantById, zap.Int("merchant.id", merchant_id))
 	}
 
 	so := s.mapping.ToMerchantResponse(res)
+
+	s.mencache.SetCachedMerchant(so)
+
+	logSuccess("Successfully fetched merchant from database", zap.Int("merchant.id", merchant_id))
 
 	return so, nil
 }
 
 func (s *merchantQueryService) FindByActive(req *requests.FindAllMerchant) ([]*response.MerchantResponseDeleteAt, *int, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindByActive"
 
-	defer func() {
-		s.recordMetrics("FindByActive", status, startTime)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindByActive")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
-	s.logger.Debug("Fetching all merchant active",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
-	if page <= 0 {
-		page = 1
-	}
+	if data, total, found := s.mencache.GetCachedMerchantActive(req); found {
+		logSuccess("Successfully fetched active merchants from cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
-	if pageSize <= 0 {
-		pageSize = 10
+		return data, total, nil
 	}
 
 	merchants, totalRecords, err := s.merchantQueryRepository.FindByActive(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ACTIVE_MERCHANTS")
-
-		s.logger.Error("Failed to retrieve active merchant",
-			zap.Error(err),
-			zap.Int("page", req.Page),
-			zap.Int("pageSize", req.PageSize),
-			zap.String("search", req.Search),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve active merchant")
-		status = "failed_to_find_active_merchants"
-
-		return nil, nil, merchant_errors.ErrFailedFindActiveMerchants
+		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_ALL_ACTIVE_MERCHANTS", span, &status, merchant_errors.ErrFailedFindActiveMerchants, zap.Error(err))
 	}
 
 	so := s.mapping.ToMerchantsResponseDeleteAt(merchants)
 
-	s.logger.Debug("Successfully fetched active merchants",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize))
+	logSuccess("Successfully fetched active merchants from database", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
 func (s *merchantQueryService) FindByTrashed(req *requests.FindAllMerchant) ([]*response.MerchantResponseDeleteAt, *int, *response.ErrorResponse) {
-	startTime := time.Now()
+	const method = "FindByTrashed"
 
-	status := "success"
-
-	defer func() {
-		s.recordMetrics("FindByTrashed", status, startTime)
-	}()
-
-	_, span := s.trace.Start(s.ctx, "FindByTrashed")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
-	s.logger.Debug("Fetching fetched trashed merchants",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
-	if page <= 0 {
-		page = 1
-	}
+	if data, total, found := s.mencache.GetCachedMerchantTrashed(req); found {
+		logSuccess("Successfully fetched trashed merchants from cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
-	if pageSize <= 0 {
-		pageSize = 10
+		return data, total, nil
 	}
 
 	merchants, totalRecords, err := s.merchantQueryRepository.FindByTrashed(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_TRASHED_MERCHANTS")
-
-		s.logger.Error("Failed to retrieve trashed merchant",
-			zap.Error(err),
-			zap.Int("page", req.Page),
-			zap.Int("pageSize", req.PageSize),
-			zap.String("search", req.Search),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to retrieve trashed merchant")
-		status = "failed_to_find_trashed_merchants"
-
-		return nil, nil, merchant_errors.ErrFailedFindTrashedMerchants
+		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_ALL_TRASHED_MERCHANTS", span, &status, merchant_errors.ErrFailedFindTrashedMerchants, zap.Error(err))
 	}
 
 	so := s.mapping.ToMerchantsResponseDeleteAt(merchants)
 
-	s.logger.Debug("Successfully fetched trashed merchants",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize))
+	s.mencache.SetCachedMerchantTrashed(req, so, totalRecords)
+
+	logSuccess("Successfully fetched trashed merchants from database", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
+}
+
+func (s *merchantQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
+}
+
+func (s *merchantQueryService) normalizePagination(page, pageSize int) (int, int) {
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	return page, pageSize
 }
 
 func (s *merchantQueryService) recordMetrics(method string, status string, start time.Time) {

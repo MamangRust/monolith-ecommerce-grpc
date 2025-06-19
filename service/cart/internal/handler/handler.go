@@ -5,14 +5,14 @@ import (
 )
 
 type Deps struct {
-	Service service.Service
+	Service *service.Service
 }
 
 type Handler struct {
 	Cart CartHandleGrpc
 }
 
-func NewHandler(deps Deps) *Handler {
+func NewHandler(deps *Deps) *Handler {
 	return &Handler{
 		Cart: NewCartHandleGrpc(deps.Service),
 	}

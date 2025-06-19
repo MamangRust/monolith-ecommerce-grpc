@@ -6,14 +6,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-auth/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-auth/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-auth/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/auth"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	refreshtoken_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/refresh_token_errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors/user_errors"
 	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -25,6 +24,9 @@ import (
 
 type identityService struct {
 	ctx             context.Context
+	errorhandler    errorhandler.IdentityErrorHandler
+	errorToken      errorhandler.TokenErrorHandler
+	mencache        mencache.IdentityCache
 	trace           trace.Tracer
 	logger          logger.LoggerInterface
 	token           auth.TokenManager
@@ -36,7 +38,7 @@ type identityService struct {
 	requestDuration *prometheus.HistogramVec
 }
 
-func NewIdentityService(ctx context.Context, token auth.TokenManager, refreshToken repository.RefreshTokenRepository, user repository.UserRepository, logger logger.LoggerInterface, mapping response_service.UserResponseMapper, tokenService tokenService) *identityService {
+func NewIdentityService(ctx context.Context, errohandler errorhandler.IdentityErrorHandler, errorToken errorhandler.TokenErrorHandler, mencache mencache.IdentityCache, token auth.TokenManager, refreshToken repository.RefreshTokenRepository, user repository.UserRepository, logger logger.LoggerInterface, mapping response_service.UserResponseMapper, tokenService tokenService) *identityService {
 	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "identity_service_requests_total",
@@ -55,6 +57,9 @@ func NewIdentityService(ctx context.Context, token auth.TokenManager, refreshTok
 
 	return &identityService{
 		ctx:             ctx,
+		errorhandler:    errohandler,
+		errorToken:      errorToken,
+		mencache:        mencache,
 		trace:           otel.Tracer("identity-service"),
 		logger:          logger,
 		token:           token,
@@ -68,105 +73,88 @@ func NewIdentityService(ctx context.Context, token auth.TokenManager, refreshTok
 }
 
 func (s *identityService) RefreshToken(token string) (*response.TokenResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "RefreshToken"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.String("token", token))
+
 	defer func() {
-		s.recordMetrics("RefreshToken", status, startTime)
+		end(status)
 	}()
 
-	ctx, span := s.trace.Start(s.ctx, "IdentityService.RefreshToken")
-	defer span.End()
+	if cachedUserID, found := s.mencache.GetRefreshToken(token); found {
+		userId, err := strconv.Atoi(cachedUserID)
+		if err == nil {
+			s.mencache.DeleteRefreshToken(token)
+			s.logger.Debug("Invalidated old refresh token from cache", zap.String("token", token))
 
-	span.SetAttributes(
-		attribute.String("token", token),
-	)
+			accessToken, err := s.tokenService.createAccessToken(userId)
+			if err != nil {
+				return s.errorToken.HandleCreateAccessTokenError(err, method, "CREATE_ACCESS_TOKEN_FAILED", span, &status, zap.Int("user.id", userId))
+			}
 
-	s.logger.Debug("Refreshing token",
-		zap.String("token", token),
-	)
+			refreshToken, err := s.tokenService.createRefreshToken(userId)
+			if err != nil {
+				return s.errorToken.HandleCreateRefreshTokenError(err, method, "CREATE_REFRESH_TOKEN_FAILED", span, &status, zap.Int("user.id", userId))
+			}
+
+			expiryTime := time.Now().Add(24 * time.Hour)
+			expirationDuration := time.Until(expiryTime)
+
+			s.mencache.SetRefreshToken(refreshToken, expirationDuration)
+			s.logger.Debug("Stored new refresh token in cache",
+				zap.String("new_token", refreshToken),
+				zap.Duration("expiration", expirationDuration))
+
+			s.logger.Debug("Refresh token refreshed successfully (cached)", zap.Int("user_id", userId))
+			span.SetStatus(codes.Ok, "Token refreshed successfully from cache")
+
+			return &response.TokenResponse{
+				AccessToken:  accessToken,
+				RefreshToken: refreshToken,
+			}, nil
+		}
+	}
 
 	userIdStr, err := s.token.ValidateToken(token)
 	if err != nil {
 		if errors.Is(err, auth.ErrTokenExpired) {
-			traceID := traceunic.GenerateTraceID("TOKEN_EXPIRED")
+			s.mencache.DeleteRefreshToken(token)
 			if err := s.refreshToken.DeleteRefreshToken(token); err != nil {
-				s.logger.Error("Failed to delete expired refresh token",
-					zap.String("trace_id", traceID),
-					zap.Error(err),
-				)
-				span.RecordError(err)
-				span.SetStatus(codes.Error, "Failed to delete expired token")
-				status = "delete_token_failed"
-				return nil, refreshtoken_errors.ErrFailedDeleteRefreshToken
+
+				return s.errorhandler.HandleDeleteRefreshTokenError(err, method, "DELETE_REFRESH_TOKEN", span, &status, zap.String("token", token))
 			}
 
-			s.logger.Error("Refresh token has expired",
-				zap.String("trace_id", traceID),
-				zap.Error(err),
-			)
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "Token expired")
-			status = "token_expired"
-			return nil, refreshtoken_errors.ErrFailedExpire
+			return s.errorhandler.HandleExpiredRefreshTokenError(err, method, "TOKEN_EXPIRED", span, &status, zap.String("token", token))
 		}
 
-		traceID := traceunic.GenerateTraceID("INVALID_TOKEN")
-		s.logger.Error("Invalid refresh token",
-			zap.String("trace_id", traceID),
-			zap.Error(err),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Invalid token")
-		status = "invalid_token"
-		return nil, refreshtoken_errors.ErrRefreshTokenNotFound
+		return s.errorhandler.HandleInvalidTokenError(err, method, "INVALID_TOKEN", span, &status, zap.String("token", token))
 	}
 
 	userId, err := strconv.Atoi(userIdStr)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("INVALID_USER_ID")
-		s.logger.Error("Invalid user ID format in token",
-			zap.String("trace_id", traceID),
-			zap.Error(err),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Invalid user ID format")
-		status = "invalid_user_id"
-		return nil, &response.ErrorResponse{
-			Status:  "error",
-			Message: "Invalid user ID format in token",
-		}
+
+		return errorhandler.HandleInvalidFormatUserIDError[*response.TokenResponse](s.logger, err, method, "INVALID_USER_ID", span, &status, zap.Int("user.id", userId))
 	}
 
-	span.SetAttributes(
-		attribute.Int("user.id", userId),
-	)
+	span.SetAttributes(attribute.Int("user.id", userId))
 
-	accessToken, err := s.tokenService.createAccessToken(ctx, userId)
-	if err != nil {
-		traceID := traceunic.GenerateTraceID("ACCESS_TOKEN_FAILED")
-		s.logger.Error("Failed to generate new access token",
-			zap.String("trace_id", traceID),
-			zap.Int("user_id", userId),
-			zap.Error(err),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to create access token")
-		status = "access_token_failed"
-		return nil, refreshtoken_errors.ErrFailedCreateAccess
+	s.mencache.DeleteRefreshToken(token)
+	if err := s.refreshToken.DeleteRefreshToken(token); err != nil {
+		s.logger.Debug("Failed to delete old refresh token", zap.Error(err))
+
+		return s.errorhandler.HandleDeleteRefreshTokenError(err, method, "DELETE_REFRESH_TOKEN", span, &status, zap.String("token", token))
 	}
 
-	refreshToken, err := s.tokenService.createRefreshToken(ctx, userId)
+	accessToken, err := s.tokenService.createAccessToken(userId)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("REFRESH_TOKEN_FAILED")
-		s.logger.Error("Failed to generate new refresh token",
-			zap.String("trace_id", traceID),
-			zap.Int("user_id", userId),
-			zap.Error(err),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to create refresh token")
-		status = "refresh_token_failed"
-		return nil, refreshtoken_errors.ErrFailedCreateRefreshToken
+
+		return s.errorToken.HandleCreateAccessTokenError(err, method, "CREATE_ACCESS_TOKEN_FAILED", span, &status, zap.Int("user.id", userId))
+	}
+
+	refreshToken, err := s.tokenService.createRefreshToken(userId)
+	if err != nil {
+
+		return s.errorToken.HandleCreateRefreshTokenError(err, method, "CREATE_REFRESH_TOKEN_FAILED", span, &status, zap.Int("user.id", userId))
 	}
 
 	expiryTime := time.Now().Add(24 * time.Hour)
@@ -177,99 +165,105 @@ func (s *identityService) RefreshToken(token string) (*response.TokenResponse, *
 	}
 
 	if _, err = s.refreshToken.UpdateRefreshToken(updateRequest); err != nil {
-		traceID := traceunic.GenerateTraceID("UPDATE_TOKEN_FAILED")
-		s.logger.Error("Failed to update refresh token in storage",
-			zap.String("trace_id", traceID),
-			zap.Int("user_id", userId),
-			zap.Error(err),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to update token")
-		status = "token_update_failed"
-		return nil, refreshtoken_errors.ErrFailedUpdateRefreshToken
+		s.mencache.DeleteRefreshToken(refreshToken)
+
+		return s.errorhandler.HandleUpdateRefreshTokenError(err, method, "UPDATE_REFRESH_TOKEN_FAILED", span, &status, zap.Int("user.id", userId))
 	}
 
-	s.logger.Debug("Refresh token refreshed successfully",
-		zap.Int("user_id", userId),
-	)
-	span.SetStatus(codes.Ok, "Token refreshed successfully")
+	expirationDuration := time.Until(expiryTime)
+	s.mencache.SetRefreshToken(refreshToken, expirationDuration)
+
+	logSuccess("Refresh token refreshed successfully", zap.Int("user.id", userId))
 
 	return &response.TokenResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
 }
-
 func (s *identityService) GetMe(token string) (*response.UserResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "GetMe"
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.String("token", token))
+
 	defer func() {
-		s.recordMetrics("GetMe", status, startTime)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "IdentityService.GetMe")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.String("token", token),
-	)
-
-	s.logger.Debug("Fetching user details",
-		zap.String("token", token),
-	)
+	s.logger.Debug("Fetching user details", zap.String("token", token))
 
 	userIdStr, err := s.token.ValidateToken(token)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("INVALID_ACCESS_TOKEN")
-		s.logger.Error("Invalid access token",
-			zap.String("trace_id", traceID),
-			zap.Error(err),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Invalid access token")
-		status = "invalid_token"
-		return nil, refreshtoken_errors.ErrFailedInValidToken
+		status = "error"
+
+		return s.errorhandler.HandleValidateTokenError(err, method, "INVALID_TOKEN", span, &status, zap.String("token", token))
 	}
 
 	userId, err := strconv.Atoi(userIdStr)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("INVALID_USER_ID_FORMAT")
-		s.logger.Error("Invalid user ID format in token",
-			zap.String("trace_id", traceID),
-			zap.Error(err),
+		status = "error"
+
+		return errorhandler.HandleInvalidFormatUserIDError[*response.UserResponse](
+			s.logger, err, method, "INVALID_USER_ID", span, &status, zap.String("user_id_str", userIdStr),
 		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Invalid user ID format")
-		status = "invalid_user_id"
-		return nil, refreshtoken_errors.ErrFailedInValidUserId
 	}
 
-	span.SetAttributes(
-		attribute.Int("user.id", userId),
-	)
+	span.SetAttributes(attribute.Int("user.id", userId))
+
+	if cachedUser, found := s.mencache.GetCachedUserInfo(userIdStr); found {
+		logSuccess("User info retrieved from cache", zap.Int("user.id", userId))
+		return cachedUser, nil
+	}
 
 	user, err := s.user.FindById(userId)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("USER_NOT_FOUND")
-		s.logger.Error("Failed to find user by ID",
-			zap.String("trace_id", traceID),
-			zap.Int("user_id", userId),
-			zap.Error(err),
-		)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "User not found")
-		status = "user_not_found"
-		return nil, user_errors.ErrUserNotFoundRes
+		status = "error"
+
+		return s.errorhandler.HandleFindByIdError(err, method, "FAILED_FETCH_USER", span, &status, zap.Int("user.id", userId))
 	}
 
 	userResponse := s.mapping.ToUserResponse(user)
 
-	s.logger.Debug("User details fetched successfully",
-		zap.Int("user_id", userId),
-	)
-	span.SetStatus(codes.Ok, "User details fetched")
+	s.mencache.SetCachedUserInfo(userResponse, time.Minute*5)
+
+	logSuccess("User details fetched successfully", zap.Int("user.id", userId))
 
 	return userResponse, nil
+}
+
+func (s *identityService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
 }
 
 func (s *identityService) recordMetrics(method string, status string, start time.Time) {

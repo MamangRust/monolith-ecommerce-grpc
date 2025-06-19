@@ -11,8 +11,8 @@ type CartQueryRepository interface {
 
 type CartCommandRepository interface {
 	CreateCart(req *requests.CartCreateRecord) (*record.CartRecord, error)
-	DeletePermanent(cart_id int) (bool, error)
-	DeleteAllPermanently(req *requests.DeleteCartRequest) (bool, error)
+	DeletePermanent(req *requests.DeleteCartRequest) (bool, error)
+	DeleteAllPermanently(req *requests.DeleteAllCartRequest) (bool, error)
 }
 
 type ProductQueryRepository interface {

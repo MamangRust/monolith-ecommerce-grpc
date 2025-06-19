@@ -42,8 +42,11 @@ func (r *cartCommandRepository) CreateCart(req *requests.CartCreateRecord) (*rec
 	return r.mapping.ToCartRecord(res), nil
 }
 
-func (r *cartCommandRepository) DeletePermanent(cart_id int) (bool, error) {
-	err := r.db.DeleteCart(r.ctx, int32(cart_id))
+func (r *cartCommandRepository) DeletePermanent(req *requests.DeleteCartRequest) (bool, error) {
+	err := r.db.DeleteCartByIdAndUserId(r.ctx, db.DeleteCartByIdAndUserIdParams{
+		UserID: int32(req.UserID),
+		CartID: int32(req.CartID),
+	})
 
 	if err != nil {
 		return false, cart_errors.ErrDeleteCartPermanent
@@ -52,14 +55,17 @@ func (r *cartCommandRepository) DeletePermanent(cart_id int) (bool, error) {
 	return true, nil
 }
 
-func (r *cartCommandRepository) DeleteAllPermanently(req *requests.DeleteCartRequest) (bool, error) {
+func (r *cartCommandRepository) DeleteAllPermanently(req *requests.DeleteAllCartRequest) (bool, error) {
 	cartIDs := make([]int32, len(req.CartIds))
 
 	for i, id := range req.CartIds {
 		cartIDs[i] = int32(id)
 	}
 
-	err := r.db.DeleteAllCart(r.ctx, cartIDs)
+	err := r.db.DeleteAllCartByUserId(r.ctx, db.DeleteAllCartByUserIdParams{
+		UserID:  int32(req.UserID),
+		Column1: cartIDs,
+	})
 
 	if err != nil {
 		return false, cart_errors.ErrDeleteAllCarts

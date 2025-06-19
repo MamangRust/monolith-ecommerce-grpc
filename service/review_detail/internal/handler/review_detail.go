@@ -21,7 +21,7 @@ type reviewDetailHandleGrpc struct {
 	mappingReview              protomapper.ReviewProtoMapper
 }
 
-func NewReviewDetailHandleGrpc(service service.Service) *reviewDetailHandleGrpc {
+func NewReviewDetailHandleGrpc(service *service.Service) *reviewDetailHandleGrpc {
 	return &reviewDetailHandleGrpc{
 		reviewDetailQueryService:   service.ReviewDetailQuery,
 		reviewDetailCommandService: service.ReviewDetailCommand,

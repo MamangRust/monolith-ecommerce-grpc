@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-exporter
+  namespace: ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-exporter
+  template:
+    metadata:
+      labels:
+        app: kafka-exporter
+    spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox:1.35
+          command: ['sh', '-c']
+          args:
+            - |
+              echo "Waiting for Kafka to be ready (TCP)..."
+              until nc -z kafka.ecommerce.svc.cluster.local 9092; do
+                echo "Kafka is not ready yet. Waiting 5 seconds..."
+                sleep 5
+              done
+              echo "Kafka is ready!"
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"
+      containers:
+      - name: kafka-exporter
+        image: danielqsj/kafka-exporter:v1.9.0
+        args:
+          - --kafka.server=kafka.ecommerce.svc.cluster.local:9092
+          - --web.listen-address=:9308
+          - --log.level=debug
+        ports:
+        - containerPort: 9308
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9308
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"

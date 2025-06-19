@@ -5,16 +5,17 @@ import (
 	"os"
 	"time"
 
-	"github.com/MamangRust/monolith-point-of-sale-grpc-product/internal/repository"
-	"github.com/MamangRust/monolith-point-of-sale-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-point-of-sale-pkg/trace_unic"
-	"github.com/MamangRust/monolith-point-of-sale-pkg/utils"
-	"github.com/MamangRust/monolith-point-of-sale-shared/domain/requests"
-	"github.com/MamangRust/monolith-point-of-sale-shared/domain/response"
-	"github.com/MamangRust/monolith-point-of-sale-shared/errors/category_errors"
-	merchant_errors "github.com/MamangRust/monolith-point-of-sale-shared/errors/merchant"
-	"github.com/MamangRust/monolith-point-of-sale-shared/errors/product_errors"
-	response_service "github.com/MamangRust/monolith-point-of-sale-shared/mapper/response/services"
+	"github.com/MamangRust/monolith-ecommerce-grpc-product/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-product/internal/redis"
+	"github.com/MamangRust/monolith-ecommerce-grpc-product/internal/repository"
+	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-pkg/utils"
+	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors/category_errors"
+	merchant_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors/product_errors"
+	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -25,6 +26,8 @@ import (
 
 type productCommandService struct {
 	ctx                      context.Context
+	errorhandler             errorhandler.ProductCommandError
+	mencache                 mencache.ProductCommandCache
 	trace                    trace.Tracer
 	categoryRepository       repository.CategoryQueryRepository
 	merchantRepository       repository.MerchantQueryRepository
@@ -38,6 +41,8 @@ type productCommandService struct {
 
 func NewProductCommandService(
 	ctx context.Context,
+	errorhandler errorhandler.ProductCommandError,
+	mencache mencache.ProductCommandCache,
 	categoryRepository repository.CategoryQueryRepository,
 	merchantRepository repository.MerchantQueryRepository,
 	productQueryRepository repository.ProductQueryRepository,
@@ -66,6 +71,8 @@ func NewProductCommandService(
 
 	return &productCommandService{
 		ctx:                      ctx,
+		errorhandler:             errorhandler,
+		mencache:                 mencache,
 		trace:                    otel.Tracer("product-command-service"),
 		categoryRepository:       categoryRepository,
 		merchantRepository:       merchantRepository,
@@ -79,60 +86,24 @@ func NewProductCommandService(
 }
 
 func (s *productCommandService) CreateProduct(req *requests.CreateProductRequest) (*response.ProductResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "CreateProduct"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.String("product.name", req.Name), attribute.Int("product.category_id", req.CategoryID), attribute.Int("product.merchant_id", req.MerchantID))
 
 	defer func() {
-		s.recordMetrics("CreateProduct", status, startTime)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "CreateProduct")
-	defer span.End()
-
-	s.logger.Debug("Creating new product")
 
 	_, err := s.categoryRepository.FindById(req.CategoryID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_CATEGORY_BY_ID")
-
-		s.logger.Error("Category not found for product creation",
-			zap.Int("categoryID", req.CategoryID),
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Category not found for product creation")
-
-		status = "failed_find_category_by_id"
-
-		return nil, category_errors.ErrFailedFindCategoryById
+		return errorhandler.HandleRepositorySingleError[*response.ProductResponse](s.logger, err, method, "FAILED_FIND_CATEGORY_BY_ID", span, &status, category_errors.ErrFailedFindCategoryById, zap.Error(err))
 	}
 
 	_, err = s.merchantRepository.FindById(req.MerchantID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MERCHANT_BY_ID")
-
-		s.logger.Error("Merchant not found for product creation",
-			zap.Int("merchantID", req.MerchantID),
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Merchant not found for product creation")
-
-		status = "failed_find_merchant_by_id"
-
-		return nil, merchant_errors.ErrFailedFindMerchantById
+		return errorhandler.HandleRepositorySingleError[*response.ProductResponse](s.logger, err, method, "FAILED_FIND_MERCHANT_BY_ID", span, &status, merchant_errors.ErrFailedFindMerchantById, zap.Error(err))
 	}
 
 	slug := utils.GenerateSlug(req.Name)
@@ -142,88 +113,35 @@ func (s *productCommandService) CreateProduct(req *requests.CreateProductRequest
 	product, err := s.productCommandRepository.CreateProduct(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_CREATE_PRODUCT")
-
-		s.logger.Error("Failed to create product",
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to create product")
-
-		status = "failed_create_product"
-
-		return nil, product_errors.ErrFailedCreateProduct
+		return errorhandler.HandleRepositorySingleError[*response.ProductResponse](s.logger, err, method, "FAILED_CREATE_PRODUCT", span, &status, product_errors.ErrFailedCreateProduct, zap.Error(err))
 	}
 
-	s.logger.Debug("Product created successfully", zap.Int("productID", product.ID))
+	so := s.mapping.ToProductResponse(product)
 
-	return s.mapping.ToProductResponse(product), nil
+	logSuccess("Successfully created product", zap.Int("product.id", product.ID), zap.Bool("success", true))
+
+	return so, nil
 }
 
 func (s *productCommandService) UpdateProduct(req *requests.UpdateProductRequest) (*response.ProductResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "UpdateProduct"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("UpdateProduct", status, startTime)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "UpdateProduct")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("productID", *req.ProductID),
-	)
-
-	s.logger.Debug("Updating product", zap.Int("productID", *req.ProductID))
 
 	_, err := s.categoryRepository.FindById(req.CategoryID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_CATEGORY_BY_ID")
-
-		s.logger.Error("Category not found for product update",
-			zap.Int("categoryID", req.CategoryID),
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Category not found for product update")
-
-		status = "failed_find_category_by_id"
-
-		return nil, category_errors.ErrFailedFindCategoryById
+		return errorhandler.HandleRepositorySingleError[*response.ProductResponse](s.logger, err, method, "FAILED_FIND_CATEGORY_BY_ID", span, &status, category_errors.ErrFailedFindCategoryById, zap.Error(err))
 	}
 
 	_, err = s.merchantRepository.FindById(req.MerchantID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_MERCHANT_BY_ID")
-
-		s.logger.Error("Merchant not found for product update",
-			zap.Int("merchantID", req.MerchantID),
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Merchant not found for product update")
-
-		status = "failed_find_merchant_by_id"
-
-		return nil, merchant_errors.ErrFailedFindMerchantById
+		return errorhandler.HandleRepositorySingleError[*response.ProductResponse](s.logger, err, method, "FAILED_FIND_MERCHANT_BY_ID", span, &status, merchant_errors.ErrFailedFindMerchantById, zap.Error(err))
 	}
 
 	slug := utils.GenerateSlug(req.Name)
@@ -233,192 +151,94 @@ func (s *productCommandService) UpdateProduct(req *requests.UpdateProductRequest
 	product, err := s.productCommandRepository.UpdateProduct(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_UPDATE_PRODUCT")
-
-		s.logger.Error("Failed to update product",
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to update product")
-
-		status = "failed_update_product"
-
-		return nil, product_errors.ErrFailedUpdateProduct
+		return errorhandler.HandleRepositorySingleError[*response.ProductResponse](s.logger, err, method, "FAILED_UPDATE_PRODUCT", span, &status, product_errors.ErrFailedUpdateProduct, zap.Error(err))
 	}
 
-	s.logger.Debug("Product updated successfully", zap.Int("productID", product.ID))
-	return s.mapping.ToProductResponse(product), nil
+	so := s.mapping.ToProductResponse(product)
+
+	s.mencache.DeleteCachedProduct(*req.ProductID)
+
+	logSuccess("Successfully updated product", zap.Int("product.id", *req.ProductID), zap.Bool("success", true))
+
+	return so, nil
 }
 
 func (s *productCommandService) TrashProduct(productID int) (*response.ProductResponseDeleteAt, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "TrashProduct"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("TrashProduct", status, startTime)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "TrashProduct")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("productID", productID),
-	)
-
-	s.logger.Debug("Trashing product", zap.Int("productID", productID))
 
 	product, err := s.productCommandRepository.TrashedProduct(productID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_TRASH_PRODUCT")
-
-		s.logger.Error("Failed to trash product",
-			zap.Int("product_id", productID),
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to trash product")
-
-		status = "failed_trash_product"
-
-		return nil, product_errors.ErrFailedTrashProduct
+		return s.errorhandler.HandleTrashedProductError(err, method, "FAILED_TRASH_PRODUCT", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToProductResponseDeleteAt(product), nil
+	so := s.mapping.ToProductResponseDeleteAt(product)
+
+	s.mencache.DeleteCachedProduct(productID)
+
+	logSuccess("Successfully trashed product", zap.Int("product.id", productID), zap.Bool("success", true))
+
+	return so, nil
 }
 
 func (s *productCommandService) RestoreProduct(productID int) (*response.ProductResponseDeleteAt, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "RestoreProduct"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("RestoreProduct", status, startTime)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "RestoreProduct")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("productID", productID),
-	)
-
-	s.logger.Debug("Restoring product", zap.Int("productID", productID))
 
 	product, err := s.productCommandRepository.RestoreProduct(productID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_RESTORE_PRODUCT")
-
-		s.logger.Error("Failed to restore product",
-			zap.Int("product_id", productID),
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to restore product")
-
-		status = "failed_restore_product"
-
-		return nil, product_errors.ErrFailedRestoreProduct
+		return s.errorhandler.HandleRestoreProductError(err, method, "FAILED_RESTORE_PRODUCT", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToProductResponseDeleteAt(product), nil
+	so := s.mapping.ToProductResponseDeleteAt(product)
+
+	s.mencache.DeleteCachedProduct(productID)
+
+	logSuccess("Successfully restored product", zap.Int("product.id", productID), zap.Bool("success", true))
+
+	return so, nil
 }
 
 func (s *productCommandService) DeleteProductPermanent(productID int) (bool, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "DeleteProductPermanent"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("DeleteProductPermanent", status, startTime)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "DeleteProductPermanent")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("productID", productID),
-	)
-
-	s.logger.Debug("Permanently deleting product", zap.Int("productID", productID))
 
 	res, err := s.productQueryRepository.FindByIdTrashed(productID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_PRODUCT_TRASHED_BY_ID")
-
-		s.logger.Error("Failed to find product trashed by id",
-			zap.Int("product_id", productID),
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to find product trashed by id")
-
-		status = "failed_find_product_trashed_by_id"
-
-		return false, product_errors.ErrFailedFindProductTrashedById
+		return errorhandler.HandleRepositorySingleError[bool](s.logger, err, method, "FAILED_FIND_PRODUCT_BY_ID_TRASHED", span, &status, product_errors.ErrFailedFindProductTrashedById, zap.Error(err))
 	}
 
 	if res.ImageProduct != "" {
 		err := os.Remove(res.ImageProduct)
+
 		if err != nil {
 			if os.IsNotExist(err) {
-				traceID := traceunic.GenerateTraceID("FAILED_DELETE_IMAGE_PRODUCT")
-
 				s.logger.Error("Failed to delete product image",
 					zap.String("image_path", res.ImageProduct),
-					zap.Error(err),
-					zap.String("traceID", traceID))
-
-				span.SetAttributes(
-					attribute.String("traceID", traceID),
-				)
-
-				span.RecordError(err)
-				span.SetStatus(codes.Error, "Failed to delete product image")
-
-				status = "failed_delete_image_product"
-
+					zap.Error(err))
 			} else {
-				traceID := traceunic.GenerateTraceID("FAILED_DELETE_IMAGE_PRODUCT")
-
-				s.logger.Error("Failed to delete product image",
-					zap.String("image_path", res.ImageProduct),
-					zap.Error(err),
-					zap.String("traceID", traceID))
-
-				span.SetAttributes(
-					attribute.String("traceID", traceID),
-				)
-
-				span.RecordError(err)
-				span.SetStatus(codes.Error, "Failed to delete product image")
-
-				status = "failed_delete_image_product"
-
-				return false, product_errors.ErrFailedDeleteImageProduct
+				return s.errorhandler.HandleFileError(err, method, "FAILED_DELETE_IMAGE_PRODUCT", res.ImageProduct, span, &status, zap.Error(err))
 			}
 		} else {
-			s.logger.Debug("Successfully deleted product image",
+			s.logger.Debug("Successfully deleted category image",
 				zap.String("image_path", res.ImageProduct))
 		}
 	}
@@ -426,113 +246,91 @@ func (s *productCommandService) DeleteProductPermanent(productID int) (bool, *re
 	_, err = s.productCommandRepository.DeleteProductPermanent(productID)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_DELETE_PRODUCT_PERMANENT")
-
-		s.logger.Error("Failed to permanently delete product",
-			zap.Int("product_id", productID),
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to permanently delete product")
-
-		status = "failed_delete_product_permanent"
-
-		return false, product_errors.ErrFailedDeleteProductPermanent
+		return s.errorhandler.HandleDeleteProductError(err, method, "FAILED_DELETE_PRODUCT_PERMANENT", span, &status, zap.Error(err))
 	}
 
-	s.logger.Debug("Product permanently deleted successfully",
-		zap.Int("product_id", productID))
+	msgSuccess := "Product deleted permanently successfully"
+
+	logSuccess(msgSuccess, zap.Int("product.id", productID), zap.Bool("success", true))
 
 	return true, nil
 }
 
 func (s *productCommandService) RestoreAllProducts() (bool, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "RestoreAllProducts"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("RestoreAllProducts", status, startTime)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "RestoreAllProducts")
-	defer span.End()
-
-	s.logger.Debug("Restoring all trashed products")
 
 	success, err := s.productCommandRepository.RestoreAllProducts()
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_RESTORE_ALL_PRODUCTS")
-
-		s.logger.Error("Failed to restore all trashed products",
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to restore all trashed products")
-
-		status = "failed_restore_all_products"
-
-		return false, product_errors.ErrFailedRestoreAllProducts
+		return s.errorhandler.HandleRestoreAllProductError(err, method, "FAILED_RESTORE_ALL_PRODUCTS", span, &status, zap.Error(err))
 	}
 
-	s.logger.Debug("All trashed products restored successfully",
-		zap.Bool("success", success))
+	logSuccess("All trashed products restored successfully", zap.Bool("success", success))
 
 	return success, nil
 }
 
 func (s *productCommandService) DeleteAllProductsPermanent() (bool, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "DeleteAllProductsPermanent"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("DeleteAllProductsPermanent", status, startTime)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "DeleteAllProductsPermanent")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.String("method", "DeleteAllProductsPermanent"),
-	)
-
-	s.logger.Debug("Permanently deleting all products")
 
 	success, err := s.productCommandRepository.DeleteAllProductPermanent()
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_DELETE_ALL_PRODUCTS_PERMANENT")
-
-		s.logger.Error("Failed to permanently delete all trashed products",
-			zap.Error(err),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to permanently delete all trashed products")
-
-		status = "failed_delete_all_products_permanent"
-
-		return false, product_errors.ErrFailedDeleteAllProductsPermanent
+		return s.errorhandler.HandleDeleteAllProductError(err, method, "FAILED_DELETE_ALL_PRODUCTS_PERMANENT", span, &status, zap.Error(err))
 	}
 
-	s.logger.Debug("All trashed products permanently deleted successfully",
-		zap.Bool("success", success))
+	logSuccess("All trashed products deleted permanently successfully", zap.Bool("success", success))
 
 	return success, nil
+}
+
+func (s *productCommandService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
 }
 
 func (s *productCommandService) recordMetrics(method string, status string, start time.Time) {

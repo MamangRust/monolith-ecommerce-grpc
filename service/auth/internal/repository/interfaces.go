@@ -8,6 +8,7 @@ import (
 type UserRepository interface {
 	FindByEmail(email string) (*record.UserRecord, error)
 	FindById(id int) (*record.UserRecord, error)
+	FindByEmailAndVerify(email string) (*record.UserRecord, error)
 	CreateUser(request *requests.RegisterRequest) (*record.UserRecord, error)
 	UpdateUserIsVerified(user_id int, is_verified bool) (*record.UserRecord, error)
 	UpdateUserPassword(user_id int, password string) (*record.UserRecord, error)

@@ -1,0 +1,68 @@
+name: Build and push
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags:
+      - v*
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service: [apigateway migrate auth user role banner cart category email merchant merchant_award merchant_business merchant_detail merchant_policy order order_item product review review_detail shipping_address slider transaction]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/mamangrust/monolith-ecommerce-grpc/${{ matrix.service }}
+          tags: |
+            type=ref,event=branch,name=main
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+          labels: |
+            org.opencontainers.image.title=${{ matrix.service }}
+            org.opencontainers.image.description=Microservice ${{ matrix.service }} for Payment Gateway
+            org.opencontainers.image.source=https://github.com/mamangrust/monolith-ecommerce-grpc
+            org.opencontainers.image.url=https://github.com/mamangrust/monolith-ecommerce-grpc
+            org.opencontainers.image.licenses=MIT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.MY_TOKEN }}
+
+      - name: Debug Build Info
+        run: |
+          echo "Building service: ${{ matrix.service }}"
+          echo "Dockerfile: service/${{ matrix.service }}/Dockerfile"
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          context: ./service/${{ matrix.service }}
+          file: ./service/${{ matrix.service }}/Dockerfile
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ghcr.io/mamangrust/monolith-ecommerce-grpc/${{ matrix.service }}:latest
+          labels: ${{ steps.meta.outputs.labels }}
+
+
+
+

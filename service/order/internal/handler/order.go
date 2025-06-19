@@ -24,7 +24,7 @@ type orderHandleGrpc struct {
 	mapping              protomapper.OrderProtoMapper
 }
 
-func NewOrderHandleGrpc(service service.Service) *orderHandleGrpc {
+func NewOrderHandleGrpc(service *service.Service) *orderHandleGrpc {
 	return &orderHandleGrpc{
 		orderQuery:           service.OrderQuery,
 		orderCommand:         service.OrderCommand,

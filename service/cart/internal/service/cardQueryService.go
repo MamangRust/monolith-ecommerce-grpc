@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors/cart_errors"
 	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -21,6 +21,8 @@ import (
 
 type cartQueryService struct {
 	ctx                 context.Context
+	errorhandler        errorhandler.CartQueryError
+	mencache            mencache.CartQueryCache
 	trace               trace.Tracer
 	cardQueryRepository repository.CartQueryRepository
 	mapping             response_service.CartResponseMapper
@@ -29,7 +31,10 @@ type cartQueryService struct {
 	requestDuration     *prometheus.HistogramVec
 }
 
-func NewCartQueryService(ctx context.Context, cardQueryRepository repository.CartQueryRepository, logger logger.LoggerInterface, mapping response_service.CartResponseMapper) *cartQueryService {
+func NewCartQueryService(ctx context.Context,
+	errorhandler errorhandler.CartQueryError,
+	mencache mencache.CartQueryCache,
+	cardQueryRepository repository.CartQueryRepository, logger logger.LoggerInterface, mapping response_service.CartResponseMapper) *cartQueryService {
 	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "cart_query_service_request_count",
@@ -51,6 +56,8 @@ func NewCartQueryService(ctx context.Context, cardQueryRepository repository.Car
 
 	return &cartQueryService{
 		ctx:                 ctx,
+		errorhandler:        errorhandler,
+		mencache:            mencache,
 		trace:               otel.Tracer("cart-query-service"),
 		cardQueryRepository: cardQueryRepository,
 		mapping:             mapping,
@@ -61,69 +68,83 @@ func NewCartQueryService(ctx context.Context, cardQueryRepository repository.Car
 }
 
 func (s *cartQueryService) FindAll(req *requests.FindAllCarts) ([]*response.CartResponse, *int, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "FindAll"
 
-	defer func() {
-		s.recordMetrics("FindAll", status, startTime)
-	}()
+	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 
-	_, span := s.trace.Start(s.ctx, "FindAll")
-	defer span.End()
-
-	page := req.Page
-	pageSize := req.PageSize
 	search := req.Search
 
-	span.SetAttributes(
-		attribute.Int("page", page),
-		attribute.Int("pageSize", pageSize),
-		attribute.String("search", search),
-	)
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
-	s.logger.Debug("Fetching cart",
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize),
-		zap.String("search", search))
+	defer func() {
+		end(status)
+	}()
 
-	if page <= 0 {
-		page = 1
-	}
-
-	if pageSize <= 0 {
-		pageSize = 10
+	if data, total, found := s.mencache.GetCachedCartsCache(req); found {
+		logSuccess("Successfully fetched all Carts from cache", zap.Int("totalRecords", *total), zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
+		return data, total, nil
 	}
 
 	cart, totalRecords, err := s.cardQueryRepository.FindCarts(req)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_FIND_ALL_CARTS")
-
-		s.logger.Error("Failed to fetch cart",
-			zap.String("traceID", traceID),
-			zap.Error(err))
-
-		span.SetAttributes(
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-
-		span.SetStatus(codes.Error, "Failed to fetch cart")
-
-		status = "failed_find_all_carts"
-
-		return nil, nil, cart_errors.ErrFailedFindAllCarts
+		return s.errorhandler.HandleRepositoryPaginationError(err, method, "FAILED_FIND_ALL_CARTS", span, &status, zap.Error(err))
 	}
 
 	cartRes := s.mapping.ToCartsResponse(cart)
 
-	s.logger.Debug("Successfully fetched cart",
-		zap.Int("totalRecords", *totalRecords),
-		zap.Int("page", page),
-		zap.Int("pageSize", pageSize))
+	s.mencache.SetCartsCache(req, cartRes, totalRecords)
+
+	logSuccess("Successfully fetched all Carts", zap.Int("totalRecords", *totalRecords), zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return cartRes, totalRecords, nil
+}
+
+func (s *cartQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Info("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
+}
+
+func (s *cartQueryService) normalizePagination(page, pageSize int) (int, int) {
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	return page, pageSize
 }
 
 func (s *cartQueryService) recordMetrics(method string, status string, start time.Time) {

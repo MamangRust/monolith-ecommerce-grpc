@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -10,6 +12,11 @@ import (
 	response_api "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/api"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	otelcode "go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -19,6 +26,9 @@ type merchantPoliciesHandleApi struct {
 	logger          logger.LoggerInterface
 	mapping         response_api.MerchantPolicyResponseMapper
 	mappingMerchant response_api.MerchantResponseMapper
+	trace           trace.Tracer
+	requestCounter  *prometheus.CounterVec
+	requestDuration *prometheus.HistogramVec
 }
 
 func NewHandlerMerchantPolicies(
@@ -28,11 +38,33 @@ func NewHandlerMerchantPolicies(
 	mapping response_api.MerchantPolicyResponseMapper,
 	mappingMerchant response_api.MerchantResponseMapper,
 ) *merchantPoliciesHandleApi {
+	requestCounter := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "merchant_policy_handler_requests_total",
+			Help: "Total number of banner requests",
+		},
+		[]string{"method", "status"},
+	)
+
+	requestDuration := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "merchant_policy_handler_request_duration_seconds",
+			Help:    "Duration of banner requests",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"method", "status"},
+	)
+
+	prometheus.MustRegister(requestCounter)
+
 	merchantPoliciesHandler := &merchantPoliciesHandleApi{
 		client:          client,
 		logger:          logger,
 		mapping:         mapping,
 		mappingMerchant: mappingMerchant,
+		trace:           otel.Tracer("merchant-policy-handler"),
+		requestCounter:  requestCounter,
+		requestDuration: requestDuration,
 	}
 
 	routercategory := router.Group("/api/merchant-policy")
@@ -68,19 +100,29 @@ func NewHandlerMerchantPolicies(
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve merchant data"
 // @Router /api/merchant-policy [get]
 func (h *merchantPoliciesHandleApi) FindAllMerchantPolicy(c echo.Context) error {
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if err != nil || page <= 0 {
-		page = 1
-	}
+	const (
+		defaultPage     = 1
+		defaultPageSize = 10
+		method          = "FindAllMerchantPolicy"
+	)
 
-	pageSize, err := strconv.Atoi(c.QueryParam("page_size"))
-	if err != nil || pageSize <= 0 {
-		pageSize = 10
-	}
-
+	page := parseQueryInt(c, "page", defaultPage)
+	pageSize := parseQueryInt(c, "page_size", defaultPageSize)
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+		attribute.Int("page", page),
+		attribute.Int("page_size", pageSize),
+		attribute.String("search", search),
+	)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	req := &pb.FindAllMerchantRequest{
 		Page:     int32(page),
@@ -91,11 +133,16 @@ func (h *merchantPoliciesHandleApi) FindAllMerchantPolicy(c echo.Context) error 
 	res, err := h.client.FindAll(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to fetch merchants", zap.Error(err))
+		status = "error"
+
+		logError("Failed to retrieve merchant data", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiFailedFindAllMerchantPolicy(c)
 	}
 
 	so := h.mapping.ToApiResponsePaginationMerchantPolicies(res)
+
+	logSuccess("Successfully retrieve merchant data", zap.Bool("Success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -112,14 +159,25 @@ func (h *merchantPoliciesHandleApi) FindAllMerchantPolicy(c echo.Context) error 
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve merchant data"
 // @Router /api/merchant-policy/{id} [get]
 func (h *merchantPoliciesHandleApi) FindById(c echo.Context) error {
+	const method = "FindById"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		h.logger.Debug("Invalid merchant ID format", zap.Error(err))
+		status = "error"
+
+		logError("Failed to fetch merchant details", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiInvalidId(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.FindByIdMerchantPoliciesRequest{
 		Id: int32(id),
@@ -128,11 +186,16 @@ func (h *merchantPoliciesHandleApi) FindById(c echo.Context) error {
 	res, err := h.client.FindById(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to fetch merchant details", zap.Error(err))
+		status = "error"
+
+		logError("Failed to fetch merchant details", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiFailedFindByIdMerchantPolicy(c)
 	}
 
 	so := h.mapping.ToApiResponseMerchantPolicies(res)
+
+	logSuccess("Successfully fetch merchant details", zap.Bool("Success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -150,19 +213,29 @@ func (h *merchantPoliciesHandleApi) FindById(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve merchant data"
 // @Router /api/merchant-policy/active [get]
 func (h *merchantPoliciesHandleApi) FindByActive(c echo.Context) error {
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if err != nil || page <= 0 {
-		page = 1
-	}
+	const (
+		defaultPage     = 1
+		defaultPageSize = 10
+		method          = "FindByActive"
+	)
 
-	pageSize, err := strconv.Atoi(c.QueryParam("page_size"))
-	if err != nil || pageSize <= 0 {
-		pageSize = 10
-	}
-
+	page := parseQueryInt(c, "page", defaultPage)
+	pageSize := parseQueryInt(c, "page_size", defaultPageSize)
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+		attribute.Int("page", page),
+		attribute.Int("page_size", pageSize),
+		attribute.String("search", search),
+	)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	req := &pb.FindAllMerchantRequest{
 		Page:     int32(page),
@@ -173,11 +246,16 @@ func (h *merchantPoliciesHandleApi) FindByActive(c echo.Context) error {
 	res, err := h.client.FindByActive(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to fetch active merchants", zap.Error(err))
+		status = "error"
+
+		logError("Failed to retrieve merchant data", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiFailedFindByActiveMerchantPolicy(c)
 	}
 
 	so := h.mapping.ToApiResponsePaginationMerchantPoliciesDeleteAt(res)
+
+	logSuccess("Successfully retrieve merchant data", zap.Bool("Success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -193,19 +271,29 @@ func (h *merchantPoliciesHandleApi) FindByActive(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve merchant data"
 // @Router /api/merchant-policy/trashed [get]
 func (h *merchantPoliciesHandleApi) FindByTrashed(c echo.Context) error {
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if err != nil || page <= 0 {
-		page = 1
-	}
+	const (
+		defaultPage     = 1
+		defaultPageSize = 10
+		method          = "FindByTrashed"
+	)
 
-	pageSize, err := strconv.Atoi(c.QueryParam("page_size"))
-	if err != nil || pageSize <= 0 {
-		pageSize = 10
-	}
-
+	page := parseQueryInt(c, "page", defaultPage)
+	pageSize := parseQueryInt(c, "page_size", defaultPageSize)
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+		attribute.Int("page", page),
+		attribute.Int("page_size", pageSize),
+		attribute.String("search", search),
+	)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	req := &pb.FindAllMerchantRequest{
 		Page:     int32(page),
@@ -216,11 +304,16 @@ func (h *merchantPoliciesHandleApi) FindByTrashed(c echo.Context) error {
 	res, err := h.client.FindByTrashed(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to fetch archived merchants", zap.Error(err))
+		status = "error"
+
+		logError("Failed to retrieve merchant data", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiFailedFindByTrashedMerchantPolicy(c)
 	}
 
 	so := h.mapping.ToApiResponsePaginationMerchantPoliciesDeleteAt(res)
+
+	logSuccess("Successfully retrieve merchant data", zap.Bool("Success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -237,19 +330,31 @@ func (h *merchantPoliciesHandleApi) FindByTrashed(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to create merchant policy"
 // @Router /api/merchant-policy/create [post]
 func (h *merchantPoliciesHandleApi) Create(c echo.Context) error {
+	const method = "Create"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	var body requests.CreateMerchantPolicyRequest
 
 	if err := c.Bind(&body); err != nil {
-		h.logger.Debug("Invalid request format", zap.Error(err))
+		status = "error"
+
+		logError("Failed to bind request body", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiBindCreateMerchantPolicy(c)
 	}
 
 	if err := body.Validate(); err != nil {
-		h.logger.Debug("Validation failed", zap.Error(err))
+		status = "error"
+
 		return merchantpolicy_errors.ErrValidateCreateMerchantPolicy(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.CreateMerchantPoliciesRequest{
 		MerchantId:  int32(body.MerchantID),
@@ -260,11 +365,17 @@ func (h *merchantPoliciesHandleApi) Create(c echo.Context) error {
 
 	res, err := h.client.Create(ctx, req)
 	if err != nil {
-		h.logger.Error("Merchant policy creation failed", zap.Error(err))
+		status = "error"
+
+		logError("Failed to create merchant policy", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiFailedCreateMerchantPolicy(c)
 	}
 
 	so := h.mapping.ToApiResponseMerchantPolicies(res)
+
+	logSuccess("Successfully create merchant policy", zap.Bool("Success", true))
+
 	return c.JSON(http.StatusOK, so)
 }
 
@@ -281,27 +392,44 @@ func (h *merchantPoliciesHandleApi) Create(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to update merchant policy"
 // @Router /api/merchant-policy/update/{id} [post]
 func (h *merchantPoliciesHandleApi) Update(c echo.Context) error {
+	const method = "Update"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id := c.Param("id")
 
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
-		h.logger.Debug("Invalid id parameter", zap.Error(err))
+		status = "error"
+
+		logError("Failed to parse merchant policy id", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiInvalidId(c)
 	}
 
 	var body requests.UpdateMerchantPolicyRequest
 
 	if err := c.Bind(&body); err != nil {
-		h.logger.Debug("Invalid request format", zap.Error(err))
+		status = "error"
+
+		logError("Failed to bind request body", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiBindUpdateMerchantPolicy(c)
 	}
 
 	if err := body.Validate(); err != nil {
-		h.logger.Debug("Validation failed", zap.Error(err))
+		status = "error"
+
+		logError("Failed to validate request body", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrValidateUpdateMerchantPolicy(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.UpdateMerchantPoliciesRequest{
 		MerchantPolicyId: int32(idInt),
@@ -312,11 +440,17 @@ func (h *merchantPoliciesHandleApi) Update(c echo.Context) error {
 
 	res, err := h.client.Update(ctx, req)
 	if err != nil {
-		h.logger.Error("Merchant policy update failed", zap.Error(err))
+		status = "error"
+
+		logError("Failed to update merchant policy", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiFailedUpdateMerchantPolicy(c)
 	}
 
 	so := h.mapping.ToApiResponseMerchantPolicies(res)
+
+	logSuccess("Successfully update merchant policy", zap.Bool("Success", true))
+
 	return c.JSON(http.StatusOK, so)
 }
 
@@ -333,14 +467,25 @@ func (h *merchantPoliciesHandleApi) Update(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve trashed merchant"
 // @Router /api/merchant-policy/trashed/{id} [get]
 func (h *merchantPoliciesHandleApi) TrashedMerchant(c echo.Context) error {
+	const method = "TrashedMerchant"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		h.logger.Debug("Invalid merchant ID format", zap.Error(err))
+		status = "error"
+
+		logError("Failed to parse merchant policy id", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiInvalidId(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.FindByIdMerchantPoliciesRequest{
 		Id: int32(id),
@@ -349,11 +494,16 @@ func (h *merchantPoliciesHandleApi) TrashedMerchant(c echo.Context) error {
 	res, err := h.client.TrashedMerchantPolicies(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to archive merchant", zap.Error(err))
+		status = "error"
+
+		logError("Failed to trashed merchant policy", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiFailedTrashMerchantPolicy(c)
 	}
 
 	so := h.mapping.ToApiResponseMerchantPoliciesDeleteAt(res)
+
+	logSuccess("Successfully trashed merchant policy", zap.Bool("Success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -371,14 +521,25 @@ func (h *merchantPoliciesHandleApi) TrashedMerchant(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to restore merchant"
 // @Router /api/merchant-policy/restore/{id} [post]
 func (h *merchantPoliciesHandleApi) RestoreMerchant(c echo.Context) error {
+	const method = "RestoreMerchant"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		h.logger.Debug("Invalid merchant ID format", zap.Error(err))
+		status = "error"
+
+		logError("Failed to parse merchant policy id", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiInvalidId(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.FindByIdMerchantPoliciesRequest{
 		Id: int32(id),
@@ -387,11 +548,16 @@ func (h *merchantPoliciesHandleApi) RestoreMerchant(c echo.Context) error {
 	res, err := h.client.RestoreMerchantPolicies(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to restore merchant", zap.Error(err))
+		status = "error"
+
+		logError("Failed to restore merchant policy", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiFailedRestoreMerchantPolicy(c)
 	}
 
 	so := h.mapping.ToApiResponseMerchantPoliciesDeleteAt(res)
+
+	logSuccess("Successfully restore merchant policy", zap.Bool("Success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -409,14 +575,25 @@ func (h *merchantPoliciesHandleApi) RestoreMerchant(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to delete merchant:"
 // @Router /api/merchant-policy/delete/{id} [delete]
 func (h *merchantPoliciesHandleApi) DeleteMerchantPermanent(c echo.Context) error {
+	const method = "DeleteMerchantPermanent"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		h.logger.Debug("Invalid merchant ID format", zap.Error(err))
+		status = "error"
+
+		logError("Failed to parse merchant policy id", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiInvalidId(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.FindByIdMerchantPoliciesRequest{
 		Id: int32(id),
@@ -425,11 +602,16 @@ func (h *merchantPoliciesHandleApi) DeleteMerchantPermanent(c echo.Context) erro
 	res, err := h.client.DeleteMerchantPoliciesPermanent(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to delete merchant", zap.Error(err))
+		status = "error"
+
+		logError("Failed to delete merchant policy", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiFailedDeleteMerchantPolicy(c)
 	}
 
 	so := h.mappingMerchant.ToApiResponseMerchantDelete(res)
+
+	logSuccess("Successfully deleted merchant policy", zap.Bool("Success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -447,18 +629,29 @@ func (h *merchantPoliciesHandleApi) DeleteMerchantPermanent(c echo.Context) erro
 // @Failure 500 {object} response.ErrorResponse "Failed to restore merchant"
 // @Router /api/merchant-policy/restore/all [post]
 func (h *merchantPoliciesHandleApi) RestoreAllMerchant(c echo.Context) error {
+	const method = "RestoreAllMerchant"
+
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	res, err := h.client.RestoreAllMerchantPolicies(ctx, &emptypb.Empty{})
 
 	if err != nil {
-		h.logger.Error("Bulk merchant restoration failed", zap.Error(err))
+		status = "error"
+
+		logError("Failed to restore all merchant", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiFailedRestoreAllMerchantPolicies(c)
 	}
 
 	so := h.mappingMerchant.ToApiResponseMerchantAll(res)
 
-	h.logger.Debug("Successfully restored all merchant")
+	logSuccess("Successfully restore all merchant", zap.Bool("Success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -476,18 +669,75 @@ func (h *merchantPoliciesHandleApi) RestoreAllMerchant(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to delete merchant:"
 // @Router /api/merchant-policy/delete/all [post]
 func (h *merchantPoliciesHandleApi) DeleteAllMerchantPermanent(c echo.Context) error {
+	const method = "DeleteAllMerchantPermanent"
+
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	res, err := h.client.DeleteAllMerchantPoliciesPermanent(ctx, &emptypb.Empty{})
 
 	if err != nil {
-		h.logger.Error("Bulk merchant deletion failed", zap.Error(err))
+		status = "error"
+
+		logError("Bulk merchant deletion failed", err, zap.Error(err))
+
 		return merchantpolicy_errors.ErrApiFailedDeleteAllMerchantPolicies(c)
 	}
 
 	so := h.mappingMerchant.ToApiResponseMerchantAll(res)
 
-	h.logger.Debug("Successfully deleted all merchant permanently")
+	logSuccess("Bulk merchant deletion success", zap.Bool("Success", true))
 
 	return c.JSON(http.StatusOK, so)
+}
+
+func (s *merchantPoliciesHandleApi) startTracingAndLogging(
+	ctx context.Context,
+	method string,
+	attrs ...attribute.KeyValue,
+) (func(string), func(string, ...zap.Field), func(string, error, ...zap.Field)) {
+	start := time.Now()
+	_, span := s.trace.Start(ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := otelcode.Ok
+		if status != "success" {
+			code = otelcode.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	logError := func(msg string, err error, fields ...zap.Field) {
+		span.RecordError(err)
+		span.SetStatus(otelcode.Error, msg)
+		span.AddEvent(msg)
+		allFields := append([]zap.Field{zap.Error(err)}, fields...)
+		s.logger.Error(msg, allFields...)
+	}
+
+	return end, logSuccess, logError
+}
+
+func (s *merchantPoliciesHandleApi) recordMetrics(method string, status string, start time.Time) {
+	s.requestCounter.WithLabelValues(method, status).Inc()
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

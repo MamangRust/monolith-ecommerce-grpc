@@ -20,7 +20,7 @@ type reviewHandleGrpc struct {
 	mapping              protomapper.ReviewProtoMapper
 }
 
-func NewReviewHandleGrpc(service service.Service) *reviewHandleGrpc {
+func NewReviewHandleGrpc(service *service.Service) *reviewHandleGrpc {
 	return &reviewHandleGrpc{
 		reviewQueryService:   service.ReviewQuery,
 		reviewCommandService: service.ReviewCommand,

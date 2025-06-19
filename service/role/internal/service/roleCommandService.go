@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-role/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors/role_errors"
 	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -21,6 +21,8 @@ import (
 
 type roleCommandService struct {
 	ctx             context.Context
+	errorhandler    errorhandler.RoleCommandErrorHandler
+	mencache        mencache.RoleCommandCache
 	trace           trace.Tracer
 	roleCommand     repository.RoleCommandRepository
 	logger          logger.LoggerInterface
@@ -29,7 +31,8 @@ type roleCommandService struct {
 	requestDuration *prometheus.HistogramVec
 }
 
-func NewRoleCommandService(ctx context.Context, roleCommand repository.RoleCommandRepository, logger logger.LoggerInterface, mapping response_service.RoleResponseMapper) *roleCommandService {
+func NewRoleCommandService(ctx context.Context, errorhandler errorhandler.RoleCommandErrorHandler,
+	mencache mencache.RoleCommandCache, roleCommand repository.RoleCommandRepository, logger logger.LoggerInterface, mapping response_service.RoleResponseMapper) *roleCommandService {
 	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "role_command_service_request_total",
@@ -51,6 +54,8 @@ func NewRoleCommandService(ctx context.Context, roleCommand repository.RoleComma
 
 	return &roleCommandService{
 		ctx:             ctx,
+		errorhandler:    errorhandler,
+		mencache:        mencache,
 		trace:           otel.Tracer("role-command-service"),
 		roleCommand:     roleCommand,
 		logger:          logger,
@@ -61,289 +66,191 @@ func NewRoleCommandService(ctx context.Context, roleCommand repository.RoleComma
 }
 
 func (s *roleCommandService) CreateRole(request *requests.CreateRoleRequest) (*response.RoleResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "CreateRole"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.String("name", request.Name))
 
 	defer func() {
-		s.recordMetrics("CreateRole", status, startTime)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "CreateRole")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.String("name", request.Name),
-	)
-
-	s.logger.Debug("Starting CreateRole process",
-		zap.String("roleName", request.Name),
-	)
 
 	role, err := s.roleCommand.CreateRole(request)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_CREATE_ROLE")
-
-		s.logger.Error("Failed to create role record",
-			zap.String("trace_id", traceID),
-			zap.String("name", request.Name),
-			zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to create role record")
-		status = "failed_to_create_role_record"
-		return nil, role_errors.ErrFailedCreateRole
+		return s.errorhandler.HandleCreateRoleError(err, method, "FAILED_CREATE_ROLE", span, &status, zap.Error(err))
 	}
 
 	so := s.mapping.ToRoleResponse(role)
 
-	s.logger.Debug("CreateRole process completed",
-		zap.String("roleName", request.Name),
-		zap.Int("roleID", role.ID),
-	)
+	logSuccess("Successfully created role", zap.Int("role.id", role.ID), zap.Bool("success", true))
 
 	return so, nil
 }
 
 func (s *roleCommandService) UpdateRole(request *requests.UpdateRoleRequest) (*response.RoleResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "UpdateRole"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("id", *request.ID))
 
 	defer func() {
-		s.recordMetrics("UpdateRole", status, startTime)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "UpdateRole")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("id", *request.ID),
-		attribute.String("name", request.Name),
-	)
-
-	s.logger.Debug("Starting UpdateRole process",
-		zap.Int("roleID", *request.ID),
-		zap.String("newRoleName", request.Name),
-	)
 
 	role, err := s.roleCommand.UpdateRole(request)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_UPDATE_ROLE")
-
-		s.logger.Error("Failed to update role record",
-			zap.String("trace_id", traceID),
-			zap.Int("role_id", *request.ID),
-			zap.String("name", request.Name),
-			zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to update role record")
-		status = "failed_to_update_role_record"
-		return nil, role_errors.ErrFailedUpdateRole
+		return s.errorhandler.HandleUpdateRoleError(err, method, "FAILED_UPDATE_ROLE", span, &status, zap.Error(err))
 	}
 
 	so := s.mapping.ToRoleResponse(role)
 
-	s.logger.Debug("UpdateRole process completed",
-		zap.Int("roleID", *request.ID),
-		zap.String("newRoleName", request.Name),
-	)
+	s.mencache.DeleteCachedRole(*request.ID)
+
+	logSuccess("Successfully updated role", zap.Int("role.id", role.ID), zap.Bool("success", true))
 
 	return so, nil
 }
 
 func (s *roleCommandService) TrashedRole(id int) (*response.RoleResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "TrashedRole"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("id", id))
 
 	defer func() {
-		s.recordMetrics("TrashedRole", status, startTime)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "TrashedRole")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("id", id),
-	)
-
-	s.logger.Debug("Starting TrashedRole process",
-		zap.Int("roleID", id),
-	)
 
 	role, err := s.roleCommand.TrashedRole(id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_TRASHED_ROLE")
-
-		s.logger.Error("Failed to trashed role",
-			zap.String("trace_id", traceID),
-			zap.Int("role_id", id),
-			zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to trashed role")
-		status = "failed_to_trashed_role"
-		return nil, role_errors.ErrFailedTrashedRole
+		return s.errorhandler.HandleTrashedRoleError(err, method, "FAILED_TRASH_ROLE", span, &status, zap.Error(err))
 	}
 
 	so := s.mapping.ToRoleResponse(role)
 
-	s.logger.Debug("TrashedRole process completed",
-		zap.Int("roleID", id),
-	)
+	s.mencache.DeleteCachedRole(id)
+
+	logSuccess("Successfully trashed role", zap.Int("role.id", role.ID), zap.Bool("success", true))
 
 	return so, nil
 }
 
 func (s *roleCommandService) RestoreRole(id int) (*response.RoleResponse, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "RestoreRole"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("id", id))
 
 	defer func() {
-		s.recordMetrics("RestoreRole", status, startTime)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "RestoreRole")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("id", id),
-	)
-
-	s.logger.Debug("Starting RestoreRole process",
-		zap.Int("roleID", id),
-	)
 
 	role, err := s.roleCommand.RestoreRole(id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_RESTORE_ROLE")
-
-		s.logger.Error("Failed to restore role",
-			zap.String("trace_id", traceID),
-			zap.Int("role_id", id),
-			zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to restore role")
-		status = "failed_to_restore_role"
-
-		return nil, role_errors.ErrFailedRestoreRole
+		return s.errorhandler.HandleRestoreRoleError(err, method, "FAILED_RESTORE_ROLE", span, &status, zap.Error(err))
 	}
 
 	so := s.mapping.ToRoleResponse(role)
 
-	s.logger.Debug("RestoreRole process completed",
-		zap.Int("roleID", id),
-	)
+	s.mencache.DeleteCachedRole(id)
+
+	logSuccess("Successfully restored role", zap.Int("role.id", role.ID), zap.Bool("success", true))
 
 	return so, nil
 }
 
 func (s *roleCommandService) DeleteRolePermanent(id int) (bool, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "DeleteRolePermanent"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("id", id))
 
 	defer func() {
-		s.recordMetrics("DeleteRolePermanent", status, startTime)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "DeleteRolePermanent")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("id", id),
-	)
-
-	s.logger.Debug("Starting DeleteRolePermanent process",
-		zap.Int("roleID", id),
-	)
-
-	_, err := s.roleCommand.DeleteRolePermanent(id)
+	success, err := s.roleCommand.DeleteRolePermanent(id)
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_DELETE_ROLE_PERMANENT")
-
-		s.logger.Error("Failed to permanently delete role",
-			zap.String("trace_id", traceID),
-			zap.Int("role_id", id),
-			zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to permanently delete role")
-		status = "failed_to_permanently_delete_role"
-
-		return false, role_errors.ErrFailedDeletePermanent
+		return s.errorhandler.HandleDeleteRolePermanentError(err, method, "FAILED_DELETE_ROLE_PERMANENT", span, &status, zap.Error(err))
 	}
 
-	s.logger.Debug("DeleteRolePermanent process completed",
-		zap.Int("roleID", id),
-	)
+	logSuccess("Successfully deleted role permanently", zap.Int("role.id", id), zap.Bool("success", success))
 
-	return true, nil
+	return success, nil
 }
 
 func (s *roleCommandService) RestoreAllRole() (bool, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "RestoreAllRole"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("RestoreAllRole", status, startTime)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "RestoreAllRole")
-	defer span.End()
-
-	_, err := s.roleCommand.RestoreAllRole()
+	success, err := s.roleCommand.RestoreAllRole()
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_RESTORE_ALL_ROLE")
-
-		s.logger.Error("Failed to restore all trashed roles",
-			zap.String("trace_id", traceID),
-			zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to restore all trashed roles")
-
-		status = "failed_to_restore_all_trashed_roles"
-		return false, role_errors.ErrFailedRestoreAll
+		return s.errorhandler.HandleRestoreAllRoleError(err, method, "FAILED_RESTORE_ALL_ROLE", span, &status, zap.Error(err))
 	}
 
-	s.logger.Debug("Successfully restored all roles")
-	return true, nil
+	logSuccess("Successfully restored all roles", zap.Bool("success", success))
+
+	return success, nil
 }
 
 func (s *roleCommandService) DeleteAllRolePermanent() (bool, *response.ErrorResponse) {
-	startTime := time.Now()
-	status := "success"
+	const method = "DeleteAllRolePermanent"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("DeleteAllRolePermanent", status, startTime)
+		end(status)
 	}()
 
-	_, span := s.trace.Start(s.ctx, "DeleteAllRolePermanent")
-	defer span.End()
-
-	s.logger.Debug("Permanently deleting all roles")
-
-	_, err := s.roleCommand.DeleteAllRolePermanent()
+	success, err := s.roleCommand.DeleteAllRolePermanent()
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_DELETE_ALL_ROLE_PERMANENT")
-
-		s.logger.Error("Failed to permanently delete all roles",
-			zap.String("trace_id", traceID),
-			zap.Error(err))
-		span.SetAttributes(attribute.String("trace.id", traceID))
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to permanently delete all roles")
-		status = "failed_to_permanently_delete_all_roles"
-
-		return false, role_errors.ErrFailedDeletePermanent
+		return s.errorhandler.HandleDeleteAllRolePermanentError(err, method, "FAILED_DELETE_ALL_ROLE_PERMANENT", span, &status, zap.Error(err))
 	}
 
-	s.logger.Debug("Successfully deleted all roles permanently")
-	return true, nil
+	logSuccess("Successfully deleted all roles permanently", zap.Bool("success", success))
+
+	return success, nil
+}
+
+func (s *roleCommandService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
 }
 
 func (s *roleCommandService) recordMetrics(method string, status string, start time.Time) {

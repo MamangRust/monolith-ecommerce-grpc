@@ -11,15 +11,15 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - app_network
+      - app_ecommerce_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U DRAGON -d PAYMENT_GATEWAY"]
       interval: 5s
       timeout: 5s
       retries: 5
   migrate:
-    image: migrate-ecommerce:1.0
-    container_name: migrate
+    image: migrate-ecommerce-service:1.0
+    container_name: migrate-ecommerce
     volumes:
       - ./docker.env:/app/docker.env
       - ./pkg/database/migrations:/app/pkg/database/migrations
@@ -28,21 +28,21 @@ services:
       APP_ENV: docker
       DB_URL: postgres://DRAGON:DRAGON@postgres/PAYMENT_GATEWAY
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
 
   apigateway:
-    image: apigateway-ecommerce:1.0
-    container_name: apigateway
+    image: apigateway-ecommerce-service:1.0
+    container_name: apigateway-ecommerce
     env_file: ./docker.env 
     volumes:
       - ./docker.env:/app/docker.env
     ports:
       - "5000:5000"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       - postgres
       - kafka
@@ -68,10 +68,9 @@ services:
     environment:
       - APP_ENV=docker
 
-  
   auth:
     image: auth-ecommerce-service:1.0
-    container_name: auth
+    container_name: auth-ecommerce
     env_file: ./docker.env 
     volumes:
       - ./docker.env:/app/docker.env
@@ -79,7 +78,7 @@ services:
       - "50051:50051"
       - "8081:8081"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -91,7 +90,7 @@ services:
 
   role:
     image: role-ecommerce-service:1.0
-    container_name: role
+    container_name: role-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -99,7 +98,7 @@ services:
       - "50052:50052"
       - "8082:8082"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -111,7 +110,7 @@ services:
   
   user:
     image: user-ecommerce-service:1.0
-    container_name: user
+    container_name: user-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -119,7 +118,7 @@ services:
       - "50055:50053"
       - "8085:8083"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -131,7 +130,7 @@ services:
 
   category:
     image: category-ecommerce-service:1.0
-    container_name: category
+    container_name: category-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -139,7 +138,7 @@ services:
       - "50056:50054"
       - "8086:8084"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -151,7 +150,7 @@ services:
 
   merchant:
     image: merchant-ecommerce-service:1.0
-    container_name: merchant
+    container_name: merchant-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -159,7 +158,7 @@ services:
       - "50054:50055"
       - "8084:8085"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -171,7 +170,7 @@ services:
 
   order-item:
     image: order-item-ecommerce-service:1.0
-    container_name: order-item
+    container_name: order-item-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -179,7 +178,7 @@ services:
       - "50058:50056"
       - "8088:8086"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -191,7 +190,7 @@ services:
 
   order:
     image: order-ecommerce-service:1.0
-    container_name: order
+    container_name: order-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -199,7 +198,7 @@ services:
       - "50059:50057"
       - "8089:8087"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -211,7 +210,7 @@ services:
   
   product:
     image: product-ecommerce-service:1.0
-    container_name: product
+    container_name: product-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -219,7 +218,7 @@ services:
       - "50060:50058"
       - "8090:8088"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -231,7 +230,7 @@ services:
 
   transaction:
     image: transaction-ecommerce-service:1.0
-    container_name: transaction
+    container_name: transaction-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -239,7 +238,7 @@ services:
       - "50061:50059"
       - "8091:8089"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -251,7 +250,7 @@ services:
 
   cart:
     image: cart-ecommerce-service:1.0
-    container_name: cart
+    container_name: cart-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -259,7 +258,7 @@ services:
       - "50062:50060"
       - "8092:8090"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -271,7 +270,7 @@ services:
 
   review:
     image: review-ecommerce-service:1.0
-    container_name: review
+    container_name: review-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -279,7 +278,7 @@ services:
       - "50063:50061"
       - "8093:8091"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -291,7 +290,7 @@ services:
   
   slider:
     image: slider-ecommerce-service:1.0
-    container_name: slider
+    container_name: slider-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -299,7 +298,7 @@ services:
       - "50064:50062"
       - "8094:8092"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -311,7 +310,7 @@ services:
   
   shipping:
     image: shipping-ecommerce-service:1.0
-    container_name: shipping
+    container_name: shipping-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -319,7 +318,7 @@ services:
       - "50065:50063"
       - "8095:8093"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -331,7 +330,7 @@ services:
   
   banner:
     image: banner-ecommerce-service:1.0
-    container_name: banner
+    container_name: banner-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -339,7 +338,7 @@ services:
       - "50066:50064"
       - "8096:8094"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -351,7 +350,7 @@ services:
 
   merchant_award:
     image: merchant_award-ecommerce-service:1.0
-    container_name: merchant_award
+    container_name: merchant_award-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -359,7 +358,7 @@ services:
       - "50067:50065"
       - "8097:8095"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -379,7 +378,7 @@ services:
       - "50068:50066"
       - "8098:8096"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -391,7 +390,7 @@ services:
 
   merchant_detail:
     image: merchant_detail-ecommerce-service:1.0
-    container_name: merchant_detail
+    container_name: merchant_detail-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -399,7 +398,7 @@ services:
       - "50069:50067"
       - "8099:8097"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -411,7 +410,7 @@ services:
 
   merchant_policy:
     image: merchant_policy-ecommerce-service:1.0
-    container_name: merchant_policy
+    container_name: merchant_policy-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -419,7 +418,7 @@ services:
       - "50070:50068"
       - "8100:8098"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -431,7 +430,7 @@ services:
   
   review_detail:
     image: review_detail-ecommerce-service:1.0
-    container_name: review_detail
+    container_name: review_detail-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -439,7 +438,7 @@ services:
       - "50071:50069"
       - "8101:8099"
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       postgres:
         condition: service_healthy
@@ -451,13 +450,13 @@ services:
 
   zookeeper:
     image: bitnami/zookeeper:latest
-    container_name: my-zookeeper
+    container_name: my-zookeeper-ecommerce
     ports:
       - "2181:2181"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
     networks:
-      - app_network
+      - app_ecommerce_network
     healthcheck:
       test: ["CMD-SHELL", "echo stat | nc localhost 2181 || exit 1"]
       interval: 5s
@@ -466,7 +465,7 @@ services:
 
   kafka:
     image: bitnami/kafka:latest
-    container_name: my-kafka
+    container_name: my-kafka-ecommerce
     ports:
       - "9092:9092"
     environment:
@@ -482,7 +481,7 @@ services:
     volumes:
       - kafka_data:/bitnami/kafka
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       zookeeper:
         condition: service_healthy
@@ -492,15 +491,37 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:v1.9.0
+    container_name: kafka-exporter
+    ports:
+      - "9308:9308"
+    networks:
+      - app_ecommerce_network
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command: 
+      - "--kafka.server=my-kafka:9092"
+      - "--web.listen-address=0.0.0.0:9308"
+      - "--log.level=debug"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:9308/metrics || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  
   prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus
+    container_name: prometheus-ecommerce
     ports:
       - "9090:9090"
     volumes:
       - ./observability/prometheus.yaml:/etc/prometheus/prometheus.yml
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       - otel-collector
     restart: unless-stopped
@@ -512,15 +533,53 @@ services:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana  
     networks:
-      - app_network
+      - app_ecommerce_network
     depends_on:
       - prometheus
       - jaeger
 
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ../../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - apigateway
+    networks:
+      - app_ecommerce_network
+
+  redis:
+    image: redis:7.4
+    container_name: redis
+    command: ["redis-server", "--requirepass", "dragon_knight"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - app_ecommerce_network
+
+
+  node-exporter:
+    image: quay.io/prometheus/node-exporter
+    container_name: node-exporter
+    pid: "host"
+    networks:
+      - app_ecommerce_network
+    volumes:
+      - "/:/host:ro,rslave"
+    command:
+      - '--path.rootfs=/host'
+
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
-    container_name: otel-collector
+    container_name: otel-collector-ecommerce
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./observability/otel-collector.yaml:/etc/otel-collector-config.yaml
@@ -530,23 +589,61 @@ services:
       - "13133:13133"
       - "8889:8889"
     networks:
-      - app_network
+      - app_ecommerce_network
     restart: unless-stopped
 
   jaeger:
     image: jaegertracing/all-in-one:1.62.0
-    container_name: jaeger
+    container_name: jaeger-ecommerce
     ports:
       - "6831:6831/udp"
       - "16686:16686"
     networks:
-      - app_network
+      - app_ecommerce_network
 
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: alertmanager
+    volumes:
+      - ../../observability/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+    ports:
+      - "9093:9093"
+    networks:
+      - app_ecommerce_network
+
+  loki:
+    container_name: loki
+    image: grafana/loki:2.9.0
+    user: "10001:10001"
+    ports:
+      - "3100:3100"
+    volumes:
+      - ../../observability/loki-config.yaml:/etc/loki/local-config.yaml
+      - ../../observability/loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - app_ecommerce_network
+
+  promtail:
+    container_name: promtail
+    image: grafana/promtail:2.9.0
+    volumes:
+      - ../../observability/promtail-config.yaml:/etc/promtail/config.yaml
+      - ./logs:/var/log/app
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - app_ecommerce_network
+
+  
 
 volumes:
+  grafana-storage:
   postgres_data:
   kafka_data:
+  redis_data:
 
 networks:
-  app_network:
+  app_ecommerce_network:
     driver: bridge

@@ -1,0 +1,72 @@
+groups:
+  - name: Golang Runtime Alerts
+    rules:
+      # 🔥 GC Duration Tinggi
+      - alert: HighGCDuration
+        expr: histogram_quantile(0.99, rate(go_gc_duration_seconds_bucket[5m])) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High GC duration detected"
+          description: "99th percentile of GC duration is greater than 0.5s for 2 minutes"
+
+      # 🧠 Memory Heap Usage Tinggi
+      - alert: HighHeapMemoryUsage
+        expr: go_memstats_heap_alloc_bytes > 1.5e+09  # 1.5 GB
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High heap memory usage"
+          description: "Heap memory usage has exceeded 1.5GB for 2 minutes"
+
+      # 💾 Total Memory dari Go Runtime
+      - alert: HighTotalGoMemoryUsage
+        expr: go_memstats_sys_bytes > 2e+09  # 2 GB
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Total Go runtime memory usage too high"
+          description: "Go runtime has used more than 2GB of total memory"
+
+      # 🔢 High Live Object Count
+      - alert: HighLiveObjects
+        expr: (go_memstats_mallocs_total - go_memstats_frees_total) > 1e+06
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of live objects in memory"
+          description: "There are more than 1 million live objects (mallocs - frees) for 5 minutes"
+
+      # 🚨 Allocation Rate Tinggi
+      - alert: HighAllocationRate
+        expr: rate(go_memstats_mallocs_total[1m]) > 50000
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory allocation rate"
+          description: "Go is allocating more than 50,000 objects/sec"
+
+      # 🧵 Goroutine Banyak Banget
+      - alert: HighGoroutines
+        expr: go_goroutines > 500
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Too many goroutines"
+          description: "Number of goroutines has exceeded 500"
+
+      # ⚠️ Stack Usage Tinggi
+      - alert: HighStackMemoryUsage
+        expr: go_memstats_stack_inuse_bytes > 200e+06  # 200 MB
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High stack memory usage"
+          description: "Stack memory usage is over 200MB"

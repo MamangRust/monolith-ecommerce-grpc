@@ -54,6 +54,20 @@ func (r *userRepository) FindByEmail(email string) (*record.UserRecord, error) {
 	return r.mapping.ToUserRecord(res), nil
 }
 
+func (r *userRepository) FindByEmailAndVerify(email string) (*record.UserRecord, error) {
+	res, err := r.db.GetUserByEmailAndVerify(r.ctx, email)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, user_errors.ErrUserNotFound
+		}
+
+		return nil, user_errors.ErrUserNotFound
+	}
+
+	return r.mapping.ToUserRecord(res), nil
+}
+
 func (r *userRepository) FindByVerificationCode(verification_code string) (*record.UserRecord, error) {
 	res, err := r.db.GetUserByVerificationCode(r.ctx, verification_code)
 

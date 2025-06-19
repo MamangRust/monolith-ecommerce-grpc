@@ -20,7 +20,7 @@ type sliderHandleGrpc struct {
 	mapping       protomapper.SliderProtoMapper
 }
 
-func NewSliderHandleGrpc(service service.Service) *sliderHandleGrpc {
+func NewSliderHandleGrpc(service *service.Service) *sliderHandleGrpc {
 	return &sliderHandleGrpc{
 		sliderQuery:   service.SliderQuery,
 		sliderCommand: service.SliderCommand,

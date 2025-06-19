@@ -20,7 +20,7 @@ type bannerHandleGrpc struct {
 	mapping              protomapper.BannerProtoMapper
 }
 
-func NewBannerHandleGrpc(service service.Service) *bannerHandleGrpc {
+func NewBannerHandleGrpc(service *service.Service) *bannerHandleGrpc {
 	return &bannerHandleGrpc{
 		bannerQueryService:   service.BannerQuery,
 		bannerCommandService: service.BannerCommand,

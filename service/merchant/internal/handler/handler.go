@@ -6,7 +6,7 @@ import (
 )
 
 type Deps struct {
-	Service services.Service
+	Service *services.Service
 }
 
 type Handler struct {
@@ -14,7 +14,7 @@ type Handler struct {
 	MerchantDocument MerchantDocumentHandleGrpc
 }
 
-func NewHandler(deps Deps) *Handler {
+func NewHandler(deps *Deps) *Handler {
 	merchantProto := protomapper.NewMerchantProtoMaper()
 	merchantDocumentProto := protomapper.NewMerchantDocumentProtoMapper()
 

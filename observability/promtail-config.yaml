@@ -1,0 +1,389 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: apigateway
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: apigateway
+          __path__: /var/log/app/apigateway.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+  
+  - job_name: auth-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: auth-service
+          __path__: /var/log/app/auth.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+  
+  - job_name: email-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: email-service
+          __path__: /var/log/app/email.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+
+  - job_name: role-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: role-service
+          __path__: /var/log/app/role.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+  
+  - job_name: user-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: user-service
+          __path__: /var/log/app/user.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+  
+  - job_name: category-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: category-service
+          __path__: /var/log/app/category.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+  
+  - job_name: merchant-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: merchant-service
+          __path__: /var/log/app/merchant.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+  
+  - job_name: order-item-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: order-item-service
+          __path__: /var/log/app/order-item.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+  
+  - job_name: order-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: order-service
+          __path__: /var/log/app/order.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+
+  - job_name: product-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: product-service
+          __path__: /var/log/app/product.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+  
+  - job_name: transaction-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: transaction-service
+          __path__: /var/log/app/transaction.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+
+  - job_name: cart-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: cart-service
+          __path__: /var/log/app/cart.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+
+  - job_name: review-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: review-service
+          __path__: /var/log/app/review.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+
+  - job_name: slider-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: slider-service
+          __path__: /var/log/app/slider.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+
+  - job_name: shipping-address-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: shipping-address-service
+          __path__: /var/log/app/shipping-address.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+
+  - job_name: banner-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: banner-service
+          __path__: /var/log/app/banner.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+  
+  - job_name: merchant-award-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: merchant-award-service
+          __path__: /var/log/app/merchant-award.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+
+  - job_name: merchant-business-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: merchant-business-service
+          __path__: /var/log/app/merchant-business.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+  
+  - job_name: merchant-policy-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: merchant-policy-service
+          __path__: /var/log/app/merchant-policy.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+  
+  - job_name: merchant-detail-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: merchant-detail-service
+          __path__: /var/log/app/merchant-detail.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+
+  - job_name: review-detail-service
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: review-detail-service
+          __path__: /var/log/app/review-detail.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            caller: caller
+      - labels:
+          level:
+      - output:
+          source: msg
+ 

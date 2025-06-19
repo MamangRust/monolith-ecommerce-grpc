@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate
+  namespace: ecommerce
+spec:
+  template:
+    spec:
+      containers:
+        - name: migrate
+          image: migrate-ecommerce-service:1.0
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+          env:
+            - name: APP_ENV
+              value: "kubernetes"
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DB_URL
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: migration-files
+              mountPath: /app/pkg/database/migrations
+              readOnly: true
+      restartPolicy: OnFailure
+      volumes:
+        - name: migration-files
+          configMap:
+            name: migration-files

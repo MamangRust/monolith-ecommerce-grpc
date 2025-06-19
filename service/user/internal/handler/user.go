@@ -20,7 +20,7 @@ type userHandleGrpc struct {
 	mapping            protomapper.UserProtoMapper
 }
 
-func NewUserHandleGrpc(user service.Service) *userHandleGrpc {
+func NewUserHandleGrpc(user *service.Service) *userHandleGrpc {
 	return &userHandleGrpc{
 		userQueryService:   user.UserQuery,
 		userCommandService: user.UserCommand,

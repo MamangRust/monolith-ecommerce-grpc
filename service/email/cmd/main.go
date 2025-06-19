@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,7 +19,7 @@ import (
 )
 
 func main() {
-	logger, err := logger.NewLogger()
+	logger, err := logger.NewLogger("email-service")
 	if err != nil {
 		log.Fatalf("Error creating logger: %v", err)
 	}
@@ -26,6 +27,7 @@ func main() {
 	if err := dotenv.Viper(); err != nil {
 		logger.Fatal("Failed to load .env file", zap.Error(err))
 	}
+	ctx := context.Background()
 
 	cfg := config.Config{
 		KafkaBrokers: []string{viper.GetString("KAFKA_BROKERS")},
@@ -43,20 +45,22 @@ func main() {
 		log.Fatal(http.ListenAndServe(metricsAddr, nil))
 	}()
 
-	m := &mailer.Mailer{
-		Server:   cfg.SMTPServer,
-		Port:     cfg.SMTPPort,
-		User:     cfg.SMTPUser,
-		Password: cfg.SMTPPass,
-	}
+	m := mailer.NewMailer(
+		ctx,
+		cfg.SMTPServer,
+		cfg.SMTPPort,
+		cfg.SMTPUser,
+		cfg.SMTPPass,
+	)
 
-	h := &handler.EmailHandler{Mailer: m}
+	h := handler.NewEmailHandler(ctx, logger, m)
 
 	myKafka := kafka.NewKafka(logger, cfg.KafkaBrokers)
 
 	err = myKafka.StartConsumers([]string{
 		"email-service-topic-auth-register",
 		"email-service-topic-auth-forgot-password",
+		"email-service-topic-auth-verify-code-success",
 		"email-service-topic-merchant-create",
 		"email-service-topic-merchant-update-status",
 		"email-service-topic-merchant-document-create",

@@ -41,7 +41,7 @@ var (
 func RunClient() {
 	flag.Parse()
 
-	logger, err := logger.NewLogger()
+	logger, err := logger.NewLogger("apigateway")
 
 	if err != nil {
 		logger.Fatal("Failed to create logger", zap.Error(err))

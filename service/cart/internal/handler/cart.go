@@ -19,7 +19,7 @@ type cartHandleGrpc struct {
 	mapping     protomapper.CartProtoMapper
 }
 
-func NewCartHandleGrpc(service service.Service) *cartHandleGrpc {
+func NewCartHandleGrpc(service *service.Service) *cartHandleGrpc {
 	return &cartHandleGrpc{
 		cardQuery:   service.CartQuery,
 		cardCommand: service.CartCommand,
@@ -87,14 +87,18 @@ func (s *cartHandleGrpc) Create(ctx context.Context, request *pb.CreateCartReque
 	return so, nil
 }
 
-func (s *cartHandleGrpc) Delete(ctx context.Context, request *pb.FindByIdCartRequest) (*pb.ApiResponseCartDelete, error) {
-	id := int(request.GetId())
+func (s *cartHandleGrpc) Delete(ctx context.Context, request *pb.DeleteCartRequest) (*pb.ApiResponseCartDelete, error) {
+	userId := request.GetUserId()
+	cartId := request.GetCartId()
 
-	if id == 0 {
+	if userId == 0 || cartId == 0 {
 		return nil, cart_errors.ErrGrpcCartInvalidId
 	}
 
-	_, err := s.cardCommand.DeletePermanent(id)
+	_, err := s.cardCommand.DeletePermanent(&requests.DeleteCartRequest{
+		UserID: int(userId),
+		CartID: int(cartId),
+	})
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -105,13 +109,20 @@ func (s *cartHandleGrpc) Delete(ctx context.Context, request *pb.FindByIdCartReq
 	return so, nil
 }
 
-func (s *cartHandleGrpc) DeleteAll(ctx context.Context, req *pb.DeleteCartRequest) (*pb.ApiResponseCartAll, error) {
+func (s *cartHandleGrpc) DeleteAll(ctx context.Context, req *pb.DeleteAllCartRequest) (*pb.ApiResponseCartAll, error) {
+	userId := req.GetUserId()
+
+	if userId == 0 {
+		return nil, cart_errors.ErrGrpcCartInvalidId
+	}
+
 	cartIDs := make([]int, len(req.GetCartIds()))
 	for i, id := range req.GetCartIds() {
 		cartIDs[i] = int(id)
 	}
 
-	deleteRequest := &requests.DeleteCartRequest{
+	deleteRequest := &requests.DeleteAllCartRequest{
+		UserID:  int(userId),
 		CartIds: cartIDs,
 	}
 

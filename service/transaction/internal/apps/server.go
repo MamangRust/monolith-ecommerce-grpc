@@ -7,8 +7,11 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/internal/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/internal/handler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-transaction/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/internal/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/database"
@@ -19,6 +22,7 @@ import (
 	otel_pkg "github.com/MamangRust/monolith-ecommerce-pkg/otel"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
@@ -33,7 +37,7 @@ var (
 func init() {
 	port = viper.GetInt("GRPC_TRANSACTION_ADDR")
 	if port == 0 {
-		port = 50052
+		port = 50059
 	}
 
 	flag.IntVar(&port, "port", port, "gRPC server port")
@@ -47,10 +51,10 @@ type Server struct {
 	Ctx      context.Context
 }
 
-func NewServer() (*Server, error) {
+func NewServer() (*Server, func(context.Context) error, error) {
 	logger, err := logger.NewLogger()
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize logger: %w", err)
+		return nil, nil, fmt.Errorf("failed to initialize logger: %w", err)
 	}
 
 	if err := dotenv.Viper(); err != nil {
@@ -66,7 +70,7 @@ func NewServer() (*Server, error) {
 
 	ctx := context.Background()
 
-	depsRepo := repository.Deps{
+	depsRepo := &repository.Deps{
 		DB:  DB,
 		Ctx: ctx,
 	}
@@ -74,7 +78,7 @@ func NewServer() (*Server, error) {
 	repositories := repository.NewRepositories(depsRepo)
 	myKafka := kafka.NewKafka(logger, []string{viper.GetString("KAFKA_BROKERS")})
 
-	shutdownTracerProvider, err := otel_pkg.InitTracerProvider("TRANSACTION-service", ctx)
+	shutdownTracerProvider, err := otel_pkg.InitTracerProvider("Transaction-service", ctx)
 	if err != nil {
 		logger.Fatal("Failed to initialize tracer provider", zap.Error(err))
 	}
@@ -84,15 +88,40 @@ func NewServer() (*Server, error) {
 		}
 	}()
 
-	services := service.NewService(service.Deps{
-		Ctx:          ctx,
-		Repositories: repositories,
-		Logger:       logger,
-		Kafka:        *myKafka,
+	myredis := redis.NewClient(&redis.Options{
+		Addr:         fmt.Sprintf("%s:%s", viper.GetString("REDIS_HOST"), viper.GetString("REDIS_PORT")),
+		Password:     viper.GetString("REDIS_PASSWORD"),
+		DB:           viper.GetInt("REDIS_DB_TRANSACTION"),
+		DialTimeout:  5 * time.Second,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
+		PoolSize:     10,
+		MinIdleConns: 3,
 	})
 
-	handlers := handler.NewHandler(handler.Deps{
-		Service: *services,
+	if err := myredis.Ping(ctx).Err(); err != nil {
+		logger.Fatal("Failed to ping redis", zap.Error(err))
+	}
+
+	mencache := mencache.NewMencache(&mencache.Deps{
+		Ctx:    ctx,
+		Redis:  myredis,
+		Logger: logger,
+	})
+
+	errorhandler := errorhandler.NewErrorHandler(logger)
+
+	services := service.NewService(&service.Deps{
+		Ctx:          ctx,
+		Mencache:     mencache,
+		ErrorHandler: errorhandler,
+		Repositories: repositories,
+		Logger:       logger,
+		Kafka:        myKafka,
+	})
+
+	handlers := handler.NewHandler(&handler.Deps{
+		Service: services,
 	})
 
 	return &Server{
@@ -101,7 +130,7 @@ func NewServer() (*Server, error) {
 		Services: services,
 		Handlers: handlers,
 		Ctx:      ctx,
-	}, nil
+	}, shutdownTracerProvider, nil
 }
 
 func (s *Server) Run() {
@@ -140,7 +169,7 @@ func (s *Server) Run() {
 
 	go func() {
 		defer wg.Done()
-		s.Logger.Info("Metrics server listening on :8082")
+		s.Logger.Info("Metrics server listening on :8089")
 		if err := http.Serve(metricsLis, metricsServer); err != nil {
 			s.Logger.Fatal("Metrics server error", zap.Error(err))
 		}
@@ -148,7 +177,7 @@ func (s *Server) Run() {
 
 	go func() {
 		defer wg.Done()
-		s.Logger.Info("gRPC server listening on :50052")
+		s.Logger.Info("gRPC server listening on :50059")
 		if err := grpcServer.Serve(lis); err != nil {
 			s.Logger.Fatal("gRPC server error", zap.Error(err))
 		}

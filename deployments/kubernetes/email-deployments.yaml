@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: email
+  namespace: ecommerce
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: email
+  template:
+    metadata:
+      labels:
+        app: email
+    spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox:1.35
+          command: ['sh', '-c']
+          args:
+            - |
+              echo "Waiting for Kafka to be ready (TCP)..."
+              until nc -z kafka.ecommerce.svc.cluster.local 9092; do
+                echo "Kafka is not ready yet. Waiting 5 seconds..."
+                sleep 5
+              done
+              echo "Kafka is ready!"
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"
+      containers:
+      - name: email
+        image: email-service:1.0
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secrets
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "250m"
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          failureThreshold: 5
+        imagePullPolicy: IfNotPresent

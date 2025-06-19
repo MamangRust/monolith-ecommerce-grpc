@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/internal/errorhandler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	traceunic "github.com/MamangRust/monolith-ecommerce-pkg/trace_unic"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	shippingaddress_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/shipping_address_errors"
 	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -20,6 +20,8 @@ import (
 
 type shippingAddressCommandService struct {
 	ctx                              context.Context
+	mencache                         mencache.ShippingAddressCommandCache
+	errorhandler                     errorhandler.ShippingAddressCommandError
 	trace                            trace.Tracer
 	shippingAddressCommandRepository repository.ShippingAddressCommandRepository
 	mapping                          response_service.ShippingAddressResponseMapper
@@ -28,7 +30,10 @@ type shippingAddressCommandService struct {
 	requestDuration                  *prometheus.HistogramVec
 }
 
-func NewShippingAddressCommandService(ctx context.Context, shippingAddressCommandRepository repository.ShippingAddressCommandRepository, logger logger.LoggerInterface, mapping response_service.ShippingAddressResponseMapper) *shippingAddressCommandService {
+func NewShippingAddressCommandService(ctx context.Context,
+	mencache mencache.ShippingAddressCommandCache,
+	errorhandler errorhandler.ShippingAddressCommandError,
+	shippingAddressCommandRepository repository.ShippingAddressCommandRepository, logger logger.LoggerInterface, mapping response_service.ShippingAddressResponseMapper) *shippingAddressCommandService {
 	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "shipping_address_command_service_request_count",
@@ -50,6 +55,8 @@ func NewShippingAddressCommandService(ctx context.Context, shippingAddressComman
 
 	return &shippingAddressCommandService{
 		ctx:                              ctx,
+		mencache:                         mencache,
+		errorhandler:                     errorhandler,
 		trace:                            otel.Tracer("shipping-address-command-service"),
 		shippingAddressCommandRepository: shippingAddressCommandRepository,
 		mapping:                          mapping,
@@ -60,195 +67,144 @@ func NewShippingAddressCommandService(ctx context.Context, shippingAddressComman
 }
 
 func (s *shippingAddressCommandService) TrashShippingAddress(shipping_id int) (*response.ShippingAddressResponseDeleteAt, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "TrashShippingAddress"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("shipping.id", shipping_id))
 
 	defer func() {
-		s.recordMetrics("TrashShippingAddress", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "TrashShippingAddress")
-	defer span.End()
-
-	s.logger.Debug("Trashing shipping address", zap.Int("category", shipping_id))
 
 	category, err := s.shippingAddressCommandRepository.TrashShippingAddress(shipping_id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_TRASH_SHIPPING_ADDRESS")
-
-		s.logger.Error("Failed to trash shipping address",
-			zap.Error(err),
-			zap.Int("shipping_id", shipping_id),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("shipping_id", shipping_id),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to trash shipping address")
-		status = "failed_trash_shipping_address"
-
-		return nil, shippingaddress_errors.ErrFailedTrashShippingAddress
+		return s.errorhandler.HandleTrashedShippingAddressError(err, method, "FAILED_TRASH_SHIPPING_ADDRESS", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToShippingAddressResponseDeleteAt(category), nil
+	so := s.mapping.ToShippingAddressResponseDeleteAt(category)
+
+	logSuccess("Successfully trashed shipping address", zap.Int("shipping.id", shipping_id), zap.Bool("success", true))
+
+	return so, nil
 }
 
 func (s *shippingAddressCommandService) RestoreShippingAddress(shipping_id int) (*response.ShippingAddressResponseDeleteAt, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "RestoreShippingAddress"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("shipping.id", shipping_id))
 
 	defer func() {
-		s.recordMetrics("RestoreShippingAddress", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "RestoreShippingAddress")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("shipping_id", shipping_id),
-	)
-
-	s.logger.Debug("Restoring Shipping Address", zap.Int("shipping_id", shipping_id))
 
 	shipping, err := s.shippingAddressCommandRepository.RestoreShippingAddress(shipping_id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_RESTORE_SHIPPING_ADDRESS")
-
-		s.logger.Error("Failed to restore shipping address",
-			zap.Error(err),
-			zap.Int("shipping_id", shipping_id),
-			zap.String("traceID", traceID))
-
-		span.SetAttributes(
-			attribute.Int("shipping_id", shipping_id),
-			attribute.String("traceID", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to restore shipping address")
-		status = "failed_restore_shipping_address"
-
-		return nil, shippingaddress_errors.ErrFailedRestoreShippingAddress
+		return s.errorhandler.HandleRestoreShippingAddressError(err, method, "FAILED_RESTORE_SHIPPING_ADDRESS", span, &status, zap.Error(err))
 	}
 
-	return s.mapping.ToShippingAddressResponseDeleteAt(shipping), nil
+	so := s.mapping.ToShippingAddressResponseDeleteAt(shipping)
+
+	logSuccess("Successfully restored shipping address", zap.Int("shipping.id", shipping_id), zap.Bool("success", true))
+
+	return so, nil
 }
 
 func (s *shippingAddressCommandService) DeleteShippingAddressPermanently(shipping_id int) (bool, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "DeleteShippingAddressPermanently"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("shipping.id", shipping_id))
 
 	defer func() {
-		s.recordMetrics("DeleteShippingAddressPermanently", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "DeleteShippingAddressPermanently")
-	defer span.End()
-
-	span.SetAttributes(
-		attribute.Int("shipping_id", shipping_id),
-	)
-
-	s.logger.Debug("Permanently deleting shipping address", zap.Int("shipping_id", shipping_id))
 
 	success, err := s.shippingAddressCommandRepository.DeleteShippingAddressPermanently(shipping_id)
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_DELETE_SHIPPING_ADDRESS_PERMANENTLY")
-
-		s.logger.Error("Failed to permanently delete shipping address",
-			zap.Error(err),
-			zap.Int("shipping_id", shipping_id),
-			zap.String("trace_id", traceID))
-
-		span.SetAttributes(
-			attribute.Int("shipping_id", shipping_id),
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to permanently delete shipping address")
-		status = "failed_delete_shipping_address_permanently"
-
-		return false, shippingaddress_errors.ErrFailedDeleteShippingAddressPermanent
+		return s.errorhandler.HandleDeleteShippingAddressError(err, method, "FAILED_DELETE_SHIPPING_ADDRESS_PERMANENTLY", span, &status, zap.Error(err))
 	}
+
+	logSuccess("Successfully deleted shipping address permanently", zap.Int("shipping.id", shipping_id), zap.Bool("success", success))
 
 	return success, nil
 }
 
 func (s *shippingAddressCommandService) RestoreAllShippingAddress() (bool, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "RestoreAllShippingAddress"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("RestoreAllShippingAddress", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "RestoreAllShippingAddress")
-	defer span.End()
-
-	s.logger.Debug("Restoring all trashed shipping address")
 
 	success, err := s.shippingAddressCommandRepository.RestoreAllShippingAddress()
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_RESTORE_ALL_SHIPPING_ADDRESS")
-
-		s.logger.Debug("Failed to restore all trashed shipping address", zap.Error(err), zap.String("trace_id", traceID))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to restore all trashed shipping address")
-		status = "failed_restore_all_shipping_address"
-
-		return false, shippingaddress_errors.ErrFailedRestoreAllShippingAddresses
+		return s.errorhandler.HandleRestoreAllShippingAddressError(err, method, "FAILED_RESTORE_ALL_TRASHED_SHIPPING_ADDRESS", span, &status, zap.Error(err))
 	}
+
+	logSuccess("Successfully restored all trashed shipping address", zap.Bool("success", success))
 
 	return success, nil
 }
 
 func (s *shippingAddressCommandService) DeleteAllPermanentShippingAddress() (bool, *response.ErrorResponse) {
-	start := time.Now()
-	status := "success"
+	const method = "DeleteAllPermanentShippingAddress"
+
+	span, end, status, logSuccess := s.startTracingAndLogging(method)
 
 	defer func() {
-		s.recordMetrics("DeleteAllPermanentShippingAddress", status, start)
+		end(status)
 	}()
-
-	_, span := s.trace.Start(s.ctx, "DeleteAllPermanentShippingAddress")
-	defer span.End()
-
-	s.logger.Debug("Permanently deleting all shipping address")
 
 	success, err := s.shippingAddressCommandRepository.DeleteAllPermanentShippingAddress()
 
 	if err != nil {
-		traceID := traceunic.GenerateTraceID("FAILED_DELETE_ALL_SHIPPING_ADDRESS_PERMANENT")
-
-		s.logger.Error("Failed to permanently delete all shipping address",
-			zap.Error(err),
-			zap.String("trace_id", traceID))
-
-		span.SetAttributes(
-			attribute.String("trace.id", traceID),
-		)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to permanently delete all shipping address")
-		status = "failed_delete_all_shipping_address_permanent"
-
-		return false, shippingaddress_errors.ErrFailedDeleteAllShippingAddressesPermanent
+		return s.errorhandler.HandleDeleteAllShippingAddressError(err, method, "FAILED_DELETE_ALL_SHIPPING_ADDRESS_PERMANENTLY", span, &status, zap.Error(err))
 	}
 
+	logSuccess("Successfully deleted all shipping address permanently", zap.Bool("success", success))
+
 	return success, nil
+}
+
+func (s *shippingAddressCommandService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+	trace.Span,
+	func(string),
+	string,
+	func(string, ...zap.Field),
+) {
+	start := time.Now()
+	status := "success"
+
+	_, span := s.trace.Start(s.ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := codes.Ok
+		if status != "success" {
+			code = codes.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	return span, end, status, logSuccess
 }
 
 func (s *shippingAddressCommandService) recordMetrics(method string, status string, start time.Time) {

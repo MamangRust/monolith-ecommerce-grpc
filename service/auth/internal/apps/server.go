@@ -8,8 +8,11 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-auth/internal/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-auth/internal/handler"
+	mencache "github.com/MamangRust/monolith-ecommerce-auth/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-auth/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-auth/internal/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/auth"
@@ -24,6 +27,7 @@ import (
 	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
@@ -38,7 +42,7 @@ var (
 func init() {
 	port = viper.GetInt("GRPC_AUTH_ADDR")
 	if port == 0 {
-		port = 50053
+		port = 50051
 	}
 
 	flag.IntVar(&port, "port", port, "gRPC server port")
@@ -53,12 +57,12 @@ type Server struct {
 	Ctx          context.Context
 }
 
-func NewServer() (*Server, error) {
+func NewServer() (*Server, func(context.Context) error, error) {
 	flag.Parse()
 
-	logger, err := logger.NewLogger()
+	logger, err := logger.NewLogger("auth-service")
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize logger: %w", err)
+		return nil, nil, fmt.Errorf("failed to initialize logger: %w", err)
 	}
 
 	if err := dotenv.Viper(); err != nil {
@@ -81,11 +85,12 @@ func NewServer() (*Server, error) {
 	mapperRecord := recordmapper.NewRecordMapper()
 	mapperResponse := response_service.NewResponseServiceMapper()
 
-	depsRepo := repository.Deps{
+	depsRepo := &repository.Deps{
 		DB:           DB,
 		Ctx:          ctx,
 		MapperRecord: mapperRecord,
 	}
+
 	repositories := repository.NewRepositories(depsRepo)
 
 	kafka := kafka.NewKafka(logger, []string{viper.GetString("KAFKA_BROKERS")})
@@ -100,14 +105,39 @@ func NewServer() (*Server, error) {
 		}
 	}()
 
-	services := service.NewService(service.Deps{
+	myredis := redis.NewClient(&redis.Options{
+		Addr:         fmt.Sprintf("%s:%s", viper.GetString("REDIS_HOST"), viper.GetString("REDIS_PORT")),
+		Password:     viper.GetString("REDIS_PASSWORD"),
+		DB:           viper.GetInt("REDIS_DB_AUTH"),
+		DialTimeout:  5 * time.Second,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
+		PoolSize:     10,
+		MinIdleConns: 3,
+	})
+
+	if err := myredis.Ping(ctx).Err(); err != nil {
+		logger.Fatal("Failed to ping redis", zap.Error(err))
+	}
+
+	mencache := mencache.NewMencache(&mencache.Deps{
+		Ctx:    ctx,
+		Redis:  myredis,
+		Logger: logger,
+	})
+
+	errorhandler := errorhandler.NewErrorHandler(logger)
+
+	services := service.NewService(&service.Deps{
 		Context:      ctx,
+		ErrorHandler: errorhandler,
+		Mencache:     mencache,
 		Repositories: repositories,
 		Hash:         hash,
 		Token:        tokenManager,
 		Logger:       logger,
 		Mapper:       mapperResponse.UserResponseMapper,
-		Kafka:        *kafka,
+		Kafka:        kafka,
 	})
 
 	handlers := handler.NewHandler(handler.Deps{
@@ -121,7 +151,7 @@ func NewServer() (*Server, error) {
 		Services:     services,
 		Handlers:     handlers,
 		Ctx:          ctx,
-	}, nil
+	}, shutdownTracerProvider, nil
 }
 
 func (s *Server) Run() {
@@ -161,7 +191,9 @@ func (s *Server) Run() {
 
 	go func() {
 		defer wg.Done()
+
 		s.Logger.Info("Metrics server listening on :8081")
+
 		if err := http.Serve(metricsLis, metricsServer); err != nil {
 			s.Logger.Fatal("Failed to start metrics server", zap.Error(err))
 		}
@@ -169,7 +201,9 @@ func (s *Server) Run() {
 
 	go func() {
 		defer wg.Done()
-		s.Logger.Debug("gRPC server listening on port", zap.Int("port", port))
+
+		s.Logger.Info("gRPC server listening on :50051")
+
 		if err := grpcServer.Serve(lis); err != nil {
 			s.Logger.Fatal("Failed to start gRPC server", zap.Error(err))
 		}

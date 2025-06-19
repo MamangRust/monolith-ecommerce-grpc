@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -10,14 +12,22 @@ import (
 	response_api "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/api"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	otelcode "go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type reviewHandleApi struct {
-	client  pb.ReviewServiceClient
-	logger  logger.LoggerInterface
-	mapping response_api.ReviewResponseMapper
+	client          pb.ReviewServiceClient
+	logger          logger.LoggerInterface
+	mapping         response_api.ReviewResponseMapper
+	trace           trace.Tracer
+	requestCounter  *prometheus.CounterVec
+	requestDuration *prometheus.HistogramVec
 }
 
 func NewHandlerReview(
@@ -26,10 +36,32 @@ func NewHandlerReview(
 	logger logger.LoggerInterface,
 	mapping response_api.ReviewResponseMapper,
 ) *reviewHandleApi {
+	requestCounter := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "review_handler_requests_total",
+			Help: "Total number of review requests",
+		},
+		[]string{"method", "status"},
+	)
+
+	requestDuration := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "review_handler_request_duration_seconds",
+			Help:    "Duration of review requests",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"method", "status"},
+	)
+
+	prometheus.MustRegister(requestCounter)
+
 	reviewHandler := &reviewHandleApi{
-		client:  client,
-		logger:  logger,
-		mapping: mapping,
+		client:          client,
+		logger:          logger,
+		mapping:         mapping,
+		trace:           otel.Tracer("review-handler"),
+		requestCounter:  requestCounter,
+		requestDuration: requestDuration,
 	}
 
 	routerreview := router.Group("/api/review")
@@ -65,19 +97,29 @@ func NewHandlerReview(
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve review data"
 // @Router /api/review [get]
 func (h *reviewHandleApi) FindAll(c echo.Context) error {
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if err != nil || page <= 0 {
-		page = 1
-	}
+	const (
+		defaultPage     = 1
+		defaultPageSize = 10
+		method          = "FindAll"
+	)
 
-	pageSize, err := strconv.Atoi(c.QueryParam("page_size"))
-	if err != nil || pageSize <= 0 {
-		pageSize = 10
-	}
-
+	page := parseQueryInt(c, "page", defaultPage)
+	pageSize := parseQueryInt(c, "page_size", defaultPageSize)
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+		attribute.Int("page", page),
+		attribute.Int("page_size", pageSize),
+		attribute.String("search", search),
+	)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	req := &pb.FindAllReviewRequest{
 		Page:     int32(page),
@@ -88,11 +130,16 @@ func (h *reviewHandleApi) FindAll(c echo.Context) error {
 	res, err := h.client.FindAll(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to fetch reviews", zap.Error(err))
+		status = "error"
+
+		logError("Failed to retrieve review data", err, zap.Error(err))
+
 		return review_errors.ErrApiFailedFindAllReviews(c)
 	}
 
 	so := h.mapping.ToApiResponsePaginationReview(res)
+
+	logSuccess("Successfully retrieve review data", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -167,18 +214,29 @@ func (h *reviewHandleApi) FindByMerchant(c echo.Context) error {
 		return review_errors.ErrApiReviewInvalidMerchantId(c)
 	}
 
-	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 {
-		page = 1
-	}
+	const (
+		defaultPage     = 1
+		defaultPageSize = 10
+		method          = "FindByMerchant"
+	)
 
-	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 {
-		pageSize = 10
-	}
-
+	page := parseQueryInt(c, "page", defaultPage)
+	pageSize := parseQueryInt(c, "page_size", defaultPageSize)
 	search := c.QueryParam("search")
+
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+		attribute.Int("page", page),
+		attribute.Int("page_size", pageSize),
+		attribute.String("search", search),
+	)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	req := &pb.FindAllReviewMerchantRequest{
 		MerchantId: int32(id),
@@ -189,11 +247,17 @@ func (h *reviewHandleApi) FindByMerchant(c echo.Context) error {
 
 	res, err := h.client.FindByMerchant(ctx, req)
 	if err != nil {
-		h.logger.Error("Failed to fetch reviews merchant", zap.Error(err))
+		status = "error"
+
+		logError("Failed to retrieve review data", err, zap.Error(err))
+
 		return review_errors.ErrApiFailedFindMerchantReviews(c)
 	}
 
 	so := h.mapping.ToApiResponsePaginationReviewsDetail(res)
+
+	logSuccess("Successfully retrieve review data", zap.Bool("success", true))
+
 	return c.JSON(http.StatusOK, so)
 }
 
@@ -210,19 +274,29 @@ func (h *reviewHandleApi) FindByMerchant(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve review data"
 // @Router /api/review/active [get]
 func (h *reviewHandleApi) FindByActive(c echo.Context) error {
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if err != nil || page <= 0 {
-		page = 1
-	}
+	const (
+		defaultPage     = 1
+		defaultPageSize = 10
+		method          = "FindByActive"
+	)
 
-	pageSize, err := strconv.Atoi(c.QueryParam("page_size"))
-	if err != nil || pageSize <= 0 {
-		pageSize = 10
-	}
-
+	page := parseQueryInt(c, "page", defaultPage)
+	pageSize := parseQueryInt(c, "page_size", defaultPageSize)
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+		attribute.Int("page", page),
+		attribute.Int("page_size", pageSize),
+		attribute.String("search", search),
+	)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	req := &pb.FindAllReviewRequest{
 		Page:     int32(page),
@@ -233,12 +307,16 @@ func (h *reviewHandleApi) FindByActive(c echo.Context) error {
 	res, err := h.client.FindByActive(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to fetch review details", zap.Error(err))
+		status = "error"
+
+		logError("Failed to retrieve review data", err, zap.Error(err))
 
 		return review_errors.ErrApiFailedFindActiveReviews(c)
 	}
 
 	so := h.mapping.ToApiResponsePaginationReviewDeleteAt(res)
+
+	logSuccess("Successfully retrieve review data", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -257,19 +335,29 @@ func (h *reviewHandleApi) FindByActive(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve review data"
 // @Router /api/review/trashed [get]
 func (h *reviewHandleApi) FindByTrashed(c echo.Context) error {
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if err != nil || page <= 0 {
-		page = 1
-	}
+	const (
+		defaultPage     = 1
+		defaultPageSize = 10
+		method          = "FindByTrashed"
+	)
 
-	pageSize, err := strconv.Atoi(c.QueryParam("page_size"))
-	if err != nil || pageSize <= 0 {
-		pageSize = 10
-	}
-
+	page := parseQueryInt(c, "page", defaultPage)
+	pageSize := parseQueryInt(c, "page_size", defaultPageSize)
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+		attribute.Int("page", page),
+		attribute.Int("page_size", pageSize),
+		attribute.String("search", search),
+	)
+
+	status := "success"
+
+	defer func() { end(status) }()
 
 	req := &pb.FindAllReviewRequest{
 		Page:     int32(page),
@@ -280,11 +368,16 @@ func (h *reviewHandleApi) FindByTrashed(c echo.Context) error {
 	res, err := h.client.FindByTrashed(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to fetch archived reviews", zap.Error(err))
+		status = "error"
+
+		logError("Failed to retrieve review data", err, zap.Error(err))
+
 		return review_errors.ErrApiFailedFindTrashedReviews(c)
 	}
 
 	so := h.mapping.ToApiResponsePaginationReviewDeleteAt(res)
+
+	logSuccess("Successfully retrieve review data", zap.Bool("success", true))
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -559,4 +652,50 @@ func (h *reviewHandleApi) DeleteAllReviewPermanent(c echo.Context) error {
 	h.logger.Debug("Successfully deleted all review permanently")
 
 	return c.JSON(http.StatusOK, so)
+}
+
+func (s *reviewHandleApi) startTracingAndLogging(
+	ctx context.Context,
+	method string,
+	attrs ...attribute.KeyValue,
+) (func(string), func(string, ...zap.Field), func(string, error, ...zap.Field)) {
+	start := time.Now()
+	_, span := s.trace.Start(ctx, method)
+
+	if len(attrs) > 0 {
+		span.SetAttributes(attrs...)
+	}
+
+	span.AddEvent("Start: " + method)
+	s.logger.Debug("Start: " + method)
+
+	end := func(status string) {
+		s.recordMetrics(method, status, start)
+		code := otelcode.Ok
+		if status != "success" {
+			code = otelcode.Error
+		}
+		span.SetStatus(code, status)
+		span.End()
+	}
+
+	logSuccess := func(msg string, fields ...zap.Field) {
+		span.AddEvent(msg)
+		s.logger.Debug(msg, fields...)
+	}
+
+	logError := func(msg string, err error, fields ...zap.Field) {
+		span.RecordError(err)
+		span.SetStatus(otelcode.Error, msg)
+		span.AddEvent(msg)
+		allFields := append([]zap.Field{zap.Error(err)}, fields...)
+		s.logger.Error(msg, allFields...)
+	}
+
+	return end, logSuccess, logError
+}
+
+func (s *reviewHandleApi) recordMetrics(method string, status string, start time.Time) {
+	s.requestCounter.WithLabelValues(method, status).Inc()
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

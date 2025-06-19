@@ -24,7 +24,7 @@ type categoryHandleGrpc struct {
 }
 
 func NewCategoryHandleGrpc(
-	service service.Service,
+	service *service.Service,
 ) *categoryHandleGrpc {
 	return &categoryHandleGrpc{
 		categoryQuery:           service.CategoryQuery,
