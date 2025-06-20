@@ -7,8 +7,8 @@ type ErrorHandler struct {
 	RoleCommandError RoleCommandErrorHandler
 }
 
-func NewErrorHandler(logger logger.LoggerInterface) ErrorHandler {
-	return ErrorHandler{
+func NewErrorHandler(logger logger.LoggerInterface) *ErrorHandler {
+	return &ErrorHandler{
 		RoleQueryError:   NewRoleQueryError(logger),
 		RoleCommandError: NewRoleCommandError(logger),
 	}

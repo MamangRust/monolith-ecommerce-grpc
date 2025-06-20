@@ -1,0 +1,66 @@
+groups:
+  - name: product-service-alerts
+    rules:
+      - alert: ProductHighCommandErrorRate
+        expr: |
+          sum(rate(product_command_service_requests_total{status="error"}[1m])) 
+          / 
+          sum(rate(product_command_service_requests_total[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on product command service"
+          description: "More than 10% of product command requests are failing (current value: {{ $value }})."
+
+      - alert: ProductHighQueryErrorRate
+        expr: |
+          sum(rate(product_query_service_requests_total{status="error"}[1m])) 
+          / 
+          sum(rate(product_query_service_requests_total[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on product query service"
+          description: "More than 10% of product query requests are failing (current value: {{ $value }})."
+
+      - alert: ProductHighCommandLatency
+        expr: |
+          histogram_quantile(0.95, rate(product_command_service_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Product command service latency is high"
+          description: "95th percentile latency > 1s for product command service (current: {{ $value }}s)."
+
+      - alert: ProductHighQueryLatency
+        expr: |
+          histogram_quantile(0.95, rate(product_query_service_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Product query service latency is high"
+          description: "95th percentile latency > 1s for product query service (current: {{ $value }}s)."
+
+      - alert: ProductNoCommandTraffic
+        expr: |
+          rate(product_command_service_requests_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on product command service"
+          description: "No incoming traffic for product command service for 5 minutes."
+
+      - alert: ProductNoQueryTraffic
+        expr: |
+          rate(product_query_service_requests_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on product query service"
+          description: "No incoming traffic for product query service for 5 minutes."

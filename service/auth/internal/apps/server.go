@@ -60,7 +60,7 @@ type Server struct {
 func NewServer() (*Server, func(context.Context) error, error) {
 	flag.Parse()
 
-	logger, err := logger.NewLogger("auth-service")
+	logger, err := logger.NewLogger("auth")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize logger: %w", err)
 	}
@@ -160,7 +160,7 @@ func (s *Server) Run() {
 		s.Logger.Fatal("Failed to listen", zap.Error(err))
 	}
 
-	metricsAddr := fmt.Sprintf(":%s", viper.GetString("METRICS_AUTH_ADDR"))
+	metricsAddr := fmt.Sprintf(":%s", viper.GetString("METRIC_AUTH_ADDR"))
 	metricsLis, err := net.Listen("tcp", metricsAddr)
 	if err != nil {
 		s.Logger.Fatal("failed to listen on", zap.Error(err))

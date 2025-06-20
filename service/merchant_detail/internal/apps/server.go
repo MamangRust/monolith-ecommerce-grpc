@@ -51,7 +51,7 @@ type Server struct {
 }
 
 func NewServer() (*Server, func(context.Context) error, error) {
-	logger, err := logger.NewLogger()
+	logger, err := logger.NewLogger("merchant-detail")
 
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize logger: %w", err)
@@ -142,6 +142,7 @@ func (s *Server) Run() {
 		s.Logger.Fatal("Failed to listen", zap.Error(err))
 	}
 	metricsAddr := fmt.Sprintf(":%s", viper.GetString("METRIC_MERCHANT_DETAIL_ADDR"))
+
 	metricsLis, err := net.Listen("tcp", metricsAddr)
 	if err != nil {
 		s.Logger.Fatal("failed to listen on", zap.Error(err))

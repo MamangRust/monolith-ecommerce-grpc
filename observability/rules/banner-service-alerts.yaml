@@ -1,0 +1,66 @@
+groups:
+  - name: banner-service-alerts
+    rules:
+      - alert: BannerHighQueryErrorRate
+        expr: |
+          sum(rate(banner_query_service_request_total{status="error"}[1m])) 
+          / 
+          sum(rate(banner_query_service_request_total[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on banner query service"
+          description: "More than 10% of banner query requests are failing (current value: {{ $value }})."
+
+      - alert: BannerHighCommandErrorRate
+        expr: |
+          sum(rate(banner_command_service_request_total{status="error"}[1m])) 
+          / 
+          sum(rate(banner_command_service_request_total[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on banner command service"
+          description: "More than 10% of banner command requests are failing (current value: {{ $value }})."
+
+      - alert: BannerHighQueryLatency
+        expr: |
+          histogram_quantile(0.95, rate(banner_query_service_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Banner query service latency is high"
+          description: "95th percentile latency > 1s for banner query service (current: {{ $value }}s)."
+
+      - alert: BannerHighCommandLatency
+        expr: |
+          histogram_quantile(0.95, rate(banner_command_service_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Banner command service latency is high"
+          description: "95th percentile latency > 1s for banner command service (current: {{ $value }}s)."
+
+      - alert: BannerNoQueryTraffic
+        expr: |
+          rate(banner_query_service_request_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on banner query service"
+          description: "No incoming traffic for banner query service for 5 minutes."
+
+      - alert: BannerNoCommandTraffic
+        expr: |
+          rate(banner_command_service_request_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on banner command service"
+          description: "No incoming traffic for banner command service for 5 minutes."

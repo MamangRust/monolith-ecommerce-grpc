@@ -1,0 +1,98 @@
+groups:
+  - name: category-service-alerts
+    rules:
+      - alert: CategoryHighCommandErrorRate
+        expr: |
+          sum(rate(category_command_service_request_total{status="error"}[1m])) 
+          / 
+          sum(rate(category_command_service_request_total[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on category command service"
+          description: "More than 10% of category command requests are failing (current value: {{ $value }})."
+
+      - alert: CategoryHighQueryErrorRate
+        expr: |
+          sum(rate(category_query_service_request_total{status="error"}[1m])) 
+          / 
+          sum(rate(category_query_service_request_total[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on category query service"
+          description: "More than 10% of category query requests are failing (current value: {{ $value }})."
+
+      - alert: CategoryHighStatsErrorRate
+        expr: |
+          sum(rate(category_stats_service_request_total{status="error"}[1m])) 
+          / 
+          sum(rate(category_stats_service_request_total[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on category stats service"
+          description: "More than 10% of category stats requests are failing (current value: {{ $value }})."
+
+      - alert: CategoryHighCommandLatency
+        expr: |
+          histogram_quantile(0.95, rate(category_command_service_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Category command service latency is high"
+          description: "95th percentile latency > 1s for category command service (current: {{ $value }}s)."
+
+      - alert: CategoryHighQueryLatency
+        expr: |
+          histogram_quantile(0.95, rate(category_query_service_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Category query service latency is high"
+          description: "95th percentile latency > 1s for category query service (current: {{ $value }}s)."
+
+      - alert: CategoryHighStatsLatency
+        expr: |
+          histogram_quantile(0.95, rate(category_stats_service_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Category stats service latency is high"
+          description: "95th percentile latency > 1s for category stats service (current: {{ $value }}s)."
+
+      - alert: CategoryNoCommandTraffic
+        expr: |
+          rate(category_command_service_request_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on category command service"
+          description: "No incoming traffic for category command service for 5 minutes."
+
+      - alert: CategoryNoQueryTraffic
+        expr: |
+          rate(category_query_service_request_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on category query service"
+          description: "No incoming traffic for category query service for 5 minutes."
+
+      - alert: CategoryNoStatsTraffic
+        expr: |
+          rate(category_stats_service_request_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on category stats service"
+          description: "No incoming traffic for category stats service for 5 minutes."

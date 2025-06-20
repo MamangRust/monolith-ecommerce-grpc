@@ -1,0 +1,66 @@
+groups:
+  - name: slider-service-alerts
+    rules:
+      - alert: SliderHighQueryErrorRate
+        expr: |
+          sum(rate(slider_query_service_request_count{status="error"}[1m])) 
+          / 
+          sum(rate(slider_query_service_request_count[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on slider query service"
+          description: "More than 10% of slider query requests are failing (current value: {{ $value }})."
+
+      - alert: SliderHighCommandErrorRate
+        expr: |
+          sum(rate(slider_command_service_request_count{status="error"}[1m])) 
+          / 
+          sum(rate(slider_command_service_request_count[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on slider command service"
+          description: "More than 10% of slider command requests are failing (current value: {{ $value }})."
+
+      - alert: SliderHighQueryLatency
+        expr: |
+          histogram_quantile(0.95, rate(slider_query_service_request_duration[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slider query service latency is high"
+          description: "95th percentile latency > 1s for slider query service (current: {{ $value }}s)."
+
+      - alert: SliderHighCommandLatency
+        expr: |
+          histogram_quantile(0.95, rate(slider_command_service_request_duration[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slider command service latency is high"
+          description: "95th percentile latency > 1s for slider command service (current: {{ $value }}s)."
+
+      - alert: SliderNoQueryTraffic
+        expr: |
+          rate(slider_query_service_request_count[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on slider query service"
+          description: "No incoming traffic for slider query service for 5 minutes."
+
+      - alert: SliderNoCommandTraffic
+        expr: |
+          rate(slider_command_service_request_count[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on slider command service"
+          description: "No incoming traffic for slider command service for 5 minutes."

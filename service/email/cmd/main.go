@@ -19,7 +19,7 @@ import (
 )
 
 func main() {
-	logger, err := logger.NewLogger("email-service")
+	logger, err := logger.NewLogger("email")
 	if err != nil {
 		log.Fatalf("Error creating logger: %v", err)
 	}
@@ -40,6 +40,7 @@ func main() {
 	metricsAddr := fmt.Sprintf(":%s", viper.GetString("METRIC_EMAIL_ADDR"))
 
 	metrics.Register()
+
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
 		log.Fatal(http.ListenAndServe(metricsAddr, nil))

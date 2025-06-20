@@ -23,7 +23,7 @@ seeder:
 
 build-image:
 	@for service in $(SERVICES); do \
-		echo "🔨 Building $$service-service..."; \
+		echo "🔨 Building $$service-ecommerce-service..."; \
 		docker build -t $$service-ecommerce-service:1.0 -f service/$$service/Dockerfile service/$$service || exit 1; \
 	done
 	@echo "✅ All services built successfully."

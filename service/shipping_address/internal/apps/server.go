@@ -51,7 +51,7 @@ type Server struct {
 }
 
 func NewServer() (*Server, func(context.Context) error, error) {
-	logger, err := logger.NewLogger()
+	logger, err := logger.NewLogger("shipping")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize logger: %w", err)
 	}
@@ -135,7 +135,7 @@ func (s *Server) Run() {
 	if err != nil {
 		s.Logger.Fatal("Failed to listen", zap.Error(err))
 	}
-	metricsAddr := fmt.Sprintf(":%s", viper.GetString("METRIC_SHIPPING_ADDRESS_ADDR"))
+	metricsAddr := fmt.Sprintf(":%s", viper.GetString("METRIC_SHIPPING_ADDR"))
 	metricsLis, err := net.Listen("tcp", metricsAddr)
 	if err != nil {
 		s.Logger.Fatal("failed to listen on", zap.Error(err))
@@ -166,7 +166,7 @@ func (s *Server) Run() {
 
 	go func() {
 		defer wg.Done()
-		s.Logger.Info("Metrics server listening on :8083")
+		s.Logger.Info("Metrics server listening on :8093")
 		if err := http.Serve(metricsLis, metricsServer); err != nil {
 			s.Logger.Fatal("Metrics server error", zap.Error(err))
 		}
@@ -174,7 +174,7 @@ func (s *Server) Run() {
 
 	go func() {
 		defer wg.Done()
-		s.Logger.Info("gRPC server listening on :50053")
+		s.Logger.Info("gRPC server listening on :50063")
 		if err := grpcServer.Serve(lis); err != nil {
 			s.Logger.Fatal("gRPC server error", zap.Error(err))
 		}

@@ -12,36 +12,58 @@ import (
 	"google.golang.org/grpc"
 )
 
-type Deps struct {
-	Conn    *grpc.ClientConn
-	Token   auth.TokenManager
-	E       *echo.Echo
-	Logger  logger.LoggerInterface
-	Mapping response_api.ResponseApiMapper
-	Image   upload_image.ImageUploads
+type ServiceConnections struct {
+	Auth             *grpc.ClientConn
+	Role             *grpc.ClientConn
+	User             *grpc.ClientConn
+	Category         *grpc.ClientConn
+	Merchant         *grpc.ClientConn
+	OrderItem        *grpc.ClientConn
+	Order            *grpc.ClientConn
+	Product          *grpc.ClientConn
+	Transaction      *grpc.ClientConn
+	Cart             *grpc.ClientConn
+	Review           *grpc.ClientConn
+	Slider           *grpc.ClientConn
+	Shipping         *grpc.ClientConn
+	Banner           *grpc.ClientConn
+	MerchantAward    *grpc.ClientConn
+	MerchantBusiness *grpc.ClientConn
+	MerchantDetail   *grpc.ClientConn
+	MerchantPolicy   *grpc.ClientConn
+	ReviewDetail     *grpc.ClientConn
 }
 
-func NewHandler(deps Deps) {
+type Deps struct {
+	Token              auth.TokenManager
+	E                  *echo.Echo
+	Logger             logger.LoggerInterface
+	Mapping            *response_api.ResponseApiMapper
+	Image              upload_image.ImageUploads
+	ServiceConnections ServiceConnections
+}
 
-	clientAuth := pb.NewAuthServiceClient(deps.Conn)
-	clientRole := pb.NewRoleServiceClient(deps.Conn)
-	clientUser := pb.NewUserServiceClient(deps.Conn)
-	clientCategory := pb.NewCategoryServiceClient(deps.Conn)
-	clientMerchant := pb.NewMerchantServiceClient(deps.Conn)
-	clientOrderItem := pb.NewOrderItemServiceClient(deps.Conn)
-	clientOrder := pb.NewOrderServiceClient(deps.Conn)
-	clientProduct := pb.NewProductServiceClient(deps.Conn)
-	clientTransaction := pb.NewTransactionServiceClient(deps.Conn)
-	clientCart := pb.NewCartServiceClient(deps.Conn)
-	clientReview := pb.NewReviewServiceClient(deps.Conn)
-	clientSlider := pb.NewSliderServiceClient(deps.Conn)
-	clientShipping := pb.NewShippingServiceClient(deps.Conn)
-	clientBanner := pb.NewBannerServiceClient(deps.Conn)
-	clientMerchantAward := pb.NewMerchantAwardServiceClient(deps.Conn)
-	clientMerchantBusiness := pb.NewMerchantBusinessServiceClient(deps.Conn)
-	clientMerchantDetail := pb.NewMerchantDetailServiceClient(deps.Conn)
-	clientMerchantPolicy := pb.NewMerchantPoliciesServiceClient(deps.Conn)
-	clientReviewDetail := pb.NewReviewDetailServiceClient(deps.Conn)
+func NewHandler(deps *Deps) {
+
+	clientAuth := pb.NewAuthServiceClient(deps.ServiceConnections.Auth)
+	clientRole := pb.NewRoleServiceClient(deps.ServiceConnections.Role)
+	clientUser := pb.NewUserServiceClient(deps.ServiceConnections.User)
+	clientCategory := pb.NewCategoryServiceClient(deps.ServiceConnections.Category)
+	clientMerchant := pb.NewMerchantServiceClient(deps.ServiceConnections.Merchant)
+	clientOrderItem := pb.NewOrderItemServiceClient(deps.ServiceConnections.OrderItem)
+	clientOrder := pb.NewOrderServiceClient(deps.ServiceConnections.Order)
+	clientProduct := pb.NewProductServiceClient(deps.ServiceConnections.Product)
+	clientTransaction := pb.NewTransactionServiceClient(deps.ServiceConnections.Transaction)
+	clientCart := pb.NewCartServiceClient(deps.ServiceConnections.Cart)
+	clientReview := pb.NewReviewServiceClient(deps.ServiceConnections.Review)
+	clientSlider := pb.NewSliderServiceClient(deps.ServiceConnections.Slider)
+	clientShipping := pb.NewShippingServiceClient(deps.ServiceConnections.Shipping)
+	clientBanner := pb.NewBannerServiceClient(deps.ServiceConnections.Banner)
+	clientMerchantAward := pb.NewMerchantAwardServiceClient(deps.ServiceConnections.MerchantAward)
+	clientMerchantBusiness := pb.NewMerchantBusinessServiceClient(deps.ServiceConnections.MerchantBusiness)
+	clientMerchantDetail := pb.NewMerchantDetailServiceClient(deps.ServiceConnections.MerchantDetail)
+	clientMerchantPolicy := pb.NewMerchantPoliciesServiceClient(deps.ServiceConnections.MerchantPolicy)
+	clientReviewDetail := pb.NewReviewDetailServiceClient(deps.ServiceConnections.ReviewDetail)
 
 	NewHandlerAuth(deps.E, clientAuth, deps.Logger, deps.Mapping.AuthResponseMapper)
 	NewHandlerRole(deps.E, clientRole, deps.Logger, deps.Mapping.RoleResponseMapper)

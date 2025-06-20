@@ -1,0 +1,66 @@
+groups:
+  - name: merchant-award-service-alerts
+    rules:
+      - alert: MerchantAwardHighCommandErrorRate
+        expr: |
+          sum(rate(merchant_award_command_service_request_total{status="error"}[1m])) 
+          / 
+          sum(rate(merchant_award_command_service_request_total[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on merchant award command service"
+          description: "More than 10% of merchant award command requests are failing (current value: {{ $value }})."
+
+      - alert: MerchantAwardHighQueryErrorRate
+        expr: |
+          sum(rate(merchant_award_query_service_request_total{status="error"}[1m])) 
+          / 
+          sum(rate(merchant_award_query_service_request_total[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on merchant award query service"
+          description: "More than 10% of merchant award query requests are failing (current value: {{ $value }})."
+
+      - alert: MerchantAwardHighCommandLatency
+        expr: |
+          histogram_quantile(0.95, rate(merchant_award_command_service_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Merchant award command service latency is high"
+          description: "95th percentile latency > 1s for merchant award command service (current: {{ $value }}s)."
+
+      - alert: MerchantAwardHighQueryLatency
+        expr: |
+          histogram_quantile(0.95, rate(merchant_award_query_service_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Merchant award query service latency is high"
+          description: "95th percentile latency > 1s for merchant award query service (current: {{ $value }}s)."
+
+      - alert: MerchantAwardNoCommandTraffic
+        expr: |
+          rate(merchant_award_command_service_request_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on merchant award command service"
+          description: "No incoming traffic for merchant award command service for 5 minutes."
+
+      - alert: MerchantAwardNoQueryTraffic
+        expr: |
+          rate(merchant_award_query_service_request_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on merchant award query service"
+          description: "No incoming traffic for merchant award query service for 5 minutes."

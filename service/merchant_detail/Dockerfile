@@ -15,5 +15,5 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 COPY --from=builder /app/merchant_detail .
 
-EXPOSE 50067 8099
+EXPOSE 50067 8097
 CMD ["./merchant_detail"]

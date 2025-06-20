@@ -15,5 +15,5 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 COPY --from=builder /app/apigateway .
 
-EXPOSE 5000
+EXPOSE 5000 8100
 CMD ["./apigateway"]

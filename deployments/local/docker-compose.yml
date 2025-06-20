@@ -1,19 +1,19 @@
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: postgres
+    container_name: postgres_ecommerce
     environment:
       POSTGRES_USER: DRAGON
       POSTGRES_PASSWORD: DRAGON
-      POSTGRES_DB: PAYMENT_GATEWAY
+      POSTGRES_DB: ECOMMERCE
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_ecommerce_data:/var/lib/postgresql/data
     networks:
       - app_ecommerce_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U DRAGON -d PAYMENT_GATEWAY"]
+      test: ["CMD-SHELL", "pg_isready -U DRAGON -d ECOMMERCE"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -26,7 +26,7 @@ services:
     env_file: ./docker.env
     environment:
       APP_ENV: docker
-      DB_URL: postgres://DRAGON:DRAGON@postgres/PAYMENT_GATEWAY
+      DB_URL: postgres://DRAGON:DRAGON@postgres/ECOMMERCE
     networks:
       - app_ecommerce_network
     depends_on:
@@ -39,44 +39,9 @@ services:
     env_file: ./docker.env 
     volumes:
       - ./docker.env:/app/docker.env
+      - ./logs:/var/log/app
     ports:
       - "5000:5000"
-    networks:
-      - app_ecommerce_network
-    depends_on:
-      - postgres
-      - kafka
-      - auth
-      - role
-      - user
-      - category
-      - merchant
-      - orderitem
-      - order
-      - product
-      - transaction
-      - cart
-      - review
-      - slider
-      - shipping_address
-      - banner
-      - merchant_award
-      - merchant_business
-      - merchant_detail
-      - merchant_policy
-      - review_detail
-    environment:
-      - APP_ENV=docker
-
-  auth:
-    image: auth-ecommerce-service:1.0
-    container_name: auth-ecommerce
-    env_file: ./docker.env 
-    volumes:
-      - ./docker.env:/app/docker.env
-    ports:
-      - "50051:50051"
-      - "8081:8081"
     networks:
       - app_ecommerce_network
     depends_on:
@@ -84,7 +49,69 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      auth:
+        condition: service_started
+      role:
+        condition: service_started
+      user:
+        condition: service_started
+      category:
+        condition: service_started
+      merchant:
+        condition: service_started
+      order-item:
+        condition: service_started
+      order:
+        condition: service_started
+      product:
+        condition: service_started
+      transaction:
+        condition: service_started
+      cart:
+        condition: service_started
+      review:
+        condition: service_started
+      slider:
+        condition: service_started
+      shipping_address:
+        condition: service_started
+      banner:
+        condition: service_started
+      merchant_award:
+        condition: service_started
+      merchant_business:
+        condition: service_started
+      merchant_detail:
+        condition: service_started
+      merchant_policy:
+        condition: service_started
+      review_detail:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
+      - APP_ENV=docker
+
+
+  auth:
+    image: auth-ecommerce-service:1.0
+    container_name: auth-ecommerce
+    env_file: ./docker.env 
+    volumes:
+      - ./docker.env:/app/docker.env
+      - ./logs:/var/log/app
+    networks:
+      - app_ecommerce_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
+    environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
 
@@ -94,9 +121,7 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50052:50052"
-      - "8082:8082"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -104,7 +129,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
   
@@ -114,9 +144,9 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
+      - ./logs:/var/log/app
     ports:
-      - "50055:50053"
-      - "8085:8083"
+      - "50053"
     networks:
       - app_ecommerce_network
     depends_on:
@@ -124,7 +154,31 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
+      - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
+
+  email:
+    image: email-ecommerce-service:1.0
+    container_name: email
+    env_file: ./docker.env 
+    volumes:
+      - ./docker.env:/app/docker.env
+      - ./logs:/var/log/app
+    networks:
+      - app_ecommerce_network
+    depends_on:
+      kafka:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
 
@@ -134,9 +188,7 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50056:50054"
-      - "8086:8084"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -144,7 +196,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
 
@@ -154,9 +211,7 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50054:50055"
-      - "8084:8085"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -164,19 +219,22 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
 
   order-item:
-    image: order-item-ecommerce-service:1.0
+    image: order_item-ecommerce-service:1.0
     container_name: order-item-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50058:50056"
-      - "8088:8086"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -185,6 +243,7 @@ services:
       kafka:
         condition: service_healthy
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
 
@@ -194,9 +253,7 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50059:50057"
-      - "8089:8087"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -204,7 +261,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
   
@@ -214,9 +276,7 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50060:50058"
-      - "8090:8088"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -224,7 +284,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
 
@@ -234,9 +299,7 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50061:50059"
-      - "8091:8089"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -244,7 +307,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
 
@@ -254,9 +322,7 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50062:50060"
-      - "8092:8090"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -264,7 +330,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
 
@@ -274,9 +345,7 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50063:50061"
-      - "8093:8091"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -284,7 +353,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
   
@@ -294,9 +368,7 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50064:50062"
-      - "8094:8092"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -304,19 +376,22 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
   
-  shipping:
-    image: shipping-ecommerce-service:1.0
-    container_name: shipping-ecommerce
+  shipping_address:
+    image: shipping_address-ecommerce-service:1.0
+    container_name: shipping_address-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50065:50063"
-      - "8095:8093"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -324,7 +399,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
   
@@ -334,9 +414,7 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50066:50064"
-      - "8096:8094"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -344,7 +422,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
 
@@ -354,9 +437,7 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50067:50065"
-      - "8097:8095"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -364,7 +445,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
   
@@ -374,9 +460,7 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50068:50066"
-      - "8098:8096"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -384,7 +468,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
 
@@ -394,9 +483,7 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50069:50067"
-      - "8099:8097"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -404,7 +491,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
 
@@ -414,9 +506,7 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50070:50068"
-      - "8100:8098"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -424,7 +514,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
   
@@ -434,9 +529,7 @@ services:
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
-    ports:
-      - "50071:50069"
-      - "8101:8099"
+      - ./logs:/var/log/app
     networks:
       - app_ecommerce_network
     depends_on:
@@ -444,7 +537,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
+      - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
 
@@ -479,7 +577,7 @@ services:
       - KAFKA_KRAFT_CLUSTER_ID=kraft-cluster-01
       - ALLOW_PLAINTEXT_LISTENER=yes
     volumes:
-      - kafka_data:/bitnami/kafka
+      - kafka_ecommerce_data:/bitnami/kafka
     networks:
       - app_ecommerce_network
     depends_on:
@@ -503,7 +601,7 @@ services:
       kafka:
         condition: service_healthy
     command: 
-      - "--kafka.server=my-kafka:9092"
+      - "--kafka.server=my-kafka-ecommerce:9092"
       - "--web.listen-address=0.0.0.0:9308"
       - "--log.level=debug"
     restart: unless-stopped
@@ -515,11 +613,12 @@ services:
   
   prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus-ecommerce
+    container_name: prometheus
     ports:
       - "9090:9090"
     volumes:
-      - ./observability/prometheus.yaml:/etc/prometheus/prometheus.yml
+      - ../../observability/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - ../../observability/rules:/etc/prometheus/rules
     networks:
       - app_ecommerce_network
     depends_on:
@@ -528,22 +627,24 @@ services:
 
   grafana:
     image: grafana/grafana:latest
-    container_name: grafana
+    container_name: grafana_ecommerce
     ports:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
-      - grafana-storage:/var/lib/grafana  
+      - grafana_ecommerce-storage:/var/lib/grafana  
     networks:
       - app_ecommerce_network
     depends_on:
       - prometheus
       - jaeger
+      - alertmanager
+      - loki
 
   nginx:
     image: nginx:alpine
-    container_name: nginx
+    container_name: nginx_ecommerce
     ports:
       - "80:80"
     volumes:
@@ -555,20 +656,22 @@ services:
 
   redis:
     image: redis:7.4
-    container_name: redis
-    command: ["redis-server", "--requirepass", "dragon_knight"]
+    container_name: redis_ecommerce
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - redis_ecommerce_data:/data
+      - ../../redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     restart: unless-stopped
     networks:
       - app_ecommerce_network
 
 
+
   node-exporter:
     image: quay.io/prometheus/node-exporter
-    container_name: node-exporter
+    container_name: node-exporter_ecommerce
     pid: "host"
     networks:
       - app_ecommerce_network
@@ -582,7 +685,7 @@ services:
     container_name: otel-collector-ecommerce
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
-      - ./observability/otel-collector.yaml:/etc/otel-collector-config.yaml
+      - ../../observability/otel-collector.yaml:/etc/otel-collector-config.yaml:ro
     ports:
       - "4317:4317"     
       - "4318:4318"      
@@ -600,10 +703,12 @@ services:
       - "16686:16686"
     networks:
       - app_ecommerce_network
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
 
   alertmanager:
     image: prom/alertmanager:v0.27.0
-    container_name: alertmanager
+    container_name: alertmanager_ecommerce
     volumes:
       - ../../observability/alertmanager.yml:/etc/alertmanager/alertmanager.yml
     command:
@@ -614,20 +719,19 @@ services:
       - app_ecommerce_network
 
   loki:
-    container_name: loki
+    container_name: loki_ecommerce
     image: grafana/loki:2.9.0
-    user: "10001:10001"
     ports:
       - "3100:3100"
     volumes:
       - ../../observability/loki-config.yaml:/etc/loki/local-config.yaml
-      - ../../observability/loki-data:/loki
+      - loki_ecommerce_data:/loki
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - app_ecommerce_network
 
   promtail:
-    container_name: promtail
+    container_name: promtail_ecommerce
     image: grafana/promtail:2.9.0
     volumes:
       - ../../observability/promtail-config.yaml:/etc/promtail/config.yaml
@@ -639,10 +743,11 @@ services:
   
 
 volumes:
-  grafana-storage:
-  postgres_data:
-  kafka_data:
-  redis_data:
+  loki_ecommerce_data:
+  grafana_ecommerce-storage:
+  postgres_ecommerce_data:
+  kafka_ecommerce_data:
+  redis_ecommerce_data:
 
 networks:
   app_ecommerce_network:

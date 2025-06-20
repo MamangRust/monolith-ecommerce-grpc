@@ -1,0 +1,242 @@
+groups:
+  - name: merchant-service-alerts
+    rules:
+      - alert: HighFailureRate_MerchantCommandService
+        expr: increase(merchant_command_service_requests_total{status="error"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_command_service
+        annotations:
+          summary: "High failure rate on merchant_command_service"
+          description: "More than 5 error requests in the last 5 minutes for merchant_command_service."
+
+      - alert: HighLatency_MerchantCommandService
+        expr: histogram_quantile(0.95, rate(merchant_command_service_request_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_command_service
+        annotations:
+          summary: "High latency detected on merchant_command_service"
+          description: "P95 latency for merchant_command_service is greater than 1 second in the last 5 minutes."
+
+      - alert: NoTraffic_MerchantCommandService
+        expr: rate(merchant_command_service_requests_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_command_service
+        annotations:
+          summary: "No traffic detected on merchant_command_service"
+          description: "No traffic detected on merchant_command_service in the last 5 minutes."
+
+      - alert: HighFailureRate_MerchantDocumentCommand
+        expr: increase(merchant_document_command_requests_total{status="error"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_document_command
+        annotations:
+          summary: "High failure rate on merchant_document_command"
+          description: "More than 5 error requests in the last 5 minutes for merchant_document_command."
+
+      - alert: HighLatency_MerchantDocumentCommand
+        expr: histogram_quantile(0.95, rate(merchant_document_command_request_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_document_command
+        annotations:
+          summary: "High latency detected on merchant_document_command"
+          description: "P95 latency for merchant_document_command is greater than 1 second in the last 5 minutes."
+
+      - alert: NoTraffic_MerchantDocumentCommand
+        expr: rate(merchant_document_command_requests_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_document_command
+        annotations:
+          summary: "No traffic detected on merchant_document_command"
+          description: "No traffic detected on merchant_document_command in the last 5 minutes."
+
+      - alert: HighFailureRate_MerchantDocumentQuery
+        expr: increase(merchant_document_query_requests_total{status="error"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_document_query
+        annotations:
+          summary: "High failure rate on merchant_document_query"
+          description: "More than 5 error requests in the last 5 minutes for merchant_document_query."
+
+      - alert: HighLatency_MerchantDocumentQuery
+        expr: histogram_quantile(0.95, rate(merchant_document_query_request_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_document_query
+        annotations:
+          summary: "High latency detected on merchant_document_query"
+          description: "P95 latency for merchant_document_query is greater than 1 second in the last 5 minutes."
+
+      - alert: NoTraffic_MerchantDocumentQuery
+        expr: rate(merchant_document_query_requests_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_document_query
+        annotations:
+          summary: "No traffic detected on merchant_document_query"
+          description: "No traffic detected on merchant_document_query in the last 5 minutes."
+
+      - alert: HighFailureRate_MerchantQueryService
+        expr: increase(merchant_query_service_requests_total{status="error"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_query_service
+        annotations:
+          summary: "High failure rate on merchant_query_service"
+          description: "More than 5 error requests in the last 5 minutes for merchant_query_service."
+
+      - alert: HighLatency_MerchantQueryService
+        expr: histogram_quantile(0.95, rate(merchant_query_service_request_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_query_service
+        annotations:
+          summary: "High latency detected on merchant_query_service"
+          description: "P95 latency for merchant_query_service is greater than 1 second in the last 5 minutes."
+
+      - alert: NoTraffic_MerchantQueryService
+        expr: rate(merchant_query_service_requests_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_query_service
+        annotations:
+          summary: "No traffic detected on merchant_query_service"
+          description: "No traffic detected on merchant_query_service in the last 5 minutes."
+
+      - alert: HighFailureRate_MerchantStatisByApikeyService
+        expr: increase(merchant_statis_by_apikey_service_requests_total{status="error"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_statis_by_apikey_service
+        annotations:
+          summary: "High failure rate on merchant_statis_by_apikey_service"
+          description: "More than 5 error requests in the last 5 minutes for merchant_statis_by_apikey_service."
+
+      - alert: HighLatency_MerchantStatisByApikeyService
+        expr: histogram_quantile(0.95, rate(merchant_statis_by_apikey_service_request_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_statis_by_apikey_service
+        annotations:
+          summary: "High latency detected on merchant_statis_by_apikey_service"
+          description: "P95 latency for merchant_statis_by_apikey_service is greater than 1 second in the last 5 minutes."
+
+      - alert: NoTraffic_MerchantStatisByApikeyService
+        expr: rate(merchant_statis_by_apikey_service_requests_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_statis_by_apikey_service
+        annotations:
+          summary: "No traffic detected on merchant_statis_by_apikey_service"
+          description: "No traffic detected on merchant_statis_by_apikey_service in the last 5 minutes."
+
+      - alert: HighFailureRate_MerchantStatisByMerchantService
+        expr: increase(merchant_statis_by_merchant_service_requests_total{status="error"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_statis_by_merchant_service
+        annotations:
+          summary: "High failure rate on merchant_statis_by_merchant_service"
+          description: "More than 5 error requests in the last 5 minutes for merchant_statis_by_merchant_service."
+
+      - alert: HighLatency_MerchantStatisByMerchantService
+        expr: histogram_quantile(0.95, rate(merchant_statis_by_merchant_service_request_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_statis_by_merchant_service
+        annotations:
+          summary: "High latency detected on merchant_statis_by_merchant_service"
+          description: "P95 latency for merchant_statis_by_merchant_service is greater than 1 second in the last 5 minutes."
+
+      - alert: NoTraffic_MerchantStatisByMerchantService
+        expr: rate(merchant_statis_by_merchant_service_requests_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_statis_by_merchant_service
+        annotations:
+          summary: "No traffic detected on merchant_statis_by_merchant_service"
+          description: "No traffic detected on merchant_statis_by_merchant_service in the last 5 minutes."
+
+      - alert: HighFailureRate_MerchantStatisticService
+        expr: increase(merchant_statistic_service_requests_total{status="error"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_statistic_service
+        annotations:
+          summary: "High failure rate on merchant_statistic_service"
+          description: "More than 5 error requests in the last 5 minutes for merchant_statistic_service."
+
+      - alert: HighLatency_MerchantStatisticService
+        expr: histogram_quantile(0.95, rate(merchant_statistic_service_request_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_statistic_service
+        annotations:
+          summary: "High latency detected on merchant_statistic_service"
+          description: "P95 latency for merchant_statistic_service is greater than 1 second in the last 5 minutes."
+
+      - alert: NoTraffic_MerchantStatisticService
+        expr: rate(merchant_statistic_service_requests_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_statistic_service
+        annotations:
+          summary: "No traffic detected on merchant_statistic_service"
+          description: "No traffic detected on merchant_statistic_service in the last 5 minutes."
+
+      - alert: HighFailureRate_MerchantTransactionService
+        expr: increase(merchant_transaction_service_requests_total{status="error"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_transaction_service
+        annotations:
+          summary: "High failure rate on merchant_transaction_service"
+          description: "More than 5 error requests in the last 5 minutes for merchant_transaction_service."
+
+      - alert: HighLatency_MerchantTransactionService
+        expr: histogram_quantile(0.95, rate(merchant_transaction_service_request_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_transaction_service
+        annotations:
+          summary: "High latency detected on merchant_transaction_service"
+          description: "P95 latency for merchant_transaction_service is greater than 1 second in the last 5 minutes."
+
+      - alert: NoTraffic_MerchantTransactionService
+        expr: rate(merchant_transaction_service_requests_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: merchant_transaction_service
+        annotations:
+          summary: "No traffic detected on merchant_transaction_service"
+          description: "No traffic detected on merchant_transaction_service in the last 5 minutes."

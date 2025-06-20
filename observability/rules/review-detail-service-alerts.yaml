@@ -1,0 +1,66 @@
+groups:
+  - name: review_detail-service-alerts
+    rules:
+      - alert: ReviewDetailHighQueryErrorRate
+        expr: |
+          sum(rate(review_detail_query_service_request_count{status="error"}[1m])) 
+          / 
+          sum(rate(review_detail_query_service_request_count[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on review_detail query service"
+          description: "More than 10% of review_detail query requests are failing (current value: {{ $value }})."
+
+      - alert: ReviewDetailHighCommandErrorRate
+        expr: |
+          sum(rate(review_detail_command_service_request_count{status="error"}[1m])) 
+          / 
+          sum(rate(review_detail_command_service_request_count[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on review_detail command service"
+          description: "More than 10% of review_detail command requests are failing (current value: {{ $value }})."
+
+      - alert: ReviewDetailHighQueryLatency
+        expr: |
+          histogram_quantile(0.95, rate(review_detail_query_service_request_duration[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Review_detail query service latency is high"
+          description: "95th percentile latency > 1s for review_detail query service (current: {{ $value }}s)."
+
+      - alert: ReviewDetailHighCommandLatency
+        expr: |
+          histogram_quantile(0.95, rate(review_detail_command_service_request_duration[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Review_detail command service latency is high"
+          description: "95th percentile latency > 1s for review_detail command service (current: {{ $value }}s)."
+
+      - alert: ReviewDetailNoQueryTraffic
+        expr: |
+          rate(review_detail_query_service_request_count[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on review_detail query service"
+          description: "No incoming traffic for review_detail query service for 5 minutes."
+
+      - alert: ReviewDetailNoCommandTraffic
+        expr: |
+          rate(review_detail_command_service_request_count[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on review_detail command service"
+          description: "No incoming traffic for review_detail command service for 5 minutes."

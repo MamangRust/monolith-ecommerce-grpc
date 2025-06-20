@@ -1,0 +1,66 @@
+groups:
+  - name: shipping_address-service-alerts
+    rules:
+      - alert: ShippingAddressHighQueryErrorRate
+        expr: |
+          sum(rate(shipping_address_query_service_request_count{status="error"}[1m])) 
+          / 
+          sum(rate(shipping_address_query_service_request_count[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on shipping_address query service"
+          description: "More than 10% of shipping_address query requests are failing (current value: {{ $value }})."
+
+      - alert: ShippingAddressHighCommandErrorRate
+        expr: |
+          sum(rate(shipping_address_command_service_request_count{status="error"}[1m])) 
+          / 
+          sum(rate(shipping_address_command_service_request_count[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on shipping_address command service"
+          description: "More than 10% of shipping_address command requests are failing (current value: {{ $value }})."
+
+      - alert: ShippingAddressHighQueryLatency
+        expr: |
+          histogram_quantile(0.95, rate(shipping_address_query_service_request_duration[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Shipping_address query service latency is high"
+          description: "95th percentile latency > 1s for shipping_address query service (current: {{ $value }}s)."
+
+      - alert: ShippingAddressHighCommandLatency
+        expr: |
+          histogram_quantile(0.95, rate(shipping_address_command_service_request_duration[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Shipping_address command service latency is high"
+          description: "95th percentile latency > 1s for shipping_address command service (current: {{ $value }}s)."
+
+      - alert: ShippingAddressNoQueryTraffic
+        expr: |
+          rate(shipping_address_query_service_request_count[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on shipping_address query service"
+          description: "No incoming traffic for shipping_address query service for 5 minutes."
+
+      - alert: ShippingAddressNoCommandTraffic
+        expr: |
+          rate(shipping_address_command_service_request_count[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on shipping_address command service"
+          description: "No incoming traffic for shipping_address command service for 5 minutes."

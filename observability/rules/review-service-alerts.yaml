@@ -1,0 +1,66 @@
+groups:
+  - name: review-service-alerts
+    rules:
+      - alert: ReviewHighQueryErrorRate
+        expr: |
+          sum(rate(review_query_service_request_count{status="error"}[1m])) 
+          / 
+          sum(rate(review_query_service_request_count[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on review query service"
+          description: "More than 10% of review query requests are failing (current value: {{ $value }})."
+
+      - alert: ReviewHighCommandErrorRate
+        expr: |
+          sum(rate(review_command_service_request_count{status="error"}[1m])) 
+          / 
+          sum(rate(review_command_service_request_count[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on review command service"
+          description: "More than 10% of review command requests are failing (current value: {{ $value }})."
+
+      - alert: ReviewHighQueryLatency
+        expr: |
+          histogram_quantile(0.95, rate(review_query_service_request_duration[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Review query service latency is high"
+          description: "95th percentile latency > 1s for review query service (current: {{ $value }}s)."
+
+      - alert: ReviewHighCommandLatency
+        expr: |
+          histogram_quantile(0.95, rate(review_command_service_request_duration[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Review command service latency is high"
+          description: "95th percentile latency > 1s for review command service (current: {{ $value }}s)."
+
+      - alert: ReviewNoQueryTraffic
+        expr: |
+          rate(review_query_service_request_count[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on review query service"
+          description: "No incoming traffic for review query service for 5 minutes."
+
+      - alert: ReviewNoCommandTraffic
+        expr: |
+          rate(review_command_service_request_count[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on review command service"
+          description: "No incoming traffic for review command service for 5 minutes."

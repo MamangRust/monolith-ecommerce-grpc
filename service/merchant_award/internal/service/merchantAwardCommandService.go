@@ -37,7 +37,7 @@ func NewMerchantAwardCommandService(ctx context.Context,
 	merchantAwardCommandRepositroy repository.MerchantAwardCommandRepository, logger logger.LoggerInterface, mapping response_service.MerchantAwardResponseMapper) *merchantAwardCommandService {
 	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "merchant_award_Command_service_request_total",
+			Name: "merchant_award_command_service_request_total",
 			Help: "Total number of requests to the MerchantAwardCommandService",
 		},
 		[]string{"method", "status"},
@@ -45,7 +45,7 @@ func NewMerchantAwardCommandService(ctx context.Context,
 
 	requestDuration := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "merchant_award_Command_service_request_duration_seconds",
+			Name:    "merchant_award_command_service_request_duration_seconds",
 			Help:    "Histogram of request durations for the MerchantAwardCommandService",
 			Buckets: prometheus.DefBuckets,
 		},

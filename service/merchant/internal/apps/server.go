@@ -55,7 +55,7 @@ type Server struct {
 func NewServer() (*Server, func(context.Context) error, error) {
 	flag.Parse()
 
-	logger, err := logger.NewLogger()
+	logger, err := logger.NewLogger("merchant")
 
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize logger: %w", err)

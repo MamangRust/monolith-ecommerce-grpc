@@ -9,7 +9,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/handler"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-role/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/database"
@@ -49,7 +51,7 @@ type Server struct {
 }
 
 func NewServer() (*Server, func(context.Context) error, error) {
-	logger, err := logger.NewLogger()
+	logger, err := logger.NewLogger("role")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize logger: %w", err)
 	}
@@ -100,10 +102,20 @@ func NewServer() (*Server, func(context.Context) error, error) {
 		return nil, nil, err
 	}
 
+	mencache := mencache.NewMencache(&mencache.Deps{
+		Ctx:    ctx,
+		Redis:  myredis,
+		Logger: logger,
+	})
+
+	errorhandler := errorhandler.NewErrorHandler(logger)
+
 	services := service.NewService(&service.Deps{
 		Ctx:          ctx,
 		Repositories: repositories,
 		Logger:       logger,
+		ErrorHandler: errorhandler,
+		Mencache:     mencache,
 	})
 
 	handlers := handler.NewHandler(&handler.Deps{

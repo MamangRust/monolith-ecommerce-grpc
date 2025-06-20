@@ -38,7 +38,7 @@ func NewHandlerOrder(
 ) *orderHandleApi {
 	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "merchant_handler_requests_total",
+			Name: "order_handler_requests_total",
 			Help: "Total number of order item requests",
 		},
 		[]string{"method", "status"},
@@ -46,7 +46,7 @@ func NewHandlerOrder(
 
 	requestDuration := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "merchant_handler_request_duration_seconds",
+			Name:    "order_handler_request_duration_seconds",
 			Help:    "Duration of order item requests",
 			Buckets: prometheus.DefBuckets,
 		},

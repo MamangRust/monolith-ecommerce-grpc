@@ -51,7 +51,7 @@ type Server struct {
 }
 
 func NewServer() (*Server, func(context.Context) error, error) {
-	logger, err := logger.NewLogger()
+	logger, err := logger.NewLogger("merchant-business")
 
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize logger: %w", err)
@@ -175,7 +175,7 @@ func (s *Server) Run() {
 
 	go func() {
 		defer wg.Done()
-		s.Logger.Info("Metrics server listening on :50066")
+		s.Logger.Info("Metrics server listening on :8096")
 		if err := http.Serve(metricsLis, metricsServer); err != nil {
 			s.Logger.Fatal("Metrics server error", zap.Error(err))
 		}

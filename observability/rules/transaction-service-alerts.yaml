@@ -1,0 +1,66 @@
+groups:
+  - name: transaction-service-alerts
+    rules:
+      - alert: TransactionHighQueryErrorRate
+        expr: |
+          sum(rate(transaction_query_service_request_total{status="error"}[1m])) 
+          / 
+          sum(rate(transaction_query_service_request_total[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on transaction query service"
+          description: "More than 10% of transaction query requests are failing (current value: {{ $value }})."
+
+      - alert: TransactionHighCommandErrorRate
+        expr: |
+          sum(rate(transaction_command_service_request_total{status="error"}[1m])) 
+          / 
+          sum(rate(transaction_command_service_request_total[1m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on transaction command service"
+          description: "More than 10% of transaction command requests are failing (current value: {{ $value }})."
+
+      - alert: TransactionHighQueryLatency
+        expr: |
+          histogram_quantile(0.95, rate(transaction_query_service_request_duration[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Transaction query service latency is high"
+          description: "95th percentile latency > 1s for transaction query service (current: {{ $value }}s)."
+
+      - alert: TransactionHighCommandLatency
+        expr: |
+          histogram_quantile(0.95, rate(transaction_command_service_request_duration[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Transaction command service latency is high"
+          description: "95th percentile latency > 1s for transaction command service (current: {{ $value }}s)."
+
+      - alert: TransactionNoQueryTraffic
+        expr: |
+          rate(transaction_query_service_request_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on transaction query service"
+          description: "No incoming traffic for transaction query service for 5 minutes."
+
+      - alert: TransactionNoCommandTraffic
+        expr: |
+          rate(transaction_command_service_request_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on transaction command service"
+          description: "No incoming traffic for transaction command service for 5 minutes."

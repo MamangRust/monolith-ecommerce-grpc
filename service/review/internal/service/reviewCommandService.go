@@ -50,7 +50,7 @@ func NewReviewCommandService(ctx context.Context,
 
 	requestDuration := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "review_command_service_request_count",
+			Name:    "review_command_service_request_duration",
 			Help:    "Histogram of request durations for the ReviewCommandService",
 			Buckets: prometheus.DefBuckets,
 		},

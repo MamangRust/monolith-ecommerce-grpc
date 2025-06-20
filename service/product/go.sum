@@ -1,7 +1,7 @@
-github.com/MamangRust/monolith-ecommerce-pkg v1.0.2 h1:R3lDPxeLcJmPEs4Mf0zQmvPdWDYNca8E1uP/UlAuczc=
-github.com/MamangRust/monolith-ecommerce-pkg v1.0.2/go.mod h1:X8mGkttx9AemOv9QxV1K2vuSdOfQFGG9qzJQX5+oGFo=
-github.com/MamangRust/monolith-ecommerce-shared v1.0.4 h1:eB0s7JbpDoXeyNuFTUGTLisQl4htGMDIVCCIwG9DlEQ=
-github.com/MamangRust/monolith-ecommerce-shared v1.0.4/go.mod h1:qQEHIzntOtvhw+wXBreNmHD82ommlL+7SmqWk8/lky4=
+github.com/MamangRust/monolith-ecommerce-pkg v1.0.9 h1:XYbTO2sgkJpZB4YJsLa48Y9FHFG3Ll81aJHMkDmYkBU=
+github.com/MamangRust/monolith-ecommerce-pkg v1.0.9/go.mod h1:FrbLXki+X+v+r2h12kPa4QQPjeU4s+A2/s5F73u6gUc=
+github.com/MamangRust/monolith-ecommerce-shared v1.0.5 h1:0bJYn9vDSjHyEVnEbI4OIccwsw70LBqlrOZXXUX64QA=
+github.com/MamangRust/monolith-ecommerce-shared v1.0.5/go.mod h1:qQEHIzntOtvhw+wXBreNmHD82ommlL+7SmqWk8/lky4=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=

@@ -46,7 +46,7 @@ func NewReviewQueryService(ctx context.Context,
 
 	requestDuration := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "review_query_service_request_count",
+			Name:    "review_query_service_request_duration",
 			Help:    "Histogram of request durations for the ReviewQueryService",
 			Buckets: prometheus.DefBuckets,
 		},
