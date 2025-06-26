@@ -13,6 +13,7 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	otelcode "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -30,11 +31,34 @@ type userHandleApi struct {
 }
 
 func NewHandlerUser(router *echo.Echo, client pb.UserServiceClient, logger logger.LoggerInterface, mapping response_api.UserResponseMapper) *userHandleApi {
+	requestCounter := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "user_handler_requests_total",
+			Help: "Total number of user requests",
+		},
+		[]string{"method", "status"},
+	)
+
+	requestDuration := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "user_handler_request_duration_seconds",
+			Help:    "Duration of user requests",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"method", "status"},
+	)
+
+	prometheus.MustRegister(requestCounter)
+
 	userHandler := &userHandleApi{
-		client:  client,
-		logger:  logger,
-		mapping: mapping,
+		client:          client,
+		logger:          logger,
+		mapping:         mapping,
+		trace:           otel.Tracer("user-handler"),
+		requestCounter:  requestCounter,
+		requestDuration: requestDuration,
 	}
+
 	routerUser := router.Group("/api/user")
 
 	routerUser.GET("", userHandler.FindAllUser)

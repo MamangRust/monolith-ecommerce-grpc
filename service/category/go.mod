@@ -3,8 +3,8 @@ module github.com/MamangRust/monolith-ecommerce-grpc-category
 go 1.23.4
 
 require (
-	github.com/MamangRust/monolith-ecommerce-pkg v1.0.9
-	github.com/MamangRust/monolith-ecommerce-shared v1.0.5
+	github.com/MamangRust/monolith-ecommerce-pkg v1.0.10
+	github.com/MamangRust/monolith-ecommerce-shared v1.0.15
 	github.com/prometheus/client_golang v1.22.0
 	github.com/redis/go-redis/v9 v9.10.0
 	github.com/spf13/viper v1.20.1

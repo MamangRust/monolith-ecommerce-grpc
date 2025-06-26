@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/MamangRust/monolith-ecommerce-pkg/auth"
+	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
 	response_api "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/api"
@@ -35,12 +36,13 @@ type ServiceConnections struct {
 }
 
 type Deps struct {
+	Kafka              *kafka.Kafka
 	Token              auth.TokenManager
 	E                  *echo.Echo
 	Logger             logger.LoggerInterface
 	Mapping            *response_api.ResponseApiMapper
 	Image              upload_image.ImageUploads
-	ServiceConnections ServiceConnections
+	ServiceConnections *ServiceConnections
 }
 
 func NewHandler(deps *Deps) {
@@ -66,7 +68,7 @@ func NewHandler(deps *Deps) {
 	clientReviewDetail := pb.NewReviewDetailServiceClient(deps.ServiceConnections.ReviewDetail)
 
 	NewHandlerAuth(deps.E, clientAuth, deps.Logger, deps.Mapping.AuthResponseMapper)
-	NewHandlerRole(deps.E, clientRole, deps.Logger, deps.Mapping.RoleResponseMapper)
+	NewHandlerRole(deps.E, clientRole, deps.Logger, deps.Mapping.RoleResponseMapper, deps.Kafka)
 	NewHandlerUser(deps.E, clientUser, deps.Logger, deps.Mapping.UserResponseMapper)
 	NewHandlerCategory(deps.E, clientCategory, deps.Logger, deps.Mapping.CategoryResponseMapper, deps.Image)
 	NewHandlerMerchant(deps.E, clientMerchant, deps.Logger, deps.Mapping.MerchantResponseMapper)

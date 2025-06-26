@@ -14,6 +14,7 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/internal/middlewares"
 	"github.com/MamangRust/monolith-ecommerce-pkg/auth"
 	"github.com/MamangRust/monolith-ecommerce-pkg/dotenv"
+	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	otel_pkg "github.com/MamangRust/monolith-ecommerce-pkg/otel"
 	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
@@ -194,7 +195,7 @@ func RunClient() (*Client, func(), error) {
 		return nil, nil, fmt.Errorf("failed to connect services: %w", err)
 	}
 
-	e := setupEcho(log)
+	e := setupEcho()
 
 	token, err := auth.NewManager(viper.GetString("SECRET_KEY"))
 	if err != nil {
@@ -210,12 +211,15 @@ func RunClient() (*Client, func(), error) {
 	mapping := response_api.NewResponseApiMapper()
 	image_upload := upload_image.NewImageUpload()
 
+	myKafka := kafka.NewKafka(log, []string{os.Getenv("KAFKA_BROKERS")})
+
 	depsHandler := &handler.Deps{
 		Token:   token,
 		E:       e,
 		Logger:  log,
 		Mapping: mapping,
 		Image:   image_upload,
+		Kafka:   myKafka,
 	}
 
 	handler.NewHandler(depsHandler)
@@ -260,7 +264,7 @@ func RunClient() (*Client, func(), error) {
 	return &Client{App: e, Logger: log}, shutdown, nil
 }
 
-func setupEcho(log logger.LoggerInterface) *echo.Echo {
+func setupEcho() *echo.Echo {
 	e := echo.New()
 
 	limiter := middlewares.NewRateLimiter(20, 50)

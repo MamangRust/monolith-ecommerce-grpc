@@ -130,7 +130,7 @@ func (h *merchantHandleApi) FindAllMerchant(c echo.Context) error {
 	res, err := h.client.FindAll(ctx, req)
 
 	if err != nil {
-		status = "failed"
+		status = "error"
 		logError("Failed to retrieve merchant data", err, zap.Error(err))
 
 		return merchant_errors.ErrApiFailedFindAllMerchant(c)
@@ -182,7 +182,7 @@ func (h *merchantHandleApi) FindById(c echo.Context) error {
 	res, err := h.client.FindById(ctx, req)
 
 	if err != nil {
-		status = "failed"
+		status = "error"
 		logError("Failed to retrieve merchant data", err, zap.Error(err))
 
 		return merchant_errors.ErrApiFailedFindMerchantById(c)
@@ -241,7 +241,7 @@ func (h *merchantHandleApi) FindByActive(c echo.Context) error {
 	res, err := h.client.FindByActive(ctx, req)
 
 	if err != nil {
-		status = "failed"
+		status = "error"
 		logError("Failed to retrieve merchant data", err, zap.Error(err))
 
 		return merchant_errors.ErrApiFailedFindActiveMerchant(c)
@@ -298,7 +298,7 @@ func (h *merchantHandleApi) FindByTrashed(c echo.Context) error {
 	res, err := h.client.FindByTrashed(ctx, req)
 
 	if err != nil {
-		status = "failed"
+		status = "error"
 		logError("Failed to retrieve merchant data", err, zap.Error(err))
 
 		return merchant_errors.ErrApiFailedFindTrashedMerchant(c)

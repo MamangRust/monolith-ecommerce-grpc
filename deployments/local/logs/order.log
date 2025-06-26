@@ -1,4 +1,0 @@
-{"level":"debug","ts":"2025-06-20T13:50:25.870Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
-{"level":"info","ts":"2025-06-20T13:50:25.875Z","caller":"apps/server.go:168","msg":"Server running on port 50057"}
-{"level":"info","ts":"2025-06-20T13:50:25.875Z","caller":"apps/server.go:183","msg":"gRPC server listening on :50057"}
-{"level":"info","ts":"2025-06-20T13:50:25.876Z","caller":"apps/server.go:175","msg":"Metrics server listening on :8087"}

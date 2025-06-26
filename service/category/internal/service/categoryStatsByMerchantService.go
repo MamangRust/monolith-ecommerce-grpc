@@ -146,7 +146,7 @@ func (s *categoryStatsByMerchantService) FindMonthPriceByMerchant(req *requests.
 	}()
 
 	if data, found := s.mencache.GetCachedMonthPriceByMerchantCache(req); found {
-		s.finishSpanWithSuccess(span, status, "Successfully fetched monthly category prices by merchant from cache", zap.Int("year", year), zap.Int("merchant.id", merchant_id))
+		logSuccess("Successfully fetched monthly category prices by merchant from cache", zap.Int("year", year), zap.Int("merchant.id", merchant_id))
 
 		return data, nil
 	}
@@ -179,8 +179,7 @@ func (s *categoryStatsByMerchantService) FindYearPriceByMerchant(req *requests.Y
 	}()
 
 	if data, found := s.mencache.GetCachedYearPriceByMerchantCache(req); found {
-		s.finishSpanWithSuccess(span, status, "Successfully fetched yearly category prices by merchant from cache", zap.Int("year", year), zap.Int("merchant.id", merchant_id))
-
+		logSuccess("Successfully fetched yearly category prices by merchant from cache", zap.Int("year", year), zap.Int("merchant.id", merchant_id))
 		return data, nil
 	}
 
@@ -234,12 +233,6 @@ func (s *categoryStatsByMerchantService) startTracingAndLogging(method string, a
 	}
 
 	return span, end, status, logSuccess
-}
-
-func (s *categoryStatsByMerchantService) finishSpanWithSuccess(span trace.Span, status string, msg string, fields ...zap.Field) {
-	span.AddEvent(msg)
-	span.SetStatus(codes.Ok, status)
-	s.logger.Debug(msg, fields...)
 }
 
 func (s *categoryStatsByMerchantService) recordMetrics(method string, status string, start time.Time) {

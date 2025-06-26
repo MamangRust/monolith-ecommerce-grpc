@@ -11,12 +11,14 @@ import (
 
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/handler"
+	myhandlerkafka "github.com/MamangRust/monolith-ecommerce-grpc-role/internal/kafka"
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-role/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/database"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/dotenv"
+	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	otel_pkg "github.com/MamangRust/monolith-ecommerce-pkg/otel"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
@@ -76,6 +78,8 @@ func NewServer() (*Server, func(context.Context) error, error) {
 
 	repositories := repository.NewRepositories(depsRepo)
 
+	myKafka := kafka.NewKafka(logger, []string{viper.GetString("KAFKA_BROKERS")})
+
 	shutdownTracerProvider, err := otel_pkg.InitTracerProvider("Role-service", ctx)
 	if err != nil {
 		logger.Fatal("Failed to initialize tracer provider", zap.Error(err))
@@ -117,6 +121,15 @@ func NewServer() (*Server, func(context.Context) error, error) {
 		ErrorHandler: errorhandler,
 		Mencache:     mencache,
 	})
+
+	handler_kafka_role := myhandlerkafka.NewRoleKafkaHandler(services.RoleQuery, myKafka, logger)
+
+	err = myKafka.StartConsumers([]string{"request-role"}, "role-service-group", handler_kafka_role)
+
+	if err != nil {
+		logger.Fatal("Failed to start Kafka consumer", zap.Error(err))
+		return nil, nil, err
+	}
 
 	handlers := handler.NewHandler(&handler.Deps{
 		Service: services,

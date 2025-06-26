@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/internal/middlewares"
+	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/role_errors"
@@ -22,6 +24,7 @@ import (
 )
 
 type roleHandleApi struct {
+	kafka           *kafka.Kafka
 	role            pb.RoleServiceClient
 	logger          logger.LoggerInterface
 	mapping         response_api.RoleResponseMapper
@@ -30,7 +33,7 @@ type roleHandleApi struct {
 	requestDuration *prometheus.HistogramVec
 }
 
-func NewHandlerRole(router *echo.Echo, role pb.RoleServiceClient, logger logger.LoggerInterface, mapping response_api.RoleResponseMapper) *roleHandleApi {
+func NewHandlerRole(router *echo.Echo, role pb.RoleServiceClient, logger logger.LoggerInterface, mapping response_api.RoleResponseMapper, kafka *kafka.Kafka) *roleHandleApi {
 	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "role_handler_requests_total",
@@ -57,22 +60,38 @@ func NewHandlerRole(router *echo.Echo, role pb.RoleServiceClient, logger logger.
 		trace:           otel.Tracer("role-handler"),
 		requestCounter:  requestCounter,
 		requestDuration: requestDuration,
+		kafka:           kafka,
 	}
+
+	roleMiddleware := middlewares.NewRoleValidator(kafka, "request-role", "response-role", 5*time.Second, logger)
 
 	routerRole := router.Group("/api/role")
 
-	routerRole.GET("", roleHandler.FindAll)
-	routerRole.GET("/:id", roleHandler.FindById)
-	routerRole.GET("/active", roleHandler.FindByActive)
-	routerRole.GET("/trashed", roleHandler.FindByTrashed)
-	routerRole.GET("/user/:user_id", roleHandler.FindByUserId)
-	routerRole.POST("", roleHandler.Create)
-	routerRole.POST("/update/:id", roleHandler.Update)
-	routerRole.POST("/trashed/:id", roleHandler.Trashed)
-	routerRole.POST("/restore/:id", roleHandler.Restore)
-	routerRole.DELETE("/permanent/:id", roleHandler.DeletePermanent)
-	routerRole.POST("/restore/all", roleHandler.RestoreAll)
-	routerRole.DELETE("/permanent-all", roleHandler.DeleteAllPermanent)
+	roleMiddlewareChain := roleMiddleware.Middleware()
+	requireAdmin := middlewares.RequireRoles("Admin_Admin_14")
+
+	routerRole.GET("", roleMiddlewareChain(requireAdmin(roleHandler.FindAll)))
+
+	routerRole.GET("/:id", roleMiddlewareChain(requireAdmin(roleHandler.FindById)))
+
+	routerRole.GET("/active", roleMiddlewareChain(requireAdmin(roleHandler.FindAll)))
+
+	routerRole.GET("/trashed", roleMiddlewareChain(requireAdmin(roleHandler.FindByTrashed)))
+
+	routerRole.GET("/user/:user_id", roleMiddlewareChain(requireAdmin(roleHandler.FindByUserId)))
+
+	routerRole.POST("/",
+		roleMiddlewareChain(requireAdmin(roleHandler.Create)),
+	)
+
+	routerRole.POST("/:id", roleMiddlewareChain(requireAdmin(roleHandler.Update)))
+
+	routerRole.DELETE("/:id", roleMiddlewareChain(requireAdmin(roleHandler.DeletePermanent)))
+	routerRole.PUT("/restore/:id", roleMiddlewareChain(requireAdmin(roleHandler.Restore)))
+	routerRole.DELETE("/permanent/:id", roleMiddlewareChain(requireAdmin(roleHandler.DeletePermanent)))
+
+	routerRole.POST("/restore/all", roleMiddlewareChain(requireAdmin(roleHandler.RestoreAll)))
+	routerRole.POST("/permanent/all", roleMiddlewareChain(requireAdmin(roleHandler.DeleteAllPermanent)))
 
 	return roleHandler
 }

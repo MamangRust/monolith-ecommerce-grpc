@@ -4,7 +4,7 @@ go 1.23.4
 
 require (
 	github.com/IBM/sarama v1.45.1
-	github.com/MamangRust/monolith-ecommerce-pkg v1.0.9
+	github.com/MamangRust/monolith-ecommerce-pkg v1.0.10
 	github.com/prometheus/client_golang v1.22.0
 	github.com/spf13/viper v1.20.1
 	go.opentelemetry.io/otel v1.35.0

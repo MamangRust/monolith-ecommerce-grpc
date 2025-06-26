@@ -151,7 +151,7 @@ func (s *productCommandService) UpdateProduct(req *requests.UpdateProductRequest
 	product, err := s.productCommandRepository.UpdateProduct(req)
 
 	if err != nil {
-		return errorhandler.HandleRepositorySingleError[*response.ProductResponse](s.logger, err, method, "FAILED_UPDATE_PRODUCT", span, &status, product_errors.ErrFailedUpdateProduct, zap.Error(err))
+		return s.errorhandler.HandleUpdateProductError(err, method, "FAILED_UPDATE_PRODUCT", span, &status, zap.Error(err))
 	}
 
 	so := s.mapping.ToProductResponse(product)

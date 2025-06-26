@@ -285,7 +285,7 @@ func (s *orderCommandService) UpdateOrder(req *requests.UpdateOrderRequest) (*re
 		return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_CALCULATE_TOTAL_PRICE", span, &status, orderitem_errors.ErrFailedCalculateTotal, zap.Error(err))
 	}
 
-	_, err = s.orderCommandRepository.UpdateOrder(&requests.UpdateOrderRecordRequest{
+	res, err := s.orderCommandRepository.UpdateOrder(&requests.UpdateOrderRecordRequest{
 		OrderID:    *req.OrderID,
 		UserID:     req.UserID,
 		TotalPrice: int(*totalPrice),
@@ -295,7 +295,7 @@ func (s *orderCommandService) UpdateOrder(req *requests.UpdateOrderRequest) (*re
 		return errorhandler.HandleRepositorySingleError[*response.OrderResponse](s.logger, err, method, "FAILED_UPDATE_ORDER", span, &status, order_errors.ErrFailedUpdateOrder, zap.Error(err))
 	}
 
-	so := s.mapping.ToOrderResponse(existingOrder)
+	so := s.mapping.ToOrderResponse(res)
 
 	s.mencache.DeleteOrderCache(*req.OrderID)
 
