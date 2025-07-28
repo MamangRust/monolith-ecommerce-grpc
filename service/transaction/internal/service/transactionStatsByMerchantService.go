@@ -20,7 +20,6 @@ import (
 )
 
 type transactionStatsByMerchantService struct {
-	ctx                                  context.Context
 	errorhandler                         errorhandler.TransactionStatsByMerchantError
 	mencache                             mencache.TransactionStatsByMerchantCache
 	trace                                trace.Tracer
@@ -32,7 +31,6 @@ type transactionStatsByMerchantService struct {
 }
 
 func NewTransactionStatsByMerchantService(
-	ctx context.Context,
 	errorhandler errorhandler.TransactionStatsByMerchantError,
 	mencache mencache.TransactionStatsByMerchantCache,
 	transactionStatsByMerchantRepository repository.TransactonStatsByMerchantRepository,
@@ -59,7 +57,6 @@ func NewTransactionStatsByMerchantService(
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &transactionStatsByMerchantService{
-		ctx:                                  ctx,
 		errorhandler:                         errorhandler,
 		mencache:                             mencache,
 		trace:                                otel.Tracer("transaction-stats-by-merchant-service"),
@@ -71,26 +68,26 @@ func NewTransactionStatsByMerchantService(
 	}
 }
 
-func (s *transactionStatsByMerchantService) FindMonthlyAmountSuccessByMerchant(req *requests.MonthAmountTransactionMerchant) ([]*response.TransactionMonthlyAmountSuccessResponse, *response.ErrorResponse) {
+func (s *transactionStatsByMerchantService) FindMonthlyAmountSuccessByMerchant(ctx context.Context, req *requests.MonthAmountTransactionMerchant) ([]*response.TransactionMonthlyAmountSuccessResponse, *response.ErrorResponse) {
 	const method = "FindMonthlyAmountSuccessByMerchant"
 
 	year := req.Year
 	month := req.Month
 	merchantId := req.MerchantID
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year), attribute.Int("month", month), attribute.Int("merchant.id", merchantId))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year), attribute.Int("month", month), attribute.Int("merchant.id", merchantId))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedMonthAmountSuccessCached(req); found {
+	if data, found := s.mencache.GetCachedMonthAmountSuccessCached(ctx, req); found {
 		logSuccess("Successfully fetched monthly successful transactions by merchant from cache", zap.Int("year", year), zap.Int("month", month), zap.Int("merchant.id", merchantId))
 
 		return data, nil
 	}
 
-	res, err := s.transactionStatsByMerchantRepository.GetMonthlyAmountSuccessByMerchant(req)
+	res, err := s.transactionStatsByMerchantRepository.GetMonthlyAmountSuccessByMerchant(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleMonthlyAmountSuccessByMerchantError(err, method, "FAILED_FIND_MONTHLY_AMOUNT_SUCCESS_BY_MERCHANT", span, &status, zap.Error(err))
@@ -98,32 +95,32 @@ func (s *transactionStatsByMerchantService) FindMonthlyAmountSuccessByMerchant(r
 
 	so := s.mapping.ToTransactionMonthlyAmountSuccess(res)
 
-	s.mencache.SetCachedMonthAmountSuccessCached(req, so)
+	s.mencache.SetCachedMonthAmountSuccessCached(ctx, req, so)
 
 	logSuccess("Successfully fetched monthly successful transactions by merchant", zap.Int("year", year), zap.Int("month", month), zap.Int("merchant.id", merchantId))
 
 	return so, nil
 }
 
-func (s *transactionStatsByMerchantService) FindYearlyAmountSuccessByMerchant(req *requests.YearAmountTransactionMerchant) ([]*response.TransactionYearlyAmountSuccessResponse, *response.ErrorResponse) {
+func (s *transactionStatsByMerchantService) FindYearlyAmountSuccessByMerchant(ctx context.Context, req *requests.YearAmountTransactionMerchant) ([]*response.TransactionYearlyAmountSuccessResponse, *response.ErrorResponse) {
 	const method = "FindYearlyAmountSuccessByMerchant"
 
 	year := req.Year
 	merchantId := req.MerchantID
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year), attribute.Int("merchant.id", merchantId))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year), attribute.Int("merchant.id", merchantId))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedYearAmountSuccessCached(req); found {
+	if data, found := s.mencache.GetCachedYearAmountSuccessCached(ctx, req); found {
 		logSuccess("Successfully fetched yearly successful transactions by merchant from cache", zap.Int("year", year), zap.Int("merchant.id", merchantId))
 
 		return data, nil
 	}
 
-	res, err := s.transactionStatsByMerchantRepository.GetYearlyAmountSuccessByMerchant(req)
+	res, err := s.transactionStatsByMerchantRepository.GetYearlyAmountSuccessByMerchant(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleYearlyAmountSuccessByMerchantError(err, method, "FAILED_FIND_YEARLY_AMOUNT_SUCCESS_BY_MERCHANT", span, &status, zap.Error(err))
@@ -131,33 +128,33 @@ func (s *transactionStatsByMerchantService) FindYearlyAmountSuccessByMerchant(re
 
 	so := s.mapping.ToTransactionYearlyAmountSuccess(res)
 
-	s.mencache.SetCachedYearAmountSuccessCached(req, so)
+	s.mencache.SetCachedYearAmountSuccessCached(ctx, req, so)
 
 	logSuccess("Successfully fetched yearly successful transactions by merchant", zap.Int("year", year), zap.Int("merchant.id", merchantId))
 
 	return so, nil
 }
 
-func (s *transactionStatsByMerchantService) FindMonthlyAmountFailedByMerchant(req *requests.MonthAmountTransactionMerchant) ([]*response.TransactionMonthlyAmountFailedResponse, *response.ErrorResponse) {
+func (s *transactionStatsByMerchantService) FindMonthlyAmountFailedByMerchant(ctx context.Context, req *requests.MonthAmountTransactionMerchant) ([]*response.TransactionMonthlyAmountFailedResponse, *response.ErrorResponse) {
 	const method = "FindMonthlyAmountFailedByMerchant"
 
 	year := req.Year
 	month := req.Month
 	merchantId := req.MerchantID
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year), attribute.Int("month", month), attribute.Int("merchant.id", merchantId))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year), attribute.Int("month", month), attribute.Int("merchant.id", merchantId))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedMonthAmountFailedCached(req); found {
+	if data, found := s.mencache.GetCachedMonthAmountFailedCached(ctx, req); found {
 		logSuccess("Successfully fetched monthly failed transactions by merchant from cache", zap.Int("year", year), zap.Int("month", month), zap.Int("merchant.id", merchantId))
 
 		return data, nil
 	}
 
-	res, err := s.transactionStatsByMerchantRepository.GetMonthlyAmountFailedByMerchant(req)
+	res, err := s.transactionStatsByMerchantRepository.GetMonthlyAmountFailedByMerchant(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleMonthlyAmountFailedByMerchantError(err, method, "FAILED_FIND_MONTHLY_AMOUNT_FAILED_BY_MERCHANT", span, &status, zap.Error(err))
@@ -165,32 +162,32 @@ func (s *transactionStatsByMerchantService) FindMonthlyAmountFailedByMerchant(re
 
 	so := s.mapping.ToTransactionMonthlyAmountFailed(res)
 
-	s.mencache.SetCachedMonthAmountFailedCached(req, so)
+	s.mencache.SetCachedMonthAmountFailedCached(ctx, req, so)
 
 	logSuccess("Successfully fetched monthly failed transactions by merchant", zap.Int("year", year), zap.Int("month", month), zap.Int("merchant.id", merchantId))
 
 	return so, nil
 }
 
-func (s *transactionStatsByMerchantService) FindYearlyAmountFailedByMerchant(req *requests.YearAmountTransactionMerchant) ([]*response.TransactionYearlyAmountFailedResponse, *response.ErrorResponse) {
+func (s *transactionStatsByMerchantService) FindYearlyAmountFailedByMerchant(ctx context.Context, req *requests.YearAmountTransactionMerchant) ([]*response.TransactionYearlyAmountFailedResponse, *response.ErrorResponse) {
 	const method = "FindYearlyAmountFailedByMerchant"
 
 	year := req.Year
 	merchantId := req.MerchantID
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year), attribute.Int("merchant.id", merchantId))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year), attribute.Int("merchant.id", merchantId))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedYearAmountFailedCached(req); found {
+	if data, found := s.mencache.GetCachedYearAmountFailedCached(ctx, req); found {
 		logSuccess("Successfully fetched yearly failed transactions by merchant from cache", zap.Int("year", year), zap.Int("merchant.id", merchantId))
 
 		return data, nil
 	}
 
-	res, err := s.transactionStatsByMerchantRepository.GetYearlyAmountFailedByMerchant(req)
+	res, err := s.transactionStatsByMerchantRepository.GetYearlyAmountFailedByMerchant(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleYearlyAmountFailedByMerchantError(err, method, "FAILED_FIND_YEARLY_AMOUNT_FAILED_BY_MERCHANT", span, &status, zap.Error(err))
@@ -198,33 +195,33 @@ func (s *transactionStatsByMerchantService) FindYearlyAmountFailedByMerchant(req
 
 	so := s.mapping.ToTransactionYearlyAmountFailed(res)
 
-	s.mencache.SetCachedYearAmountFailedCached(req, so)
+	s.mencache.SetCachedYearAmountFailedCached(ctx, req, so)
 
 	logSuccess("Successfully fetched yearly failed transactions by merchant", zap.Int("year", year), zap.Int("merchant.id", merchantId))
 
 	return so, nil
 }
 
-func (s *transactionStatsByMerchantService) FindMonthlyMethodByMerchantSuccess(req *requests.MonthMethodTransactionMerchant) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse) {
+func (s *transactionStatsByMerchantService) FindMonthlyMethodByMerchantSuccess(ctx context.Context, req *requests.MonthMethodTransactionMerchant) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse) {
 	const method = "FindMonthlyMethodByMerchantSuccess"
 
 	year := req.Year
 	month := req.Month
 	merchantId := req.MerchantID
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year), attribute.Int("month", month), attribute.Int("merchant.id", merchantId))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year), attribute.Int("month", month), attribute.Int("merchant.id", merchantId))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedMonthMethodSuccessCached(req); found {
+	if data, found := s.mencache.GetCachedMonthMethodSuccessCached(ctx, req); found {
 		logSuccess("Successfully found monthly successful transaction methods by merchant from cache", zap.Int("year", year), zap.Int("month", month), zap.Int("merchant.id", merchantId))
 
 		return data, nil
 	}
 
-	res, err := s.transactionStatsByMerchantRepository.GetMonthlyTransactionMethodByMerchantSuccess(req)
+	res, err := s.transactionStatsByMerchantRepository.GetMonthlyTransactionMethodByMerchantSuccess(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleMonthlyMethodSuccessByMerchantError(err, method, "FAILED_FIND_MONTHLY_METHOD_BY_MERCHANT_SUCCESS", span, &status, zap.Error(err))
@@ -232,32 +229,32 @@ func (s *transactionStatsByMerchantService) FindMonthlyMethodByMerchantSuccess(r
 
 	so := s.mapping.ToTransactionMonthlyMethod(res)
 
-	s.mencache.SetCachedMonthMethodSuccessCached(req, so)
+	s.mencache.SetCachedMonthMethodSuccessCached(ctx, req, so)
 
 	logSuccess("Successfully found monthly successful transaction methods by merchant", zap.Int("year", year), zap.Int("month", month), zap.Int("merchant.id", merchantId))
 
 	return so, nil
 }
 
-func (s *transactionStatsByMerchantService) FindYearlyMethodByMerchantSuccess(req *requests.YearMethodTransactionMerchant) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse) {
+func (s *transactionStatsByMerchantService) FindYearlyMethodByMerchantSuccess(ctx context.Context, req *requests.YearMethodTransactionMerchant) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse) {
 	const method = "FindYearlyMethodByMerchantSuccess"
 
 	year := req.Year
 	merchantId := req.MerchantID
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year), attribute.Int("merchant.id", merchantId))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year), attribute.Int("merchant.id", merchantId))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedYearMethodSuccessCached(req); found {
+	if data, found := s.mencache.GetCachedYearMethodSuccessCached(ctx, req); found {
 		logSuccess("Successfully found yearly successful transaction methods by merchant from cache", zap.Int("year", year), zap.Int("merchant.id", merchantId))
 
 		return data, nil
 	}
 
-	res, err := s.transactionStatsByMerchantRepository.GetYearlyTransactionMethodByMerchantSuccess(req)
+	res, err := s.transactionStatsByMerchantRepository.GetYearlyTransactionMethodByMerchantSuccess(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleYearlyMethodSuccessByMerchantError(err, method, "FAILED_FIND_YEARLY_METHOD_BY_MERCHANT_SUCCESS", span, &status, zap.Error(err))
@@ -265,65 +262,65 @@ func (s *transactionStatsByMerchantService) FindYearlyMethodByMerchantSuccess(re
 
 	so := s.mapping.ToTransactionYearlyMethod(res)
 
-	s.mencache.SetCachedYearMethodSuccessCached(req, so)
+	s.mencache.SetCachedYearMethodSuccessCached(ctx, req, so)
 
 	logSuccess("Successfully found yearly successful transaction methods by merchant", zap.Int("year", year), zap.Int("merchant.id", merchantId))
 
 	return so, nil
 }
 
-func (s *transactionStatsByMerchantService) FindMonthlyMethodByMerchantFailed(req *requests.MonthMethodTransactionMerchant) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse) {
+func (s *transactionStatsByMerchantService) FindMonthlyMethodByMerchantFailed(ctx context.Context, req *requests.MonthMethodTransactionMerchant) ([]*response.TransactionMonthlyMethodResponse, *response.ErrorResponse) {
 	const method = "FindMonthlyMethodByMerchantFailed"
 
 	year := req.Year
 	month := req.Month
 	merchantId := req.MerchantID
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year), attribute.Int("month", month), attribute.Int("merchant.id", merchantId))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year), attribute.Int("month", month), attribute.Int("merchant.id", merchantId))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedMonthMethodFailedCached(req); found {
+	if data, found := s.mencache.GetCachedMonthMethodFailedCached(ctx, req); found {
 		logSuccess("Successfully found monthly failed transaction methods by merchant from cache", zap.Int("year", year), zap.Int("month", month), zap.Int("merchant.id", merchantId))
 
 		return data, nil
 	}
 
-	res, err := s.transactionStatsByMerchantRepository.GetMonthlyTransactionMethodByMerchantFailed(req)
+	res, err := s.transactionStatsByMerchantRepository.GetMonthlyTransactionMethodByMerchantFailed(ctx, req)
 	if err != nil {
 		return s.errorhandler.HandleMonthlyMethodFailedByMerchantError(err, method, "FAILED_FIND_MONTHLY_METHOD_BY_MERCHANT_FAILED", span, &status, zap.Error(err))
 	}
 
 	so := s.mapping.ToTransactionMonthlyMethod(res)
 
-	s.mencache.SetCachedMonthMethodFailedCached(req, so)
+	s.mencache.SetCachedMonthMethodFailedCached(ctx, req, so)
 
 	logSuccess("Successfully found monthly failed transaction methods by merchant", zap.Int("year", year), zap.Int("month", month), zap.Int("merchant.id", merchantId))
 
 	return so, nil
 }
 
-func (s *transactionStatsByMerchantService) FindYearlyMethodByMerchantFailed(req *requests.YearMethodTransactionMerchant) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse) {
+func (s *transactionStatsByMerchantService) FindYearlyMethodByMerchantFailed(ctx context.Context, req *requests.YearMethodTransactionMerchant) ([]*response.TransactionYearlyMethodResponse, *response.ErrorResponse) {
 	const method = "FindYearlyMethodByMerchantFailed"
 
 	year := req.Year
 	merchantId := req.MerchantID
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year), attribute.Int("merchant.id", merchantId))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year), attribute.Int("merchant.id", merchantId))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedYearMethodFailedCached(req); found {
+	if data, found := s.mencache.GetCachedYearMethodFailedCached(ctx, req); found {
 		logSuccess("Successfully found yearly failed transaction methods by merchant from cache", zap.Int("year", year), zap.Int("merchant.id", merchantId))
 
 		return data, nil
 	}
 
-	res, err := s.transactionStatsByMerchantRepository.GetYearlyTransactionMethodByMerchantFailed(req)
+	res, err := s.transactionStatsByMerchantRepository.GetYearlyTransactionMethodByMerchantFailed(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleYearlyMethodFailedByMerchantError(err, method, "FAILED_FIND_YEARLY_METHOD_BY_MERCHANT_FAILED", span, &status, zap.Error(err))
@@ -331,14 +328,15 @@ func (s *transactionStatsByMerchantService) FindYearlyMethodByMerchantFailed(req
 
 	so := s.mapping.ToTransactionYearlyMethod(res)
 
-	s.mencache.SetCachedYearMethodFailedCached(req, so)
+	s.mencache.SetCachedYearMethodFailedCached(ctx, req, so)
 
 	logSuccess("Successfully found yearly failed transaction methods by merchant", zap.Int("year", year), zap.Int("merchant.id", merchantId))
 
 	return so, nil
 }
 
-func (s *transactionStatsByMerchantService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *transactionStatsByMerchantService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -347,7 +345,7 @@ func (s *transactionStatsByMerchantService) startTracingAndLogging(method string
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -372,7 +370,7 @@ func (s *transactionStatsByMerchantService) startTracingAndLogging(method string
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *transactionStatsByMerchantService) recordMetrics(method string, status string, start time.Time) {

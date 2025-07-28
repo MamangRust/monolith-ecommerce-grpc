@@ -20,7 +20,6 @@ import (
 )
 
 type tokenService struct {
-	ctx             context.Context
 	refreshToken    repository.RefreshTokenRepository
 	token           auth.TokenManager
 	logger          logger.LoggerInterface
@@ -30,7 +29,6 @@ type tokenService struct {
 }
 
 func NewTokenService(
-	ctx context.Context,
 	refreshToken repository.RefreshTokenRepository, token auth.TokenManager, logger logger.LoggerInterface) *tokenService {
 	prometheus.MustRegister(prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -52,10 +50,10 @@ func NewTokenService(
 	return &tokenService{trace: otel.Tracer("token-service"), refreshToken: refreshToken, token: token, logger: logger}
 }
 
-func (s *tokenService) createAccessToken(id int) (string, error) {
+func (s *tokenService) createAccessToken(ctx context.Context, id int) (string, error) {
 	const method = "createAccessToken"
 
-	end, logSuccess, status, logError := s.startTracingAndLogging(method, attribute.Int("user.id", id))
+	ctx, end, logSuccess, status, logError := s.startTracingAndLogging(ctx, method, attribute.Int("user.id", id))
 
 	defer func() {
 		end(status)
@@ -81,10 +79,10 @@ func (s *tokenService) createAccessToken(id int) (string, error) {
 	return res, nil
 }
 
-func (s *tokenService) createRefreshToken(id int) (string, error) {
+func (s *tokenService) createRefreshToken(ctx context.Context, id int) (string, error) {
 	const method = "createRefreshToken"
 
-	end, logSuccess, status, logError := s.startTracingAndLogging(method, attribute.Int("user.id", id))
+	ctx, end, logSuccess, status, logError := s.startTracingAndLogging(ctx, method, attribute.Int("user.id", id))
 
 	defer func() {
 		end(status)
@@ -99,7 +97,7 @@ func (s *tokenService) createRefreshToken(id int) (string, error) {
 		return "", err
 	}
 
-	if err := s.refreshToken.DeleteRefreshTokenByUserId(id); err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err := s.refreshToken.DeleteRefreshTokenByUserId(ctx, id); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		status = "error"
 
 		traceId := traceunic.GenerateTraceID("DELETE_REFRESH_TOKEN_ERR")
@@ -109,7 +107,7 @@ func (s *tokenService) createRefreshToken(id int) (string, error) {
 		return "", err
 	}
 
-	_, err = s.refreshToken.CreateRefreshToken(&requests.CreateRefreshToken{
+	_, err = s.refreshToken.CreateRefreshToken(ctx, &requests.CreateRefreshToken{
 		Token:     res,
 		UserId:    id,
 		ExpiresAt: time.Now().Add(24 * time.Hour).Format("2006-01-02 15:04:05"),
@@ -132,9 +130,11 @@ func (s *tokenService) createRefreshToken(id int) (string, error) {
 }
 
 func (s *tokenService) startTracingAndLogging(
+	ctx context.Context,
 	method string,
 	attrs ...attribute.KeyValue,
 ) (
+	newCtx context.Context,
 	end func(string),
 	logSuccess func(string, ...zap.Field),
 	status string,
@@ -143,7 +143,7 @@ func (s *tokenService) startTracingAndLogging(
 	start := time.Now()
 	status = "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	newCtx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -182,7 +182,7 @@ func (s *tokenService) startTracingAndLogging(
 		s.logger.Error(msg, allFields...)
 	}
 
-	return end, logSuccess, status, logError
+	return newCtx, end, logSuccess, status, logError
 }
 
 func (s *tokenService) recordMetrics(method string, status string, start time.Time) {

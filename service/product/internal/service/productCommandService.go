@@ -25,7 +25,6 @@ import (
 )
 
 type productCommandService struct {
-	ctx                      context.Context
 	errorhandler             errorhandler.ProductCommandError
 	mencache                 mencache.ProductCommandCache
 	trace                    trace.Tracer
@@ -40,7 +39,6 @@ type productCommandService struct {
 }
 
 func NewProductCommandService(
-	ctx context.Context,
 	errorhandler errorhandler.ProductCommandError,
 	mencache mencache.ProductCommandCache,
 	categoryRepository repository.CategoryQueryRepository,
@@ -70,7 +68,6 @@ func NewProductCommandService(
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &productCommandService{
-		ctx:                      ctx,
 		errorhandler:             errorhandler,
 		mencache:                 mencache,
 		trace:                    otel.Tracer("product-command-service"),
@@ -85,22 +82,22 @@ func NewProductCommandService(
 	}
 }
 
-func (s *productCommandService) CreateProduct(req *requests.CreateProductRequest) (*response.ProductResponse, *response.ErrorResponse) {
+func (s *productCommandService) CreateProduct(ctx context.Context, req *requests.CreateProductRequest) (*response.ProductResponse, *response.ErrorResponse) {
 	const method = "CreateProduct"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.String("product.name", req.Name), attribute.Int("product.category_id", req.CategoryID), attribute.Int("product.merchant_id", req.MerchantID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("product.name", req.Name), attribute.Int("product.category_id", req.CategoryID), attribute.Int("product.merchant_id", req.MerchantID))
 
 	defer func() {
 		end(status)
 	}()
 
-	_, err := s.categoryRepository.FindById(req.CategoryID)
+	_, err := s.categoryRepository.FindById(ctx, req.CategoryID)
 
 	if err != nil {
 		return errorhandler.HandleRepositorySingleError[*response.ProductResponse](s.logger, err, method, "FAILED_FIND_CATEGORY_BY_ID", span, &status, category_errors.ErrFailedFindCategoryById, zap.Error(err))
 	}
 
-	_, err = s.merchantRepository.FindById(req.MerchantID)
+	_, err = s.merchantRepository.FindById(ctx, req.MerchantID)
 
 	if err != nil {
 		return errorhandler.HandleRepositorySingleError[*response.ProductResponse](s.logger, err, method, "FAILED_FIND_MERCHANT_BY_ID", span, &status, merchant_errors.ErrFailedFindMerchantById, zap.Error(err))
@@ -110,7 +107,7 @@ func (s *productCommandService) CreateProduct(req *requests.CreateProductRequest
 
 	req.SlugProduct = &slug
 
-	product, err := s.productCommandRepository.CreateProduct(req)
+	product, err := s.productCommandRepository.CreateProduct(ctx, req)
 
 	if err != nil {
 		return errorhandler.HandleRepositorySingleError[*response.ProductResponse](s.logger, err, method, "FAILED_CREATE_PRODUCT", span, &status, product_errors.ErrFailedCreateProduct, zap.Error(err))
@@ -123,22 +120,22 @@ func (s *productCommandService) CreateProduct(req *requests.CreateProductRequest
 	return so, nil
 }
 
-func (s *productCommandService) UpdateProduct(req *requests.UpdateProductRequest) (*response.ProductResponse, *response.ErrorResponse) {
+func (s *productCommandService) UpdateProduct(ctx context.Context, req *requests.UpdateProductRequest) (*response.ProductResponse, *response.ErrorResponse) {
 	const method = "UpdateProduct"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	_, err := s.categoryRepository.FindById(req.CategoryID)
+	_, err := s.categoryRepository.FindById(ctx, req.CategoryID)
 
 	if err != nil {
 		return errorhandler.HandleRepositorySingleError[*response.ProductResponse](s.logger, err, method, "FAILED_FIND_CATEGORY_BY_ID", span, &status, category_errors.ErrFailedFindCategoryById, zap.Error(err))
 	}
 
-	_, err = s.merchantRepository.FindById(req.MerchantID)
+	_, err = s.merchantRepository.FindById(ctx, req.MerchantID)
 
 	if err != nil {
 		return errorhandler.HandleRepositorySingleError[*response.ProductResponse](s.logger, err, method, "FAILED_FIND_MERCHANT_BY_ID", span, &status, merchant_errors.ErrFailedFindMerchantById, zap.Error(err))
@@ -148,7 +145,7 @@ func (s *productCommandService) UpdateProduct(req *requests.UpdateProductRequest
 
 	req.SlugProduct = &slug
 
-	product, err := s.productCommandRepository.UpdateProduct(req)
+	product, err := s.productCommandRepository.UpdateProduct(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleUpdateProductError(err, method, "FAILED_UPDATE_PRODUCT", span, &status, zap.Error(err))
@@ -156,23 +153,23 @@ func (s *productCommandService) UpdateProduct(req *requests.UpdateProductRequest
 
 	so := s.mapping.ToProductResponse(product)
 
-	s.mencache.DeleteCachedProduct(*req.ProductID)
+	s.mencache.DeleteCachedProduct(ctx, *req.ProductID)
 
 	logSuccess("Successfully updated product", zap.Int("product.id", *req.ProductID), zap.Bool("success", true))
 
 	return so, nil
 }
 
-func (s *productCommandService) TrashProduct(productID int) (*response.ProductResponseDeleteAt, *response.ErrorResponse) {
+func (s *productCommandService) TrashProduct(ctx context.Context, productID int) (*response.ProductResponseDeleteAt, *response.ErrorResponse) {
 	const method = "TrashProduct"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	product, err := s.productCommandRepository.TrashedProduct(productID)
+	product, err := s.productCommandRepository.TrashedProduct(ctx, productID)
 
 	if err != nil {
 		return s.errorhandler.HandleTrashedProductError(err, method, "FAILED_TRASH_PRODUCT", span, &status, zap.Error(err))
@@ -180,23 +177,23 @@ func (s *productCommandService) TrashProduct(productID int) (*response.ProductRe
 
 	so := s.mapping.ToProductResponseDeleteAt(product)
 
-	s.mencache.DeleteCachedProduct(productID)
+	s.mencache.DeleteCachedProduct(ctx, productID)
 
 	logSuccess("Successfully trashed product", zap.Int("product.id", productID), zap.Bool("success", true))
 
 	return so, nil
 }
 
-func (s *productCommandService) RestoreProduct(productID int) (*response.ProductResponseDeleteAt, *response.ErrorResponse) {
+func (s *productCommandService) RestoreProduct(ctx context.Context, productID int) (*response.ProductResponseDeleteAt, *response.ErrorResponse) {
 	const method = "RestoreProduct"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	product, err := s.productCommandRepository.RestoreProduct(productID)
+	product, err := s.productCommandRepository.RestoreProduct(ctx, productID)
 
 	if err != nil {
 		return s.errorhandler.HandleRestoreProductError(err, method, "FAILED_RESTORE_PRODUCT", span, &status, zap.Error(err))
@@ -204,23 +201,23 @@ func (s *productCommandService) RestoreProduct(productID int) (*response.Product
 
 	so := s.mapping.ToProductResponseDeleteAt(product)
 
-	s.mencache.DeleteCachedProduct(productID)
+	s.mencache.DeleteCachedProduct(ctx, productID)
 
 	logSuccess("Successfully restored product", zap.Int("product.id", productID), zap.Bool("success", true))
 
 	return so, nil
 }
 
-func (s *productCommandService) DeleteProductPermanent(productID int) (bool, *response.ErrorResponse) {
+func (s *productCommandService) DeleteProductPermanent(ctx context.Context, productID int) (bool, *response.ErrorResponse) {
 	const method = "DeleteProductPermanent"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	res, err := s.productQueryRepository.FindByIdTrashed(productID)
+	res, err := s.productQueryRepository.FindByIdTrashed(ctx, productID)
 
 	if err != nil {
 		return errorhandler.HandleRepositorySingleError[bool](s.logger, err, method, "FAILED_FIND_PRODUCT_BY_ID_TRASHED", span, &status, product_errors.ErrFailedFindProductTrashedById, zap.Error(err))
@@ -243,7 +240,7 @@ func (s *productCommandService) DeleteProductPermanent(productID int) (bool, *re
 		}
 	}
 
-	_, err = s.productCommandRepository.DeleteProductPermanent(productID)
+	_, err = s.productCommandRepository.DeleteProductPermanent(ctx, productID)
 
 	if err != nil {
 		return s.errorhandler.HandleDeleteProductError(err, method, "FAILED_DELETE_PRODUCT_PERMANENT", span, &status, zap.Error(err))
@@ -256,16 +253,16 @@ func (s *productCommandService) DeleteProductPermanent(productID int) (bool, *re
 	return true, nil
 }
 
-func (s *productCommandService) RestoreAllProducts() (bool, *response.ErrorResponse) {
+func (s *productCommandService) RestoreAllProducts(ctx context.Context) (bool, *response.ErrorResponse) {
 	const method = "RestoreAllProducts"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.productCommandRepository.RestoreAllProducts()
+	success, err := s.productCommandRepository.RestoreAllProducts(ctx)
 
 	if err != nil {
 		return s.errorhandler.HandleRestoreAllProductError(err, method, "FAILED_RESTORE_ALL_PRODUCTS", span, &status, zap.Error(err))
@@ -276,16 +273,16 @@ func (s *productCommandService) RestoreAllProducts() (bool, *response.ErrorRespo
 	return success, nil
 }
 
-func (s *productCommandService) DeleteAllProductsPermanent() (bool, *response.ErrorResponse) {
+func (s *productCommandService) DeleteAllProductsPermanent(ctx context.Context) (bool, *response.ErrorResponse) {
 	const method = "DeleteAllProductsPermanent"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.productCommandRepository.DeleteAllProductPermanent()
+	success, err := s.productCommandRepository.DeleteAllProductPermanent(ctx)
 
 	if err != nil {
 		return s.errorhandler.HandleDeleteAllProductError(err, method, "FAILED_DELETE_ALL_PRODUCTS_PERMANENT", span, &status, zap.Error(err))
@@ -296,7 +293,8 @@ func (s *productCommandService) DeleteAllProductsPermanent() (bool, *response.Er
 	return success, nil
 }
 
-func (s *productCommandService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *productCommandService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -305,7 +303,7 @@ func (s *productCommandService) startTracingAndLogging(method string, attrs ...a
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -330,7 +328,7 @@ func (s *productCommandService) startTracingAndLogging(method string, attrs ...a
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *productCommandService) recordMetrics(method string, status string, start time.Time) {

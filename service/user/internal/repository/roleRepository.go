@@ -14,20 +14,18 @@ import (
 
 type roleRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.RoleRecordMapping
 }
 
-func NewRoleRepository(db *db.Queries, ctx context.Context, mapping recordmapper.RoleRecordMapping) *roleRepository {
+func NewRoleRepository(db *db.Queries, mapping recordmapper.RoleRecordMapping) *roleRepository {
 	return &roleRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *roleRepository) FindById(id int) (*record.RoleRecord, error) {
-	res, err := r.db.GetRole(r.ctx, int32(id))
+func (r *roleRepository) FindById(ctx context.Context, id int) (*record.RoleRecord, error) {
+	res, err := r.db.GetRole(ctx, int32(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("role not found with ID: %d", id)
@@ -37,8 +35,8 @@ func (r *roleRepository) FindById(id int) (*record.RoleRecord, error) {
 	return r.mapping.ToRoleRecord(res), nil
 }
 
-func (r *roleRepository) FindByName(name string) (*record.RoleRecord, error) {
-	res, err := r.db.GetRoleByName(r.ctx, name)
+func (r *roleRepository) FindByName(ctx context.Context, name string) (*record.RoleRecord, error) {
+	res, err := r.db.GetRoleByName(ctx, name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, role_errors.ErrRoleNotFound

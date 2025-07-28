@@ -1,7 +1,9 @@
 package myhandlerkafka
 
 import (
+	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/IBM/sarama"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/service"
@@ -16,10 +18,12 @@ type roleKafkaHandler struct {
 	logger      logger.LoggerInterface
 	roleService service.RoleQueryService
 	kafka       *kafka.Kafka
+	ctx         context.Context
 }
 
-func NewRoleKafkaHandler(roleService service.RoleQueryService, kafka *kafka.Kafka, logger logger.LoggerInterface) sarama.ConsumerGroupHandler {
+func NewRoleKafkaHandler(ctx context.Context, roleService service.RoleQueryService, kafka *kafka.Kafka, logger logger.LoggerInterface) sarama.ConsumerGroupHandler {
 	return &roleKafkaHandler{
+		ctx:         ctx,
 		roleService: roleService,
 		kafka:       kafka,
 		logger:      logger,
@@ -38,7 +42,10 @@ func (h *roleKafkaHandler) Cleanup(session sarama.ConsumerGroupSession) error {
 
 func (h *roleKafkaHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
-		h.logger.Debug("Received role validation request",
+		msgCtx, cancel := context.WithTimeout(h.ctx, 20*time.Second)
+		defer cancel()
+
+		h.logger.Info("Received role validation request",
 			zap.String("topic", msg.Topic),
 			zap.String("key", string(msg.Key)))
 
@@ -57,18 +64,22 @@ func (h *roleKafkaHandler) ConsumeClaim(session sarama.ConsumerGroupSession, cla
 			continue
 		}
 
+		// Log pemrosesan
 		h.logger.Info("Processing role validation request",
 			zap.Int("user_id", payload.UserID),
 			zap.String("correlation_id", payload.CorrelationID))
 
-		roles, errResp := h.roleService.FindByUserId(payload.UserID)
+		// Panggil service untuk mendapatkan role
+		roles, errResp := h.roleService.FindByUserId(msgCtx, payload.UserID)
 
+		// Siapkan payload respons
 		resp := response.RoleResponsePayload{
 			CorrelationID: payload.CorrelationID,
 			Valid:         errResp == nil && len(roles) > 0,
 			RoleNames:     make([]string, 0),
 		}
 
+		// Isi nama role jika valid
 		if errResp == nil && len(roles) > 0 {
 			for _, r := range roles {
 				resp.RoleNames = append(resp.RoleNames, r.Name)

@@ -48,7 +48,7 @@ func (s *reviewDetailHandleGrpc) FindAll(ctx context.Context, request *pb.FindAl
 		Search:   search,
 	}
 
-	Review, totalRecords, err := s.reviewDetailQueryService.FindAll(&reqService)
+	Review, totalRecords, err := s.reviewDetailQueryService.FindAll(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -74,7 +74,7 @@ func (s *reviewDetailHandleGrpc) FindById(ctx context.Context, request *pb.FindB
 		return nil, reviewdetail_errors.ErrGrpcInvalidID
 	}
 
-	Review, err := s.reviewDetailQueryService.FindById(id)
+	Review, err := s.reviewDetailQueryService.FindById(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -104,7 +104,7 @@ func (s *reviewDetailHandleGrpc) FindByActive(ctx context.Context, request *pb.F
 		Search:   search,
 	}
 
-	Review, totalRecords, err := s.reviewDetailQueryService.FindByActive(&reqService)
+	Review, totalRecords, err := s.reviewDetailQueryService.FindByActive(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -142,7 +142,7 @@ func (s *reviewDetailHandleGrpc) FindByTrashed(ctx context.Context, request *pb.
 		Search:   search,
 	}
 
-	users, totalRecords, err := s.reviewDetailQueryService.FindByTrashed(&reqService)
+	users, totalRecords, err := s.reviewDetailQueryService.FindByTrashed(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -174,7 +174,7 @@ func (s *reviewDetailHandleGrpc) Create(ctx context.Context, request *pb.CreateR
 		return nil, reviewdetail_errors.ErrGrpcValidateCreateReviewDetail
 	}
 
-	review, err := s.reviewDetailCommandService.CreateReviewDetail(req)
+	review, err := s.reviewDetailCommandService.CreateReviewDetail(ctx, req)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -201,7 +201,7 @@ func (s *reviewDetailHandleGrpc) Update(ctx context.Context, request *pb.UpdateR
 		return nil, reviewdetail_errors.ErrGrpcValidateUpdateReviewDetail
 	}
 
-	review, err := s.reviewDetailCommandService.UpdateReviewDetail(req)
+	review, err := s.reviewDetailCommandService.UpdateReviewDetail(ctx, req)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -217,7 +217,7 @@ func (s *reviewDetailHandleGrpc) TrashedReview(ctx context.Context, request *pb.
 		return nil, reviewdetail_errors.ErrGrpcInvalidID
 	}
 
-	Review, err := s.reviewDetailCommandService.TrashedReviewDetail(id)
+	Review, err := s.reviewDetailCommandService.TrashedReviewDetail(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -235,7 +235,7 @@ func (s *reviewDetailHandleGrpc) RestoreReview(ctx context.Context, request *pb.
 		return nil, reviewdetail_errors.ErrGrpcInvalidID
 	}
 
-	Review, err := s.reviewDetailCommandService.RestoreReviewDetail(id)
+	Review, err := s.reviewDetailCommandService.RestoreReviewDetail(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -253,7 +253,7 @@ func (s *reviewDetailHandleGrpc) DeleteReviewPermanent(ctx context.Context, requ
 		return nil, reviewdetail_errors.ErrGrpcInvalidID
 	}
 
-	_, err := s.reviewDetailCommandService.DeleteReviewDetailPermanent(id)
+	_, err := s.reviewDetailCommandService.DeleteReviewDetailPermanent(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -265,7 +265,7 @@ func (s *reviewDetailHandleGrpc) DeleteReviewPermanent(ctx context.Context, requ
 }
 
 func (s *reviewDetailHandleGrpc) RestoreAllReview(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseReviewAll, error) {
-	_, err := s.reviewDetailCommandService.RestoreAllReviewDetail()
+	_, err := s.reviewDetailCommandService.RestoreAllReviewDetail(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -277,7 +277,7 @@ func (s *reviewDetailHandleGrpc) RestoreAllReview(ctx context.Context, _ *emptyp
 }
 
 func (s *reviewDetailHandleGrpc) DeleteAllReviewPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseReviewAll, error) {
-	_, err := s.reviewDetailCommandService.DeleteAllReviewDetailPermanent()
+	_, err := s.reviewDetailCommandService.DeleteAllReviewDetailPermanent(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)

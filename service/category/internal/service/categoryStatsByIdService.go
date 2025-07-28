@@ -20,7 +20,6 @@ import (
 )
 
 type categoryStatsByIdService struct {
-	ctx                         context.Context
 	mencache                    mencache.CategoryStatsByIdCache
 	errorhandler                errorhandler.CategoryStatsByIdError
 	trace                       trace.Tracer
@@ -31,7 +30,7 @@ type categoryStatsByIdService struct {
 	requestDuration             *prometheus.HistogramVec
 }
 
-func NewCategoryStatsByIdService(ctx context.Context,
+func NewCategoryStatsByIdService(
 	mencache mencache.CategoryStatsByIdCache,
 	errorhandler errorhandler.CategoryStatsByIdError,
 	categoryStatsByIdRepository repository.CategoryStatsByIdRepository, logger logger.LoggerInterface, mapping response_service.CategoryResponseMapper) *categoryStatsByIdService {
@@ -55,7 +54,6 @@ func NewCategoryStatsByIdService(ctx context.Context,
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &categoryStatsByIdService{
-		ctx:                         ctx,
 		mencache:                    mencache,
 		errorhandler:                errorhandler,
 		trace:                       otel.Tracer("category-stats-by-id-service"),
@@ -67,25 +65,25 @@ func NewCategoryStatsByIdService(ctx context.Context,
 	}
 }
 
-func (s *categoryStatsByIdService) FindMonthlyTotalPriceById(req *requests.MonthTotalPriceCategory) ([]*response.CategoriesMonthlyTotalPriceResponse, *response.ErrorResponse) {
+func (s *categoryStatsByIdService) FindMonthlyTotalPriceById(ctx context.Context, req *requests.MonthTotalPriceCategory) ([]*response.CategoriesMonthlyTotalPriceResponse, *response.ErrorResponse) {
 	const method = "FindMonthlyTotalPriceById"
 
 	year := req.Year
 	month := req.Month
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year), attribute.Int("month", month))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year), attribute.Int("month", month))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedMonthTotalPriceByIdCache(req); found {
+	if data, found := s.mencache.GetCachedMonthTotalPriceByIdCache(ctx, req); found {
 		logSuccess("Successfully fetched monthly total price by ID from cache", zap.Int("year", year), zap.Int("month", month))
 
 		return data, nil
 	}
 
-	res, err := s.categoryStatsByIdRepository.GetMonthlyTotalPriceById(req)
+	res, err := s.categoryStatsByIdRepository.GetMonthlyTotalPriceById(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleMonthTotalPriceError(err, method, "FAILED_FIND_MONTHLY_TOTAL_PRICE_BY_ID", span, &status, zap.Error(err))
@@ -93,31 +91,31 @@ func (s *categoryStatsByIdService) FindMonthlyTotalPriceById(req *requests.Month
 
 	so := s.mapping.ToCategoryMonthlyTotalPrices(res)
 
-	s.mencache.SetCachedMonthTotalPriceByIdCache(req, so)
+	s.mencache.SetCachedMonthTotalPriceByIdCache(ctx, req, so)
 
 	logSuccess("Successfully fetched monthly total price by ID", zap.Int("year", year), zap.Int("month", month))
 
 	return so, nil
 }
 
-func (s *categoryStatsByIdService) FindYearlyTotalPriceById(req *requests.YearTotalPriceCategory) ([]*response.CategoriesYearlyTotalPriceResponse, *response.ErrorResponse) {
+func (s *categoryStatsByIdService) FindYearlyTotalPriceById(ctx context.Context, req *requests.YearTotalPriceCategory) ([]*response.CategoriesYearlyTotalPriceResponse, *response.ErrorResponse) {
 	const method = "FindYearlyTotalPriceById"
 
 	year := req.Year
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedYearTotalPriceByIdCache(req); found {
+	if data, found := s.mencache.GetCachedYearTotalPriceByIdCache(ctx, req); found {
 		logSuccess("Successfully fetched yearly total price by ID from cache", zap.Int("year", year))
 
 		return data, nil
 	}
 
-	res, err := s.categoryStatsByIdRepository.GetYearlyTotalPricesById(req)
+	res, err := s.categoryStatsByIdRepository.GetYearlyTotalPricesById(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleYearTotalPriceError(err, method, "FAILED_FIND_YEARLY_TOTAL_PRICE_BY_ID", span, &status, zap.Error(err))
@@ -125,31 +123,31 @@ func (s *categoryStatsByIdService) FindYearlyTotalPriceById(req *requests.YearTo
 
 	so := s.mapping.ToCategoryYearlyTotalPrices(res)
 
-	s.mencache.SetCachedYearTotalPriceByIdCache(req, so)
+	s.mencache.SetCachedYearTotalPriceByIdCache(ctx, req, so)
 
 	logSuccess("Successfully fetched yearly total price by ID", zap.Int("year", year))
 
 	return so, nil
 }
 
-func (s *categoryStatsByIdService) FindMonthPriceById(req *requests.MonthPriceId) ([]*response.CategoryMonthPriceResponse, *response.ErrorResponse) {
+func (s *categoryStatsByIdService) FindMonthPriceById(ctx context.Context, req *requests.MonthPriceId) ([]*response.CategoryMonthPriceResponse, *response.ErrorResponse) {
 	const method = "FindMonthPriceById"
 
 	year := req.Year
 	category_id := req.CategoryID
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year), attribute.Int("category.id", category_id))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year), attribute.Int("category.id", category_id))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedMonthPriceByIdCache(req); found {
+	if data, found := s.mencache.GetCachedMonthPriceByIdCache(ctx, req); found {
 		s.logger.Debug("Successfully fetched monthly category prices by ID from cache", zap.Int("year", year), zap.Int("category.id", category_id))
 		return data, nil
 	}
 
-	res, err := s.categoryStatsByIdRepository.GetMonthPriceById(req)
+	res, err := s.categoryStatsByIdRepository.GetMonthPriceById(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleMonthPrice(err, method, "FAILED_FIND_MONTH_PRICE_BY_ID", span, &status, zap.Error(err))
@@ -157,32 +155,32 @@ func (s *categoryStatsByIdService) FindMonthPriceById(req *requests.MonthPriceId
 
 	so := s.mapping.ToCategoryMonthlyPrices(res)
 
-	s.mencache.SetCachedMonthPriceByIdCache(req, so)
+	s.mencache.SetCachedMonthPriceByIdCache(ctx, req, so)
 
 	logSuccess("Successfully fetched monthly category prices by ID", zap.Int("year", year), zap.Int("category.id", category_id))
 
 	return so, nil
 }
 
-func (s *categoryStatsByIdService) FindYearPriceById(req *requests.YearPriceId) ([]*response.CategoryYearPriceResponse, *response.ErrorResponse) {
+func (s *categoryStatsByIdService) FindYearPriceById(ctx context.Context, req *requests.YearPriceId) ([]*response.CategoryYearPriceResponse, *response.ErrorResponse) {
 	const method = "FindYearPriceById"
 
 	year := req.Year
 	category_id := req.CategoryID
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("year", year), attribute.Int("category.id", category_id))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year), attribute.Int("category.id", category_id))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedYearPriceByIdCache(req); found {
+	if data, found := s.mencache.GetCachedYearPriceByIdCache(ctx, req); found {
 		logSuccess("Successfully fetched yearly category prices by ID from cache", zap.Int("year", year), zap.Int("category.id", category_id))
 
 		return data, nil
 	}
 
-	res, err := s.categoryStatsByIdRepository.GetYearPriceById(req)
+	res, err := s.categoryStatsByIdRepository.GetYearPriceById(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleYearPrice(err, method, "FAILED_FIND_YEAR_PRICE_BY_ID", span, &status, zap.Error(err))
@@ -190,14 +188,15 @@ func (s *categoryStatsByIdService) FindYearPriceById(req *requests.YearPriceId) 
 
 	so := s.mapping.ToCategoryYearlyPrices(res)
 
-	s.mencache.SetCachedYearPriceByIdCache(req, so)
+	s.mencache.SetCachedYearPriceByIdCache(ctx, req, so)
 
 	logSuccess("Successfully fetched yearly category prices by ID", zap.Int("year", year), zap.Int("category.id", category_id))
 
 	return so, nil
 }
 
-func (s *categoryStatsByIdService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *categoryStatsByIdService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -206,7 +205,7 @@ func (s *categoryStatsByIdService) startTracingAndLogging(method string, attrs .
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -231,7 +230,7 @@ func (s *categoryStatsByIdService) startTracingAndLogging(method string, attrs .
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *categoryStatsByIdService) recordMetrics(method string, status string, start time.Time) {

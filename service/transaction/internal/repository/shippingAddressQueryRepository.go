@@ -11,20 +11,18 @@ import (
 
 type shippingAddressQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.ShippingAddressMapping
 }
 
-func NewShippingAddressQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.ShippingAddressMapping) *shippingAddressQueryRepository {
+func NewShippingAddressQueryRepository(db *db.Queries, mapping recordmapper.ShippingAddressMapping) *shippingAddressQueryRepository {
 	return &shippingAddressQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *shippingAddressQueryRepository) FindByOrder(order_id int) (*record.ShippingAddressRecord, error) {
-	res, err := r.db.GetShippingAddressByOrderID(r.ctx, int32(order_id))
+func (r *shippingAddressQueryRepository) FindByOrder(ctx context.Context, order_id int) (*record.ShippingAddressRecord, error) {
+	res, err := r.db.GetShippingAddressByOrderID(ctx, int32(order_id))
 
 	if err != nil {
 		return nil, shippingaddress_errors.ErrFindShippingAddressByOrder

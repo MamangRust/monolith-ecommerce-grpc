@@ -53,7 +53,7 @@ func (s *transactionHandleGrpc) FindAll(ctx context.Context, request *pb.FindAll
 		Search:   search,
 	}
 
-	transaction, totalRecords, err := s.transactionQuery.FindAllTransactions(&reqService)
+	transaction, totalRecords, err := s.transactionQuery.FindAllTransactions(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -92,7 +92,7 @@ func (s *transactionHandleGrpc) FindByMerchant(ctx context.Context, request *pb.
 		Search:     search,
 	}
 
-	transaction, totalRecords, err := s.transactionQuery.FindByMerchant(&reqService)
+	transaction, totalRecords, err := s.transactionQuery.FindByMerchant(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -118,7 +118,7 @@ func (s *transactionHandleGrpc) FindById(ctx context.Context, request *pb.FindBy
 		return nil, transaction_errors.ErrGrpcInvalidID
 	}
 
-	transaction, err := s.transactionQuery.FindById(id)
+	transaction, err := s.transactionQuery.FindById(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -148,7 +148,7 @@ func (s *transactionHandleGrpc) FindByActive(ctx context.Context, request *pb.Fi
 		Search:   search,
 	}
 
-	transaction, totalRecords, err := s.transactionQuery.FindByActive(&reqService)
+	transaction, totalRecords, err := s.transactionQuery.FindByActive(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -185,7 +185,7 @@ func (s *transactionHandleGrpc) FindByTrashed(ctx context.Context, request *pb.F
 		Search:   search,
 	}
 
-	transaction, totalRecords, err := s.transactionQuery.FindByTrashed(&reqService)
+	transaction, totalRecords, err := s.transactionQuery.FindByTrashed(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -222,7 +222,7 @@ func (s *transactionHandleGrpc) FindMonthStatusSuccess(ctx context.Context, requ
 		Month: month,
 	}
 
-	res, err := s.transactionStats.FindMonthlyAmountSuccess(&reqService)
+	res, err := s.transactionStats.FindMonthlyAmountSuccess(ctx, &reqService)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -237,7 +237,7 @@ func (s *transactionHandleGrpc) FindYearStatusSuccess(ctx context.Context, reque
 		return nil, transaction_errors.ErrGrpcInvalidYear
 	}
 
-	res, err := s.transactionStats.FindYearlyAmountSuccess(year)
+	res, err := s.transactionStats.FindYearlyAmountSuccess(ctx, year)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -263,7 +263,7 @@ func (s *transactionHandleGrpc) FindMonthStatusFailed(ctx context.Context, reque
 		Month: month,
 	}
 
-	res, err := s.transactionStats.FindMonthlyAmountFailed(&reqService)
+	res, err := s.transactionStats.FindMonthlyAmountFailed(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -279,7 +279,7 @@ func (s *transactionHandleGrpc) FindYearStatusFailed(ctx context.Context, reques
 		return nil, transaction_errors.ErrGrpcInvalidYear
 	}
 
-	res, err := s.transactionStats.FindYearlyAmountFailed(year)
+	res, err := s.transactionStats.FindYearlyAmountFailed(ctx, year)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -311,7 +311,7 @@ func (s *transactionHandleGrpc) FindMonthStatusSuccessByMerchant(ctx context.Con
 		MerchantID: id,
 	}
 
-	res, err := s.transactionStatsByMerchant.FindMonthlyAmountSuccessByMerchant(
+	res, err := s.transactionStatsByMerchant.FindMonthlyAmountSuccessByMerchant(ctx,
 		&reqService,
 	)
 
@@ -340,6 +340,7 @@ func (s *transactionHandleGrpc) FindYearStatusSuccessByMerchant(ctx context.Cont
 	}
 
 	res, err := s.transactionStatsByMerchant.FindYearlyAmountSuccessByMerchant(
+		ctx,
 		&reqService,
 	)
 	if err != nil {
@@ -373,6 +374,7 @@ func (s *transactionHandleGrpc) FindMonthStatusFailedByMerchant(ctx context.Cont
 	}
 
 	res, err := s.transactionStatsByMerchant.FindMonthlyAmountFailedByMerchant(
+		ctx,
 		&reqService,
 	)
 
@@ -401,6 +403,7 @@ func (s *transactionHandleGrpc) FindYearStatusFailedByMerchant(ctx context.Conte
 	}
 
 	res, err := s.transactionStatsByMerchant.FindYearlyAmountFailedByMerchant(
+		ctx,
 		&reqService,
 	)
 
@@ -423,7 +426,7 @@ func (s *transactionHandleGrpc) FindMonthMethodSuccess(ctx context.Context, req 
 		return nil, transaction_errors.ErrGrpcInvalidMonth
 	}
 
-	methods, err := s.transactionStats.FindMonthlyMethodSuccess(&requests.MonthMethodTransaction{
+	methods, err := s.transactionStats.FindMonthlyMethodSuccess(ctx, &requests.MonthMethodTransaction{
 		Year:  year,
 		Month: month,
 	})
@@ -442,7 +445,7 @@ func (s *transactionHandleGrpc) FindYearMethodSuccess(ctx context.Context, req *
 		return nil, transaction_errors.ErrGrpcInvalidYear
 	}
 
-	methods, err := s.transactionStats.FindYearlyMethodSuccess(year)
+	methods, err := s.transactionStats.FindYearlyMethodSuccess(ctx, year)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -475,6 +478,7 @@ func (s *transactionHandleGrpc) FindMonthMethodByMerchantSuccess(ctx context.Con
 	}
 
 	methods, err := s.transactionStatsByMerchant.FindMonthlyMethodByMerchantSuccess(
+		ctx,
 		&reqService,
 	)
 
@@ -503,6 +507,7 @@ func (s *transactionHandleGrpc) FindYearMethodByMerchantSuccess(ctx context.Cont
 	}
 
 	methods, err := s.transactionStatsByMerchant.FindYearlyMethodByMerchantSuccess(
+		ctx,
 		&reqService,
 	)
 
@@ -525,7 +530,7 @@ func (s *transactionHandleGrpc) FindMonthMethodFailed(ctx context.Context, req *
 		return nil, transaction_errors.ErrGrpcInvalidMonth
 	}
 
-	methods, err := s.transactionStats.FindMonthlyMethodFailed(&requests.MonthMethodTransaction{
+	methods, err := s.transactionStats.FindMonthlyMethodFailed(ctx, &requests.MonthMethodTransaction{
 		Year:  year,
 		Month: month,
 	})
@@ -544,7 +549,7 @@ func (s *transactionHandleGrpc) FindYearMethodFailed(ctx context.Context, req *p
 		return nil, transaction_errors.ErrGrpcInvalidYear
 	}
 
-	methods, err := s.transactionStats.FindYearlyMethodFailed(year)
+	methods, err := s.transactionStats.FindYearlyMethodFailed(ctx, year)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -577,6 +582,7 @@ func (s *transactionHandleGrpc) FindMonthMethodByMerchantFailed(ctx context.Cont
 	}
 
 	methods, err := s.transactionStatsByMerchant.FindMonthlyMethodByMerchantFailed(
+		ctx,
 		&reqService,
 	)
 
@@ -605,6 +611,7 @@ func (s *transactionHandleGrpc) FindYearMethodByMerchantFailed(ctx context.Conte
 	}
 
 	methods, err := s.transactionStatsByMerchant.FindYearlyMethodByMerchantFailed(
+		ctx,
 		&reqService,
 	)
 
@@ -629,7 +636,7 @@ func (s *transactionHandleGrpc) Create(ctx context.Context, request *pb.CreateTr
 		return nil, transaction_errors.ErrGrpcValidateCreateTransaction
 	}
 
-	transaction, err := s.transactionCommand.CreateTransaction(req)
+	transaction, err := s.transactionCommand.CreateTransaction(ctx, req)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -658,7 +665,7 @@ func (s *transactionHandleGrpc) Update(ctx context.Context, request *pb.UpdateTr
 		return nil, transaction_errors.ErrGrpcValidateUpdateTransaction
 	}
 
-	transaction, err := s.transactionCommand.UpdateTransaction(req)
+	transaction, err := s.transactionCommand.UpdateTransaction(ctx, req)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -675,7 +682,7 @@ func (s *transactionHandleGrpc) TrashedTransaction(ctx context.Context, request 
 		return nil, transaction_errors.ErrGrpcInvalidID
 	}
 
-	transaction, err := s.transactionCommand.TrashedTransaction(id)
+	transaction, err := s.transactionCommand.TrashedTransaction(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -693,7 +700,7 @@ func (s *transactionHandleGrpc) RestoreTransaction(ctx context.Context, request 
 		return nil, transaction_errors.ErrGrpcInvalidID
 	}
 
-	transaction, err := s.transactionCommand.RestoreTransaction(id)
+	transaction, err := s.transactionCommand.RestoreTransaction(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -711,7 +718,7 @@ func (s *transactionHandleGrpc) DeleteTransactionPermanent(ctx context.Context, 
 		return nil, transaction_errors.ErrGrpcInvalidID
 	}
 
-	_, err := s.transactionCommand.DeleteTransactionPermanently(id)
+	_, err := s.transactionCommand.DeleteTransactionPermanently(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -723,7 +730,7 @@ func (s *transactionHandleGrpc) DeleteTransactionPermanent(ctx context.Context, 
 }
 
 func (s *transactionHandleGrpc) RestoreAllTransaction(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseTransactionAll, error) {
-	_, err := s.transactionCommand.RestoreAllTransactions()
+	_, err := s.transactionCommand.RestoreAllTransactions(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -735,7 +742,7 @@ func (s *transactionHandleGrpc) RestoreAllTransaction(ctx context.Context, _ *em
 }
 
 func (s *transactionHandleGrpc) DeleteAllTransactionPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseTransactionAll, error) {
-	_, err := s.transactionCommand.DeleteAllTransactionPermanent()
+	_, err := s.transactionCommand.DeleteAllTransactionPermanent(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)

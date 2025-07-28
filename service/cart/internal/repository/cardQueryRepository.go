@@ -13,19 +13,17 @@ import (
 
 type cartQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.CartRecordMapping
 }
 
-func NewCartQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.CartRecordMapping) *cartQueryRepository {
+func NewCartQueryRepository(db *db.Queries, mapping recordmapper.CartRecordMapping) *cartQueryRepository {
 	return &cartQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *cartQueryRepository) FindCarts(req *requests.FindAllCarts) ([]*record.CartRecord, *int, error) {
+func (r *cartQueryRepository) FindCarts(ctx context.Context, req *requests.FindAllCarts) ([]*record.CartRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetCartsParams{
@@ -35,7 +33,7 @@ func (r *cartQueryRepository) FindCarts(req *requests.FindAllCarts) ([]*record.C
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetCarts(r.ctx, reqDb)
+	res, err := r.db.GetCarts(ctx, reqDb)
 
 	if err != nil {
 		log.Fatal(err)

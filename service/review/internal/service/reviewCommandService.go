@@ -22,7 +22,6 @@ import (
 )
 
 type reviewCommandService struct {
-	ctx                     context.Context
 	errorhandler            errorhandler.ReviewCommandError
 	trace                   trace.Tracer
 	productQueryRepository  repository.ProductQueryRepository
@@ -35,7 +34,7 @@ type reviewCommandService struct {
 	requestDuration         *prometheus.HistogramVec
 }
 
-func NewReviewCommandService(ctx context.Context,
+func NewReviewCommandService(
 	errorhandler errorhandler.ReviewCommandError,
 	productQueryRepository repository.ProductQueryRepository, userQueryRepository repository.UserQueryRepository,
 	reviewQueryRepository repository.ReviewQueryRepository,
@@ -60,7 +59,6 @@ func NewReviewCommandService(ctx context.Context,
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &reviewCommandService{
-		ctx:                     ctx,
 		errorhandler:            errorhandler,
 		trace:                   otel.Tracer("review-command-service"),
 		productQueryRepository:  productQueryRepository,
@@ -73,28 +71,28 @@ func NewReviewCommandService(ctx context.Context,
 		requestDuration:         requestDuration,
 	}
 }
-func (s *reviewCommandService) CreateReview(req *requests.CreateReviewRequest) (*response.ReviewResponse, *response.ErrorResponse) {
+func (s *reviewCommandService) CreateReview(ctx context.Context, req *requests.CreateReviewRequest) (*response.ReviewResponse, *response.ErrorResponse) {
 	const method = "CreateReview"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("user.id", req.UserID), attribute.Int("product.id", req.ProductID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("user.id", req.UserID), attribute.Int("product.id", req.ProductID))
 
 	defer func() {
 		end(status)
 	}()
 
-	_, err := s.userQueryRepository.FindById(req.UserID)
+	_, err := s.userQueryRepository.FindById(ctx, req.UserID)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_USER_BY_ID", span, &status, user_errors.ErrUserNotFoundRes)
 	}
 
-	_, err = s.productQueryRepository.FindById(req.ProductID)
+	_, err = s.productQueryRepository.FindById(ctx, req.ProductID)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_PRODUCT_BY_ID", span, &status, product_errors.ErrFailedFindProductById, zap.Error(err))
 	}
 
-	review, err := s.reviewCommandRepository.CreateReview(req)
+	review, err := s.reviewCommandRepository.CreateReview(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleCreateReviewError(err, method, "FAILED_CREATE_REVIEW", span, &status, zap.Error(err))
@@ -107,22 +105,22 @@ func (s *reviewCommandService) CreateReview(req *requests.CreateReviewRequest) (
 	return so, nil
 }
 
-func (s *reviewCommandService) UpdateReview(req *requests.UpdateReviewRequest) (*response.ReviewResponse, *response.ErrorResponse) {
+func (s *reviewCommandService) UpdateReview(ctx context.Context, req *requests.UpdateReviewRequest) (*response.ReviewResponse, *response.ErrorResponse) {
 	const method = "UpdateReview"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("review.id", *req.ReviewID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("review.id", *req.ReviewID))
 
 	defer func() {
 		end(status)
 	}()
 
-	_, err := s.reviewQueryRepository.FindById(*req.ReviewID)
+	_, err := s.reviewQueryRepository.FindById(ctx, *req.ReviewID)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_REVIEW_BY_ID", span, &status, review_errors.ErrFailedReviewNotFound, zap.Error(err))
 	}
 
-	review, err := s.reviewCommandRepository.UpdateReview(req)
+	review, err := s.reviewCommandRepository.UpdateReview(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleUpdateReviewError(err, method, "FAILED_UPDATE_REVIEW", span, &status, zap.Error(err))
@@ -135,16 +133,16 @@ func (s *reviewCommandService) UpdateReview(req *requests.UpdateReviewRequest) (
 	return so, nil
 }
 
-func (s *reviewCommandService) TrashedReview(reviewID int) (*response.ReviewResponseDeleteAt, *response.ErrorResponse) {
+func (s *reviewCommandService) TrashedReview(ctx context.Context, reviewID int) (*response.ReviewResponseDeleteAt, *response.ErrorResponse) {
 	const method = "TrashedReview"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("review.id", reviewID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("review.id", reviewID))
 
 	defer func() {
 		end(status)
 	}()
 
-	review, err := s.reviewCommandRepository.TrashReview(reviewID)
+	review, err := s.reviewCommandRepository.TrashReview(ctx, reviewID)
 
 	if err != nil {
 		return s.errorhandler.HandleTrashedReviewError(err, method, "FAILED_TRASH_REVIEW", span, &status, zap.Error(err))
@@ -159,16 +157,16 @@ func (s *reviewCommandService) TrashedReview(reviewID int) (*response.ReviewResp
 	return so, nil
 }
 
-func (s *reviewCommandService) RestoreReview(reviewID int) (*response.ReviewResponseDeleteAt, *response.ErrorResponse) {
+func (s *reviewCommandService) RestoreReview(ctx context.Context, reviewID int) (*response.ReviewResponseDeleteAt, *response.ErrorResponse) {
 	const method = "RestoreReview"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("review.id", reviewID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("review.id", reviewID))
 
 	defer func() {
 		end(status)
 	}()
 
-	review, err := s.reviewCommandRepository.RestoreReview(reviewID)
+	review, err := s.reviewCommandRepository.RestoreReview(ctx, reviewID)
 
 	if err != nil {
 		return s.errorhandler.HandleRestoreReviewError(err, method, "FAILED_RESTORE_REVIEW", span, &status, zap.Error(err))
@@ -181,16 +179,16 @@ func (s *reviewCommandService) RestoreReview(reviewID int) (*response.ReviewResp
 	return so, nil
 }
 
-func (s *reviewCommandService) DeleteReviewPermanent(reviewID int) (bool, *response.ErrorResponse) {
+func (s *reviewCommandService) DeleteReviewPermanent(ctx context.Context, reviewID int) (bool, *response.ErrorResponse) {
 	const method = "DeleteReviewPermanent"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("review.id", reviewID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("review.id", reviewID))
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.reviewCommandRepository.DeleteReviewPermanently(reviewID)
+	success, err := s.reviewCommandRepository.DeleteReviewPermanently(ctx, reviewID)
 
 	if err != nil {
 		return s.errorhandler.HandleDeleteReviewError(err, method, "FAILED_DELETE_PERMANENT_REVIEW", span, &status, zap.Error(err))
@@ -201,16 +199,16 @@ func (s *reviewCommandService) DeleteReviewPermanent(reviewID int) (bool, *respo
 	return success, nil
 }
 
-func (s *reviewCommandService) RestoreAllReviews() (bool, *response.ErrorResponse) {
+func (s *reviewCommandService) RestoreAllReviews(ctx context.Context) (bool, *response.ErrorResponse) {
 	const method = "RestoreAllReviews"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.reviewCommandRepository.RestoreAllReview()
+	success, err := s.reviewCommandRepository.RestoreAllReview(ctx)
 
 	if err != nil {
 		return s.errorhandler.HandleRestoreAllReviewError(err, method, "FAILED_RESTORE_ALL_REVIEW", span, &status, zap.Error(err))
@@ -221,16 +219,16 @@ func (s *reviewCommandService) RestoreAllReviews() (bool, *response.ErrorRespons
 	return success, nil
 }
 
-func (s *reviewCommandService) DeleteAllReviewsPermanent() (bool, *response.ErrorResponse) {
+func (s *reviewCommandService) DeleteAllReviewsPermanent(ctx context.Context) (bool, *response.ErrorResponse) {
 	const method = "DeleteAllReviewsPermanent"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.reviewCommandRepository.DeleteAllPermanentReview()
+	success, err := s.reviewCommandRepository.DeleteAllPermanentReview(ctx)
 
 	if err != nil {
 		return s.errorhandler.HandleDeleteAllReviewError(err, method, "FAILED_DELETE_ALL_PERMANENT_REVIEW", span, &status, zap.Error(err))
@@ -241,7 +239,8 @@ func (s *reviewCommandService) DeleteAllReviewsPermanent() (bool, *response.Erro
 	return success, nil
 }
 
-func (s *reviewCommandService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *reviewCommandService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -250,7 +249,7 @@ func (s *reviewCommandService) startTracingAndLogging(method string, attrs ...at
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -275,7 +274,7 @@ func (s *reviewCommandService) startTracingAndLogging(method string, attrs ...at
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *reviewCommandService) recordMetrics(method string, status string, start time.Time) {

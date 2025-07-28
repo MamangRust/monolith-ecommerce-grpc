@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -35,10 +36,10 @@ func NewCategoryQueryCache(store *CacheStore) *categoryQueryCache {
 	return &categoryQueryCache{store: store}
 }
 
-func (s *categoryQueryCache) GetCachedCategoriesCache(req *requests.FindAllCategory) ([]*response.CategoryResponse, *int, bool) {
+func (s *categoryQueryCache) GetCachedCategoriesCache(ctx context.Context, req *requests.FindAllCategory) ([]*response.CategoryResponse, *int, bool) {
 	key := fmt.Sprintf(categoryAllCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[categoryCacheResponse](s.store, key)
+	result, found := GetFromCache[categoryCacheResponse](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -47,7 +48,7 @@ func (s *categoryQueryCache) GetCachedCategoriesCache(req *requests.FindAllCateg
 	return result.Data, result.TotalRecords, true
 }
 
-func (s *categoryQueryCache) SetCachedCategoriesCache(req *requests.FindAllCategory, data []*response.CategoryResponse, total *int) {
+func (s *categoryQueryCache) SetCachedCategoriesCache(ctx context.Context, req *requests.FindAllCategory, data []*response.CategoryResponse, total *int) {
 	if total == nil {
 		zero := 0
 
@@ -60,13 +61,13 @@ func (s *categoryQueryCache) SetCachedCategoriesCache(req *requests.FindAllCateg
 
 	key := fmt.Sprintf(categoryAllCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &categoryCacheResponse{Data: data, TotalRecords: total}
-	SetToCache(s.store, key, payload, ttlDefault)
+	SetToCache(ctx, s.store, key, payload, ttlDefault)
 }
 
-func (s *categoryQueryCache) GetCachedCategoryActiveCache(req *requests.FindAllCategory) ([]*response.CategoryResponseDeleteAt, *int, bool) {
+func (s *categoryQueryCache) GetCachedCategoryActiveCache(ctx context.Context, req *requests.FindAllCategory) ([]*response.CategoryResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(categoryActiveCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[categoryCacheResponseDeleteAt](s.store, key)
+	result, found := GetFromCache[categoryCacheResponseDeleteAt](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -74,7 +75,7 @@ func (s *categoryQueryCache) GetCachedCategoryActiveCache(req *requests.FindAllC
 
 	return result.Data, result.TotalRecords, true
 }
-func (s *categoryQueryCache) SetCachedCategoryActiveCache(req *requests.FindAllCategory, data []*response.CategoryResponseDeleteAt, total *int) {
+func (s *categoryQueryCache) SetCachedCategoryActiveCache(ctx context.Context, req *requests.FindAllCategory, data []*response.CategoryResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -86,13 +87,13 @@ func (s *categoryQueryCache) SetCachedCategoryActiveCache(req *requests.FindAllC
 
 	key := fmt.Sprintf(categoryActiveCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &categoryCacheResponseDeleteAt{Data: data, TotalRecords: total}
-	SetToCache(s.store, key, payload, ttlDefault)
+	SetToCache(ctx, s.store, key, payload, ttlDefault)
 }
 
-func (s *categoryQueryCache) GetCachedCategoryTrashedCache(req *requests.FindAllCategory) ([]*response.CategoryResponseDeleteAt, *int, bool) {
+func (s *categoryQueryCache) GetCachedCategoryTrashedCache(ctx context.Context, req *requests.FindAllCategory) ([]*response.CategoryResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(categoryTrashedCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[categoryCacheResponseDeleteAt](s.store, key)
+	result, found := GetFromCache[categoryCacheResponseDeleteAt](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -101,7 +102,7 @@ func (s *categoryQueryCache) GetCachedCategoryTrashedCache(req *requests.FindAll
 	return result.Data, result.TotalRecords, true
 }
 
-func (s *categoryQueryCache) SetCachedCategoryTrashedCache(req *requests.FindAllCategory, data []*response.CategoryResponseDeleteAt, total *int) {
+func (s *categoryQueryCache) SetCachedCategoryTrashedCache(ctx context.Context, req *requests.FindAllCategory, data []*response.CategoryResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -113,12 +114,12 @@ func (s *categoryQueryCache) SetCachedCategoryTrashedCache(req *requests.FindAll
 
 	key := fmt.Sprintf(categoryTrashedCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &categoryCacheResponseDeleteAt{Data: data, TotalRecords: total}
-	SetToCache(s.store, key, payload, ttlDefault)
+	SetToCache(ctx, s.store, key, payload, ttlDefault)
 }
 
-func (s *categoryQueryCache) GetCachedCategoryCache(id int) (*response.CategoryResponse, bool) {
+func (s *categoryQueryCache) GetCachedCategoryCache(ctx context.Context, id int) (*response.CategoryResponse, bool) {
 	key := fmt.Sprintf(categoryByIdCacheKey, id)
-	result, found := GetFromCache[*response.CategoryResponse](s.store, key)
+	result, found := GetFromCache[*response.CategoryResponse](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -127,12 +128,12 @@ func (s *categoryQueryCache) GetCachedCategoryCache(id int) (*response.CategoryR
 	return *result, true
 }
 
-func (s *categoryQueryCache) SetCachedCategoryCache(data *response.CategoryResponse) {
+func (s *categoryQueryCache) SetCachedCategoryCache(ctx context.Context, data *response.CategoryResponse) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(categoryByIdCacheKey, data.ID)
 
-	SetToCache(s.store, key, data, ttlDefault)
+	SetToCache(ctx, s.store, key, data, ttlDefault)
 }

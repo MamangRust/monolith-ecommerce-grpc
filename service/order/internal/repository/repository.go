@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"context"
-
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
@@ -21,12 +19,7 @@ type Repositories struct {
 	ShippingAddress      ShippingAddressCommandRepository
 }
 
-type Deps struct {
-	DB  *db.Queries
-	Ctx context.Context
-}
-
-func NewRepositories(deps *Deps) *Repositories {
+func NewRepositories(DB *db.Queries) *Repositories {
 	mapperOrder := recordmapper.NewOrderRecordMapper()
 	mapperOrderItem := recordmapper.NewOrderItemRecordMapper()
 	mapperProduct := recordmapper.NewProductRecordMapper()
@@ -35,19 +28,18 @@ func NewRepositories(deps *Deps) *Repositories {
 	mapperShipping := recordmapper.NewShippingAddressRecordMapper()
 
 	return &Repositories{
-		MerchantQuery:    NewMerchantQueryRepository(deps.DB, deps.Ctx, mapperMerchant),
-		ProductQuery:     NewProductQueryRepository(deps.DB, deps.Ctx, mapperProduct),
-		ProductCommand:   NewProductCommandRepository(deps.DB, deps.Ctx, mapperProduct),
-		OrderItemQuery:   NewOrderItemQueryRepository(deps.DB, deps.Ctx, mapperOrderItem),
-		OrderItemCommand: NewOrderItemCommandRepository(deps.DB, deps.Ctx, mapperOrderItem),
-		OrderQuery:       NewOrderQueryRepository(deps.DB, deps.Ctx, mapperOrder),
-		OrderCommand:     NewOrderCommandRepository(deps.DB, deps.Ctx, mapperOrder),
-		UserQuery:        NewUserQueryRepository(deps.DB, deps.Ctx, mapperUser),
-		ShippingAddress:  NewShippingAddressCommandRepository(deps.DB, deps.Ctx, mapperShipping),
-		OrderStats:       NewOrderStatsRepository(deps.DB, deps.Ctx, mapperOrder),
+		MerchantQuery:    NewMerchantQueryRepository(DB, mapperMerchant),
+		ProductQuery:     NewProductQueryRepository(DB, mapperProduct),
+		ProductCommand:   NewProductCommandRepository(DB, mapperProduct),
+		OrderItemQuery:   NewOrderItemQueryRepository(DB, mapperOrderItem),
+		OrderItemCommand: NewOrderItemCommandRepository(DB, mapperOrderItem),
+		OrderQuery:       NewOrderQueryRepository(DB, mapperOrder),
+		OrderCommand:     NewOrderCommandRepository(DB, mapperOrder),
+		UserQuery:        NewUserQueryRepository(DB, mapperUser),
+		ShippingAddress:  NewShippingAddressCommandRepository(DB, mapperShipping),
+		OrderStats:       NewOrderStatsRepository(DB, mapperOrder),
 		OrderStatsByMerchant: NewOrderStatsByMerchantRepository(
-			deps.DB,
-			deps.Ctx,
+			DB,
 			mapperOrder,
 		),
 	}

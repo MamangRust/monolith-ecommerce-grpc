@@ -11,20 +11,18 @@ import (
 
 type productCommandRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.ProductRecordMapping
 }
 
-func NewProductCommandRepository(db *db.Queries, ctx context.Context, mapping recordmapper.ProductRecordMapping) *productCommandRepository {
+func NewProductCommandRepository(db *db.Queries, mapping recordmapper.ProductRecordMapping) *productCommandRepository {
 	return &productCommandRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *productCommandRepository) UpdateProductCountStock(product_id int, stock int) (*record.ProductRecord, error) {
-	res, err := r.db.UpdateProductCountStock(r.ctx, db.UpdateProductCountStockParams{
+func (r *productCommandRepository) UpdateProductCountStock(ctx context.Context, product_id int, stock int) (*record.ProductRecord, error) {
+	res, err := r.db.UpdateProductCountStock(ctx, db.UpdateProductCountStockParams{
 		ProductID:    int32(product_id),
 		CountInStock: int32(stock),
 	})

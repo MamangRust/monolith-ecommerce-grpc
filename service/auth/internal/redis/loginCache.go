@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -17,10 +18,10 @@ func NewLoginCache(store *CacheStore) *loginCache {
 	return &loginCache{store: store}
 }
 
-func (s *loginCache) GetCachedLogin(email string) (*response.TokenResponse, bool) {
+func (s *loginCache) GetCachedLogin(ctx context.Context, email string) (*response.TokenResponse, bool) {
 	key := fmt.Sprintf(keylogin, email)
 
-	result, found := GetFromCache[*response.TokenResponse](s.store, key)
+	result, found := GetFromCache[*response.TokenResponse](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -29,12 +30,12 @@ func (s *loginCache) GetCachedLogin(email string) (*response.TokenResponse, bool
 	return *result, true
 }
 
-func (s *loginCache) SetCachedLogin(email string, data *response.TokenResponse, expiration time.Duration) {
+func (s *loginCache) SetCachedLogin(ctx context.Context, email string, data *response.TokenResponse, expiration time.Duration) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(keylogin, email)
 
-	SetToCache(s.store, key, data, expiration)
+	SetToCache(ctx, s.store, key, data, expiration)
 }

@@ -47,7 +47,7 @@ func (s *bannerHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllBanne
 		Search:   search,
 	}
 
-	Banner, totalRecords, err := s.bannerQueryService.FindAll(&reqService)
+	Banner, totalRecords, err := s.bannerQueryService.FindAll(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -73,7 +73,7 @@ func (s *bannerHandleGrpc) FindById(ctx context.Context, request *pb.FindByIdBan
 		return nil, banner_errors.ErrGrpcBannerInvalidId
 	}
 
-	Banner, err := s.bannerQueryService.FindById(id)
+	Banner, err := s.bannerQueryService.FindById(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -103,7 +103,7 @@ func (s *bannerHandleGrpc) FindByActive(ctx context.Context, request *pb.FindAll
 		Search:   search,
 	}
 
-	Banner, totalRecords, err := s.bannerQueryService.FindByActive(&reqService)
+	Banner, totalRecords, err := s.bannerQueryService.FindByActive(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -141,7 +141,7 @@ func (s *bannerHandleGrpc) FindByTrashed(ctx context.Context, request *pb.FindAl
 		Search:   search,
 	}
 
-	users, totalRecords, err := s.bannerQueryService.FindByTrashed(&reqService)
+	users, totalRecords, err := s.bannerQueryService.FindByTrashed(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -175,7 +175,7 @@ func (s *bannerHandleGrpc) Create(ctx context.Context, request *pb.CreateBannerR
 		return nil, banner_errors.ErrGrpcValidateCreateBanner
 	}
 
-	Banner, err := s.bannerCommandService.CreateBanner(req)
+	Banner, err := s.bannerCommandService.CreateBanner(ctx, req)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -205,7 +205,7 @@ func (s *bannerHandleGrpc) Update(ctx context.Context, request *pb.UpdateBannerR
 		return nil, banner_errors.ErrGrpcValidateUpdateBanner
 	}
 
-	Banner, err := s.bannerCommandService.UpdateBanner(req)
+	Banner, err := s.bannerCommandService.UpdateBanner(ctx, req)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -221,7 +221,7 @@ func (s *bannerHandleGrpc) TrashedBanner(ctx context.Context, request *pb.FindBy
 		return nil, banner_errors.ErrGrpcBannerInvalidId
 	}
 
-	Banner, err := s.bannerCommandService.TrashedBanner(id)
+	Banner, err := s.bannerCommandService.TrashedBanner(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -239,7 +239,7 @@ func (s *bannerHandleGrpc) RestoreBanner(ctx context.Context, request *pb.FindBy
 		return nil, banner_errors.ErrGrpcBannerInvalidId
 	}
 
-	Banner, err := s.bannerCommandService.RestoreBanner(id)
+	Banner, err := s.bannerCommandService.RestoreBanner(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -257,7 +257,7 @@ func (s *bannerHandleGrpc) DeleteBannerPermanent(ctx context.Context, request *p
 		return nil, banner_errors.ErrGrpcBannerInvalidId
 	}
 
-	_, err := s.bannerCommandService.DeleteBannerPermanent(id)
+	_, err := s.bannerCommandService.DeleteBannerPermanent(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -269,7 +269,7 @@ func (s *bannerHandleGrpc) DeleteBannerPermanent(ctx context.Context, request *p
 }
 
 func (s *bannerHandleGrpc) RestoreAllBanner(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseBannerAll, error) {
-	_, err := s.bannerCommandService.RestoreAllBanner()
+	_, err := s.bannerCommandService.RestoreAllBanner(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -281,7 +281,7 @@ func (s *bannerHandleGrpc) RestoreAllBanner(ctx context.Context, _ *emptypb.Empt
 }
 
 func (s *bannerHandleGrpc) DeleteAllBannerPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseBannerAll, error) {
-	_, err := s.bannerCommandService.DeleteAllBannerPermanent()
+	_, err := s.bannerCommandService.DeleteAllBannerPermanent(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)

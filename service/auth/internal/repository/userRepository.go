@@ -14,20 +14,18 @@ import (
 
 type userRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.UserRecordMapping
 }
 
-func NewUserRepository(db *db.Queries, ctx context.Context, mapping recordmapper.UserRecordMapping) *userRepository {
+func NewUserRepository(db *db.Queries, mapping recordmapper.UserRecordMapping) *userRepository {
 	return &userRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *userRepository) FindById(user_id int) (*record.UserRecord, error) {
-	res, err := r.db.GetUserByID(r.ctx, int32(user_id))
+func (r *userRepository) FindById(ctx context.Context, user_id int) (*record.UserRecord, error) {
+	res, err := r.db.GetUserByID(ctx, int32(user_id))
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -40,8 +38,22 @@ func (r *userRepository) FindById(user_id int) (*record.UserRecord, error) {
 	return r.mapping.ToUserRecord(res), nil
 }
 
-func (r *userRepository) FindByEmail(email string) (*record.UserRecord, error) {
-	res, err := r.db.GetUserByEmail(r.ctx, email)
+func (r *userRepository) FindByEmail(ctx context.Context, email string) (*record.UserRecord, error) {
+	res, err := r.db.GetUserByEmail(ctx, email)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, user_errors.ErrUserNotFound
+	}
+
+	return r.mapping.ToUserRecord(res), nil
+}
+
+func (r *userRepository) FindByEmailAndVerify(ctx context.Context, email string) (*record.UserRecord, error) {
+	res, err := r.db.GetUserByEmailAndVerify(ctx, email)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -54,22 +66,8 @@ func (r *userRepository) FindByEmail(email string) (*record.UserRecord, error) {
 	return r.mapping.ToUserRecord(res), nil
 }
 
-func (r *userRepository) FindByEmailAndVerify(email string) (*record.UserRecord, error) {
-	res, err := r.db.GetUserByEmailAndVerify(r.ctx, email)
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, user_errors.ErrUserNotFound
-		}
-
-		return nil, user_errors.ErrUserNotFound
-	}
-
-	return r.mapping.ToUserRecord(res), nil
-}
-
-func (r *userRepository) FindByVerificationCode(verification_code string) (*record.UserRecord, error) {
-	res, err := r.db.GetUserByVerificationCode(r.ctx, verification_code)
+func (r *userRepository) FindByVerificationCode(ctx context.Context, verification_code string) (*record.UserRecord, error) {
+	res, err := r.db.GetUserByVerificationCode(ctx, verification_code)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -83,7 +81,7 @@ func (r *userRepository) FindByVerificationCode(verification_code string) (*reco
 	return r.mapping.ToUserRecord(res), nil
 }
 
-func (r *userRepository) CreateUser(request *requests.RegisterRequest) (*record.UserRecord, error) {
+func (r *userRepository) CreateUser(ctx context.Context, request *requests.RegisterRequest) (*record.UserRecord, error) {
 	req := db.CreateUserParams{
 		Firstname:        request.FirstName,
 		Lastname:         request.LastName,
@@ -93,7 +91,7 @@ func (r *userRepository) CreateUser(request *requests.RegisterRequest) (*record.
 		IsVerified:       sql.NullBool{Bool: request.IsVerified, Valid: true},
 	}
 
-	user, err := r.db.CreateUser(r.ctx, req)
+	user, err := r.db.CreateUser(ctx, req)
 
 	if err != nil {
 		return nil, user_errors.ErrCreateUser
@@ -102,8 +100,8 @@ func (r *userRepository) CreateUser(request *requests.RegisterRequest) (*record.
 	return r.mapping.ToUserRecord(user), nil
 }
 
-func (r *userRepository) UpdateUserIsVerified(user_id int, is_verified bool) (*record.UserRecord, error) {
-	res, err := r.db.UpdateUserIsVerified(r.ctx, db.UpdateUserIsVerifiedParams{
+func (r *userRepository) UpdateUserIsVerified(ctx context.Context, user_id int, is_verified bool) (*record.UserRecord, error) {
+	res, err := r.db.UpdateUserIsVerified(ctx, db.UpdateUserIsVerifiedParams{
 		UserID: int32(user_id),
 		IsVerified: sql.NullBool{
 			Bool:  is_verified,
@@ -118,8 +116,8 @@ func (r *userRepository) UpdateUserIsVerified(user_id int, is_verified bool) (*r
 	return r.mapping.ToUserRecord(res), nil
 }
 
-func (r *userRepository) UpdateUserPassword(user_id int, password string) (*record.UserRecord, error) {
-	res, err := r.db.UpdateUserPassword(r.ctx, db.UpdateUserPasswordParams{
+func (r *userRepository) UpdateUserPassword(ctx context.Context, user_id int, password string) (*record.UserRecord, error) {
+	res, err := r.db.UpdateUserPassword(ctx, db.UpdateUserPasswordParams{
 		UserID:   int32(user_id),
 		Password: password,
 	})

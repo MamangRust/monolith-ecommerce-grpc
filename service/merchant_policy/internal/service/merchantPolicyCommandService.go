@@ -20,7 +20,6 @@ import (
 )
 
 type merchantPolicyCommandService struct {
-	ctx                             context.Context
 	errorhandler                    errorhandler.MerchantPolicyCommandError
 	mencache                        mencache.MerchantPolicyCommandCache
 	trace                           trace.Tracer
@@ -32,7 +31,7 @@ type merchantPolicyCommandService struct {
 	requestDuration                 *prometheus.HistogramVec
 }
 
-func NewMerchantPolicyCommandService(ctx context.Context,
+func NewMerchantPolicyCommandService(
 	errorhandler errorhandler.MerchantPolicyCommandError,
 	mencache mencache.MerchantPolicyCommandCache,
 	logger logger.LoggerInterface, merchantPolicyCommandRepository repository.MerchantPoliciesCommandRepository, merchantQueryRepository repository.MerchantQueryRepository, mapping response_service.MerchantPolicyResponseMapper) *merchantPolicyCommandService {
@@ -56,7 +55,6 @@ func NewMerchantPolicyCommandService(ctx context.Context,
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &merchantPolicyCommandService{
-		ctx:                             ctx,
 		errorhandler:                    errorhandler,
 		mencache:                        mencache,
 		trace:                           otel.Tracer("merchant-policy-command-service"),
@@ -69,16 +67,16 @@ func NewMerchantPolicyCommandService(ctx context.Context,
 	}
 }
 
-func (s *merchantPolicyCommandService) CreateMerchant(req *requests.CreateMerchantPolicyRequest) (*response.MerchantPoliciesResponse, *response.ErrorResponse) {
+func (s *merchantPolicyCommandService) CreateMerchant(ctx context.Context, req *requests.CreateMerchantPolicyRequest) (*response.MerchantPoliciesResponse, *response.ErrorResponse) {
 	const method = "CreateMerchant"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchant.id", req.MerchantID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchant.id", req.MerchantID))
 
 	defer func() {
 		end(status)
 	}()
 
-	merchant, err := s.merchantPolicyCommandRepository.CreateMerchantPolicy(req)
+	merchant, err := s.merchantPolicyCommandRepository.CreateMerchantPolicy(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleCreateMerchantPolicyError(err, method, "FAILED_CREATE_MERCHANT_POLICY", span, &status, zap.Error(err))
@@ -91,16 +89,16 @@ func (s *merchantPolicyCommandService) CreateMerchant(req *requests.CreateMercha
 	return so, nil
 }
 
-func (s *merchantPolicyCommandService) UpdateMerchant(req *requests.UpdateMerchantPolicyRequest) (*response.MerchantPoliciesResponse, *response.ErrorResponse) {
+func (s *merchantPolicyCommandService) UpdateMerchant(ctx context.Context, req *requests.UpdateMerchantPolicyRequest) (*response.MerchantPoliciesResponse, *response.ErrorResponse) {
 	const method = "UpdateMerchant"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchantPolicy.id", *req.MerchantPolicyID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantPolicy.id", *req.MerchantPolicyID))
 
 	defer func() {
 		end(status)
 	}()
 
-	merchant, err := s.merchantPolicyCommandRepository.UpdateMerchantPolicy(req)
+	merchant, err := s.merchantPolicyCommandRepository.UpdateMerchantPolicy(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleUpdateMerchantPolicyError(err, method, "FAILED_UPDATE_MERCHANT_POLICY", span, &status, zap.Error(err))
@@ -113,16 +111,16 @@ func (s *merchantPolicyCommandService) UpdateMerchant(req *requests.UpdateMercha
 	return so, nil
 }
 
-func (s *merchantPolicyCommandService) TrashedMerchant(merchantID int) (*response.MerchantPoliciesResponseDeleteAt, *response.ErrorResponse) {
+func (s *merchantPolicyCommandService) TrashedMerchant(ctx context.Context, merchantID int) (*response.MerchantPoliciesResponseDeleteAt, *response.ErrorResponse) {
 	const method = "TrashedMerchant"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int(",merchantPolicy.id", merchantID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int(",merchantPolicy.id", merchantID))
 
 	defer func() {
 		end(status)
 	}()
 
-	merchant, err := s.merchantPolicyCommandRepository.TrashedMerchantPolicy(merchantID)
+	merchant, err := s.merchantPolicyCommandRepository.TrashedMerchantPolicy(ctx, merchantID)
 
 	if err != nil {
 		return s.errorhandler.HandleTrashedMerchantPolicyError(err, method, "FAILED_TRASH_MERCHANT_POLICY", span, &status, zap.Error(err))
@@ -130,23 +128,23 @@ func (s *merchantPolicyCommandService) TrashedMerchant(merchantID int) (*respons
 
 	so := s.mapping.ToMerchantPolicyResponseDeleteAt(merchant)
 
-	s.mencache.DeleteMerchantPolicyCache(merchantID)
+	s.mencache.DeleteMerchantPolicyCache(ctx, merchantID)
 
 	logSuccess("Trashed merchant", zap.Int("merchantPolicy.id", merchantID))
 
 	return so, nil
 }
 
-func (s *merchantPolicyCommandService) RestoreMerchant(merchantID int) (*response.MerchantPoliciesResponseDeleteAt, *response.ErrorResponse) {
+func (s *merchantPolicyCommandService) RestoreMerchant(ctx context.Context, merchantID int) (*response.MerchantPoliciesResponseDeleteAt, *response.ErrorResponse) {
 	const method = "RestoreMerchant"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchantPolicy.id", merchantID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantPolicy.id", merchantID))
 
 	defer func() {
 		end(status)
 	}()
 
-	merchant, err := s.merchantPolicyCommandRepository.RestoreMerchantPolicy(merchantID)
+	merchant, err := s.merchantPolicyCommandRepository.RestoreMerchantPolicy(ctx, merchantID)
 
 	if err != nil {
 		return s.errorhandler.HandleRestoreMerchantPolicyError(err, method, "FAILED_RESTORE_MERCHANT_POLICY", span, &status, zap.Error(err))
@@ -159,16 +157,16 @@ func (s *merchantPolicyCommandService) RestoreMerchant(merchantID int) (*respons
 	return so, nil
 }
 
-func (s *merchantPolicyCommandService) DeleteMerchantPermanent(merchantID int) (bool, *response.ErrorResponse) {
+func (s *merchantPolicyCommandService) DeleteMerchantPermanent(ctx context.Context, merchantID int) (bool, *response.ErrorResponse) {
 	const method = "DeleteMerchantPermanent"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchantPolicy.id", merchantID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantPolicy.id", merchantID))
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.merchantPolicyCommandRepository.DeleteMerchantPolicyPermanent(merchantID)
+	success, err := s.merchantPolicyCommandRepository.DeleteMerchantPolicyPermanent(ctx, merchantID)
 
 	if err != nil {
 		return s.errorhandler.HandleDeleteMerchantPolicyError(err, method, "FAILED_DELETE_MERCHANT_POLICY_PERMANENT", span, &status, zap.Error(err))
@@ -179,16 +177,16 @@ func (s *merchantPolicyCommandService) DeleteMerchantPermanent(merchantID int) (
 	return success, nil
 }
 
-func (s *merchantPolicyCommandService) RestoreAllMerchant() (bool, *response.ErrorResponse) {
+func (s *merchantPolicyCommandService) RestoreAllMerchant(ctx context.Context) (bool, *response.ErrorResponse) {
 	const method = "RestoreAllMerchant"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.merchantPolicyCommandRepository.RestoreAllMerchantPolicy()
+	success, err := s.merchantPolicyCommandRepository.RestoreAllMerchantPolicy(ctx)
 
 	if err != nil {
 		return s.errorhandler.HandleRestoreAllMerchantPolicyError(err, method, "FAILED_RESTORE_ALL_MERCHANT_POLICY", span, &status, zap.Error(err))
@@ -199,16 +197,16 @@ func (s *merchantPolicyCommandService) RestoreAllMerchant() (bool, *response.Err
 	return success, nil
 }
 
-func (s *merchantPolicyCommandService) DeleteAllMerchantPermanent() (bool, *response.ErrorResponse) {
+func (s *merchantPolicyCommandService) DeleteAllMerchantPermanent(ctx context.Context) (bool, *response.ErrorResponse) {
 	const method = "DeleteAllMerchantPermanent"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.merchantPolicyCommandRepository.DeleteAllMerchantPolicyPermanent()
+	success, err := s.merchantPolicyCommandRepository.DeleteAllMerchantPolicyPermanent(ctx)
 
 	if err != nil {
 		return s.errorhandler.HandleDeleteAllMerchantPolicyError(err, method, "FAILED_DELETE_ALL_MERCHANT_POLICY_PERMANENT", span, &status, zap.Error(err))
@@ -219,7 +217,8 @@ func (s *merchantPolicyCommandService) DeleteAllMerchantPermanent() (bool, *resp
 	return success, nil
 }
 
-func (s *merchantPolicyCommandService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *merchantPolicyCommandService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -228,7 +227,7 @@ func (s *merchantPolicyCommandService) startTracingAndLogging(method string, att
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -253,7 +252,7 @@ func (s *merchantPolicyCommandService) startTracingAndLogging(method string, att
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *merchantPolicyCommandService) recordMetrics(method string, status string, start time.Time) {

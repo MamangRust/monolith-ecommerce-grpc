@@ -20,7 +20,6 @@ import (
 )
 
 type cartQueryService struct {
-	ctx                 context.Context
 	errorhandler        errorhandler.CartQueryError
 	mencache            mencache.CartQueryCache
 	trace               trace.Tracer
@@ -31,7 +30,7 @@ type cartQueryService struct {
 	requestDuration     *prometheus.HistogramVec
 }
 
-func NewCartQueryService(ctx context.Context,
+func NewCartQueryService(
 	errorhandler errorhandler.CartQueryError,
 	mencache mencache.CartQueryCache,
 	cardQueryRepository repository.CartQueryRepository, logger logger.LoggerInterface, mapping response_service.CartResponseMapper) *cartQueryService {
@@ -55,7 +54,6 @@ func NewCartQueryService(ctx context.Context,
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &cartQueryService{
-		ctx:                 ctx,
 		errorhandler:        errorhandler,
 		mencache:            mencache,
 		trace:               otel.Tracer("cart-query-service"),
@@ -67,25 +65,25 @@ func NewCartQueryService(ctx context.Context,
 	}
 }
 
-func (s *cartQueryService) FindAll(req *requests.FindAllCarts) ([]*response.CartResponse, *int, *response.ErrorResponse) {
+func (s *cartQueryService) FindAll(ctx context.Context, req *requests.FindAllCarts) ([]*response.CartResponse, *int, *response.ErrorResponse) {
 	const method = "FindAll"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedCartsCache(req); found {
+	if data, total, found := s.mencache.GetCachedCartsCache(ctx, req); found {
 		logSuccess("Successfully fetched all Carts from cache", zap.Int("totalRecords", *total), zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 		return data, total, nil
 	}
 
-	cart, totalRecords, err := s.cardQueryRepository.FindCarts(req)
+	cart, totalRecords, err := s.cardQueryRepository.FindCarts(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationError(err, method, "FAILED_FIND_ALL_CARTS", span, &status, zap.Error(err))
@@ -93,14 +91,15 @@ func (s *cartQueryService) FindAll(req *requests.FindAllCarts) ([]*response.Cart
 
 	cartRes := s.mapping.ToCartsResponse(cart)
 
-	s.mencache.SetCartsCache(req, cartRes, totalRecords)
+	s.mencache.SetCartsCache(ctx, req, cartRes, totalRecords)
 
 	logSuccess("Successfully fetched all Carts", zap.Int("totalRecords", *totalRecords), zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return cartRes, totalRecords, nil
 }
 
-func (s *cartQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *cartQueryService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -109,7 +108,7 @@ func (s *cartQueryService) startTracingAndLogging(method string, attrs ...attrib
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -134,7 +133,7 @@ func (s *cartQueryService) startTracingAndLogging(method string, attrs ...attrib
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *cartQueryService) normalizePagination(page, pageSize int) (int, int) {

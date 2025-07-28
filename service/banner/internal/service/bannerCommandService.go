@@ -20,7 +20,6 @@ import (
 )
 
 type bannerCommandService struct {
-	ctx                     context.Context
 	errorhandler            errorhandler.BannerCommandError
 	mencache                mencache.BannerCommandCache
 	trace                   trace.Tracer
@@ -31,7 +30,7 @@ type bannerCommandService struct {
 	requestDuration         *prometheus.HistogramVec
 }
 
-func NewBannerCommandService(ctx context.Context,
+func NewBannerCommandService(
 	errorhandler errorhandler.BannerCommandError,
 	mencache mencache.BannerCommandCache,
 	bannerCommand repository.BannerCommandRepository, logger logger.LoggerInterface, mapping response_service.BannerResponseMapper) *bannerCommandService {
@@ -55,7 +54,6 @@ func NewBannerCommandService(ctx context.Context,
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &bannerCommandService{
-		ctx:                     ctx,
 		errorhandler:            errorhandler,
 		mencache:                mencache,
 		trace:                   otel.Tracer("banner-command-service"),
@@ -67,16 +65,16 @@ func NewBannerCommandService(ctx context.Context,
 	}
 }
 
-func (s *bannerCommandService) CreateBanner(req *requests.CreateBannerRequest) (*response.BannerResponse, *response.ErrorResponse) {
+func (s *bannerCommandService) CreateBanner(ctx context.Context, req *requests.CreateBannerRequest) (*response.BannerResponse, *response.ErrorResponse) {
 	const method = "CreateBanner"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	Banner, err := s.bannerCommandRepository.CreateBanner(req)
+	Banner, err := s.bannerCommandRepository.CreateBanner(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleCreateBannerError(err, method, "FAILED_CREATE_BANNER", span, &status, zap.Error(err))
@@ -89,16 +87,16 @@ func (s *bannerCommandService) CreateBanner(req *requests.CreateBannerRequest) (
 	return so, nil
 }
 
-func (s *bannerCommandService) UpdateBanner(req *requests.UpdateBannerRequest) (*response.BannerResponse, *response.ErrorResponse) {
+func (s *bannerCommandService) UpdateBanner(ctx context.Context, req *requests.UpdateBannerRequest) (*response.BannerResponse, *response.ErrorResponse) {
 	const method = "UpdateBanner"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("banner.id", *req.BannerID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("banner.id", *req.BannerID))
 
 	defer func() {
 		end(status)
 	}()
 
-	Banner, err := s.bannerCommandRepository.UpdateBanner(req)
+	Banner, err := s.bannerCommandRepository.UpdateBanner(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleUpdateBannerError(err, method, "FAILED_UPDATE_BANNER", span, &status, zap.Error(err))
@@ -106,23 +104,23 @@ func (s *bannerCommandService) UpdateBanner(req *requests.UpdateBannerRequest) (
 
 	so := s.mapping.ToBannerResponse(Banner)
 
-	s.mencache.DeleteBannerCache(*req.BannerID)
+	s.mencache.DeleteBannerCache(ctx, *req.BannerID)
 
 	logSuccess("Successfully updated Banner", zap.Int("banner.id", int(so.ID)))
 
 	return so, nil
 }
 
-func (s *bannerCommandService) TrashedBanner(BannerID int) (*response.BannerResponseDeleteAt, *response.ErrorResponse) {
+func (s *bannerCommandService) TrashedBanner(ctx context.Context, BannerID int) (*response.BannerResponseDeleteAt, *response.ErrorResponse) {
 	const method = "TrashedBanner"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("banner.id", BannerID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("banner.id", BannerID))
 
 	defer func() {
 		end(status)
 	}()
 
-	Banner, err := s.bannerCommandRepository.TrashedBanner(BannerID)
+	Banner, err := s.bannerCommandRepository.TrashedBanner(ctx, BannerID)
 
 	if err != nil {
 		return s.errorhandler.HandleTrashedBannerError(err, method, "FAILED_TRASH_BANNER", span, &status, zap.Error(err))
@@ -130,23 +128,23 @@ func (s *bannerCommandService) TrashedBanner(BannerID int) (*response.BannerResp
 
 	so := s.mapping.ToBannerResponseDeleteAt(Banner)
 
-	s.mencache.DeleteBannerCache(BannerID)
+	s.mencache.DeleteBannerCache(ctx, BannerID)
 
 	logSuccess("Successfully trashed Banner", zap.Int("banner.id", int(so.ID)))
 
 	return so, nil
 }
 
-func (s *bannerCommandService) RestoreBanner(BannerID int) (*response.BannerResponseDeleteAt, *response.ErrorResponse) {
+func (s *bannerCommandService) RestoreBanner(ctx context.Context, BannerID int) (*response.BannerResponseDeleteAt, *response.ErrorResponse) {
 	const method = "RestoreBanner"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("banner.id", BannerID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("banner.id", BannerID))
 
 	defer func() {
 		end(status)
 	}()
 
-	Banner, err := s.bannerCommandRepository.RestoreBanner(BannerID)
+	Banner, err := s.bannerCommandRepository.RestoreBanner(ctx, BannerID)
 
 	if err != nil {
 		return s.errorhandler.HandleRestoreBannerError(err, method, "FAILED_RESTORE_BANNER", span, &status, zap.Error(err))
@@ -154,23 +152,23 @@ func (s *bannerCommandService) RestoreBanner(BannerID int) (*response.BannerResp
 
 	so := s.mapping.ToBannerResponseDeleteAt(Banner)
 
-	s.mencache.DeleteBannerCache(BannerID)
+	s.mencache.DeleteBannerCache(ctx, BannerID)
 
 	logSuccess("Successfully restored Banner", zap.Int("banner.id", int(so.ID)))
 
 	return so, nil
 }
 
-func (s *bannerCommandService) DeleteBannerPermanent(BannerID int) (bool, *response.ErrorResponse) {
+func (s *bannerCommandService) DeleteBannerPermanent(ctx context.Context, BannerID int) (bool, *response.ErrorResponse) {
 	const method = "DeleteBannerPermanent"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("banner.id", BannerID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("banner.id", BannerID))
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.bannerCommandRepository.DeleteBannerPermanent(BannerID)
+	success, err := s.bannerCommandRepository.DeleteBannerPermanent(ctx, BannerID)
 
 	if err != nil {
 		return s.errorhandler.HandleDeleteBannerError(err, method, "FAILED_DELETE_BANNER_PERMANENT", span, &status, zap.Error(err))
@@ -181,16 +179,16 @@ func (s *bannerCommandService) DeleteBannerPermanent(BannerID int) (bool, *respo
 	return success, nil
 }
 
-func (s *bannerCommandService) RestoreAllBanner() (bool, *response.ErrorResponse) {
+func (s *bannerCommandService) RestoreAllBanner(ctx context.Context) (bool, *response.ErrorResponse) {
 	const method = "RestoreAllBanner"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.bannerCommandRepository.RestoreAllBanner()
+	success, err := s.bannerCommandRepository.RestoreAllBanner(ctx)
 
 	if err != nil {
 		return s.errorhandler.HandleRestoreAllBannerError(err, method, "FAILED_RESTORE_ALL_TRASHED_BANNERS", span, &status, zap.Error(err))
@@ -201,16 +199,16 @@ func (s *bannerCommandService) RestoreAllBanner() (bool, *response.ErrorResponse
 	return success, nil
 }
 
-func (s *bannerCommandService) DeleteAllBannerPermanent() (bool, *response.ErrorResponse) {
+func (s *bannerCommandService) DeleteAllBannerPermanent(ctx context.Context) (bool, *response.ErrorResponse) {
 	const method = "DeleteAllBannerPermanent"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.bannerCommandRepository.DeleteAllBannerPermanent()
+	success, err := s.bannerCommandRepository.DeleteAllBannerPermanent(ctx)
 
 	if err != nil {
 		return s.errorhandler.HandleDeleteAllBannerError(err, method, "FAILED_DELETE_ALL_BANNER_PERMANENT", span, &status, zap.Error(err))
@@ -221,7 +219,8 @@ func (s *bannerCommandService) DeleteAllBannerPermanent() (bool, *response.Error
 	return success, nil
 }
 
-func (s *bannerCommandService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *bannerCommandService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -230,7 +229,7 @@ func (s *bannerCommandService) startTracingAndLogging(method string, attrs ...at
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -255,7 +254,7 @@ func (s *bannerCommandService) startTracingAndLogging(method string, attrs ...at
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *bannerCommandService) recordMetrics(method string, status string, start time.Time) {

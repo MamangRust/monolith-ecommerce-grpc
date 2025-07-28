@@ -14,25 +14,23 @@ import (
 
 type categoryStatsRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.CategoryRecordMapper
 }
 
-func NewCategoryStatsRepository(db *db.Queries, ctx context.Context, mapping recordmapper.CategoryRecordMapper) *categoryStatsRepository {
+func NewCategoryStatsRepository(db *db.Queries, mapping recordmapper.CategoryRecordMapper) *categoryStatsRepository {
 	return &categoryStatsRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *categoryStatsRepository) GetMonthlyTotalPrice(req *requests.MonthTotalPrice) ([]*record.CategoriesMonthlyTotalPriceRecord, error) {
+func (r *categoryStatsRepository) GetMonthlyTotalPrice(ctx context.Context, req *requests.MonthTotalPrice) ([]*record.CategoriesMonthlyTotalPriceRecord, error) {
 	currentMonthStart := time.Date(req.Year, time.Month(req.Month), 1, 0, 0, 0, 0, time.UTC)
 	currentMonthEnd := currentMonthStart.AddDate(0, 1, -1)
 	prevMonthStart := currentMonthStart.AddDate(0, -1, 0)
 	prevMonthEnd := prevMonthStart.AddDate(0, 1, -1)
 
-	res, err := r.db.GetMonthlyTotalPrice(r.ctx, db.GetMonthlyTotalPriceParams{
+	res, err := r.db.GetMonthlyTotalPrice(ctx, db.GetMonthlyTotalPriceParams{
 		Extract:     currentMonthStart,
 		CreatedAt:   sql.NullTime{Time: currentMonthEnd, Valid: true},
 		CreatedAt_2: sql.NullTime{Time: prevMonthStart, Valid: true},
@@ -48,8 +46,8 @@ func (r *categoryStatsRepository) GetMonthlyTotalPrice(req *requests.MonthTotalP
 	return so, nil
 }
 
-func (r *categoryStatsRepository) GetYearlyTotalPrices(year int) ([]*record.CategoriesYearlyTotalPriceRecord, error) {
-	res, err := r.db.GetYearlyTotalPrice(r.ctx, int32(year))
+func (r *categoryStatsRepository) GetYearlyTotalPrices(ctx context.Context, year int) ([]*record.CategoriesYearlyTotalPriceRecord, error) {
+	res, err := r.db.GetYearlyTotalPrice(ctx, int32(year))
 
 	if err != nil {
 		return nil, category_errors.ErrGetYearlyTotalPrices
@@ -60,10 +58,10 @@ func (r *categoryStatsRepository) GetYearlyTotalPrices(year int) ([]*record.Cate
 	return so, nil
 }
 
-func (r *categoryStatsRepository) GetMonthPrice(year int) ([]*record.CategoriesMonthPriceRecord, error) {
+func (r *categoryStatsRepository) GetMonthPrice(ctx context.Context, year int) ([]*record.CategoriesMonthPriceRecord, error) {
 	yearStart := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	res, err := r.db.GetMonthlyCategory(r.ctx, yearStart)
+	res, err := r.db.GetMonthlyCategory(ctx, yearStart)
 
 	if err != nil {
 		return nil, category_errors.ErrGetMonthPrice
@@ -72,10 +70,10 @@ func (r *categoryStatsRepository) GetMonthPrice(year int) ([]*record.CategoriesM
 	return r.mapping.ToCategoryMonthlyPrices(res), nil
 }
 
-func (r *categoryStatsRepository) GetYearPrice(year int) ([]*record.CategoriesYearPriceRecord, error) {
+func (r *categoryStatsRepository) GetYearPrice(ctx context.Context, year int) ([]*record.CategoriesYearPriceRecord, error) {
 	yearStart := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	res, err := r.db.GetYearlyCategory(r.ctx, yearStart)
+	res, err := r.db.GetYearlyCategory(ctx, yearStart)
 
 	if err != nil {
 		return nil, category_errors.ErrGetYearPrice

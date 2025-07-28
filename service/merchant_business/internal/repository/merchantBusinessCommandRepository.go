@@ -13,23 +13,20 @@ import (
 
 type merchantBusinessCommandRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.MerchantBusinessMapping
 }
 
 func NewMerchantBusinessCommandRepository(
 	db *db.Queries,
-	ctx context.Context,
 	mapping recordmapper.MerchantBusinessMapping,
 ) *merchantBusinessCommandRepository {
 	return &merchantBusinessCommandRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *merchantBusinessCommandRepository) CreateMerchantBusiness(request *requests.CreateMerchantBusinessInformationRequest) (*record.MerchantBusinessRecord, error) {
+func (r *merchantBusinessCommandRepository) CreateMerchantBusiness(ctx context.Context, request *requests.CreateMerchantBusinessInformationRequest) (*record.MerchantBusinessRecord, error) {
 	req := db.CreateMerchantBusinessInformationParams{
 		MerchantID:        int32(request.MerchantID),
 		BusinessType:      sql.NullString{String: request.BusinessType, Valid: request.BusinessType != ""},
@@ -39,7 +36,7 @@ func (r *merchantBusinessCommandRepository) CreateMerchantBusiness(request *requ
 		WebsiteUrl:        sql.NullString{String: request.WebsiteUrl, Valid: request.WebsiteUrl != ""},
 	}
 
-	merchant, err := r.db.CreateMerchantBusinessInformation(r.ctx, req)
+	merchant, err := r.db.CreateMerchantBusinessInformation(ctx, req)
 	if err != nil {
 		return nil, merchantbusiness_errors.ErrCreateMerchantBusiness
 	}
@@ -47,7 +44,7 @@ func (r *merchantBusinessCommandRepository) CreateMerchantBusiness(request *requ
 	return r.mapping.ToMerchantBusinessRecord(merchant), nil
 }
 
-func (r *merchantBusinessCommandRepository) UpdateMerchantBusiness(request *requests.UpdateMerchantBusinessInformationRequest) (*record.MerchantBusinessRecord, error) {
+func (r *merchantBusinessCommandRepository) UpdateMerchantBusiness(ctx context.Context, request *requests.UpdateMerchantBusinessInformationRequest) (*record.MerchantBusinessRecord, error) {
 	req := db.UpdateMerchantBusinessInformationParams{
 		MerchantBusinessInfoID: int32(*request.MerchantBusinessInfoID),
 		BusinessType:           sql.NullString{String: request.BusinessType, Valid: request.BusinessType != ""},
@@ -57,7 +54,7 @@ func (r *merchantBusinessCommandRepository) UpdateMerchantBusiness(request *requ
 		WebsiteUrl:             sql.NullString{String: request.WebsiteUrl, Valid: request.WebsiteUrl != ""},
 	}
 
-	merchant, err := r.db.UpdateMerchantBusinessInformation(r.ctx, req)
+	merchant, err := r.db.UpdateMerchantBusinessInformation(ctx, req)
 	if err != nil {
 		return nil, merchantbusiness_errors.ErrUpdateMerchantBusiness
 	}
@@ -65,8 +62,8 @@ func (r *merchantBusinessCommandRepository) UpdateMerchantBusiness(request *requ
 	return r.mapping.ToMerchantBusinessRecord(merchant), nil
 }
 
-func (r *merchantBusinessCommandRepository) TrashedMerchantBusiness(merchant_id int) (*record.MerchantBusinessRecord, error) {
-	res, err := r.db.TrashMerchantBusinessInformation(r.ctx, int32(merchant_id))
+func (r *merchantBusinessCommandRepository) TrashedMerchantBusiness(ctx context.Context, merchant_id int) (*record.MerchantBusinessRecord, error) {
+	res, err := r.db.TrashMerchantBusinessInformation(ctx, int32(merchant_id))
 
 	if err != nil {
 		return nil, merchantbusiness_errors.ErrTrashMerchantBusiness
@@ -75,8 +72,8 @@ func (r *merchantBusinessCommandRepository) TrashedMerchantBusiness(merchant_id 
 	return r.mapping.ToMerchantBusinessRecord(res), nil
 }
 
-func (r *merchantBusinessCommandRepository) RestoreMerchantBusiness(merchant_id int) (*record.MerchantBusinessRecord, error) {
-	res, err := r.db.RestoreMerchantBusinessInformation(r.ctx, int32(merchant_id))
+func (r *merchantBusinessCommandRepository) RestoreMerchantBusiness(ctx context.Context, merchant_id int) (*record.MerchantBusinessRecord, error) {
+	res, err := r.db.RestoreMerchantBusinessInformation(ctx, int32(merchant_id))
 
 	if err != nil {
 		return nil, merchantbusiness_errors.ErrRestoreMerchantBusiness
@@ -85,8 +82,8 @@ func (r *merchantBusinessCommandRepository) RestoreMerchantBusiness(merchant_id 
 	return r.mapping.ToMerchantBusinessRecord(res), nil
 }
 
-func (r *merchantBusinessCommandRepository) DeleteMerchantBusinessPermanent(Merchant_id int) (bool, error) {
-	err := r.db.DeleteMerchantBusinessInformationPermanently(r.ctx, int32(Merchant_id))
+func (r *merchantBusinessCommandRepository) DeleteMerchantBusinessPermanent(ctx context.Context, Merchant_id int) (bool, error) {
+	err := r.db.DeleteMerchantBusinessInformationPermanently(ctx, int32(Merchant_id))
 
 	if err != nil {
 		return false, merchantbusiness_errors.ErrDeletePermanentMerchantBusiness
@@ -95,8 +92,8 @@ func (r *merchantBusinessCommandRepository) DeleteMerchantBusinessPermanent(Merc
 	return true, nil
 }
 
-func (r *merchantBusinessCommandRepository) RestoreAllMerchantBusiness() (bool, error) {
-	err := r.db.RestoreAllMerchants(r.ctx)
+func (r *merchantBusinessCommandRepository) RestoreAllMerchantBusiness(ctx context.Context) (bool, error) {
+	err := r.db.RestoreAllMerchants(ctx)
 
 	if err != nil {
 		return false, merchantbusiness_errors.ErrRestoreAllMerchantBusinesses
@@ -104,8 +101,8 @@ func (r *merchantBusinessCommandRepository) RestoreAllMerchantBusiness() (bool, 
 	return true, nil
 }
 
-func (r *merchantBusinessCommandRepository) DeleteAllMerchantBusinessPermanent() (bool, error) {
-	err := r.db.DeleteAllPermanentMerchants(r.ctx)
+func (r *merchantBusinessCommandRepository) DeleteAllMerchantBusinessPermanent(ctx context.Context) (bool, error) {
+	err := r.db.DeleteAllPermanentMerchants(ctx)
 
 	if err != nil {
 		return false, merchantbusiness_errors.ErrDeleteAllPermanentMerchantBusinesses

@@ -12,19 +12,17 @@ import (
 
 type merchantDocumentQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.MerchantDocumentMapping
 }
 
-func NewMerchantDocumentQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.MerchantDocumentMapping) *merchantDocumentQueryRepository {
+func NewMerchantDocumentQueryRepository(db *db.Queries, mapping recordmapper.MerchantDocumentMapping) *merchantDocumentQueryRepository {
 	return &merchantDocumentQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *merchantDocumentQueryRepository) FindAllDocuments(req *requests.FindAllMerchantDocuments) ([]*record.MerchantDocumentRecord, *int, error) {
+func (r *merchantDocumentQueryRepository) FindAllDocuments(ctx context.Context, req *requests.FindAllMerchantDocuments) ([]*record.MerchantDocumentRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	params := db.GetMerchantDocumentsParams{
@@ -33,7 +31,7 @@ func (r *merchantDocumentQueryRepository) FindAllDocuments(req *requests.FindAll
 		Offset:  int32(offset),
 	}
 
-	docs, err := r.db.GetMerchantDocuments(r.ctx, params)
+	docs, err := r.db.GetMerchantDocuments(ctx, params)
 	if err != nil {
 		return nil, nil, merchantdocument_errors.ErrFindAllMerchantDocumentsFailed
 	}
@@ -46,7 +44,7 @@ func (r *merchantDocumentQueryRepository) FindAllDocuments(req *requests.FindAll
 	return r.mapping.ToMerchantDocumentsRecord(docs), &totalCount, nil
 }
 
-func (r *merchantDocumentQueryRepository) FindByActive(req *requests.FindAllMerchantDocuments) ([]*record.MerchantDocumentRecord, *int, error) {
+func (r *merchantDocumentQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllMerchantDocuments) ([]*record.MerchantDocumentRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	params := db.GetActiveMerchantDocumentsParams{
@@ -55,7 +53,7 @@ func (r *merchantDocumentQueryRepository) FindByActive(req *requests.FindAllMerc
 		Offset:  int32(offset),
 	}
 
-	docs, err := r.db.GetActiveMerchantDocuments(r.ctx, params)
+	docs, err := r.db.GetActiveMerchantDocuments(ctx, params)
 	if err != nil {
 		return nil, nil, merchantdocument_errors.ErrFindActiveMerchantDocumentsFailed
 	}
@@ -68,7 +66,7 @@ func (r *merchantDocumentQueryRepository) FindByActive(req *requests.FindAllMerc
 	return r.mapping.ToMerchantDocumentsActiveRecord(docs), &totalCount, nil
 }
 
-func (r *merchantDocumentQueryRepository) FindByTrashed(req *requests.FindAllMerchantDocuments) ([]*record.MerchantDocumentRecord, *int, error) {
+func (r *merchantDocumentQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllMerchantDocuments) ([]*record.MerchantDocumentRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	params := db.GetTrashedMerchantDocumentsParams{
@@ -77,7 +75,7 @@ func (r *merchantDocumentQueryRepository) FindByTrashed(req *requests.FindAllMer
 		Offset:  int32(offset),
 	}
 
-	docs, err := r.db.GetTrashedMerchantDocuments(r.ctx, params)
+	docs, err := r.db.GetTrashedMerchantDocuments(ctx, params)
 	if err != nil {
 		return nil, nil, merchantdocument_errors.ErrFindTrashedMerchantDocumentsFailed
 	}
@@ -90,8 +88,8 @@ func (r *merchantDocumentQueryRepository) FindByTrashed(req *requests.FindAllMer
 	return r.mapping.ToMerchantDocumentsTrashedRecord(docs), &totalCount, nil
 }
 
-func (r *merchantDocumentQueryRepository) FindById(id int) (*record.MerchantDocumentRecord, error) {
-	doc, err := r.db.GetMerchantDocument(r.ctx, int32(id))
+func (r *merchantDocumentQueryRepository) FindById(ctx context.Context, id int) (*record.MerchantDocumentRecord, error) {
+	doc, err := r.db.GetMerchantDocument(ctx, int32(id))
 	if err != nil {
 		return nil, merchantdocument_errors.ErrFindMerchantDocumentByIdFailed
 	}

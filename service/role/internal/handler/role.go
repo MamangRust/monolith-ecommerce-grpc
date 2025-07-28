@@ -46,7 +46,7 @@ func (s *roleHandleGrpc) FindAllRole(ctx context.Context, req *pb.FindAllRoleReq
 		Search:   search,
 	}
 
-	role, totalRecords, err := s.roleQuery.FindAll(&reqService)
+	role, totalRecords, err := s.roleQuery.FindAll(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -73,7 +73,7 @@ func (s *roleHandleGrpc) FindByIdRole(ctx context.Context, req *pb.FindByIdRoleR
 		return nil, role_errors.ErrGrpcRoleInvalidId
 	}
 
-	role, err := s.roleQuery.FindById(roleID)
+	role, err := s.roleQuery.FindById(ctx, roleID)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -91,7 +91,7 @@ func (s *roleHandleGrpc) FindByUserId(ctx context.Context, req *pb.FindByIdUserR
 		return nil, role_errors.ErrGrpcRoleInvalidId
 	}
 
-	role, err := s.roleQuery.FindByUserId(userID)
+	role, err := s.roleQuery.FindByUserId(ctx, userID)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -120,7 +120,7 @@ func (s *roleHandleGrpc) FindByActive(ctx context.Context, req *pb.FindAllRoleRe
 		Search:   search,
 	}
 
-	roles, totalRecords, err := s.roleQuery.FindByActiveRole(&reqService)
+	roles, totalRecords, err := s.roleQuery.FindByActiveRole(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -157,7 +157,7 @@ func (s *roleHandleGrpc) FindByTrashed(ctx context.Context, req *pb.FindAllRoleR
 		Search:   search,
 	}
 
-	roles, totalRecords, err := s.roleQuery.FindByTrashedRole(&reqService)
+	roles, totalRecords, err := s.roleQuery.FindByTrashedRole(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -185,7 +185,7 @@ func (s *roleHandleGrpc) CreateRole(ctx context.Context, reqPb *pb.CreateRoleReq
 		return nil, role_errors.ErrGrpcValidateCreateRole
 	}
 
-	role, err := s.roleCommand.CreateRole(req)
+	role, err := s.roleCommand.CreateRole(ctx, req)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -214,7 +214,7 @@ func (s *roleHandleGrpc) UpdateRole(ctx context.Context, reqPb *pb.UpdateRoleReq
 		return nil, role_errors.ErrGrpcValidateUpdateRole
 	}
 
-	role, err := s.roleCommand.UpdateRole(req)
+	role, err := s.roleCommand.UpdateRole(ctx, req)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -232,7 +232,7 @@ func (s *roleHandleGrpc) TrashedRole(ctx context.Context, req *pb.FindByIdRoleRe
 		return nil, role_errors.ErrGrpcRoleInvalidId
 	}
 
-	role, err := s.roleCommand.TrashedRole(roleID)
+	role, err := s.roleCommand.TrashedRole(ctx, roleID)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -250,7 +250,7 @@ func (s *roleHandleGrpc) RestoreRole(ctx context.Context, req *pb.FindByIdRoleRe
 		return nil, role_errors.ErrGrpcRoleInvalidId
 	}
 
-	role, err := s.roleCommand.RestoreRole(roleID)
+	role, err := s.roleCommand.RestoreRole(ctx, roleID)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -268,7 +268,7 @@ func (s *roleHandleGrpc) DeleteRolePermanent(ctx context.Context, req *pb.FindBy
 		return nil, role_errors.ErrGrpcRoleInvalidId
 	}
 
-	_, err := s.roleCommand.DeleteRolePermanent(id)
+	_, err := s.roleCommand.DeleteRolePermanent(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -280,7 +280,7 @@ func (s *roleHandleGrpc) DeleteRolePermanent(ctx context.Context, req *pb.FindBy
 }
 
 func (s *roleHandleGrpc) RestoreAllRole(ctx context.Context, req *emptypb.Empty) (*pb.ApiResponseRoleAll, error) {
-	_, err := s.roleCommand.RestoreAllRole()
+	_, err := s.roleCommand.RestoreAllRole(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -292,7 +292,7 @@ func (s *roleHandleGrpc) RestoreAllRole(ctx context.Context, req *emptypb.Empty)
 }
 
 func (s *roleHandleGrpc) DeleteAllRolePermanent(ctx context.Context, req *emptypb.Empty) (*pb.ApiResponseRoleAll, error) {
-	_, err := s.roleCommand.DeleteAllRolePermanent()
+	_, err := s.roleCommand.DeleteAllRolePermanent(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)

@@ -21,7 +21,6 @@ import (
 )
 
 type reviewDetailQueryService struct {
-	ctx                         context.Context
 	mencache                    mencache.ReviewDetailQueryCache
 	errorhandler                errorhandler.ReviewDetailQueryError
 	trace                       trace.Tracer
@@ -33,7 +32,6 @@ type reviewDetailQueryService struct {
 }
 
 func NewReviewDetailQueryService(
-	ctx context.Context,
 	mencache mencache.ReviewDetailQueryCache,
 	errorhandler errorhandler.ReviewDetailQueryError,
 	reviewDetailQueryRepository repository.ReviewDetailQueryRepository,
@@ -60,7 +58,6 @@ func NewReviewDetailQueryService(
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &reviewDetailQueryService{
-		ctx:                         ctx,
 		mencache:                    mencache,
 		errorhandler:                errorhandler,
 		trace:                       otel.Tracer("review-detail-command-service"),
@@ -72,25 +69,25 @@ func NewReviewDetailQueryService(
 	}
 }
 
-func (s *reviewDetailQueryService) FindAll(req *requests.FindAllReview) ([]*response.ReviewDetailsResponse, *int, *response.ErrorResponse) {
+func (s *reviewDetailQueryService) FindAll(ctx context.Context, req *requests.FindAllReview) ([]*response.ReviewDetailsResponse, *int, *response.ErrorResponse) {
 	const method = "FindAll"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetReviewDetailAllCache(req); found {
+	if data, total, found := s.mencache.GetReviewDetailAllCache(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	res, totalRecords, err := s.reviewDetailQueryRepository.FindAllReviews(req)
+	res, totalRecords, err := s.reviewDetailQueryRepository.FindAllReviews(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationError(err, method, "FAILED_TO_FIND_REVIEW_DETAILS", span, &status, zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search), zap.Error(err))
@@ -98,33 +95,33 @@ func (s *reviewDetailQueryService) FindAll(req *requests.FindAllReview) ([]*resp
 
 	so := s.mapping.ToReviewsDetailsResponse(res)
 
-	s.mencache.SetReviewDetailAllCache(req, so, totalRecords)
+	s.mencache.SetReviewDetailAllCache(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched all Review Details", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search), zap.Int("totalRecords", *totalRecords))
 
 	return so, totalRecords, nil
 }
 
-func (s *reviewDetailQueryService) FindByActive(req *requests.FindAllReview) ([]*response.ReviewDetailsResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *reviewDetailQueryService) FindByActive(ctx context.Context, req *requests.FindAllReview) ([]*response.ReviewDetailsResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByActive"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetRevieDetailActiveCache(req); found {
+	if data, total, found := s.mencache.GetReviewDetailActiveCache(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	res, totalRecords, err := s.reviewDetailQueryRepository.FindByActive(req)
+	res, totalRecords, err := s.reviewDetailQueryRepository.FindByActive(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_TO_FIND_REVIEW_DETAILS", span, &status, reviewdetail_errors.ErrFailedFindActiveReview, zap.Error(err))
@@ -132,32 +129,32 @@ func (s *reviewDetailQueryService) FindByActive(req *requests.FindAllReview) ([]
 
 	so := s.mapping.ToReviewDetailsResponseDeleteAt(res)
 
-	s.mencache.SetReviewDetailActiveCache(req, so, totalRecords)
+	s.mencache.SetReviewDetailActiveCache(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched active Review Details", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search), zap.Int("totalRecords", *totalRecords))
 
 	return so, totalRecords, nil
 }
 
-func (s *reviewDetailQueryService) FindByTrashed(req *requests.FindAllReview) ([]*response.ReviewDetailsResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *reviewDetailQueryService) FindByTrashed(ctx context.Context, req *requests.FindAllReview) ([]*response.ReviewDetailsResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByTrashed"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetReviewDetailTrashedCache(req); found {
+	if data, total, found := s.mencache.GetReviewDetailTrashedCache(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	res, totalRecords, err := s.reviewDetailQueryRepository.FindByTrashed(req)
+	res, totalRecords, err := s.reviewDetailQueryRepository.FindByTrashed(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, "FindByTrashed", "FAILED_TO_FIND_REVIEW_DETAILS", span, &status, reviewdetail_errors.ErrFailedFindTrashedReview, zap.Error(err))
@@ -165,29 +162,29 @@ func (s *reviewDetailQueryService) FindByTrashed(req *requests.FindAllReview) ([
 
 	so := s.mapping.ToReviewDetailsResponseDeleteAt(res)
 
-	s.mencache.SetReviewDetailTrashedCache(req, so, totalRecords)
+	s.mencache.SetReviewDetailTrashedCache(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched trashed Review Details", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search), zap.Int("totalRecords", *totalRecords))
 
 	return so, totalRecords, nil
 }
 
-func (s *reviewDetailQueryService) FindById(review_id int) (*response.ReviewDetailsResponse, *response.ErrorResponse) {
+func (s *reviewDetailQueryService) FindById(ctx context.Context, review_id int) (*response.ReviewDetailsResponse, *response.ErrorResponse) {
 	const method = "FindById"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("reviewDetail.id", review_id))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("reviewDetail.id", review_id))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedReviewDetailCache(review_id); found {
+	if data, found := s.mencache.GetCachedReviewDetailCache(ctx, review_id); found {
 		logSuccess("Data found in cache", zap.Int("reviewDetail.id", review_id))
 
 		return data, nil
 	}
 
-	res, err := s.reviewDetailQueryRepository.FindById(review_id)
+	res, err := s.reviewDetailQueryRepository.FindById(ctx, review_id)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_TO_FIND_REVIEW_DETAILS", span, &status, reviewdetail_errors.ErrReviewDetailNotFoundRes, zap.Error(err))
@@ -195,14 +192,15 @@ func (s *reviewDetailQueryService) FindById(review_id int) (*response.ReviewDeta
 
 	so := s.mapping.ToReviewDetailsResponse(res)
 
-	s.mencache.SetCachedReviewDetailCache(so)
+	s.mencache.SetCachedReviewDetailCache(ctx, so)
 
 	logSuccess("Successfully fetched Review Detail", zap.Int("reviewDetail.id", review_id))
 
 	return so, nil
 }
 
-func (s *reviewDetailQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *reviewDetailQueryService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -211,7 +209,7 @@ func (s *reviewDetailQueryService) startTracingAndLogging(method string, attrs .
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -236,7 +234,7 @@ func (s *reviewDetailQueryService) startTracingAndLogging(method string, attrs .
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *reviewDetailQueryService) normalizePagination(page, pageSize int) (int, int) {

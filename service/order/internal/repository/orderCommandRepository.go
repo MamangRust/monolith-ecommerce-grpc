@@ -12,26 +12,24 @@ import (
 
 type orderCommandRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.OrderRecordMapping
 }
 
-func NewOrderCommandRepository(db *db.Queries, ctx context.Context, mapping recordmapper.OrderRecordMapping) *orderCommandRepository {
+func NewOrderCommandRepository(db *db.Queries, mapping recordmapper.OrderRecordMapping) *orderCommandRepository {
 	return &orderCommandRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *orderCommandRepository) CreateOrder(request *requests.CreateOrderRecordRequest) (*record.OrderRecord, error) {
+func (r *orderCommandRepository) CreateOrder(ctx context.Context, request *requests.CreateOrderRecordRequest) (*record.OrderRecord, error) {
 	req := db.CreateOrderParams{
 		MerchantID: int32(request.MerchantID),
 		UserID:     int32(request.UserID),
 		TotalPrice: int32(request.TotalPrice),
 	}
 
-	user, err := r.db.CreateOrder(r.ctx, req)
+	user, err := r.db.CreateOrder(ctx, req)
 
 	if err != nil {
 		return nil, order_errors.ErrCreateOrder
@@ -40,13 +38,13 @@ func (r *orderCommandRepository) CreateOrder(request *requests.CreateOrderRecord
 	return r.mapping.ToOrderRecord(user), nil
 }
 
-func (r *orderCommandRepository) UpdateOrder(request *requests.UpdateOrderRecordRequest) (*record.OrderRecord, error) {
+func (r *orderCommandRepository) UpdateOrder(ctx context.Context, request *requests.UpdateOrderRecordRequest) (*record.OrderRecord, error) {
 	req := db.UpdateOrderParams{
 		OrderID:    int32(request.OrderID),
 		TotalPrice: int32(request.TotalPrice),
 	}
 
-	res, err := r.db.UpdateOrder(r.ctx, req)
+	res, err := r.db.UpdateOrder(ctx, req)
 
 	if err != nil {
 		return nil, order_errors.ErrUpdateOrder
@@ -55,8 +53,8 @@ func (r *orderCommandRepository) UpdateOrder(request *requests.UpdateOrderRecord
 	return r.mapping.ToOrderRecord(res), nil
 }
 
-func (r *orderCommandRepository) TrashedOrder(user_id int) (*record.OrderRecord, error) {
-	res, err := r.db.TrashedOrder(r.ctx, int32(user_id))
+func (r *orderCommandRepository) TrashedOrder(ctx context.Context, user_id int) (*record.OrderRecord, error) {
+	res, err := r.db.TrashedOrder(ctx, int32(user_id))
 
 	if err != nil {
 		return nil, order_errors.ErrTrashedOrder
@@ -65,8 +63,8 @@ func (r *orderCommandRepository) TrashedOrder(user_id int) (*record.OrderRecord,
 	return r.mapping.ToOrderRecord(res), nil
 }
 
-func (r *orderCommandRepository) RestoreOrder(user_id int) (*record.OrderRecord, error) {
-	res, err := r.db.RestoreOrder(r.ctx, int32(user_id))
+func (r *orderCommandRepository) RestoreOrder(ctx context.Context, user_id int) (*record.OrderRecord, error) {
+	res, err := r.db.RestoreOrder(ctx, int32(user_id))
 
 	if err != nil {
 		return nil, order_errors.ErrRestoreOrder
@@ -75,8 +73,8 @@ func (r *orderCommandRepository) RestoreOrder(user_id int) (*record.OrderRecord,
 	return r.mapping.ToOrderRecord(res), nil
 }
 
-func (r *orderCommandRepository) DeleteOrderPermanent(user_id int) (bool, error) {
-	err := r.db.DeleteOrderPermanently(r.ctx, int32(user_id))
+func (r *orderCommandRepository) DeleteOrderPermanent(ctx context.Context, user_id int) (bool, error) {
+	err := r.db.DeleteOrderPermanently(ctx, int32(user_id))
 
 	if err != nil {
 		return false, order_errors.ErrDeleteOrderPermanent
@@ -85,8 +83,8 @@ func (r *orderCommandRepository) DeleteOrderPermanent(user_id int) (bool, error)
 	return true, nil
 }
 
-func (r *orderCommandRepository) RestoreAllOrder() (bool, error) {
-	err := r.db.RestoreAllOrders(r.ctx)
+func (r *orderCommandRepository) RestoreAllOrder(ctx context.Context) (bool, error) {
+	err := r.db.RestoreAllOrders(ctx)
 
 	if err != nil {
 		return false, order_errors.ErrRestoreAllOrder
@@ -94,8 +92,8 @@ func (r *orderCommandRepository) RestoreAllOrder() (bool, error) {
 	return true, nil
 }
 
-func (r *orderCommandRepository) DeleteAllOrderPermanent() (bool, error) {
-	err := r.db.DeleteAllPermanentOrders(r.ctx)
+func (r *orderCommandRepository) DeleteAllOrderPermanent(ctx context.Context) (bool, error) {
+	err := r.db.DeleteAllPermanentOrders(ctx)
 
 	if err != nil {
 		return false, order_errors.ErrDeleteAllOrderPermanent

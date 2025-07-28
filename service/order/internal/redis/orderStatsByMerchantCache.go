@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -23,10 +24,10 @@ func NewOrderStatsByMerchantCache(store *CacheStore) *orderStatsByMerchantCache 
 	return &orderStatsByMerchantCache{store: store}
 }
 
-func (s *orderStatsByMerchantCache) GetMonthlyTotalRevenueByMerchantCache(req *requests.MonthTotalRevenueMerchant) ([]*response.OrderMonthlyTotalRevenueResponse, bool) {
+func (s *orderStatsByMerchantCache) GetMonthlyTotalRevenueByMerchantCache(ctx context.Context, req *requests.MonthTotalRevenueMerchant) ([]*response.OrderMonthlyTotalRevenueResponse, bool) {
 	key := fmt.Sprintf(monthlyTotalRevenueCacheKeyByMerchant, req.MerchantID, req.Month, req.Year)
 
-	result, found := GetFromCache[[]*response.OrderMonthlyTotalRevenueResponse](s.store, key)
+	result, found := GetFromCache[[]*response.OrderMonthlyTotalRevenueResponse](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -35,19 +36,19 @@ func (s *orderStatsByMerchantCache) GetMonthlyTotalRevenueByMerchantCache(req *r
 	return *result, true
 }
 
-func (s *orderStatsByMerchantCache) SetMonthlyTotalRevenueByMerchantCache(req *requests.MonthTotalRevenueMerchant, data []*response.OrderMonthlyTotalRevenueResponse) {
+func (s *orderStatsByMerchantCache) SetMonthlyTotalRevenueByMerchantCache(ctx context.Context, req *requests.MonthTotalRevenueMerchant, data []*response.OrderMonthlyTotalRevenueResponse) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(monthlyTotalRevenueCacheKeyByMerchant, req.MerchantID, req.Month, req.Year)
-	SetToCache(s.store, key, &data, ttlDefault)
+	SetToCache(ctx, s.store, key, &data, ttlDefault)
 }
 
-func (s *orderStatsByMerchantCache) GetYearlyTotalRevenueByMerchantCache(req *requests.YearTotalRevenueMerchant) ([]*response.OrderYearlyTotalRevenueResponse, bool) {
+func (s *orderStatsByMerchantCache) GetYearlyTotalRevenueByMerchantCache(ctx context.Context, req *requests.YearTotalRevenueMerchant) ([]*response.OrderYearlyTotalRevenueResponse, bool) {
 	key := fmt.Sprintf(yearlyTotalRevenueCacheKeyByMerchant, req.MerchantID, req.Year)
 
-	result, found := GetFromCache[[]*response.OrderYearlyTotalRevenueResponse](s.store, key)
+	result, found := GetFromCache[[]*response.OrderYearlyTotalRevenueResponse](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -56,19 +57,19 @@ func (s *orderStatsByMerchantCache) GetYearlyTotalRevenueByMerchantCache(req *re
 	return *result, true
 }
 
-func (s *orderStatsByMerchantCache) SetYearlyTotalRevenueByMerchantCache(req *requests.YearTotalRevenueMerchant, data []*response.OrderYearlyTotalRevenueResponse) {
+func (s *orderStatsByMerchantCache) SetYearlyTotalRevenueByMerchantCache(ctx context.Context, req *requests.YearTotalRevenueMerchant, data []*response.OrderYearlyTotalRevenueResponse) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(yearlyTotalRevenueCacheKeyByMerchant, req.MerchantID, req.Year)
-	SetToCache(s.store, key, &data, ttlDefault)
+	SetToCache(ctx, s.store, key, &data, ttlDefault)
 }
 
-func (s *orderStatsByMerchantCache) GetMonthlyOrderByMerchantCache(req *requests.MonthOrderMerchant) ([]*response.OrderMonthlyResponse, bool) {
+func (s *orderStatsByMerchantCache) GetMonthlyOrderByMerchantCache(ctx context.Context, req *requests.MonthOrderMerchant) ([]*response.OrderMonthlyResponse, bool) {
 	key := fmt.Sprintf(monthlyOrderCacheKeyByMerchant, req.MerchantID, req.Year)
 
-	result, found := GetFromCache[[]*response.OrderMonthlyResponse](s.store, key)
+	result, found := GetFromCache[[]*response.OrderMonthlyResponse](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -77,19 +78,19 @@ func (s *orderStatsByMerchantCache) GetMonthlyOrderByMerchantCache(req *requests
 	return *result, true
 }
 
-func (s *orderStatsByMerchantCache) SetMonthlyOrderByMerchantCache(req *requests.MonthOrderMerchant, data []*response.OrderMonthlyResponse) {
+func (s *orderStatsByMerchantCache) SetMonthlyOrderByMerchantCache(ctx context.Context, req *requests.MonthOrderMerchant, data []*response.OrderMonthlyResponse) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(monthlyOrderCacheKeyByMerchant, req.MerchantID, req.Year)
-	SetToCache(s.store, key, &data, ttlDefault)
+	SetToCache(ctx, s.store, key, &data, ttlDefault)
 }
 
-func (s *orderStatsByMerchantCache) GetYearlyOrderByMerchantCache(req *requests.YearOrderMerchant) ([]*response.OrderYearlyResponse, bool) {
+func (s *orderStatsByMerchantCache) GetYearlyOrderByMerchantCache(ctx context.Context, req *requests.YearOrderMerchant) ([]*response.OrderYearlyResponse, bool) {
 	key := fmt.Sprintf(yearlyOrderCacheKeyByMerchant, req.MerchantID, req.Year)
 
-	result, found := GetFromCache[[]*response.OrderYearlyResponse](s.store, key)
+	result, found := GetFromCache[[]*response.OrderYearlyResponse](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -98,11 +99,11 @@ func (s *orderStatsByMerchantCache) GetYearlyOrderByMerchantCache(req *requests.
 	return *result, true
 }
 
-func (s *orderStatsByMerchantCache) SetYearlyOrderByMerchantCache(req *requests.YearOrderMerchant, data []*response.OrderYearlyResponse) {
+func (s *orderStatsByMerchantCache) SetYearlyOrderByMerchantCache(ctx context.Context, req *requests.YearOrderMerchant, data []*response.OrderYearlyResponse) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(yearlyOrderCacheKeyByMerchant, req.MerchantID, req.Year)
-	SetToCache(s.store, key, &data, ttlDefault)
+	SetToCache(ctx, s.store, key, &data, ttlDefault)
 }

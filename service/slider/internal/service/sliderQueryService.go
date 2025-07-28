@@ -21,7 +21,6 @@ import (
 )
 
 type sliderQueryService struct {
-	ctx                   context.Context
 	errorhandler          errorhandler.SliderQueryError
 	mencache              mencache.SliderQueryCache
 	trace                 trace.Tracer
@@ -32,7 +31,7 @@ type sliderQueryService struct {
 	requestDuration       *prometheus.HistogramVec
 }
 
-func NewSliderQueryService(ctx context.Context,
+func NewSliderQueryService(
 	errorhandler errorhandler.SliderQueryError,
 	mencache mencache.SliderQueryCache,
 	sliderQueryRepository repository.SliderQueryRepository, logger logger.LoggerInterface, mapping response_service.SliderResponseMapper) *sliderQueryService {
@@ -56,7 +55,6 @@ func NewSliderQueryService(ctx context.Context,
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &sliderQueryService{
-		ctx:                   ctx,
 		errorhandler:          errorhandler,
 		mencache:              mencache,
 		trace:                 otel.Tracer("slider-query-service"),
@@ -68,25 +66,25 @@ func NewSliderQueryService(ctx context.Context,
 	}
 }
 
-func (s *sliderQueryService) FindAll(req *requests.FindAllSlider) ([]*response.SliderResponse, *int, *response.ErrorResponse) {
+func (s *sliderQueryService) FindAll(ctx context.Context, req *requests.FindAllSlider) ([]*response.SliderResponse, *int, *response.ErrorResponse) {
 	const method = "FindAll"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetSliderAllCache(req); found {
+	if data, total, found := s.mencache.GetSliderAllCache(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	sliders, totalRecords, err := s.sliderQueryRepository.FindAllSlider(req)
+	sliders, totalRecords, err := s.sliderQueryRepository.FindAllSlider(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationError(
@@ -101,32 +99,32 @@ func (s *sliderQueryService) FindAll(req *requests.FindAllSlider) ([]*response.S
 
 	slidersResponse := s.mapping.ToSlidersResponse(sliders)
 
-	s.mencache.SetSliderAllCache(req, slidersResponse, totalRecords)
+	s.mencache.SetSliderAllCache(ctx, req, slidersResponse, totalRecords)
 
 	logSuccess("Successfully fetched all sliders", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return slidersResponse, totalRecords, nil
 }
 
-func (s *sliderQueryService) FindByActive(req *requests.FindAllSlider) ([]*response.SliderResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *sliderQueryService) FindByActive(ctx context.Context, req *requests.FindAllSlider) ([]*response.SliderResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByActive"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetSliderActiveCache(req); found {
+	if data, total, found := s.mencache.GetSliderActiveCache(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	sliders, totalRecords, err := s.sliderQueryRepository.FindByActive(req)
+	sliders, totalRecords, err := s.sliderQueryRepository.FindByActive(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_TO_FIND_ACTIVE_SLIDERS", span, &status, slider_errors.ErrFailedFindActiveSliders, zap.Error(err))
@@ -134,46 +132,47 @@ func (s *sliderQueryService) FindByActive(req *requests.FindAllSlider) ([]*respo
 
 	so := s.mapping.ToSlidersResponseDeleteAt(sliders)
 
-	s.mencache.SetSliderActiveCache(req, so, totalRecords)
+	s.mencache.SetSliderActiveCache(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched active sliders", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *sliderQueryService) FindByTrashed(req *requests.FindAllSlider) ([]*response.SliderResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *sliderQueryService) FindByTrashed(ctx context.Context, req *requests.FindAllSlider) ([]*response.SliderResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByTrashed"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetSliderTrashedCache(req); found {
+	if data, total, found := s.mencache.GetSliderTrashedCache(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	sliders, totalRecords, err := s.sliderQueryRepository.FindByTrashed(req)
+	sliders, totalRecords, err := s.sliderQueryRepository.FindByTrashed(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_TO_FIND_TRASHED_SLIDERS", span, &status, slider_errors.ErrFailedFindTrashedSliders)
 	}
 
 	so := s.mapping.ToSlidersResponseDeleteAt(sliders)
-	s.mencache.SetSliderTrashedCache(req, so, totalRecords)
+	s.mencache.SetSliderTrashedCache(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched trashed sliders", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *sliderQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *sliderQueryService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -182,7 +181,7 @@ func (s *sliderQueryService) startTracingAndLogging(method string, attrs ...attr
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -207,7 +206,7 @@ func (s *sliderQueryService) startTracingAndLogging(method string, attrs ...attr
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 func (s *sliderQueryService) normalizePagination(page, pageSize int) (int, int) {
 	if page <= 0 {

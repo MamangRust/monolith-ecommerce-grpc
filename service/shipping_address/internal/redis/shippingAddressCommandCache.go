@@ -1,6 +1,9 @@
 package mencache
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 type shippingAddressCommandCache struct {
 	store *CacheStore
@@ -10,6 +13,6 @@ func NewShippingAddressCommandCache(store *CacheStore) *shippingAddressCommandCa
 	return &shippingAddressCommandCache{store: store}
 }
 
-func (shippingAddressCommandCache *shippingAddressCommandCache) DeleteShippingAddressCache(shipping_id int) {
-	DeleteFromCache(shippingAddressCommandCache.store, fmt.Sprintf(shippingAddressByIdCacheKey, shipping_id))
+func (shippingAddressCommandCache *shippingAddressCommandCache) DeleteShippingAddressCache(ctx context.Context, shipping_id int) {
+	DeleteFromCache(ctx, shippingAddressCommandCache.store, fmt.Sprintf(shippingAddressByIdCacheKey, shipping_id))
 }

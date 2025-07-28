@@ -52,7 +52,6 @@ func (h *roleResponseHandler) ConsumeClaim(session sarama.ConsumerGroupSession, 
 			h.validator.logger.Debug("No waiting channel for correlation ID",
 				zap.String("correlation_id", correlationID))
 		}
-
 		session.MarkMessage(msg, "")
 	}
 	return nil

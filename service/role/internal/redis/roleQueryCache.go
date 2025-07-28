@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -35,7 +36,7 @@ func NewRoleQueryCache(store *CacheStore) *roleQueryCache {
 	return &roleQueryCache{store: store}
 }
 
-func (m *roleQueryCache) SetCachedRoles(req *requests.FindAllRole, data []*response.RoleResponse, total *int) {
+func (m *roleQueryCache) SetCachedRoles(ctx context.Context, req *requests.FindAllRole, data []*response.RoleResponse, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -48,29 +49,29 @@ func (m *roleQueryCache) SetCachedRoles(req *requests.FindAllRole, data []*respo
 	key := fmt.Sprintf(roleAllCacheKey, req.Page, req.PageSize, req.Search)
 
 	payload := &roleCachedResponse{Data: data, TotalRecords: total}
-	SetToCache(m.store, key, payload, ttlDefault)
+	SetToCache(ctx, m.store, key, payload, ttlDefault)
 }
 
-func (m *roleQueryCache) SetCachedRoleById(data *response.RoleResponse) {
+func (m *roleQueryCache) SetCachedRoleById(ctx context.Context, data *response.RoleResponse) {
 	if data == nil {
 		data = &response.RoleResponse{}
 	}
 
 	key := fmt.Sprintf(roleByIdCacheKey, data.ID)
-	SetToCache(m.store, key, data, ttlDefault)
+	SetToCache(ctx, m.store, key, data, ttlDefault)
 }
 
-func (m *roleQueryCache) SetCachedRoleByUserId(userId int, data []*response.RoleResponse) {
+func (m *roleQueryCache) SetCachedRoleByUserId(ctx context.Context, userId int, data []*response.RoleResponse) {
 	if data == nil {
 		data = []*response.RoleResponse{}
 	}
 
 	key := fmt.Sprintf(roleByIdCacheKey, userId)
 
-	SetToCache(m.store, key, &data, ttlDefault)
+	SetToCache(ctx, m.store, key, &data, ttlDefault)
 }
 
-func (m *roleQueryCache) SetCachedRoleActive(req *requests.FindAllRole, data []*response.RoleResponseDeleteAt, total *int) {
+func (m *roleQueryCache) SetCachedRoleActive(ctx context.Context, req *requests.FindAllRole, data []*response.RoleResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -83,10 +84,10 @@ func (m *roleQueryCache) SetCachedRoleActive(req *requests.FindAllRole, data []*
 	key := fmt.Sprintf(roleActiveCacheKey, req.Page, req.PageSize, req.Search)
 
 	payload := &roleCachedResponseDeleteAt{Data: data, TotalRecords: total}
-	SetToCache(m.store, key, payload, ttlDefault)
+	SetToCache(ctx, m.store, key, payload, ttlDefault)
 }
 
-func (m *roleQueryCache) SetCachedRoleTrashed(req *requests.FindAllRole, data []*response.RoleResponseDeleteAt, total *int) {
+func (m *roleQueryCache) SetCachedRoleTrashed(ctx context.Context, req *requests.FindAllRole, data []*response.RoleResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -98,13 +99,13 @@ func (m *roleQueryCache) SetCachedRoleTrashed(req *requests.FindAllRole, data []
 
 	key := fmt.Sprintf(roleTrashedCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &roleCachedResponseDeleteAt{Data: data, TotalRecords: total}
-	SetToCache(m.store, key, payload, ttlDefault)
+	SetToCache(ctx, m.store, key, payload, ttlDefault)
 }
 
-func (m *roleQueryCache) GetCachedRoles(req *requests.FindAllRole) ([]*response.RoleResponse, *int, bool) {
+func (m *roleQueryCache) GetCachedRoles(ctx context.Context, req *requests.FindAllRole) ([]*response.RoleResponse, *int, bool) {
 	key := fmt.Sprintf(roleAllCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[roleCachedResponse](m.store, key)
+	result, found := GetFromCache[roleCachedResponse](ctx, m.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -113,10 +114,10 @@ func (m *roleQueryCache) GetCachedRoles(req *requests.FindAllRole) ([]*response.
 	return result.Data, result.TotalRecords, true
 }
 
-func (m *roleQueryCache) GetCachedRoleById(id int) (*response.RoleResponse, bool) {
+func (m *roleQueryCache) GetCachedRoleById(ctx context.Context, id int) (*response.RoleResponse, bool) {
 	key := fmt.Sprintf(roleByIdCacheKey, id)
 
-	result, found := GetFromCache[*response.RoleResponse](m.store, key)
+	result, found := GetFromCache[*response.RoleResponse](ctx, m.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -125,10 +126,10 @@ func (m *roleQueryCache) GetCachedRoleById(id int) (*response.RoleResponse, bool
 	return *result, true
 }
 
-func (m *roleQueryCache) GetCachedRoleByUserId(userId int) ([]*response.RoleResponse, bool) {
+func (m *roleQueryCache) GetCachedRoleByUserId(ctx context.Context, userId int) ([]*response.RoleResponse, bool) {
 	key := fmt.Sprintf(roleByIdCacheKey, userId)
 
-	result, found := GetFromCache[[]*response.RoleResponse](m.store, key)
+	result, found := GetFromCache[[]*response.RoleResponse](ctx, m.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -137,10 +138,10 @@ func (m *roleQueryCache) GetCachedRoleByUserId(userId int) ([]*response.RoleResp
 	return *result, true
 }
 
-func (m *roleQueryCache) GetCachedRoleActive(req *requests.FindAllRole) ([]*response.RoleResponseDeleteAt, *int, bool) {
+func (m *roleQueryCache) GetCachedRoleActive(ctx context.Context, req *requests.FindAllRole) ([]*response.RoleResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(roleActiveCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[roleCachedResponseDeleteAt](m.store, key)
+	result, found := GetFromCache[roleCachedResponseDeleteAt](ctx, m.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -149,10 +150,10 @@ func (m *roleQueryCache) GetCachedRoleActive(req *requests.FindAllRole) ([]*resp
 	return result.Data, result.TotalRecords, true
 }
 
-func (m *roleQueryCache) GetCachedRoleTrashed(req *requests.FindAllRole) ([]*response.RoleResponseDeleteAt, *int, bool) {
+func (m *roleQueryCache) GetCachedRoleTrashed(ctx context.Context, req *requests.FindAllRole) ([]*response.RoleResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(roleTrashedCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[roleCachedResponseDeleteAt](m.store, key)
+	result, found := GetFromCache[roleCachedResponseDeleteAt](ctx, m.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false

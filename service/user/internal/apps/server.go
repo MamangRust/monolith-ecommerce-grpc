@@ -12,6 +12,7 @@ import (
 
 	"github.com/MamangRust/monolith-ecommerce-grpc-user/internal/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-grpc-user/internal/handler"
+	"github.com/MamangRust/monolith-ecommerce-grpc-user/internal/middleware"
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-user/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-user/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-grpc-user/internal/service"
@@ -21,7 +22,6 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	otel_pkg "github.com/MamangRust/monolith-ecommerce-pkg/otel"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
@@ -53,7 +53,7 @@ type Server struct {
 	Ctx      context.Context
 }
 
-func NewServer() (*Server, func(context.Context) error, error) {
+func NewServer(ctx context.Context) (*Server, func(context.Context) error, error) {
 	logger, err := logger.NewLogger("user")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize logger: %w", err)
@@ -73,18 +73,9 @@ func NewServer() (*Server, func(context.Context) error, error) {
 
 	DB := db.New(conn)
 
-	ctx := context.Background()
-
 	hash := hash.NewHashingPassword()
-	mapperRecord := recordmapper.NewRecordMapper()
 
-	depsRepo := &repository.Deps{
-		DB:           DB,
-		Ctx:          ctx,
-		MapperRecord: mapperRecord,
-	}
-
-	repositories := repository.NewRepositories(depsRepo)
+	repositories := repository.NewRepositories(DB)
 
 	shutdownTracerProvider, err := otel_pkg.InitTracerProvider("User-service", ctx)
 
@@ -114,7 +105,6 @@ func NewServer() (*Server, func(context.Context) error, error) {
 	}
 
 	mencache := mencache.NewMencache(&mencache.Deps{
-		Ctx:    ctx,
 		Redis:  myredis,
 		Logger: logger,
 	})
@@ -122,7 +112,6 @@ func NewServer() (*Server, func(context.Context) error, error) {
 	errorhandler := errorhandler.NewErrorHandler(logger)
 
 	services := service.NewService(&service.Deps{
-		Ctx:          ctx,
 		Mencache:     mencache,
 		ErrorHandler: errorhandler,
 		Repositories: repositories,
@@ -162,6 +151,10 @@ func (s *Server) Run() {
 				otelgrpc.WithTracerProvider(otel.GetTracerProvider()),
 				otelgrpc.WithPropagators(otel.GetTextMapPropagator()),
 			),
+		),
+		grpc.ChainUnaryInterceptor(
+			middleware.RecoveryMiddleware(s.Logger),
+			middleware.ContextMiddleware(60*time.Second, s.Logger),
 		),
 	)
 

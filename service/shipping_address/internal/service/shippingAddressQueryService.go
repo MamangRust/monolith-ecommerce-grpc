@@ -21,7 +21,6 @@ import (
 )
 
 type shippingAddressQueryService struct {
-	ctx                            context.Context
 	mencache                       mencache.ShippingAddressQueryCache
 	errorhandler                   errorhandler.ShippingAddressQueryError
 	trace                          trace.Tracer
@@ -32,7 +31,7 @@ type shippingAddressQueryService struct {
 	requestDuration                *prometheus.HistogramVec
 }
 
-func NewShippingAddressQueryService(ctx context.Context,
+func NewShippingAddressQueryService(
 	mencache mencache.ShippingAddressQueryCache,
 	errorhandler errorhandler.ShippingAddressQueryError,
 	shippingAddressQueryRepository repository.ShippingAddressQueryRepository, logger logger.LoggerInterface, mapping response_service.ShippingAddressResponseMapper) *shippingAddressQueryService {
@@ -56,7 +55,6 @@ func NewShippingAddressQueryService(ctx context.Context,
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &shippingAddressQueryService{
-		ctx:                            ctx,
 		errorhandler:                   errorhandler,
 		mencache:                       mencache,
 		trace:                          otel.Tracer("shipping-address-query-service"),
@@ -68,25 +66,25 @@ func NewShippingAddressQueryService(ctx context.Context,
 	}
 }
 
-func (s *shippingAddressQueryService) FindAll(req *requests.FindAllShippingAddress) ([]*response.ShippingAddressResponse, *int, *response.ErrorResponse) {
+func (s *shippingAddressQueryService) FindAll(ctx context.Context, req *requests.FindAllShippingAddress) ([]*response.ShippingAddressResponse, *int, *response.ErrorResponse) {
 	const method = "FindAll"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetShippingAddressAllCache(req); found {
+	if data, total, found := s.mencache.GetShippingAddressAllCache(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	shipping, totalRecords, err := s.shippingAddressQueryRepository.FindAllShippingAddress(req)
+	shipping, totalRecords, err := s.shippingAddressQueryRepository.FindAllShippingAddress(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationError(err, method, "FAILED_FIND_SHIPPING_ADDRESS", span, &status, zap.Error(err))
@@ -94,29 +92,29 @@ func (s *shippingAddressQueryService) FindAll(req *requests.FindAllShippingAddre
 
 	shippingRes := s.mapping.ToShippingAddressesResponse(shipping)
 
-	s.mencache.SetShippingAddressAllCache(req, shippingRes, totalRecords)
+	s.mencache.SetShippingAddressAllCache(ctx, req, shippingRes, totalRecords)
 
 	logSuccess("Successfully fetched all shipping address", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return shippingRes, totalRecords, nil
 }
 
-func (s *shippingAddressQueryService) FindById(shipping_id int) (*response.ShippingAddressResponse, *response.ErrorResponse) {
+func (s *shippingAddressQueryService) FindById(ctx context.Context, shipping_id int) (*response.ShippingAddressResponse, *response.ErrorResponse) {
 	const method = "FindById"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("shipping.id", shipping_id))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("shipping.id", shipping_id))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedShippingAddressCache(shipping_id); found {
+	if data, found := s.mencache.GetCachedShippingAddressCache(ctx, shipping_id); found {
 		logSuccess("Successfully fetched shipping address from cache", zap.Int("shipping_id", shipping_id))
 
 		return data, nil
 	}
 
-	shipping, err := s.shippingAddressQueryRepository.FindById(shipping_id)
+	shipping, err := s.shippingAddressQueryRepository.FindById(ctx, shipping_id)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_SHIPPING_ADDRESS_BY_ID", span, &status, shippingaddress_errors.ErrFailedFindShippingAddressByID, zap.Error(err))
@@ -124,29 +122,29 @@ func (s *shippingAddressQueryService) FindById(shipping_id int) (*response.Shipp
 
 	so := s.mapping.ToShippingAddressResponse(shipping)
 
-	s.mencache.SetCachedShippingAddressCache(so)
+	s.mencache.SetCachedShippingAddressCache(ctx, so)
 
 	logSuccess("Successfully fetched shipping address", zap.Int("shipping_id", shipping_id))
 
 	return so, nil
 }
 
-func (s *shippingAddressQueryService) FindByOrder(order_id int) (*response.ShippingAddressResponse, *response.ErrorResponse) {
+func (s *shippingAddressQueryService) FindByOrder(ctx context.Context, order_id int) (*response.ShippingAddressResponse, *response.ErrorResponse) {
 	const method = "FindByOrder"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("order.id", order_id))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("order.id", order_id))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedShippingAddressCache(order_id); found {
+	if data, found := s.mencache.GetCachedShippingAddressCache(ctx, order_id); found {
 		logSuccess("Successfully fetched shipping address from cache", zap.Int("order.id", order_id))
 
 		return data, nil
 	}
 
-	shipping, err := s.shippingAddressQueryRepository.FindByOrder(order_id)
+	shipping, err := s.shippingAddressQueryRepository.FindByOrder(ctx, order_id)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_SHIPPING_ADDRESS_BY_ORDER", span, &status, shippingaddress_errors.ErrFailedFindShippingAddressByOrder, zap.Error(err))
@@ -154,32 +152,32 @@ func (s *shippingAddressQueryService) FindByOrder(order_id int) (*response.Shipp
 
 	so := s.mapping.ToShippingAddressResponse(shipping)
 
-	s.mencache.SetCachedShippingAddressCache(so)
+	s.mencache.SetCachedShippingAddressCache(ctx, so)
 
 	logSuccess("Successfully fetched shipping address", zap.Int("order.id", order_id))
 
 	return so, nil
 }
 
-func (s *shippingAddressQueryService) FindByActive(req *requests.FindAllShippingAddress) ([]*response.ShippingAddressResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *shippingAddressQueryService) FindByActive(ctx context.Context, req *requests.FindAllShippingAddress) ([]*response.ShippingAddressResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByActive"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetShippingAddressActiveCache(req); found {
+	if data, total, found := s.mencache.GetShippingAddressActiveCache(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	cashiers, totalRecords, err := s.shippingAddressQueryRepository.FindByActive(req)
+	cashiers, totalRecords, err := s.shippingAddressQueryRepository.FindByActive(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, "FindByActive", "FAILED_FIND_SHIPPING_ADDRESS", span, &status, shippingaddress_errors.ErrFailedFindActiveShippingAddresses, zap.Error(err))
@@ -187,46 +185,47 @@ func (s *shippingAddressQueryService) FindByActive(req *requests.FindAllShipping
 
 	so := s.mapping.ToShippingAddressesResponseDeleteAt(cashiers)
 
-	s.mencache.SetShippingAddressActiveCache(req, so, totalRecords)
+	s.mencache.SetShippingAddressActiveCache(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched active shipping address", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *shippingAddressQueryService) FindByTrashed(req *requests.FindAllShippingAddress) ([]*response.ShippingAddressResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *shippingAddressQueryService) FindByTrashed(ctx context.Context, req *requests.FindAllShippingAddress) ([]*response.ShippingAddressResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByTrashed"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetShippingAddressTrashedCache(req); found {
+	if data, total, found := s.mencache.GetShippingAddressTrashedCache(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	shipping, totalRecords, err := s.shippingAddressQueryRepository.FindByTrashed(req)
+	shipping, totalRecords, err := s.shippingAddressQueryRepository.FindByTrashed(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_SHIPPING_ADDRESS", span, &status, shippingaddress_errors.ErrFailedFindTrashedShippingAddresses, zap.Error(err))
 	}
 
 	so := s.mapping.ToShippingAddressesResponseDeleteAt(shipping)
-	s.mencache.SetShippingAddressTrashedCache(req, so, totalRecords)
+	s.mencache.SetShippingAddressTrashedCache(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched trashed shipping address", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *shippingAddressQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *shippingAddressQueryService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -235,7 +234,7 @@ func (s *shippingAddressQueryService) startTracingAndLogging(method string, attr
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -260,7 +259,7 @@ func (s *shippingAddressQueryService) startTracingAndLogging(method string, attr
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *shippingAddressQueryService) normalizePagination(page, pageSize int) (int, int) {

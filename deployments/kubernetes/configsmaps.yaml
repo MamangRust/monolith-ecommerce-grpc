@@ -16,7 +16,7 @@ data:
   DB_SEEDER: "true"
   APP_LOGGER: "production"
 
-  KAFKA_BROKERS: "kafka.ecommerce.svc.cluster.local:9092"
+  KAFKA_BROKERS: "ecommerce-service.svc.cluster.local:9092"
 
   REDIS_HOST: "redis"
   REDIS_PORT: "6379"

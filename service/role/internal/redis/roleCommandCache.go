@@ -1,6 +1,9 @@
 package mencache
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 type roleCommandCache struct {
 	store *CacheStore
@@ -10,8 +13,8 @@ func NewRoleCommandCache(store *CacheStore) *roleCommandCache {
 	return &roleCommandCache{store: store}
 }
 
-func (s *roleCommandCache) DeleteCachedRole(id int) {
+func (s *roleCommandCache) DeleteCachedRole(ctx context.Context, id int) {
 	key := fmt.Sprintf(roleByIdCacheKey, id)
 
-	DeleteFromCache(s.store, key)
+	DeleteFromCache(ctx, s.store, key)
 }

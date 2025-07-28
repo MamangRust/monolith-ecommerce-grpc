@@ -36,7 +36,7 @@ services:
   apigateway:
     image: apigateway-ecommerce-service:1.0
     container_name: apigateway-ecommerce
-    env_file: ./docker.env 
+    env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
       - ./logs:/var/log/app
@@ -90,12 +90,13 @@ services:
     environment:
       - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
+      - KAFKA_BROKERS=kafka:9092
 
 
   auth:
     image: auth-ecommerce-service:1.0
     container_name: auth-ecommerce
-    env_file: ./docker.env 
+    env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
       - ./logs:/var/log/app
@@ -137,7 +138,7 @@ services:
       - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
-  
+
   user:
     image: user-ecommerce-service:1.0
     container_name: user-ecommerce
@@ -166,7 +167,7 @@ services:
   email:
     image: email-ecommerce-service:1.0
     container_name: email
-    env_file: ./docker.env 
+    env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
       - ./logs:/var/log/app
@@ -269,7 +270,7 @@ services:
       - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
-  
+
   product:
     image: product-ecommerce-service:1.0
     container_name: product-ecommerce
@@ -361,7 +362,7 @@ services:
       - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
-  
+
   slider:
     image: slider-ecommerce-service:1.0
     container_name: slider-ecommerce
@@ -384,7 +385,7 @@ services:
       - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
-  
+
   shipping_address:
     image: shipping_address-ecommerce-service:1.0
     container_name: shipping_address-ecommerce
@@ -407,7 +408,7 @@ services:
       - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
-  
+
   banner:
     image: banner-ecommerce-service:1.0
     container_name: banner-ecommerce
@@ -453,7 +454,7 @@ services:
       - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
-  
+
   merchant_business:
     image: merchant_business-ecommerce-service:1.0
     container_name: merchant_business
@@ -522,7 +523,7 @@ services:
       - OTEL_ENDPOINT=otel-collector:4317
       - APP_ENV=docker
       - KAFKA_BROKERS=kafka:9092
-  
+
   review_detail:
     image: review_detail-ecommerce-service:1.0
     container_name: review_detail-ecommerce
@@ -572,7 +573,7 @@ services:
       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
       - KAFKA_KRAFT_CLUSTER_ID=kraft-cluster-01
       - ALLOW_PLAINTEXT_LISTENER=yes
@@ -600,7 +601,7 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-    command: 
+    command:
       - "--kafka.server=my-kafka-ecommerce:9092"
       - "--web.listen-address=0.0.0.0:9308"
       - "--log.level=debug"
@@ -610,7 +611,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-  
+
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -633,7 +634,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
-      - grafana_ecommerce-storage:/var/lib/grafana  
+      - grafana_ecommerce-storage:/var/lib/grafana
     networks:
       - app_ecommerce_network
     depends_on:
@@ -687,8 +688,8 @@ services:
     volumes:
       - ../../observability/otel-collector.yaml:/etc/otel-collector-config.yaml:ro
     ports:
-      - "4317:4317"     
-      - "4318:4318"      
+      - "4317:4317"
+      - "4318:4318"
       - "13133:13133"
       - "8889:8889"
     networks:
@@ -740,7 +741,7 @@ services:
     networks:
       - app_ecommerce_network
 
-  
+
 
 volumes:
   loki_ecommerce_data:

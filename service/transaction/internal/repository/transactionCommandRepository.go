@@ -12,19 +12,17 @@ import (
 
 type transactionCommandRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.TransactionRecordMapping
 }
 
-func NewTransactionCommandRepository(db *db.Queries, ctx context.Context, mapping recordmapper.TransactionRecordMapping) *transactionCommandRepository {
+func NewTransactionCommandRepository(db *db.Queries, mapping recordmapper.TransactionRecordMapping) *transactionCommandRepository {
 	return &transactionCommandRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *transactionCommandRepository) CreateTransaction(request *requests.CreateTransactionRequest) (*record.TransactionRecord, error) {
+func (r *transactionCommandRepository) CreateTransaction(ctx context.Context, request *requests.CreateTransactionRequest) (*record.TransactionRecord, error) {
 	req := db.CreateTransactionParams{
 		OrderID:       int32(request.OrderID),
 		MerchantID:    int32(request.MerchantID),
@@ -33,7 +31,7 @@ func (r *transactionCommandRepository) CreateTransaction(request *requests.Creat
 		PaymentStatus: *request.PaymentStatus,
 	}
 
-	transaction, err := r.db.CreateTransaction(r.ctx, req)
+	transaction, err := r.db.CreateTransaction(ctx, req)
 
 	if err != nil {
 		return nil, transaction_errors.ErrCreateTransaction
@@ -42,7 +40,7 @@ func (r *transactionCommandRepository) CreateTransaction(request *requests.Creat
 	return r.mapping.ToTransactionRecord(transaction), nil
 }
 
-func (r *transactionCommandRepository) UpdateTransaction(request *requests.UpdateTransactionRequest) (*record.TransactionRecord, error) {
+func (r *transactionCommandRepository) UpdateTransaction(ctx context.Context, request *requests.UpdateTransactionRequest) (*record.TransactionRecord, error) {
 	req := db.UpdateTransactionParams{
 		TransactionID: int32(*request.TransactionID),
 		MerchantID:    int32(request.MerchantID),
@@ -52,7 +50,7 @@ func (r *transactionCommandRepository) UpdateTransaction(request *requests.Updat
 		PaymentStatus: *request.PaymentStatus,
 	}
 
-	res, err := r.db.UpdateTransaction(r.ctx, req)
+	res, err := r.db.UpdateTransaction(ctx, req)
 
 	if err != nil {
 		return nil, transaction_errors.ErrUpdateTransaction
@@ -61,8 +59,8 @@ func (r *transactionCommandRepository) UpdateTransaction(request *requests.Updat
 	return r.mapping.ToTransactionRecord(res), nil
 }
 
-func (r *transactionCommandRepository) TrashTransaction(transaction_id int) (*record.TransactionRecord, error) {
-	res, err := r.db.TrashTransaction(r.ctx, int32(transaction_id))
+func (r *transactionCommandRepository) TrashTransaction(ctx context.Context, transaction_id int) (*record.TransactionRecord, error) {
+	res, err := r.db.TrashTransaction(ctx, int32(transaction_id))
 
 	if err != nil {
 		return nil, transaction_errors.ErrTrashTransaction
@@ -71,8 +69,8 @@ func (r *transactionCommandRepository) TrashTransaction(transaction_id int) (*re
 	return r.mapping.ToTransactionRecord(res), nil
 }
 
-func (r *transactionCommandRepository) RestoreTransaction(transaction_id int) (*record.TransactionRecord, error) {
-	res, err := r.db.RestoreTransaction(r.ctx, int32(transaction_id))
+func (r *transactionCommandRepository) RestoreTransaction(ctx context.Context, transaction_id int) (*record.TransactionRecord, error) {
+	res, err := r.db.RestoreTransaction(ctx, int32(transaction_id))
 
 	if err != nil {
 		return nil, transaction_errors.ErrRestoreTransaction
@@ -81,8 +79,8 @@ func (r *transactionCommandRepository) RestoreTransaction(transaction_id int) (*
 	return r.mapping.ToTransactionRecord(res), nil
 }
 
-func (r *transactionCommandRepository) DeleteTransactionPermanently(transaction_id int) (bool, error) {
-	err := r.db.DeleteTransactionPermanently(r.ctx, int32(transaction_id))
+func (r *transactionCommandRepository) DeleteTransactionPermanently(ctx context.Context, transaction_id int) (bool, error) {
+	err := r.db.DeleteTransactionPermanently(ctx, int32(transaction_id))
 
 	if err != nil {
 		return false, transaction_errors.ErrDeleteTransactionPermanently
@@ -91,8 +89,8 @@ func (r *transactionCommandRepository) DeleteTransactionPermanently(transaction_
 	return true, nil
 }
 
-func (r *transactionCommandRepository) RestoreAllTransactions() (bool, error) {
-	err := r.db.RestoreAllTransactions(r.ctx)
+func (r *transactionCommandRepository) RestoreAllTransactions(ctx context.Context) (bool, error) {
+	err := r.db.RestoreAllTransactions(ctx)
 
 	if err != nil {
 		return false, transaction_errors.ErrRestoreAllTransactions
@@ -100,8 +98,8 @@ func (r *transactionCommandRepository) RestoreAllTransactions() (bool, error) {
 	return true, nil
 }
 
-func (r *transactionCommandRepository) DeleteAllTransactionPermanent() (bool, error) {
-	err := r.db.DeleteAllPermanentTransactions(r.ctx)
+func (r *transactionCommandRepository) DeleteAllTransactionPermanent(ctx context.Context) (bool, error) {
+	err := r.db.DeleteAllPermanentTransactions(ctx)
 
 	if err != nil {
 		return false, transaction_errors.ErrDeleteAllTransactionPermanent

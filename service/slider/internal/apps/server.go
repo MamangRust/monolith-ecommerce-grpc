@@ -11,6 +11,7 @@ import (
 
 	"github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/handler"
+	"github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/middleware"
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/service"
@@ -50,7 +51,7 @@ type Server struct {
 	Ctx      context.Context
 }
 
-func NewServer() (*Server, func(context.Context) error, error) {
+func NewServer(ctx context.Context) (*Server, func(context.Context) error, error) {
 	logger, err := logger.NewLogger("slider")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize logger: %w", err)
@@ -67,14 +68,7 @@ func NewServer() (*Server, func(context.Context) error, error) {
 	}
 	DB := db.New(conn)
 
-	ctx := context.Background()
-
-	depsRepo := &repository.Deps{
-		DB:  DB,
-		Ctx: ctx,
-	}
-
-	repositories := repository.NewRepositories(depsRepo)
+	repositories := repository.NewRepositories(DB)
 
 	shutdownTracerProvider, err := otel_pkg.InitTracerProvider("Slider-service", ctx)
 
@@ -104,7 +98,6 @@ func NewServer() (*Server, func(context.Context) error, error) {
 	}
 
 	mencache := mencache.NewMencache(&mencache.Deps{
-		Ctx:    ctx,
 		Redis:  myredis,
 		Logger: logger,
 	})
@@ -112,7 +105,6 @@ func NewServer() (*Server, func(context.Context) error, error) {
 	errorhandler := errorhandler.NewErrorHandler(logger)
 
 	services := service.NewService(&service.Deps{
-		Ctx:          ctx,
 		Mencache:     mencache,
 		ErrorHandler: errorhandler,
 		Repositories: repositories,
@@ -153,6 +145,10 @@ func (s *Server) Run() {
 				otelgrpc.WithTracerProvider(otel.GetTracerProvider()),
 				otelgrpc.WithPropagators(otel.GetTextMapPropagator()),
 			),
+		),
+		grpc.ChainUnaryInterceptor(
+			middleware.RecoveryMiddleware(s.Logger),
+			middleware.ContextMiddleware(60*time.Second, s.Logger),
 		),
 	)
 

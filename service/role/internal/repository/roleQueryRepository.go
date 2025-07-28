@@ -15,19 +15,17 @@ import (
 
 type roleQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.RoleRecordMapping
 }
 
-func NewRoleQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.RoleRecordMapping) *roleQueryRepository {
+func NewRoleQueryRepository(db *db.Queries, mapping recordmapper.RoleRecordMapping) *roleQueryRepository {
 	return &roleQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *roleQueryRepository) FindAllRoles(req *requests.FindAllRole) ([]*record.RoleRecord, *int, error) {
+func (r *roleQueryRepository) FindAllRoles(ctx context.Context, req *requests.FindAllRole) ([]*record.RoleRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetRolesParams{
@@ -36,7 +34,7 @@ func (r *roleQueryRepository) FindAllRoles(req *requests.FindAllRole) ([]*record
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetRoles(r.ctx, reqDb)
+	res, err := r.db.GetRoles(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, role_errors.ErrFindAllRoles
@@ -53,8 +51,8 @@ func (r *roleQueryRepository) FindAllRoles(req *requests.FindAllRole) ([]*record
 	return r.mapping.ToRolesRecordAll(res), &totalCount, nil
 }
 
-func (r *roleQueryRepository) FindById(id int) (*record.RoleRecord, error) {
-	res, err := r.db.GetRole(r.ctx, int32(id))
+func (r *roleQueryRepository) FindById(ctx context.Context, id int) (*record.RoleRecord, error) {
+	res, err := r.db.GetRole(ctx, int32(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("role not found with ID: %d", id)
@@ -64,8 +62,8 @@ func (r *roleQueryRepository) FindById(id int) (*record.RoleRecord, error) {
 	return r.mapping.ToRoleRecord(res), nil
 }
 
-func (r *roleQueryRepository) FindByName(name string) (*record.RoleRecord, error) {
-	res, err := r.db.GetRoleByName(r.ctx, name)
+func (r *roleQueryRepository) FindByName(ctx context.Context, name string) (*record.RoleRecord, error) {
+	res, err := r.db.GetRoleByName(ctx, name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, role_errors.ErrRoleNotFound
@@ -76,8 +74,8 @@ func (r *roleQueryRepository) FindByName(name string) (*record.RoleRecord, error
 	return r.mapping.ToRoleRecord(res), nil
 }
 
-func (r *roleQueryRepository) FindByUserId(user_id int) ([]*record.RoleRecord, error) {
-	res, err := r.db.GetUserRoles(r.ctx, int32(user_id))
+func (r *roleQueryRepository) FindByUserId(ctx context.Context, user_id int) ([]*record.RoleRecord, error) {
+	res, err := r.db.GetUserRoles(ctx, int32(user_id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, role_errors.ErrRoleNotFound
@@ -88,7 +86,7 @@ func (r *roleQueryRepository) FindByUserId(user_id int) ([]*record.RoleRecord, e
 	return r.mapping.ToRolesRecord(res), nil
 }
 
-func (r *roleQueryRepository) FindByActiveRole(req *requests.FindAllRole) ([]*record.RoleRecord, *int, error) {
+func (r *roleQueryRepository) FindByActiveRole(ctx context.Context, req *requests.FindAllRole) ([]*record.RoleRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetActiveRolesParams{
@@ -97,7 +95,7 @@ func (r *roleQueryRepository) FindByActiveRole(req *requests.FindAllRole) ([]*re
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetActiveRoles(r.ctx, reqDb)
+	res, err := r.db.GetActiveRoles(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, role_errors.ErrFindActiveRoles
@@ -113,7 +111,7 @@ func (r *roleQueryRepository) FindByActiveRole(req *requests.FindAllRole) ([]*re
 	return r.mapping.ToRolesRecordActive(res), &totalCount, nil
 }
 
-func (r *roleQueryRepository) FindByTrashedRole(req *requests.FindAllRole) ([]*record.RoleRecord, *int, error) {
+func (r *roleQueryRepository) FindByTrashedRole(ctx context.Context, req *requests.FindAllRole) ([]*record.RoleRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetTrashedRolesParams{
@@ -122,7 +120,7 @@ func (r *roleQueryRepository) FindByTrashedRole(req *requests.FindAllRole) ([]*r
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetTrashedRoles(r.ctx, reqDb)
+	res, err := r.db.GetTrashedRoles(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, role_errors.ErrFindTrashedRoles

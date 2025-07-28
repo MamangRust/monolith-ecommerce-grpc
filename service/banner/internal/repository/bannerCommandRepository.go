@@ -14,19 +14,17 @@ import (
 
 type bannerCommandRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.BannerRecordMapping
 }
 
-func NewBannerCommandRepository(db *db.Queries, ctx context.Context, mapping recordmapper.BannerRecordMapping) *bannerCommandRepository {
+func NewBannerCommandRepository(db *db.Queries, mapping recordmapper.BannerRecordMapping) *bannerCommandRepository {
 	return &bannerCommandRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *bannerCommandRepository) CreateBanner(request *requests.CreateBannerRequest) (*record.BannerRecord, error) {
+func (r *bannerCommandRepository) CreateBanner(ctx context.Context, request *requests.CreateBannerRequest) (*record.BannerRecord, error) {
 	startDate, err := time.Parse("2006-01-02", request.StartDate)
 	if err != nil {
 		return nil, banner_errors.ErrBannerStartDate
@@ -56,7 +54,7 @@ func (r *bannerCommandRepository) CreateBanner(request *requests.CreateBannerReq
 		IsActive:  sql.NullBool{Bool: request.IsActive, Valid: true},
 	}
 
-	result, err := r.db.CreateBanner(r.ctx, req)
+	result, err := r.db.CreateBanner(ctx, req)
 	if err != nil {
 		return nil, banner_errors.ErrCreateBanner
 	}
@@ -64,7 +62,7 @@ func (r *bannerCommandRepository) CreateBanner(request *requests.CreateBannerReq
 	return r.mapping.ToBannerRecord(result), nil
 }
 
-func (r *bannerCommandRepository) UpdateBanner(request *requests.UpdateBannerRequest) (*record.BannerRecord, error) {
+func (r *bannerCommandRepository) UpdateBanner(ctx context.Context, request *requests.UpdateBannerRequest) (*record.BannerRecord, error) {
 	startDate, err := time.Parse("2006-01-02", request.StartDate)
 	if err != nil {
 		return nil, banner_errors.ErrBannerStartDate
@@ -95,7 +93,7 @@ func (r *bannerCommandRepository) UpdateBanner(request *requests.UpdateBannerReq
 		IsActive:  sql.NullBool{Bool: request.IsActive, Valid: true},
 	}
 
-	result, err := r.db.UpdateBanner(r.ctx, req)
+	result, err := r.db.UpdateBanner(ctx, req)
 	if err != nil {
 		return nil, banner_errors.ErrUpdateBanner
 	}
@@ -103,8 +101,8 @@ func (r *bannerCommandRepository) UpdateBanner(request *requests.UpdateBannerReq
 	return r.mapping.ToBannerRecord(result), nil
 }
 
-func (r *bannerCommandRepository) TrashedBanner(Banner_id int) (*record.BannerRecord, error) {
-	res, err := r.db.TrashBanner(r.ctx, int32(Banner_id))
+func (r *bannerCommandRepository) TrashedBanner(ctx context.Context, Banner_id int) (*record.BannerRecord, error) {
+	res, err := r.db.TrashBanner(ctx, int32(Banner_id))
 
 	if err != nil {
 		return nil, banner_errors.ErrTrashedBanner
@@ -113,8 +111,8 @@ func (r *bannerCommandRepository) TrashedBanner(Banner_id int) (*record.BannerRe
 	return r.mapping.ToBannerRecord(res), nil
 }
 
-func (r *bannerCommandRepository) RestoreBanner(Banner_id int) (*record.BannerRecord, error) {
-	res, err := r.db.RestoreBanner(r.ctx, int32(Banner_id))
+func (r *bannerCommandRepository) RestoreBanner(ctx context.Context, Banner_id int) (*record.BannerRecord, error) {
+	res, err := r.db.RestoreBanner(ctx, int32(Banner_id))
 
 	if err != nil {
 		return nil, banner_errors.ErrRestoreBanner
@@ -123,8 +121,8 @@ func (r *bannerCommandRepository) RestoreBanner(Banner_id int) (*record.BannerRe
 	return r.mapping.ToBannerRecord(res), nil
 }
 
-func (r *bannerCommandRepository) DeleteBannerPermanent(Banner_id int) (bool, error) {
-	err := r.db.DeleteBannerPermanently(r.ctx, int32(Banner_id))
+func (r *bannerCommandRepository) DeleteBannerPermanent(ctx context.Context, Banner_id int) (bool, error) {
+	err := r.db.DeleteBannerPermanently(ctx, int32(Banner_id))
 
 	if err != nil {
 		return false, banner_errors.ErrDeleteBannerPermanent
@@ -133,8 +131,8 @@ func (r *bannerCommandRepository) DeleteBannerPermanent(Banner_id int) (bool, er
 	return true, nil
 }
 
-func (r *bannerCommandRepository) RestoreAllBanner() (bool, error) {
-	err := r.db.RestoreAllBanners(r.ctx)
+func (r *bannerCommandRepository) RestoreAllBanner(ctx context.Context) (bool, error) {
+	err := r.db.RestoreAllBanners(ctx)
 
 	if err != nil {
 		return false, banner_errors.ErrRestoreAllBanners
@@ -142,8 +140,8 @@ func (r *bannerCommandRepository) RestoreAllBanner() (bool, error) {
 	return true, nil
 }
 
-func (r *bannerCommandRepository) DeleteAllBannerPermanent() (bool, error) {
-	err := r.db.DeleteAllPermanentBanners(r.ctx)
+func (r *bannerCommandRepository) DeleteAllBannerPermanent(ctx context.Context) (bool, error) {
+	err := r.db.DeleteAllPermanentBanners(ctx)
 
 	if err != nil {
 		return false, banner_errors.ErrDeleteAllBanners

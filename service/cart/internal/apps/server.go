@@ -11,6 +11,7 @@ import (
 
 	"github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/handler"
+	"github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/middleware"
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/service"
@@ -50,10 +51,10 @@ type Server struct {
 	Ctx      context.Context
 }
 
-func NewServer() (*Server, error) {
+func NewServer(ctx context.Context) (*Server, func(context.Context) error, error) {
 	logger, err := logger.NewLogger("cart")
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize logger: %w", err)
+		return nil, nil, fmt.Errorf("failed to initialize logger: %w", err)
 	}
 
 	if err := dotenv.Viper(); err != nil {
@@ -67,14 +68,7 @@ func NewServer() (*Server, error) {
 	}
 	DB := db.New(conn)
 
-	ctx := context.Background()
-
-	depsRepo := &repository.Deps{
-		DB:  DB,
-		Ctx: ctx,
-	}
-
-	repositories := repository.NewRepositories(depsRepo)
+	repositories := repository.NewRepositories(DB)
 
 	shutdownTracerProvider, err := otel_pkg.InitTracerProvider("Cart-service", ctx)
 	if err != nil {
@@ -102,7 +96,6 @@ func NewServer() (*Server, error) {
 	}
 
 	mencache := mencache.NewMencache(&mencache.Deps{
-		Ctx:    ctx,
 		Redis:  myredis,
 		Logger: logger,
 	})
@@ -110,7 +103,6 @@ func NewServer() (*Server, error) {
 	errorhandler := errorhandler.NewErrorHandler(logger)
 
 	services := service.NewService(&service.Deps{
-		Ctx:          ctx,
 		Mencached:    mencache,
 		ErrorHandler: errorhandler,
 		Repositories: repositories,
@@ -127,7 +119,7 @@ func NewServer() (*Server, error) {
 		Services: services,
 		Handlers: handlers,
 		Ctx:      ctx,
-	}, nil
+	}, shutdownTracerProvider, nil
 }
 
 func (s *Server) Run() {
@@ -151,6 +143,10 @@ func (s *Server) Run() {
 				otelgrpc.WithTracerProvider(otel.GetTracerProvider()),
 				otelgrpc.WithPropagators(otel.GetTextMapPropagator()),
 			),
+		),
+		grpc.ChainUnaryInterceptor(
+			middleware.RecoveryMiddleware(s.Logger),
+			middleware.ContextMiddleware(60*time.Second, s.Logger),
 		),
 	)
 

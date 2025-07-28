@@ -1,8 +1,6 @@
 package service
 
 import (
-	"context"
-
 	"github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/errorhandler"
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/repository"
@@ -16,7 +14,6 @@ type Service struct {
 }
 
 type Deps struct {
-	Ctx          context.Context
 	ErrorHandler *errorhandler.ErrorHandler
 	Mencache     *mencache.Mencache
 	Repositories *repository.Repositories
@@ -27,7 +24,7 @@ func NewService(deps *Deps) *Service {
 	mapper := response_service.NewSliderResponseMapper()
 
 	return &Service{
-		SliderQuery:   NewSliderQueryService(deps.Ctx, deps.ErrorHandler.SliderQueryError, deps.Mencache.SliderQueryCache, deps.Repositories.SliderQuery, deps.Logger, mapper),
-		SliderCommand: NewSliderCommandService(deps.Ctx, deps.ErrorHandler.SliderCommandError, deps.Repositories.SliderCommand, deps.Logger, mapper),
+		SliderQuery:   NewSliderQueryService(deps.ErrorHandler.SliderQueryError, deps.Mencache.SliderQueryCache, deps.Repositories.SliderQuery, deps.Logger, mapper),
+		SliderCommand: NewSliderCommandService(deps.ErrorHandler.SliderCommandError, deps.Repositories.SliderCommand, deps.Logger, mapper),
 	}
 }

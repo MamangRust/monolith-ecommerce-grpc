@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"context"
-
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
@@ -15,18 +13,16 @@ type Repositories struct {
 	UserQuery               UserQueryRepository
 }
 
-type Deps struct {
-	DB           *db.Queries
-	Ctx          context.Context
-	MapperRecord *recordmapper.RecordMapper
-}
+func NewRepositories(DB *db.Queries) *Repositories {
+	mapper := recordmapper.NewMerchantRecordMapper()
+	mapperDocument := recordmapper.NewMerchantDocumentRecordMapper()
+	mapperUser := recordmapper.NewUserRecordMapper()
 
-func NewRepositories(deps *Deps) *Repositories {
 	return &Repositories{
-		MerchantQuery:           NewMerchantQueryRepository(deps.DB, deps.Ctx, deps.MapperRecord.MerchantRecordMapper),
-		MerchantCommand:         NewMerchantCommandRepository(deps.DB, deps.Ctx, deps.MapperRecord.MerchantRecordMapper),
-		MerchantDocumentCommand: NewMerchantDocumentCommandRepository(deps.DB, deps.Ctx, deps.MapperRecord.MerchantDocumentRecordMapper),
-		MerchantDocumentQuery:   NewMerchantDocumentQueryRepository(deps.DB, deps.Ctx, deps.MapperRecord.MerchantDocumentRecordMapper),
-		UserQuery:               NewUserQueryRepository(deps.DB, deps.Ctx, deps.MapperRecord.UserRecordMapper),
+		MerchantQuery:           NewMerchantQueryRepository(DB, mapper),
+		MerchantCommand:         NewMerchantCommandRepository(DB, mapper),
+		MerchantDocumentCommand: NewMerchantDocumentCommandRepository(DB, mapperDocument),
+		MerchantDocumentQuery:   NewMerchantDocumentQueryRepository(DB, mapperDocument),
+		UserQuery:               NewUserQueryRepository(DB, mapperUser),
 	}
 }

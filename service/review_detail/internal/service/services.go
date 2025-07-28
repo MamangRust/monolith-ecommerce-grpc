@@ -1,8 +1,6 @@
 package service
 
 import (
-	"context"
-
 	"github.com/MamangRust/monolith-ecommerce-grpc-review-detail/internal/errorhandler"
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-review-detail/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-review-detail/internal/repository"
@@ -16,7 +14,6 @@ type Service struct {
 }
 
 type Deps struct {
-	Ctx          context.Context
 	ErrorHandler *errorhandler.ErrorHandler
 	Mencache     *mencache.Mencache
 	Repositories *repository.Repositories
@@ -27,7 +24,7 @@ func NewService(deps *Deps) *Service {
 	mapper := response_service.NewReviewDetailResponseMapper()
 
 	return &Service{
-		ReviewDetailQuery:   NewReviewDetailQueryService(deps.Ctx, deps.Mencache.ReviewDetailQueryCache, deps.ErrorHandler.ReviewDetailQueryError, deps.Repositories.ReviewDetailQuery, mapper, deps.Logger),
-		ReviewDetailCommand: NewReviewDetailCommandService(deps.Ctx, deps.Mencache.ReviewDetailCommandCache, deps.ErrorHandler.ReviewDetailCommandError, deps.Repositories.ReviewDetailQuery, deps.Repositories.ReviewDetailCommand, mapper, deps.Logger),
+		ReviewDetailQuery:   NewReviewDetailQueryService(deps.Mencache.ReviewDetailQueryCache, deps.ErrorHandler.ReviewDetailQueryError, deps.Repositories.ReviewDetailQuery, mapper, deps.Logger),
+		ReviewDetailCommand: NewReviewDetailCommandService(deps.Mencache.ReviewDetailCommandCache, deps.ErrorHandler.ReviewDetailCommandError, deps.Repositories.ReviewDetailQuery, deps.Repositories.ReviewDetailCommand, mapper, deps.Logger),
 	}
 }

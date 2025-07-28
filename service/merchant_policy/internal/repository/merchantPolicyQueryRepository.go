@@ -12,19 +12,17 @@ import (
 
 type merchantPolicyQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.MerchantPolicyMapping
 }
 
-func NewMerchantPolicyQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.MerchantPolicyMapping) *merchantPolicyQueryRepository {
+func NewMerchantPolicyQueryRepository(db *db.Queries, mapping recordmapper.MerchantPolicyMapping) *merchantPolicyQueryRepository {
 	return &merchantPolicyQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *merchantPolicyQueryRepository) FindAllMerchantPolicy(req *requests.FindAllMerchant) ([]*record.MerchantPoliciesRecord, *int, error) {
+func (r *merchantPolicyQueryRepository) FindAllMerchantPolicy(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantPoliciesRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantPoliciesParams{
@@ -33,7 +31,7 @@ func (r *merchantPolicyQueryRepository) FindAllMerchantPolicy(req *requests.Find
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetMerchantPolicies(r.ctx, reqDb)
+	res, err := r.db.GetMerchantPolicies(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, merchantpolicy_errors.ErrFindAllMerchantPolicy
@@ -50,7 +48,7 @@ func (r *merchantPolicyQueryRepository) FindAllMerchantPolicy(req *requests.Find
 	return r.mapping.ToMerchantPolicysRecordPagination(res), &totalCount, nil
 }
 
-func (r *merchantPolicyQueryRepository) FindByActive(req *requests.FindAllMerchant) ([]*record.MerchantPoliciesRecord, *int, error) {
+func (r *merchantPolicyQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantPoliciesRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantPoliciesActiveParams{
@@ -59,7 +57,7 @@ func (r *merchantPolicyQueryRepository) FindByActive(req *requests.FindAllMercha
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetMerchantPoliciesActive(r.ctx, reqDb)
+	res, err := r.db.GetMerchantPoliciesActive(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, merchantpolicy_errors.ErrFindByActiveMerchantPolicy
@@ -76,7 +74,7 @@ func (r *merchantPolicyQueryRepository) FindByActive(req *requests.FindAllMercha
 	return r.mapping.ToMerchantPolicysRecordActivePagination(res), &totalCount, nil
 }
 
-func (r *merchantPolicyQueryRepository) FindByTrashed(req *requests.FindAllMerchant) ([]*record.MerchantPoliciesRecord, *int, error) {
+func (r *merchantPolicyQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantPoliciesRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantPoliciesTrashedParams{
@@ -85,7 +83,7 @@ func (r *merchantPolicyQueryRepository) FindByTrashed(req *requests.FindAllMerch
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetMerchantPoliciesTrashed(r.ctx, reqDb)
+	res, err := r.db.GetMerchantPoliciesTrashed(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, merchantpolicy_errors.ErrFindByTrashedMerchantPolicy
@@ -102,8 +100,8 @@ func (r *merchantPolicyQueryRepository) FindByTrashed(req *requests.FindAllMerch
 	return r.mapping.ToMerchantPolicysRecordTrashedPagination(res), &totalCount, nil
 }
 
-func (r *merchantPolicyQueryRepository) FindById(user_id int) (*record.MerchantPoliciesRecord, error) {
-	res, err := r.db.GetMerchantPolicy(r.ctx, int32(user_id))
+func (r *merchantPolicyQueryRepository) FindById(ctx context.Context, user_id int) (*record.MerchantPoliciesRecord, error) {
+	res, err := r.db.GetMerchantPolicy(ctx, int32(user_id))
 
 	if err != nil {
 		return nil, merchantpolicy_errors.ErrFindByIdMerchantPolicy

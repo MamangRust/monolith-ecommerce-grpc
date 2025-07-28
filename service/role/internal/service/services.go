@@ -27,7 +27,7 @@ func NewService(deps *Deps) *Service {
 	roleMapper := response_service.NewRoleResponseMapper()
 
 	return &Service{
-		RoleQuery:   NewRoleQueryService(deps.Ctx, deps.ErrorHandler.RoleQueryError, deps.Mencache.RoleQueryCache, deps.Repositories.RoleQuery, deps.Logger, roleMapper),
-		RoleCommand: NewRoleCommandService(deps.Ctx, deps.ErrorHandler.RoleCommandError, deps.Mencache.RoleCommandCache, deps.Repositories.RoleCommand, deps.Logger, roleMapper),
+		RoleQuery:   NewRoleQueryService(deps.ErrorHandler.RoleQueryError, deps.Mencache.RoleQueryCache, deps.Repositories.RoleQuery, deps.Logger, roleMapper),
+		RoleCommand: NewRoleCommandService(deps.ErrorHandler.RoleCommandError, deps.Mencache.RoleCommandCache, deps.Repositories.RoleCommand, deps.Logger, roleMapper),
 	}
 }

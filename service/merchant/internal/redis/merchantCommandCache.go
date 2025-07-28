@@ -1,6 +1,9 @@
 package mencache
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 type merchantCommandCache struct {
 	store *CacheStore
@@ -11,8 +14,8 @@ func NewMerchantCommandCache(store *CacheStore) *merchantCommandCache {
 
 }
 
-func (s *merchantCommandCache) DeleteCachedMerchant(id int) {
+func (s *merchantCommandCache) DeleteCachedMerchant(ctx context.Context, id int) {
 	key := fmt.Sprintf(merchantByIdCacheKey, id)
 
-	DeleteFromCache(s.store, key)
+	DeleteFromCache(ctx, s.store, key)
 }

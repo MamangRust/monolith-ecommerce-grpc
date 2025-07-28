@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -35,10 +36,10 @@ func NewBannerQueryCache(store *CacheStore) *bannerQueryCache {
 	return &bannerQueryCache{store: store}
 }
 
-func (b *bannerQueryCache) GetCachedBannersCache(req *requests.FindAllBanner) ([]*response.BannerResponse, *int, bool) {
+func (b *bannerQueryCache) GetCachedBannersCache(ctx context.Context, req *requests.FindAllBanner) ([]*response.BannerResponse, *int, bool) {
 	key := fmt.Sprintf(bannerAllCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[bannerCacheResponse](b.store, key)
+	result, found := GetFromCache[bannerCacheResponse](ctx, b.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -47,7 +48,7 @@ func (b *bannerQueryCache) GetCachedBannersCache(req *requests.FindAllBanner) ([
 	return result.Data, result.Total, true
 }
 
-func (b *bannerQueryCache) SetCachedBannersCache(req *requests.FindAllBanner, data []*response.BannerResponse, total *int) {
+func (b *bannerQueryCache) SetCachedBannersCache(ctx context.Context, req *requests.FindAllBanner, data []*response.BannerResponse, total *int) {
 	if total == nil {
 		zero := 0
 
@@ -56,13 +57,13 @@ func (b *bannerQueryCache) SetCachedBannersCache(req *requests.FindAllBanner, da
 
 	key := fmt.Sprintf(bannerAllCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &bannerCacheResponse{Data: data, Total: total}
-	SetToCache(b.store, key, payload, ttlDefault)
+	SetToCache(ctx, b.store, key, payload, ttlDefault)
 }
 
-func (b *bannerQueryCache) GetCachedBannerActiveCache(req *requests.FindAllBanner) ([]*response.BannerResponseDeleteAt, *int, bool) {
+func (b *bannerQueryCache) GetCachedBannerActiveCache(ctx context.Context, req *requests.FindAllBanner) ([]*response.BannerResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(bannerActiveCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[bannerCacheResponseDeleteAt](b.store, key)
+	result, found := GetFromCache[bannerCacheResponseDeleteAt](ctx, b.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -71,7 +72,7 @@ func (b *bannerQueryCache) GetCachedBannerActiveCache(req *requests.FindAllBanne
 	return result.Data, result.Total, true
 }
 
-func (b *bannerQueryCache) SetCachedBannerActiveCache(req *requests.FindAllBanner, data []*response.BannerResponseDeleteAt, total *int) {
+func (b *bannerQueryCache) SetCachedBannerActiveCache(ctx context.Context, req *requests.FindAllBanner, data []*response.BannerResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -83,13 +84,13 @@ func (b *bannerQueryCache) SetCachedBannerActiveCache(req *requests.FindAllBanne
 
 	key := fmt.Sprintf(bannerActiveCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &bannerCacheResponseDeleteAt{Data: data, Total: total}
-	SetToCache(b.store, key, payload, ttlDefault)
+	SetToCache(ctx, b.store, key, payload, ttlDefault)
 }
 
-func (b *bannerQueryCache) GetCachedBannerTrashedCache(req *requests.FindAllBanner) ([]*response.BannerResponseDeleteAt, *int, bool) {
+func (b *bannerQueryCache) GetCachedBannerTrashedCache(ctx context.Context, req *requests.FindAllBanner) ([]*response.BannerResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(bannerTrashedCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[bannerCacheResponseDeleteAt](b.store, key)
+	result, found := GetFromCache[bannerCacheResponseDeleteAt](ctx, b.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -98,7 +99,7 @@ func (b *bannerQueryCache) GetCachedBannerTrashedCache(req *requests.FindAllBann
 	return result.Data, result.Total, true
 }
 
-func (b *bannerQueryCache) SetCachedBannerTrashedCache(req *requests.FindAllBanner, data []*response.BannerResponseDeleteAt, total *int) {
+func (b *bannerQueryCache) SetCachedBannerTrashedCache(ctx context.Context, req *requests.FindAllBanner, data []*response.BannerResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -110,13 +111,13 @@ func (b *bannerQueryCache) SetCachedBannerTrashedCache(req *requests.FindAllBann
 
 	key := fmt.Sprintf(bannerTrashedCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &bannerCacheResponseDeleteAt{Data: data, Total: total}
-	SetToCache(b.store, key, payload, ttlDefault)
+	SetToCache(ctx, b.store, key, payload, ttlDefault)
 }
 
-func (b *bannerQueryCache) GetCachedBannerCache(id int) (*response.BannerResponse, bool) {
+func (b *bannerQueryCache) GetCachedBannerCache(ctx context.Context, id int) (*response.BannerResponse, bool) {
 	key := fmt.Sprintf(bannerByIdCacheKey, id)
 
-	result, found := GetFromCache[*response.BannerResponse](b.store, key)
+	result, found := GetFromCache[*response.BannerResponse](ctx, b.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -125,12 +126,12 @@ func (b *bannerQueryCache) GetCachedBannerCache(id int) (*response.BannerRespons
 	return *result, true
 }
 
-func (b *bannerQueryCache) SetCachedBannerCache(data *response.BannerResponse) {
+func (b *bannerQueryCache) SetCachedBannerCache(ctx context.Context, data *response.BannerResponse) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(bannerByIdCacheKey, data.ID)
 
-	SetToCache(b.store, key, data, ttlDefault)
+	SetToCache(ctx, b.store, key, data, ttlDefault)
 }

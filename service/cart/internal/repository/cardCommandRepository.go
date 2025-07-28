@@ -12,20 +12,18 @@ import (
 
 type cartCommandRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.CartRecordMapping
 }
 
-func NewCartCommandRepository(db *db.Queries, ctx context.Context, mapping recordmapper.CartRecordMapping) *cartCommandRepository {
+func NewCartCommandRepository(db *db.Queries, mapping recordmapper.CartRecordMapping) *cartCommandRepository {
 	return &cartCommandRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *cartCommandRepository) CreateCart(req *requests.CartCreateRecord) (*record.CartRecord, error) {
-	res, err := r.db.CreateCart(r.ctx, db.CreateCartParams{
+func (r *cartCommandRepository) CreateCart(ctx context.Context, req *requests.CartCreateRecord) (*record.CartRecord, error) {
+	res, err := r.db.CreateCart(ctx, db.CreateCartParams{
 		UserID:    int32(req.UserID),
 		ProductID: int32(req.ProductID),
 		Name:      req.Name,
@@ -42,8 +40,8 @@ func (r *cartCommandRepository) CreateCart(req *requests.CartCreateRecord) (*rec
 	return r.mapping.ToCartRecord(res), nil
 }
 
-func (r *cartCommandRepository) DeletePermanent(req *requests.DeleteCartRequest) (bool, error) {
-	err := r.db.DeleteCartByIdAndUserId(r.ctx, db.DeleteCartByIdAndUserIdParams{
+func (r *cartCommandRepository) DeletePermanent(ctx context.Context, req *requests.DeleteCartRequest) (bool, error) {
+	err := r.db.DeleteCartByIdAndUserId(ctx, db.DeleteCartByIdAndUserIdParams{
 		UserID: int32(req.UserID),
 		CartID: int32(req.CartID),
 	})
@@ -55,14 +53,14 @@ func (r *cartCommandRepository) DeletePermanent(req *requests.DeleteCartRequest)
 	return true, nil
 }
 
-func (r *cartCommandRepository) DeleteAllPermanently(req *requests.DeleteAllCartRequest) (bool, error) {
+func (r *cartCommandRepository) DeleteAllPermanently(ctx context.Context, req *requests.DeleteAllCartRequest) (bool, error) {
 	cartIDs := make([]int32, len(req.CartIds))
 
 	for i, id := range req.CartIds {
 		cartIDs[i] = int32(id)
 	}
 
-	err := r.db.DeleteAllCartByUserId(r.ctx, db.DeleteAllCartByUserIdParams{
+	err := r.db.DeleteAllCartByUserId(ctx, db.DeleteAllCartByUserIdParams{
 		UserID:  int32(req.UserID),
 		Column1: cartIDs,
 	})

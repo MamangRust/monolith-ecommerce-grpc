@@ -12,19 +12,17 @@ import (
 
 type transactionQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.TransactionRecordMapping
 }
 
-func NewTransactionQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.TransactionRecordMapping) *transactionQueryRepository {
+func NewTransactionQueryRepository(db *db.Queries, mapping recordmapper.TransactionRecordMapping) *transactionQueryRepository {
 	return &transactionQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *transactionQueryRepository) FindAllTransactions(req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error) {
+func (r *transactionQueryRepository) FindAllTransactions(ctx context.Context, req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetTransactionsParams{
@@ -33,7 +31,7 @@ func (r *transactionQueryRepository) FindAllTransactions(req *requests.FindAllTr
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetTransactions(r.ctx, reqDb)
+	res, err := r.db.GetTransactions(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, transaction_errors.ErrFindAllTransactions
@@ -50,7 +48,7 @@ func (r *transactionQueryRepository) FindAllTransactions(req *requests.FindAllTr
 	return r.mapping.ToTransactionsRecordPagination(res), &totalCount, nil
 }
 
-func (r *transactionQueryRepository) FindByActive(req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error) {
+func (r *transactionQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetTransactionsActiveParams{
@@ -59,7 +57,7 @@ func (r *transactionQueryRepository) FindByActive(req *requests.FindAllTransacti
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetTransactionsActive(r.ctx, reqDb)
+	res, err := r.db.GetTransactionsActive(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, transaction_errors.ErrFindByActive
@@ -76,7 +74,7 @@ func (r *transactionQueryRepository) FindByActive(req *requests.FindAllTransacti
 	return r.mapping.ToTransactionsRecordActivePagination(res), &totalCount, nil
 }
 
-func (r *transactionQueryRepository) FindByTrashed(req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error) {
+func (r *transactionQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetTransactionsTrashedParams{
@@ -85,7 +83,7 @@ func (r *transactionQueryRepository) FindByTrashed(req *requests.FindAllTransact
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetTransactionsTrashed(r.ctx, reqDb)
+	res, err := r.db.GetTransactionsTrashed(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, transaction_errors.ErrFindByTrashed
@@ -103,6 +101,7 @@ func (r *transactionQueryRepository) FindByTrashed(req *requests.FindAllTransact
 }
 
 func (r *transactionQueryRepository) FindByMerchant(
+	ctx context.Context,
 	req *requests.FindAllTransactionByMerchant,
 ) ([]*record.TransactionRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
@@ -114,7 +113,7 @@ func (r *transactionQueryRepository) FindByMerchant(
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetTransactionByMerchant(r.ctx, reqDb)
+	res, err := r.db.GetTransactionByMerchant(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, transaction_errors.ErrFindByMerchant
@@ -131,8 +130,8 @@ func (r *transactionQueryRepository) FindByMerchant(
 	return r.mapping.ToTransactionMerchantsRecordPagination(res), &totalCount, nil
 }
 
-func (r *transactionQueryRepository) FindById(transaction_id int) (*record.TransactionRecord, error) {
-	res, err := r.db.GetTransactionByID(r.ctx, int32(transaction_id))
+func (r *transactionQueryRepository) FindById(ctx context.Context, transaction_id int) (*record.TransactionRecord, error) {
+	res, err := r.db.GetTransactionByID(ctx, int32(transaction_id))
 
 	if err != nil {
 		return nil, transaction_errors.ErrFindById
@@ -141,8 +140,8 @@ func (r *transactionQueryRepository) FindById(transaction_id int) (*record.Trans
 	return r.mapping.ToTransactionRecord(res), nil
 }
 
-func (r *transactionQueryRepository) FindByOrderId(order_id int) (*record.TransactionRecord, error) {
-	res, err := r.db.GetTransactionByOrderID(r.ctx, int32(order_id))
+func (r *transactionQueryRepository) FindByOrderId(ctx context.Context, order_id int) (*record.TransactionRecord, error) {
+	res, err := r.db.GetTransactionByOrderID(ctx, int32(order_id))
 
 	if err != nil {
 		return nil, transaction_errors.ErrFindByOrderId

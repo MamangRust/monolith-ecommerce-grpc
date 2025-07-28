@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
@@ -19,16 +20,16 @@ func NewPasswordResetCache(store *CacheStore) *passwordResetCache {
 	return &passwordResetCache{store: store}
 }
 
-func (c *passwordResetCache) SetResetTokenCache(token string, userID int, expiration time.Duration) {
+func (c *passwordResetCache) SetResetTokenCache(ctx context.Context, token string, userID int, expiration time.Duration) {
 	key := fmt.Sprintf(keyPasswordResetToken, userID)
 
-	SetToCache(c.store, key, &userID, expiration)
+	SetToCache(ctx, c.store, key, &userID, expiration)
 }
 
-func (c *passwordResetCache) GetResetTokenCache(token string) (int, bool) {
+func (c *passwordResetCache) GetResetTokenCache(ctx context.Context, token string) (int, bool) {
 	key := fmt.Sprintf(keyPasswordResetToken, token)
 
-	result, found := GetFromCache[int](c.store, key)
+	result, found := GetFromCache[int](ctx, c.store, key)
 
 	if !found || result == nil {
 		return 0, false
@@ -37,14 +38,14 @@ func (c *passwordResetCache) GetResetTokenCache(token string) (int, bool) {
 	return *result, true
 }
 
-func (c *passwordResetCache) DeleteResetTokenCache(token string) {
+func (c *passwordResetCache) DeleteResetTokenCache(ctx context.Context, token string) {
 	key := fmt.Sprintf(keyPasswordResetToken, token)
 
-	DeleteFromCache(c.store, key)
+	DeleteFromCache(ctx, c.store, key)
 }
 
-func (c *passwordResetCache) DeleteVerificationCodeCache(email string) {
+func (c *passwordResetCache) DeleteVerificationCodeCache(ctx context.Context, email string) {
 	key := fmt.Sprintf(keyVerifyCode, email)
 
-	DeleteFromCache(c.store, key)
+	DeleteFromCache(ctx, c.store, key)
 }

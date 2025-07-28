@@ -3,7 +3,7 @@ module github.com/MamangRust/monolith-ecommerce-grpc-shipping-address
 go 1.23.4
 
 require (
-	github.com/MamangRust/monolith-ecommerce-pkg v1.0.10
+	github.com/MamangRust/monolith-ecommerce-pkg v1.0.11
 	github.com/MamangRust/monolith-ecommerce-shared v1.0.15
 	github.com/prometheus/client_golang v1.22.0
 	github.com/redis/go-redis/v9 v9.10.0

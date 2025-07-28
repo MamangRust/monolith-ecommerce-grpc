@@ -50,7 +50,7 @@ func (s *merchantDocumentHandleGrpc) FindAll(ctx context.Context, req *pb.FindAl
 		Search:   search,
 	}
 
-	documents, totalRecords, err := s.merchantDocumentQuery.FindAll(&reqService)
+	documents, totalRecords, err := s.merchantDocumentQuery.FindAll(ctx, &reqService)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -74,7 +74,7 @@ func (s *merchantDocumentHandleGrpc) FindById(ctx context.Context, req *pb.FindM
 		return nil, merchantdocument_errors.ErrGrpcMerchantInvalidID
 	}
 
-	document, err := s.merchantDocumentQuery.FindById(id)
+	document, err := s.merchantDocumentQuery.FindById(ctx, id)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -101,7 +101,7 @@ func (s *merchantDocumentHandleGrpc) FindAllActive(ctx context.Context, req *pb.
 		Search:   search,
 	}
 
-	documents, totalRecords, err := s.merchantDocumentQuery.FindByActive(&reqService)
+	documents, totalRecords, err := s.merchantDocumentQuery.FindByActive(ctx, &reqService)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -136,7 +136,7 @@ func (s *merchantDocumentHandleGrpc) FindAllTrashed(ctx context.Context, req *pb
 		Search:   search,
 	}
 
-	documents, totalRecords, err := s.merchantDocumentQuery.FindByTrashed(&reqService)
+	documents, totalRecords, err := s.merchantDocumentQuery.FindByTrashed(ctx, &reqService)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -164,7 +164,7 @@ func (s *merchantDocumentHandleGrpc) Create(ctx context.Context, req *pb.CreateM
 		return nil, merchantdocument_errors.ErrGrpcValidateCreateMerchantDocument
 	}
 
-	document, err := s.merchantDocumentCommand.CreateMerchantDocument(&request)
+	document, err := s.merchantDocumentCommand.CreateMerchantDocument(ctx, &request)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -192,7 +192,7 @@ func (s *merchantDocumentHandleGrpc) Update(ctx context.Context, req *pb.UpdateM
 		return nil, merchantdocument_errors.ErrGrpcFailedUpdateMerchantDocument
 	}
 
-	document, err := s.merchantDocumentCommand.UpdateMerchantDocument(&request)
+	document, err := s.merchantDocumentCommand.UpdateMerchantDocument(ctx, &request)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -218,7 +218,7 @@ func (s *merchantDocumentHandleGrpc) UpdateStatus(ctx context.Context, req *pb.U
 		return nil, merchantdocument_errors.ErrGrpcFailedUpdateMerchantDocument
 	}
 
-	document, err := s.merchantDocumentCommand.UpdateMerchantDocumentStatus(&request)
+	document, err := s.merchantDocumentCommand.UpdateMerchantDocumentStatus(ctx, &request)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -233,7 +233,7 @@ func (s *merchantDocumentHandleGrpc) Trashed(ctx context.Context, req *pb.Trashe
 		return nil, merchantdocument_errors.ErrGrpcMerchantInvalidID
 	}
 
-	document, err := s.merchantDocumentCommand.TrashedMerchantDocument(id)
+	document, err := s.merchantDocumentCommand.TrashedMerchantDocument(ctx, id)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -248,7 +248,7 @@ func (s *merchantDocumentHandleGrpc) Restore(ctx context.Context, req *pb.Restor
 		return nil, merchantdocument_errors.ErrGrpcMerchantInvalidID
 	}
 
-	document, err := s.merchantDocumentCommand.RestoreMerchantDocument(id)
+	document, err := s.merchantDocumentCommand.RestoreMerchantDocument(ctx, id)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -263,7 +263,7 @@ func (s *merchantDocumentHandleGrpc) DeletePermanent(ctx context.Context, req *p
 		return nil, merchantdocument_errors.ErrGrpcMerchantInvalidID
 	}
 
-	_, err := s.merchantDocumentCommand.DeleteMerchantDocumentPermanent(id)
+	_, err := s.merchantDocumentCommand.DeleteMerchantDocumentPermanent(ctx, id)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -272,7 +272,7 @@ func (s *merchantDocumentHandleGrpc) DeletePermanent(ctx context.Context, req *p
 }
 
 func (s *merchantDocumentHandleGrpc) RestoreAll(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseMerchantDocumentAll, error) {
-	_, err := s.merchantDocumentCommand.RestoreAllMerchantDocument()
+	_, err := s.merchantDocumentCommand.RestoreAllMerchantDocument(ctx)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -281,7 +281,7 @@ func (s *merchantDocumentHandleGrpc) RestoreAll(ctx context.Context, _ *emptypb.
 }
 
 func (s *merchantDocumentHandleGrpc) DeleteAllPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseMerchantDocumentAll, error) {
-	_, err := s.merchantDocumentCommand.DeleteAllMerchantDocumentPermanent()
+	_, err := s.merchantDocumentCommand.DeleteAllMerchantDocumentPermanent(ctx)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}

@@ -13,19 +13,17 @@ import (
 
 type merchantDetailCommandRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.MerchantDetailMapping
 }
 
-func NewMerchantDetailCommandRepository(db *db.Queries, ctx context.Context, mapping recordmapper.MerchantDetailMapping) *merchantDetailCommandRepository {
+func NewMerchantDetailCommandRepository(db *db.Queries, mapping recordmapper.MerchantDetailMapping) *merchantDetailCommandRepository {
 	return &merchantDetailCommandRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *merchantDetailCommandRepository) CreateMerchantDetail(request *requests.CreateMerchantDetailRequest) (*record.MerchantDetailRecord, error) {
+func (r *merchantDetailCommandRepository) CreateMerchantDetail(ctx context.Context, request *requests.CreateMerchantDetailRequest) (*record.MerchantDetailRecord, error) {
 	req := db.CreateMerchantDetailParams{
 		MerchantID:       int32(request.MerchantID),
 		DisplayName:      sql.NullString{String: request.DisplayName, Valid: true},
@@ -35,7 +33,7 @@ func (r *merchantDetailCommandRepository) CreateMerchantDetail(request *requests
 		WebsiteUrl:       sql.NullString{String: request.WebsiteUrl, Valid: request.WebsiteUrl != ""},
 	}
 
-	merchant, err := r.db.CreateMerchantDetail(r.ctx, req)
+	merchant, err := r.db.CreateMerchantDetail(ctx, req)
 	if err != nil {
 		return nil, merchantdetail_errors.ErrCreateMerchantDetail
 	}
@@ -43,7 +41,7 @@ func (r *merchantDetailCommandRepository) CreateMerchantDetail(request *requests
 	return r.mapping.ToMerchantDetailRecord(merchant), nil
 }
 
-func (r *merchantDetailCommandRepository) UpdateMerchantDetail(request *requests.UpdateMerchantDetailRequest) (*record.MerchantDetailRecord, error) {
+func (r *merchantDetailCommandRepository) UpdateMerchantDetail(ctx context.Context, request *requests.UpdateMerchantDetailRequest) (*record.MerchantDetailRecord, error) {
 	req := db.UpdateMerchantDetailParams{
 		MerchantDetailID: int32(*request.MerchantDetailID),
 		DisplayName:      sql.NullString{String: request.DisplayName, Valid: true},
@@ -53,7 +51,7 @@ func (r *merchantDetailCommandRepository) UpdateMerchantDetail(request *requests
 		WebsiteUrl:       sql.NullString{String: request.WebsiteUrl, Valid: request.WebsiteUrl != ""},
 	}
 
-	res, err := r.db.UpdateMerchantDetail(r.ctx, req)
+	res, err := r.db.UpdateMerchantDetail(ctx, req)
 	if err != nil {
 		return nil, merchantdetail_errors.ErrUpdateMerchantDetail
 	}
@@ -61,8 +59,8 @@ func (r *merchantDetailCommandRepository) UpdateMerchantDetail(request *requests
 	return r.mapping.ToMerchantDetailRecord(res), nil
 }
 
-func (r *merchantDetailCommandRepository) TrashedMerchantDetail(merchant_id int) (*record.MerchantDetailRecord, error) {
-	res, err := r.db.TrashMerchantDetail(r.ctx, int32(merchant_id))
+func (r *merchantDetailCommandRepository) TrashedMerchantDetail(ctx context.Context, merchant_id int) (*record.MerchantDetailRecord, error) {
+	res, err := r.db.TrashMerchantDetail(ctx, int32(merchant_id))
 
 	if err != nil {
 		return nil, merchantdetail_errors.ErrTrashedMerchantDetail
@@ -71,8 +69,8 @@ func (r *merchantDetailCommandRepository) TrashedMerchantDetail(merchant_id int)
 	return r.mapping.ToMerchantDetailRecord(res), nil
 }
 
-func (r *merchantDetailCommandRepository) RestoreMerchantDetail(merchant_id int) (*record.MerchantDetailRecord, error) {
-	res, err := r.db.RestoreMerchantDetail(r.ctx, int32(merchant_id))
+func (r *merchantDetailCommandRepository) RestoreMerchantDetail(ctx context.Context, merchant_id int) (*record.MerchantDetailRecord, error) {
+	res, err := r.db.RestoreMerchantDetail(ctx, int32(merchant_id))
 
 	if err != nil {
 		return nil, merchantdetail_errors.ErrRestoreMerchantDetail
@@ -81,8 +79,8 @@ func (r *merchantDetailCommandRepository) RestoreMerchantDetail(merchant_id int)
 	return r.mapping.ToMerchantDetailRecord(res), nil
 }
 
-func (r *merchantDetailCommandRepository) DeleteMerchantDetailPermanent(Merchant_id int) (bool, error) {
-	err := r.db.DeleteMerchantDetailPermanently(r.ctx, int32(Merchant_id))
+func (r *merchantDetailCommandRepository) DeleteMerchantDetailPermanent(ctx context.Context, Merchant_id int) (bool, error) {
+	err := r.db.DeleteMerchantDetailPermanently(ctx, int32(Merchant_id))
 
 	if err != nil {
 		return false, merchantdetail_errors.ErrDeleteMerchantDetailPermanent
@@ -91,8 +89,8 @@ func (r *merchantDetailCommandRepository) DeleteMerchantDetailPermanent(Merchant
 	return true, nil
 }
 
-func (r *merchantDetailCommandRepository) RestoreAllMerchantDetail() (bool, error) {
-	err := r.db.RestoreAllMerchantDetails(r.ctx)
+func (r *merchantDetailCommandRepository) RestoreAllMerchantDetail(ctx context.Context) (bool, error) {
+	err := r.db.RestoreAllMerchantDetails(ctx)
 
 	if err != nil {
 		return false, merchantdetail_errors.ErrRestoreAllMerchantDetails
@@ -100,8 +98,8 @@ func (r *merchantDetailCommandRepository) RestoreAllMerchantDetail() (bool, erro
 	return true, nil
 }
 
-func (r *merchantDetailCommandRepository) DeleteAllMerchantDetailPermanent() (bool, error) {
-	err := r.db.DeleteAllPermanentMerchantDetails(r.ctx)
+func (r *merchantDetailCommandRepository) DeleteAllMerchantDetailPermanent(ctx context.Context) (bool, error) {
+	err := r.db.DeleteAllPermanentMerchantDetails(ctx)
 
 	if err != nil {
 		return false, merchantdetail_errors.ErrDeleteAllMerchantDetailsPermanent

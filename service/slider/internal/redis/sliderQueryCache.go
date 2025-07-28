@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -34,10 +35,10 @@ func NewSliderQueryCache(store *CacheStore) *sliderQueryCache {
 	return &sliderQueryCache{store: store}
 }
 
-func (s *sliderQueryCache) GetSliderAllCache(req *requests.FindAllSlider) ([]*response.SliderResponse, *int, bool) {
+func (s *sliderQueryCache) GetSliderAllCache(ctx context.Context, req *requests.FindAllSlider) ([]*response.SliderResponse, *int, bool) {
 	key := fmt.Sprintf(sliderAllCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[sliderCacheResposne](s.store, key)
+	result, found := GetFromCache[sliderCacheResposne](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -46,7 +47,7 @@ func (s *sliderQueryCache) GetSliderAllCache(req *requests.FindAllSlider) ([]*re
 	return result.Data, result.Total, true
 }
 
-func (s *sliderQueryCache) SetSliderAllCache(req *requests.FindAllSlider, data []*response.SliderResponse, total *int) {
+func (s *sliderQueryCache) SetSliderAllCache(ctx context.Context, req *requests.FindAllSlider, data []*response.SliderResponse, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -58,12 +59,12 @@ func (s *sliderQueryCache) SetSliderAllCache(req *requests.FindAllSlider, data [
 
 	key := fmt.Sprintf(sliderAllCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &sliderCacheResposne{Data: data, Total: total}
-	SetToCache(s.store, key, payload, ttlDefault)
+	SetToCache(ctx, s.store, key, payload, ttlDefault)
 }
 
-func (s *sliderQueryCache) GetSliderActiveCache(req *requests.FindAllSlider) ([]*response.SliderResponseDeleteAt, *int, bool) {
+func (s *sliderQueryCache) GetSliderActiveCache(ctx context.Context, req *requests.FindAllSlider) ([]*response.SliderResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(sliderActiveCacheKey, req.Page, req.PageSize, req.Search)
-	result, found := GetFromCache[sliderCacheResposneDeleteAt](s.store, key)
+	result, found := GetFromCache[sliderCacheResposneDeleteAt](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -72,7 +73,7 @@ func (s *sliderQueryCache) GetSliderActiveCache(req *requests.FindAllSlider) ([]
 	return result.Data, result.Total, true
 }
 
-func (s *sliderQueryCache) SetSliderActiveCache(req *requests.FindAllSlider, data []*response.SliderResponseDeleteAt, total *int) {
+func (s *sliderQueryCache) SetSliderActiveCache(ctx context.Context, req *requests.FindAllSlider, data []*response.SliderResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -84,12 +85,12 @@ func (s *sliderQueryCache) SetSliderActiveCache(req *requests.FindAllSlider, dat
 
 	key := fmt.Sprintf(sliderActiveCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &sliderCacheResposneDeleteAt{Data: data, Total: total}
-	SetToCache(s.store, key, payload, ttlDefault)
+	SetToCache(ctx, s.store, key, payload, ttlDefault)
 }
 
-func (s *sliderQueryCache) GetSliderTrashedCache(req *requests.FindAllSlider) ([]*response.SliderResponseDeleteAt, *int, bool) {
+func (s *sliderQueryCache) GetSliderTrashedCache(ctx context.Context, req *requests.FindAllSlider) ([]*response.SliderResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(sliderTrashedCacheKey, req.Page, req.PageSize, req.Search)
-	result, found := GetFromCache[sliderCacheResposneDeleteAt](s.store, key)
+	result, found := GetFromCache[sliderCacheResposneDeleteAt](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -98,7 +99,7 @@ func (s *sliderQueryCache) GetSliderTrashedCache(req *requests.FindAllSlider) ([
 	return result.Data, result.Total, true
 }
 
-func (s *sliderQueryCache) SetSliderTrashedCache(req *requests.FindAllSlider, data []*response.SliderResponseDeleteAt, total *int) {
+func (s *sliderQueryCache) SetSliderTrashedCache(ctx context.Context, req *requests.FindAllSlider, data []*response.SliderResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -110,5 +111,5 @@ func (s *sliderQueryCache) SetSliderTrashedCache(req *requests.FindAllSlider, da
 
 	key := fmt.Sprintf(sliderTrashedCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &sliderCacheResposneDeleteAt{Data: data, Total: total}
-	SetToCache(s.store, key, payload, ttlDefault)
+	SetToCache(ctx, s.store, key, payload, ttlDefault)
 }

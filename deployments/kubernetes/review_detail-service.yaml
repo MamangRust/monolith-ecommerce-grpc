@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: review_detail
+  namespace: ecommerce
+spec:
+  selector:
+    app: review_detail
+  ports:
+    - name: http-metrics
+      port: 8099
+      targetPort: 8099
+    - name: grpc
+      port: 50069
+      targetPort: 50069
+  type: ClusterIP

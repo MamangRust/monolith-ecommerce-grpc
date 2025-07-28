@@ -12,19 +12,17 @@ import (
 
 type reviewCommandRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.ReviewRecordMapping
 }
 
-func NewReviewCommandRepository(db *db.Queries, ctx context.Context, mapping recordmapper.ReviewRecordMapping) *reviewCommandRepository {
+func NewReviewCommandRepository(db *db.Queries, mapping recordmapper.ReviewRecordMapping) *reviewCommandRepository {
 	return &reviewCommandRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *reviewCommandRepository) CreateReview(request *requests.CreateReviewRequest) (*record.ReviewRecord, error) {
+func (r *reviewCommandRepository) CreateReview(ctx context.Context, request *requests.CreateReviewRequest) (*record.ReviewRecord, error) {
 	req := db.CreateReviewParams{
 		UserID:    int32(request.UserID),
 		ProductID: int32(request.ProductID),
@@ -32,7 +30,7 @@ func (r *reviewCommandRepository) CreateReview(request *requests.CreateReviewReq
 		Comment:   request.Comment,
 	}
 
-	review, err := r.db.CreateReview(r.ctx, req)
+	review, err := r.db.CreateReview(ctx, req)
 
 	if err != nil {
 		return nil, review_errors.ErrCreateReview
@@ -41,7 +39,7 @@ func (r *reviewCommandRepository) CreateReview(request *requests.CreateReviewReq
 	return r.mapping.ToReviewRecord(review), nil
 }
 
-func (r *reviewCommandRepository) UpdateReview(request *requests.UpdateReviewRequest) (*record.ReviewRecord, error) {
+func (r *reviewCommandRepository) UpdateReview(ctx context.Context, request *requests.UpdateReviewRequest) (*record.ReviewRecord, error) {
 	req := db.UpdateReviewParams{
 		ReviewID: int32(*request.ReviewID),
 		Name:     request.Name,
@@ -49,7 +47,7 @@ func (r *reviewCommandRepository) UpdateReview(request *requests.UpdateReviewReq
 		Comment:  request.Comment,
 	}
 
-	res, err := r.db.UpdateReview(r.ctx, req)
+	res, err := r.db.UpdateReview(ctx, req)
 
 	if err != nil {
 		return nil, review_errors.ErrUpdateReview
@@ -58,8 +56,8 @@ func (r *reviewCommandRepository) UpdateReview(request *requests.UpdateReviewReq
 	return r.mapping.ToReviewRecord(res), nil
 }
 
-func (r *reviewCommandRepository) TrashReview(shipping_id int) (*record.ReviewRecord, error) {
-	res, err := r.db.TrashReview(r.ctx, int32(shipping_id))
+func (r *reviewCommandRepository) TrashReview(ctx context.Context, shipping_id int) (*record.ReviewRecord, error) {
+	res, err := r.db.TrashReview(ctx, int32(shipping_id))
 
 	if err != nil {
 		return nil, review_errors.ErrTrashReview
@@ -68,8 +66,8 @@ func (r *reviewCommandRepository) TrashReview(shipping_id int) (*record.ReviewRe
 	return r.mapping.ToReviewRecord(res), nil
 }
 
-func (r *reviewCommandRepository) RestoreReview(category_id int) (*record.ReviewRecord, error) {
-	res, err := r.db.RestoreReview(r.ctx, int32(category_id))
+func (r *reviewCommandRepository) RestoreReview(ctx context.Context, category_id int) (*record.ReviewRecord, error) {
+	res, err := r.db.RestoreReview(ctx, int32(category_id))
 
 	if err != nil {
 		return nil, review_errors.ErrRestoreReview
@@ -78,8 +76,8 @@ func (r *reviewCommandRepository) RestoreReview(category_id int) (*record.Review
 	return r.mapping.ToReviewRecord(res), nil
 }
 
-func (r *reviewCommandRepository) DeleteReviewPermanently(category_id int) (bool, error) {
-	err := r.db.DeleteReviewPermanently(r.ctx, int32(category_id))
+func (r *reviewCommandRepository) DeleteReviewPermanently(ctx context.Context, category_id int) (bool, error) {
+	err := r.db.DeleteReviewPermanently(ctx, int32(category_id))
 
 	if err != nil {
 		return false, review_errors.ErrDeleteReviewPermanent
@@ -88,8 +86,8 @@ func (r *reviewCommandRepository) DeleteReviewPermanently(category_id int) (bool
 	return true, nil
 }
 
-func (r *reviewCommandRepository) RestoreAllReview() (bool, error) {
-	err := r.db.RestoreAllReviews(r.ctx)
+func (r *reviewCommandRepository) RestoreAllReview(ctx context.Context) (bool, error) {
+	err := r.db.RestoreAllReviews(ctx)
 
 	if err != nil {
 		return false, review_errors.ErrRestoreAllReviews
@@ -97,8 +95,8 @@ func (r *reviewCommandRepository) RestoreAllReview() (bool, error) {
 	return true, nil
 }
 
-func (r *reviewCommandRepository) DeleteAllPermanentReview() (bool, error) {
-	err := r.db.DeleteAllPermanentReviews(r.ctx)
+func (r *reviewCommandRepository) DeleteAllPermanentReview(ctx context.Context) (bool, error) {
+	err := r.db.DeleteAllPermanentReviews(ctx)
 
 	if err != nil {
 		return false, review_errors.ErrDeleteAllPermanentReview

@@ -46,7 +46,7 @@ func (s *sliderHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllSlide
 		Search:   search,
 	}
 
-	category, totalRecords, err := s.sliderQuery.FindAll(&reqService)
+	category, totalRecords, err := s.sliderQuery.FindAll(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -83,7 +83,7 @@ func (s *sliderHandleGrpc) FindByActive(ctx context.Context, request *pb.FindAll
 		Search:   search,
 	}
 
-	users, totalRecords, err := s.sliderQuery.FindByActive(&reqService)
+	users, totalRecords, err := s.sliderQuery.FindByActive(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -120,7 +120,7 @@ func (s *sliderHandleGrpc) FindByTrashed(ctx context.Context, request *pb.FindAl
 		Search:   search,
 	}
 
-	users, totalRecords, err := s.sliderQuery.FindByTrashed(&reqService)
+	users, totalRecords, err := s.sliderQuery.FindByTrashed(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -150,7 +150,7 @@ func (s *sliderHandleGrpc) Create(ctx context.Context, request *pb.CreateSliderR
 		return nil, slider_errors.ErrGrpcValidateCreateSlider
 	}
 
-	slider, err := s.sliderCommand.CreateSlider(req)
+	slider, err := s.sliderCommand.CreateSlider(ctx, req)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -176,7 +176,7 @@ func (s *sliderHandleGrpc) Update(ctx context.Context, request *pb.UpdateSliderR
 		return nil, slider_errors.ErrGrpcValidateUpdateSlider
 	}
 
-	slider, err := s.sliderCommand.UpdateSlider(req)
+	slider, err := s.sliderCommand.UpdateSlider(ctx, req)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -192,7 +192,7 @@ func (s *sliderHandleGrpc) TrashedSlider(ctx context.Context, request *pb.FindBy
 		return nil, slider_errors.ErrGrpcInvalidID
 	}
 
-	slider, err := s.sliderCommand.TrashedSlider(id)
+	slider, err := s.sliderCommand.TrashedSlider(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -210,7 +210,7 @@ func (s *sliderHandleGrpc) RestoreSlider(ctx context.Context, request *pb.FindBy
 		return nil, slider_errors.ErrGrpcInvalidID
 	}
 
-	slider, err := s.sliderCommand.RestoreSlider(id)
+	slider, err := s.sliderCommand.RestoreSlider(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -228,7 +228,7 @@ func (s *sliderHandleGrpc) DeleteSliderPermanent(ctx context.Context, request *p
 		return nil, slider_errors.ErrGrpcInvalidID
 	}
 
-	_, err := s.sliderCommand.DeleteSliderPermanent(id)
+	_, err := s.sliderCommand.DeleteSliderPermanent(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -240,7 +240,7 @@ func (s *sliderHandleGrpc) DeleteSliderPermanent(ctx context.Context, request *p
 }
 
 func (s *sliderHandleGrpc) RestoreAllSlider(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseSliderAll, error) {
-	_, err := s.sliderCommand.RestoreAllSliders()
+	_, err := s.sliderCommand.RestoreAllSliders(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -252,7 +252,7 @@ func (s *sliderHandleGrpc) RestoreAllSlider(ctx context.Context, _ *emptypb.Empt
 }
 
 func (s *sliderHandleGrpc) DeleteAllSliderPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseSliderAll, error) {
-	_, err := s.sliderCommand.DeleteAllSlidersPermanent()
+	_, err := s.sliderCommand.DeleteAllSlidersPermanent(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)

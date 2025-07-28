@@ -47,7 +47,7 @@ func (s *merchantHandleGrpc) FindAllMerchant(ctx context.Context, req *pb.FindAl
 		Search:   search,
 	}
 
-	merchants, totalRecords, err := s.merchantQuery.FindAll(&reqService)
+	merchants, totalRecords, err := s.merchantQuery.FindAll(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -84,7 +84,7 @@ func (s *merchantHandleGrpc) FindByActive(ctx context.Context, req *pb.FindAllMe
 		Search:   search,
 	}
 
-	res, totalRecords, err := s.merchantQuery.FindByActive(&reqService)
+	res, totalRecords, err := s.merchantQuery.FindByActive(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -100,8 +100,8 @@ func (s *merchantHandleGrpc) FindByActive(ctx context.Context, req *pb.FindAllMe
 	}
 
 	so := s.mapping.ToProtoResponsePaginationMerchantDeleteAt(paginationMeta, "success", "Successfully fetched merchant record", res)
-
 	return so, nil
+
 }
 
 func (s *merchantHandleGrpc) FindByTrashed(ctx context.Context, req *pb.FindAllMerchantRequest) (*pb.ApiResponsePaginationMerchantDeleteAt, error) {
@@ -122,7 +122,7 @@ func (s *merchantHandleGrpc) FindByTrashed(ctx context.Context, req *pb.FindAllM
 		Search:   search,
 	}
 
-	res, totalRecords, err := s.merchantQuery.FindByTrashed(&reqService)
+	res, totalRecords, err := s.merchantQuery.FindByTrashed(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -149,7 +149,7 @@ func (s *merchantHandleGrpc) FindById(ctx context.Context, request *pb.FindByIdM
 		return nil, merchant_errors.ErrGrpcInvalidMerchantId
 	}
 
-	merchant, err := s.merchantQuery.FindById(id)
+	merchant, err := s.merchantQuery.FindById(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -176,7 +176,7 @@ func (s *merchantHandleGrpc) Create(ctx context.Context, request *pb.CreateMerch
 		return nil, merchant_errors.ErrGrpcValidateCreateMerchant
 	}
 
-	merchant, err := s.merchantCommand.CreateMerchant(req)
+	merchant, err := s.merchantCommand.CreateMerchant(ctx, req)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -208,7 +208,7 @@ func (s *merchantHandleGrpc) Update(ctx context.Context, request *pb.UpdateMerch
 		return nil, merchant_errors.ErrGrpcValidateUpdateMerchant
 	}
 
-	merchant, err := s.merchantCommand.UpdateMerchant(req)
+	merchant, err := s.merchantCommand.UpdateMerchant(ctx, req)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -234,7 +234,7 @@ func (s *merchantHandleGrpc) UpdateStatus(ctx context.Context, req *pb.UpdateMer
 		return nil, merchant_errors.ErrGrpcValidateUpdateMerchantStatus
 	}
 
-	merchant, err := s.merchantCommand.UpdateMerchantStatus(&request)
+	merchant, err := s.merchantCommand.UpdateMerchantStatus(ctx, &request)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -252,7 +252,7 @@ func (s *merchantHandleGrpc) TrashedMerchant(ctx context.Context, request *pb.Fi
 		return nil, merchant_errors.ErrGrpcInvalidMerchantId
 	}
 
-	merchant, err := s.merchantCommand.TrashedMerchant(id)
+	merchant, err := s.merchantCommand.TrashedMerchant(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -270,7 +270,7 @@ func (s *merchantHandleGrpc) RestoreMerchant(ctx context.Context, request *pb.Fi
 		return nil, merchant_errors.ErrGrpcInvalidMerchantId
 	}
 
-	merchant, err := s.merchantCommand.RestoreMerchant(id)
+	merchant, err := s.merchantCommand.RestoreMerchant(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -288,7 +288,7 @@ func (s *merchantHandleGrpc) DeleteMerchantPermanent(ctx context.Context, reques
 		return nil, merchant_errors.ErrGrpcInvalidMerchantId
 	}
 
-	_, err := s.merchantCommand.DeleteMerchantPermanent(id)
+	_, err := s.merchantCommand.DeleteMerchantPermanent(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -300,7 +300,7 @@ func (s *merchantHandleGrpc) DeleteMerchantPermanent(ctx context.Context, reques
 }
 
 func (s *merchantHandleGrpc) RestoreAllMerchant(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseMerchantAll, error) {
-	_, err := s.merchantCommand.RestoreAllMerchant()
+	_, err := s.merchantCommand.RestoreAllMerchant(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -312,7 +312,7 @@ func (s *merchantHandleGrpc) RestoreAllMerchant(ctx context.Context, _ *emptypb.
 }
 
 func (s *merchantHandleGrpc) DeleteAllMerchantPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseMerchantAll, error) {
-	_, err := s.merchantCommand.DeleteAllMerchantPermanent()
+	_, err := s.merchantCommand.DeleteAllMerchantPermanent(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)

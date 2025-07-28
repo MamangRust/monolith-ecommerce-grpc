@@ -21,7 +21,6 @@ import (
 )
 
 type loginService struct {
-	ctx             context.Context
 	errorPassword   errorhandler.PasswordErrorHandler
 	errorToken      errorhandler.TokenErrorHandler
 	errorHandler    errorhandler.LoginErrorHandler
@@ -38,7 +37,6 @@ type loginService struct {
 }
 
 func NewLoginService(
-	ctx context.Context,
 	errorPassword errorhandler.PasswordErrorHandler,
 	errorToken errorhandler.TokenErrorHandler,
 	errorHandler errorhandler.LoginErrorHandler,
@@ -69,7 +67,6 @@ func NewLoginService(
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &loginService{
-		ctx:             ctx,
 		errorPassword:   errorPassword,
 		errorToken:      errorToken,
 		errorHandler:    errorHandler,
@@ -86,21 +83,21 @@ func NewLoginService(
 	}
 }
 
-func (s *loginService) Login(request *requests.AuthRequest) (*response.TokenResponse, *response.ErrorResponse) {
+func (s *loginService) Login(ctx context.Context, request *requests.AuthRequest) (*response.TokenResponse, *response.ErrorResponse) {
 	const method = "Login"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.String("email", request.Email))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("email", request.Email))
 
 	defer func() {
 		end(status)
 	}()
 
-	if cachedToken, found := s.mencache.GetCachedLogin(request.Email); found {
+	if cachedToken, found := s.mencache.GetCachedLogin(ctx, request.Email); found {
 		logSuccess("Successfully logged in", zap.String("email", request.Email))
 		return cachedToken, nil
 	}
 
-	res, err := s.user.FindByEmailAndVerify(request.Email)
+	res, err := s.user.FindByEmailAndVerify(ctx, request.Email)
 	if err != nil {
 		return s.errorHandler.HandleFindEmailError(err, method, "LOGIN_ERR", span, &status, zap.Error(err))
 	}
@@ -110,12 +107,12 @@ func (s *loginService) Login(request *requests.AuthRequest) (*response.TokenResp
 		return s.errorPassword.HandleComparePasswordError(err, method, "COMPARE_PASSWORD_ERR", span, &status, zap.Error(err))
 	}
 
-	token, err := s.tokenService.createAccessToken(res.ID)
+	token, err := s.tokenService.createAccessToken(ctx, res.ID)
 	if err != nil {
 		return s.errorToken.HandleCreateAccessTokenError(err, method, "CREATE_ACCESS_TOKEN_ERR", span, &status, zap.Error(err))
 	}
 
-	refreshToken, err := s.tokenService.createRefreshToken(res.ID)
+	refreshToken, err := s.tokenService.createRefreshToken(ctx, res.ID)
 	if err != nil {
 		return s.errorToken.HandleCreateRefreshTokenError(err, method, "CREATE_REFRESH_TOKEN_ERR", span, &status, zap.Error(err))
 	}
@@ -125,14 +122,15 @@ func (s *loginService) Login(request *requests.AuthRequest) (*response.TokenResp
 		RefreshToken: refreshToken,
 	}
 
-	s.mencache.SetCachedLogin(request.Email, tokenResp, time.Minute)
+	s.mencache.SetCachedLogin(ctx, request.Email, tokenResp, time.Minute)
 
 	logSuccess("Successfully logged in", zap.String("email", request.Email))
 
 	return tokenResp, nil
 }
 
-func (s *loginService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *loginService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -141,7 +139,7 @@ func (s *loginService) startTracingAndLogging(method string, attrs ...attribute.
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -166,7 +164,7 @@ func (s *loginService) startTracingAndLogging(method string, attrs ...attribute.
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *loginService) recordMetrics(method string, status string, start time.Time) {

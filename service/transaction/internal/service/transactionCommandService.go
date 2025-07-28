@@ -31,7 +31,6 @@ import (
 )
 
 type transactionCommandService struct {
-	ctx                            context.Context
 	mencache                       mencache.TransactionCommandCache
 	errorhandler                   errorhandler.TransactionCommandError
 	trace                          trace.Tracer
@@ -50,7 +49,6 @@ type transactionCommandService struct {
 }
 
 func NewTransactionCommandService(
-	ctx context.Context,
 	mencache mencache.TransactionCommandCache,
 	errorhandler errorhandler.TransactionCommandError,
 	kafka *kafka.Kafka,
@@ -84,7 +82,6 @@ func NewTransactionCommandService(
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &transactionCommandService{
-		ctx:                            ctx,
 		mencache:                       mencache,
 		errorhandler:                   errorhandler,
 		kafka:                          kafka,
@@ -103,37 +100,37 @@ func NewTransactionCommandService(
 	}
 }
 
-func (s *transactionCommandService) CreateTransaction(req *requests.CreateTransactionRequest) (*response.TransactionResponse, *response.ErrorResponse) {
+func (s *transactionCommandService) CreateTransaction(ctx context.Context, req *requests.CreateTransactionRequest) (*response.TransactionResponse, *response.ErrorResponse) {
 	const method = "CreateTransaction"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("user.id", req.UserID), attribute.Int("merchant.id", req.MerchantID), attribute.Int("order.id", req.OrderID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("user.id", req.UserID), attribute.Int("merchant.id", req.MerchantID), attribute.Int("order.id", req.OrderID))
 
 	defer func() {
 		end(status)
 	}()
 
-	user, err := s.userQueryRepository.FindById(req.UserID)
+	user, err := s.userQueryRepository.FindById(ctx, req.UserID)
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_USER_BY_ID", span, &status, user_errors.ErrUserNotFoundRes, zap.Error(err))
 	}
 
-	_, err = s.merchantQueryRepository.FindById(req.MerchantID)
+	_, err = s.merchantQueryRepository.FindById(ctx, req.MerchantID)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_MERCHANT_BY_ID", span, &status, merchant_errors.ErrFailedFindMerchantById, zap.Error(err))
 	}
 
-	_, err = s.orderQueryRepository.FindById(req.OrderID)
+	_, err = s.orderQueryRepository.FindById(ctx, req.OrderID)
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_ORDER_BY_ID", span, &status, order_errors.ErrFailedFindOrderById, zap.Error(err))
 	}
 
-	orderItems, err := s.orderItemQueryRepository.FindOrderItemByOrder(req.OrderID)
+	orderItems, err := s.orderItemQueryRepository.FindOrderItemByOrder(ctx, req.OrderID)
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_ORDER_ITEM_BY_ORDER", span, &status, orderitem_errors.ErrFailedFindOrderItemByOrder, zap.Error(err))
 	}
 
-	shipping, err := s.shippingAddressQueryRepository.FindByOrder(req.OrderID)
+	shipping, err := s.shippingAddressQueryRepository.FindByOrder(ctx, req.OrderID)
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_SHIPPING_ADDRESS_BY_ORDER", span, &status, shippingaddress_errors.ErrFailedFindShippingAddressByOrder, zap.Error(err))
 	}
@@ -166,7 +163,7 @@ func (s *transactionCommandService) CreateTransaction(req *requests.CreateTransa
 	req.Amount = totalAmountWithTax
 	req.PaymentStatus = &paymentStatus
 
-	transaction, err := s.transactionCommandRepository.CreateTransaction(req)
+	transaction, err := s.transactionCommandRepository.CreateTransaction(ctx, req)
 	if err != nil {
 		return s.errorhandler.HandleCreateTransactionError(err, method, "FAILED_CREATE_TRANSACTION", span, &status, zap.Error(err))
 	}
@@ -201,16 +198,16 @@ func (s *transactionCommandService) CreateTransaction(req *requests.CreateTransa
 	return so, nil
 }
 
-func (s *transactionCommandService) UpdateTransaction(req *requests.UpdateTransactionRequest) (*response.TransactionResponse, *response.ErrorResponse) {
+func (s *transactionCommandService) UpdateTransaction(ctx context.Context, req *requests.UpdateTransactionRequest) (*response.TransactionResponse, *response.ErrorResponse) {
 	const method = "UpdateTransaction"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("transaction.id", *req.TransactionID), attribute.Int("merchant.id", req.MerchantID), attribute.Int("order.id", req.OrderID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("transaction.id", *req.TransactionID), attribute.Int("merchant.id", req.MerchantID), attribute.Int("order.id", req.OrderID))
 
 	defer func() {
 		end(status)
 	}()
 
-	existingTx, err := s.transactionQueryRepository.FindById(*req.TransactionID)
+	existingTx, err := s.transactionQueryRepository.FindById(ctx, *req.TransactionID)
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_TRANSACTION_BY_ID", span, &status, transaction_errors.ErrFailedFindTransactionById, zap.Error(err))
 	}
@@ -219,22 +216,22 @@ func (s *transactionCommandService) UpdateTransaction(req *requests.UpdateTransa
 		return s.errorhandler.HandleCannotModifiedStatus(err, method, "FAILED_PAYMENT_STATUS_CANNOT_BE_MODIFIED", span, &status, zap.Error(err))
 	}
 
-	_, err = s.merchantQueryRepository.FindById(req.MerchantID)
+	_, err = s.merchantQueryRepository.FindById(ctx, req.MerchantID)
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_MERCHANT_BY_ID", span, &status, merchant_errors.ErrFailedFindMerchantById, zap.Error(err))
 	}
 
-	_, err = s.orderQueryRepository.FindById(req.OrderID)
+	_, err = s.orderQueryRepository.FindById(ctx, req.OrderID)
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_ORDER_BY_ID", span, &status, order_errors.ErrFailedFindOrderById, zap.Error(err))
 	}
 
-	orderItems, err := s.orderItemQueryRepository.FindOrderItemByOrder(req.OrderID)
+	orderItems, err := s.orderItemQueryRepository.FindOrderItemByOrder(ctx, req.OrderID)
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_ORDER_ITEM_BY_ORDER", span, &status, orderitem_errors.ErrFailedFindOrderItemByOrder, zap.Error(err))
 	}
 
-	shipping, err := s.shippingAddressQueryRepository.FindByOrder(req.OrderID)
+	shipping, err := s.shippingAddressQueryRepository.FindByOrder(ctx, req.OrderID)
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_SHIPPING_ADDRESS_BY_ORDER", span, &status, shippingaddress_errors.ErrFailedFindShippingAddressByOrder, zap.Error(err))
 	}
@@ -264,30 +261,30 @@ func (s *transactionCommandService) UpdateTransaction(req *requests.UpdateTransa
 	req.Amount = totalAmountWithTax
 	req.PaymentStatus = &paymentStatus
 
-	transaction, err := s.transactionCommandRepository.UpdateTransaction(req)
+	transaction, err := s.transactionCommandRepository.UpdateTransaction(ctx, req)
 	if err != nil {
 		return s.errorhandler.HandleUpdateTransactionError(err, method, "FAILED_UPDATE_TRANSACTION", span, &status, zap.Error(err))
 	}
 
 	so := s.mapping.ToTransactionResponse(transaction)
 
-	s.mencache.DeleteTransactionCache(*req.TransactionID)
+	s.mencache.DeleteTransactionCache(ctx, *req.TransactionID)
 
 	logSuccess("Successfully updated transaction", zap.Int("transaction.id", transaction.ID), zap.Bool("success", true))
 
 	return so, nil
 }
 
-func (s *transactionCommandService) TrashedTransaction(transactionID int) (*response.TransactionResponseDeleteAt, *response.ErrorResponse) {
+func (s *transactionCommandService) TrashedTransaction(ctx context.Context, transactionID int) (*response.TransactionResponseDeleteAt, *response.ErrorResponse) {
 	const method = "TrashedTransaction"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("transaction.id", transactionID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("transaction.id", transactionID))
 
 	defer func() {
 		end(status)
 	}()
 
-	res, err := s.transactionCommandRepository.TrashTransaction(transactionID)
+	res, err := s.transactionCommandRepository.TrashTransaction(ctx, transactionID)
 
 	if err != nil {
 		return s.errorhandler.HandleTrashedTransactionError(err, method, "FAILED_TRASH_TRANSACTION", span, &status, zap.Error(err))
@@ -295,23 +292,23 @@ func (s *transactionCommandService) TrashedTransaction(transactionID int) (*resp
 
 	so := s.mapping.ToTransactionResponseDeleteAt(res)
 
-	s.mencache.DeleteTransactionCache(transactionID)
+	s.mencache.DeleteTransactionCache(ctx, transactionID)
 
 	logSuccess("Successfully trashed transaction", zap.Int("transaction.id", transactionID), zap.Bool("success", true))
 
 	return so, nil
 }
 
-func (s *transactionCommandService) RestoreTransaction(transactionID int) (*response.TransactionResponseDeleteAt, *response.ErrorResponse) {
+func (s *transactionCommandService) RestoreTransaction(ctx context.Context, transactionID int) (*response.TransactionResponseDeleteAt, *response.ErrorResponse) {
 	const method = "RestoreTransaction"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("transaction.id", transactionID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("transaction.id", transactionID))
 
 	defer func() {
 		end(status)
 	}()
 
-	res, err := s.transactionCommandRepository.RestoreTransaction(transactionID)
+	res, err := s.transactionCommandRepository.RestoreTransaction(ctx, transactionID)
 
 	if err != nil {
 		return s.errorhandler.HandleRestoreTransactionError(err, method, "FAILED_RESTORE_TRANSACTION", span, &status, zap.Error(err))
@@ -324,16 +321,16 @@ func (s *transactionCommandService) RestoreTransaction(transactionID int) (*resp
 	return so, nil
 }
 
-func (s *transactionCommandService) DeleteTransactionPermanently(transactionID int) (bool, *response.ErrorResponse) {
+func (s *transactionCommandService) DeleteTransactionPermanently(ctx context.Context, transactionID int) (bool, *response.ErrorResponse) {
 	const method = "DeleteTransactionPermanently"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("transaction.id", transactionID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("transaction.id", transactionID))
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.transactionCommandRepository.DeleteTransactionPermanently(transactionID)
+	success, err := s.transactionCommandRepository.DeleteTransactionPermanently(ctx, transactionID)
 
 	if err != nil {
 		return s.errorhandler.HandleDeleteTransactionPermanentError(err, method, "FAILED_DELETE_TRANSACTION_PERMANENTLY", span, &status, zap.Error(err))
@@ -344,16 +341,16 @@ func (s *transactionCommandService) DeleteTransactionPermanently(transactionID i
 	return success, nil
 }
 
-func (s *transactionCommandService) RestoreAllTransactions() (bool, *response.ErrorResponse) {
+func (s *transactionCommandService) RestoreAllTransactions(ctx context.Context) (bool, *response.ErrorResponse) {
 	const method = "RestoreAllTransactions"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.transactionCommandRepository.RestoreAllTransactions()
+	success, err := s.transactionCommandRepository.RestoreAllTransactions(ctx)
 
 	if err != nil {
 		return s.errorhandler.HandleRestoreAllTransactionError(
@@ -366,16 +363,16 @@ func (s *transactionCommandService) RestoreAllTransactions() (bool, *response.Er
 	return success, nil
 }
 
-func (s *transactionCommandService) DeleteAllTransactionPermanent() (bool, *response.ErrorResponse) {
+func (s *transactionCommandService) DeleteAllTransactionPermanent(ctx context.Context) (bool, *response.ErrorResponse) {
 	const method = "DeleteAllTransactionPermanent"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.transactionCommandRepository.DeleteAllTransactionPermanent()
+	success, err := s.transactionCommandRepository.DeleteAllTransactionPermanent(ctx)
 
 	if err != nil {
 		return s.errorhandler.HandleDeleteAllTransactionPermanentError(err, method, "FAILED_DELETE_ALL_TRANSACTION_PERMANENT", span, &status, zap.Error(err))
@@ -386,7 +383,8 @@ func (s *transactionCommandService) DeleteAllTransactionPermanent() (bool, *resp
 	return success, nil
 }
 
-func (s *transactionCommandService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *transactionCommandService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -395,7 +393,7 @@ func (s *transactionCommandService) startTracingAndLogging(method string, attrs 
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -420,7 +418,7 @@ func (s *transactionCommandService) startTracingAndLogging(method string, attrs 
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *transactionCommandService) recordMetrics(method string, status string, start time.Time) {

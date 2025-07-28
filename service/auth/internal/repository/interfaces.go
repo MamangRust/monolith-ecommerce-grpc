@@ -1,41 +1,43 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 )
 
 type UserRepository interface {
-	FindByEmail(email string) (*record.UserRecord, error)
-	FindById(id int) (*record.UserRecord, error)
-	FindByEmailAndVerify(email string) (*record.UserRecord, error)
-	CreateUser(request *requests.RegisterRequest) (*record.UserRecord, error)
-	UpdateUserIsVerified(user_id int, is_verified bool) (*record.UserRecord, error)
-	UpdateUserPassword(user_id int, password string) (*record.UserRecord, error)
-	FindByVerificationCode(verification_code string) (*record.UserRecord, error)
+	FindByEmail(ctx context.Context, email string) (*record.UserRecord, error)
+	FindById(ctx context.Context, id int) (*record.UserRecord, error)
+	FindByEmailAndVerify(ctx context.Context, email string) (*record.UserRecord, error)
+	CreateUser(ctx context.Context, request *requests.RegisterRequest) (*record.UserRecord, error)
+	UpdateUserIsVerified(ctx context.Context, user_id int, is_verified bool) (*record.UserRecord, error)
+	UpdateUserPassword(ctx context.Context, user_id int, password string) (*record.UserRecord, error)
+	FindByVerificationCode(ctx context.Context, verification_code string) (*record.UserRecord, error)
 }
 
 type ResetTokenRepository interface {
-	FindByToken(token string) (*record.ResetTokenRecord, error)
-	CreateResetToken(req *requests.CreateResetTokenRequest) (*record.ResetTokenRecord, error)
-	DeleteResetToken(user_id int) error
+	FindByToken(ctx context.Context, token string) (*record.ResetTokenRecord, error)
+	CreateResetToken(ctx context.Context, req *requests.CreateResetTokenRequest) (*record.ResetTokenRecord, error)
+	DeleteResetToken(ctx context.Context, user_id int) error
 }
 
 type RefreshTokenRepository interface {
-	FindByToken(token string) (*record.RefreshTokenRecord, error)
-	FindByUserId(user_id int) (*record.RefreshTokenRecord, error)
-	CreateRefreshToken(req *requests.CreateRefreshToken) (*record.RefreshTokenRecord, error)
-	UpdateRefreshToken(req *requests.UpdateRefreshToken) (*record.RefreshTokenRecord, error)
-	DeleteRefreshToken(token string) error
-	DeleteRefreshTokenByUserId(user_id int) error
+	FindByToken(ctx context.Context, token string) (*record.RefreshTokenRecord, error)
+	FindByUserId(ctx context.Context, user_id int) (*record.RefreshTokenRecord, error)
+	CreateRefreshToken(ctx context.Context, req *requests.CreateRefreshToken) (*record.RefreshTokenRecord, error)
+	UpdateRefreshToken(ctx context.Context, req *requests.UpdateRefreshToken) (*record.RefreshTokenRecord, error)
+	DeleteRefreshToken(ctx context.Context, token string) error
+	DeleteRefreshTokenByUserId(ctx context.Context, user_id int) error
 }
 
 type UserRoleRepository interface {
-	AssignRoleToUser(req *requests.CreateUserRoleRequest) (*record.UserRoleRecord, error)
-	RemoveRoleFromUser(req *requests.RemoveUserRoleRequest) error
+	AssignRoleToUser(ctx context.Context, req *requests.CreateUserRoleRequest) (*record.UserRoleRecord, error)
+	RemoveRoleFromUser(ctx context.Context, req *requests.RemoveUserRoleRequest) error
 }
 
 type RoleRepository interface {
-	FindById(role_id int) (*record.RoleRecord, error)
-	FindByName(name string) (*record.RoleRecord, error)
+	FindById(ctx context.Context, role_id int) (*record.RoleRecord, error)
+	FindByName(ctx context.Context, name string) (*record.RoleRecord, error)
 }

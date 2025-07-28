@@ -21,7 +21,6 @@ import (
 )
 
 type merchantPolicyQueryService struct {
-	ctx                           context.Context
 	errorhandler                  errorhandler.MerchantPolicyQueryError
 	mencache                      mencache.MerchantPolicyQueryCache
 	trace                         trace.Tracer
@@ -32,7 +31,7 @@ type merchantPolicyQueryService struct {
 	requestDuration               *prometheus.HistogramVec
 }
 
-func NewMerchantPolicyQueryService(ctx context.Context,
+func NewMerchantPolicyQueryService(
 	errorhandler errorhandler.MerchantPolicyQueryError,
 	mencache mencache.MerchantPolicyQueryCache,
 	logger logger.LoggerInterface, merchantPolicyQueryRepository repository.MerchantPoliciesQueryRepository, mapping response_service.MerchantPolicyResponseMapper) *merchantPolicyQueryService {
@@ -56,7 +55,6 @@ func NewMerchantPolicyQueryService(ctx context.Context,
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &merchantPolicyQueryService{
-		ctx:                           ctx,
 		errorhandler:                  errorhandler,
 		mencache:                      mencache,
 		trace:                         otel.Tracer("merchant-policy-query-service"),
@@ -68,118 +66,118 @@ func NewMerchantPolicyQueryService(ctx context.Context,
 	}
 }
 
-func (s *merchantPolicyQueryService) FindAll(req *requests.FindAllMerchant) ([]*response.MerchantPoliciesResponse, *int, *response.ErrorResponse) {
+func (s *merchantPolicyQueryService) FindAll(ctx context.Context, req *requests.FindAllMerchant) ([]*response.MerchantPoliciesResponse, *int, *response.ErrorResponse) {
 	const method = "FindAllMerchantPolicy"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedMerchantPolicyAll(req); found {
+	if data, total, found := s.mencache.GetCachedMerchantPolicyAll(ctx, req); found {
 		logSuccess("Successfully fetched merchants from cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	merchants, totalRecords, err := s.merchantPolicyQueryRepository.FindAllMerchantPolicy(req)
+	merchants, totalRecords, err := s.merchantPolicyQueryRepository.FindAllMerchantPolicy(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationError(err, method, "FAILED_FIND_ALL_MERCHANT_POLICY", span, &status, zap.Error(err))
 	}
 
 	so := s.mapping.ToMerchantsPolicyResponse(merchants)
-	s.mencache.SetCachedMerchantPolicyAll(req, so, totalRecords)
+	s.mencache.SetCachedMerchantPolicyAll(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched merchants", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *merchantPolicyQueryService) FindByActive(req *requests.FindAllMerchant) ([]*response.MerchantPoliciesResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *merchantPolicyQueryService) FindByActive(ctx context.Context, req *requests.FindAllMerchant) ([]*response.MerchantPoliciesResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByActiveMerchantPolicy"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedMerchantPolicyActive(req); found {
+	if data, total, found := s.mencache.GetCachedMerchantPolicyActive(ctx, req); found {
 		logSuccess("Successfully fetched active merchant from cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	merchants, totalRecords, err := s.merchantPolicyQueryRepository.FindByActive(req)
+	merchants, totalRecords, err := s.merchantPolicyQueryRepository.FindByActive(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_BY_ACTIVE_MERCHANT_POLICY", span, &status, merchantpolicy_errors.ErrFailedFindActiveMerchantPolicies, zap.Error(err))
 	}
 
 	so := s.mapping.ToMerchantsPolicyResponseDeleteAt(merchants)
-	s.mencache.SetCachedMerchantPolicyActive(req, so, totalRecords)
+	s.mencache.SetCachedMerchantPolicyActive(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched active merchants", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *merchantPolicyQueryService) FindByTrashed(req *requests.FindAllMerchant) ([]*response.MerchantPoliciesResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *merchantPolicyQueryService) FindByTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*response.MerchantPoliciesResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByTrashedMerchantPolicy"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedMerchantPolicyTrashed(req); found {
+	if data, total, found := s.mencache.GetCachedMerchantPolicyTrashed(ctx, req); found {
 		logSuccess("Successfully fetched trashed merchant from cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	merchants, totalRecords, err := s.merchantPolicyQueryRepository.FindByTrashed(req)
+	merchants, totalRecords, err := s.merchantPolicyQueryRepository.FindByTrashed(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_BY_TRASHED_MERCHANT_POLICY", span, &status, merchantpolicy_errors.ErrFailedFindTrashedMerchantPolicies, zap.Error(err))
 	}
 
 	so := s.mapping.ToMerchantsPolicyResponseDeleteAt(merchants)
-	s.mencache.SetCachedMerchantPolicyTrashed(req, so, totalRecords)
+	s.mencache.SetCachedMerchantPolicyTrashed(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched trashed merchants", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *merchantPolicyQueryService) FindById(merchantID int) (*response.MerchantPoliciesResponse, *response.ErrorResponse) {
+func (s *merchantPolicyQueryService) FindById(ctx context.Context, merchantID int) (*response.MerchantPoliciesResponse, *response.ErrorResponse) {
 	const method = "FindMerchantPolicyById"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchantPolicy.id", merchantID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantPolicy.id", merchantID))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedMerchantPolicy(merchantID); found {
+	if data, found := s.mencache.GetCachedMerchantPolicy(ctx, merchantID); found {
 		logSuccess("Successfully fetched merchant from cache", zap.Int("merchantPolicy.id", merchantID))
 
 		return data, nil
 	}
 
-	merchant, err := s.merchantPolicyQueryRepository.FindById(merchantID)
+	merchant, err := s.merchantPolicyQueryRepository.FindById(ctx, merchantID)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_MERCHANT_POLICY_BY_ID", span, &status, merchantpolicy_errors.ErrFailedFindMerchantPolicyById, zap.Error(err))
@@ -187,14 +185,15 @@ func (s *merchantPolicyQueryService) FindById(merchantID int) (*response.Merchan
 
 	so := s.mapping.ToMerchantPolicyResponse(merchant)
 
-	s.mencache.SetCachedMerchantPolicy(so)
+	s.mencache.SetCachedMerchantPolicy(ctx, so)
 
 	logSuccess("Successfully fetched merchant", zap.Int("merchantPolicy.id", merchantID))
 
 	return so, nil
 }
 
-func (s *merchantPolicyQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *merchantPolicyQueryService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -203,7 +202,7 @@ func (s *merchantPolicyQueryService) startTracingAndLogging(method string, attrs
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -228,7 +227,7 @@ func (s *merchantPolicyQueryService) startTracingAndLogging(method string, attrs
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *merchantPolicyQueryService) normalizePagination(page, pageSize int) (int, int) {

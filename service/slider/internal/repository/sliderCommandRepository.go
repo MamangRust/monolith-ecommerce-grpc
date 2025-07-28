@@ -1,35 +1,34 @@
 package repository
 
 import (
+	"context"
+
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/slider_errors"
 	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
-	"golang.org/x/net/context"
 )
 
 type sliderCommandRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.SliderMapping
 }
 
-func NewSliderCommandRepository(db *db.Queries, ctx context.Context, mapping recordmapper.SliderMapping) *sliderCommandRepository {
+func NewSliderCommandRepository(db *db.Queries, mapping recordmapper.SliderMapping) *sliderCommandRepository {
 	return &sliderCommandRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *sliderCommandRepository) CreateSlider(request *requests.CreateSliderRequest) (*record.SliderRecord, error) {
+func (r *sliderCommandRepository) CreateSlider(ctx context.Context, request *requests.CreateSliderRequest) (*record.SliderRecord, error) {
 	req := db.CreateSliderParams{
 		Name:  request.Nama,
 		Image: request.FilePath,
 	}
 
-	slider, err := r.db.CreateSlider(r.ctx, req)
+	slider, err := r.db.CreateSlider(ctx, req)
 
 	if err != nil {
 		return nil, slider_errors.ErrCreateSlider
@@ -38,14 +37,14 @@ func (r *sliderCommandRepository) CreateSlider(request *requests.CreateSliderReq
 	return r.mapping.ToSliderRecord(slider), nil
 }
 
-func (r *sliderCommandRepository) UpdateSlider(request *requests.UpdateSliderRequest) (*record.SliderRecord, error) {
+func (r *sliderCommandRepository) UpdateSlider(ctx context.Context, request *requests.UpdateSliderRequest) (*record.SliderRecord, error) {
 	req := db.UpdateSliderParams{
 		SliderID: int32(*request.ID),
 		Name:     request.Nama,
 		Image:    request.FilePath,
 	}
 
-	res, err := r.db.UpdateSlider(r.ctx, req)
+	res, err := r.db.UpdateSlider(ctx, req)
 
 	if err != nil {
 		return nil, slider_errors.ErrUpdateSlider
@@ -54,8 +53,8 @@ func (r *sliderCommandRepository) UpdateSlider(request *requests.UpdateSliderReq
 	return r.mapping.ToSliderRecord(res), nil
 }
 
-func (r *sliderCommandRepository) TrashSlider(slider_id int) (*record.SliderRecord, error) {
-	res, err := r.db.TrashSlider(r.ctx, int32(slider_id))
+func (r *sliderCommandRepository) TrashSlider(ctx context.Context, slider_id int) (*record.SliderRecord, error) {
+	res, err := r.db.TrashSlider(ctx, int32(slider_id))
 
 	if err != nil {
 		return nil, slider_errors.ErrTrashSlider
@@ -64,8 +63,8 @@ func (r *sliderCommandRepository) TrashSlider(slider_id int) (*record.SliderReco
 	return r.mapping.ToSliderRecord(res), nil
 }
 
-func (r *sliderCommandRepository) RestoreSlider(slider_id int) (*record.SliderRecord, error) {
-	res, err := r.db.RestoreSlider(r.ctx, int32(slider_id))
+func (r *sliderCommandRepository) RestoreSlider(ctx context.Context, slider_id int) (*record.SliderRecord, error) {
+	res, err := r.db.RestoreSlider(ctx, int32(slider_id))
 
 	if err != nil {
 		return nil, slider_errors.ErrRestoreSlider
@@ -74,8 +73,8 @@ func (r *sliderCommandRepository) RestoreSlider(slider_id int) (*record.SliderRe
 	return r.mapping.ToSliderRecord(res), nil
 }
 
-func (r *sliderCommandRepository) DeleteSliderPermanently(slider_id int) (bool, error) {
-	err := r.db.DeleteSliderPermanently(r.ctx, int32(slider_id))
+func (r *sliderCommandRepository) DeleteSliderPermanently(ctx context.Context, slider_id int) (bool, error) {
+	err := r.db.DeleteSliderPermanently(ctx, int32(slider_id))
 
 	if err != nil {
 		return false, slider_errors.ErrDeletePermanentSlider
@@ -84,8 +83,8 @@ func (r *sliderCommandRepository) DeleteSliderPermanently(slider_id int) (bool, 
 	return true, nil
 }
 
-func (r *sliderCommandRepository) RestoreAllSlider() (bool, error) {
-	err := r.db.RestoreAllSliders(r.ctx)
+func (r *sliderCommandRepository) RestoreAllSlider(ctx context.Context) (bool, error) {
+	err := r.db.RestoreAllSliders(ctx)
 
 	if err != nil {
 		return false, slider_errors.ErrRestoreAllSlider
@@ -93,8 +92,8 @@ func (r *sliderCommandRepository) RestoreAllSlider() (bool, error) {
 	return true, nil
 }
 
-func (r *sliderCommandRepository) DeleteAllPermanentSlider() (bool, error) {
-	err := r.db.DeleteAllPermanentSliders(r.ctx)
+func (r *sliderCommandRepository) DeleteAllPermanentSlider(ctx context.Context) (bool, error) {
+	err := r.db.DeleteAllPermanentSliders(ctx)
 
 	if err != nil {
 		return false, slider_errors.ErrDeleteAllPermanentSlider

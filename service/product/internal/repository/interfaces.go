@@ -1,36 +1,38 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 )
 
 type CategoryQueryRepository interface {
-	FindById(category_id int) (*record.CategoriesRecord, error)
+	FindById(ctx context.Context, categoryID int) (*record.CategoriesRecord, error)
 }
 
 type MerchantQueryRepository interface {
-	FindById(merchant_id int) (*record.MerchantRecord, error)
+	FindById(ctx context.Context, merchantID int) (*record.MerchantRecord, error)
 }
 
 type ProductQueryRepository interface {
-	FindAllProducts(req *requests.FindAllProduct) ([]*record.ProductRecord, *int, error)
-	FindByActive(req *requests.FindAllProduct) ([]*record.ProductRecord, *int, error)
-	FindByTrashed(req *requests.FindAllProduct) ([]*record.ProductRecord, *int, error)
-	FindByMerchant(req *requests.FindAllProductByMerchant) ([]*record.ProductRecord, *int, error)
-	FindByCategory(req *requests.FindAllProductByCategory) ([]*record.ProductRecord, *int, error)
+	FindAllProducts(ctx context.Context, req *requests.FindAllProduct) ([]*record.ProductRecord, *int, error)
+	FindByActive(ctx context.Context, req *requests.FindAllProduct) ([]*record.ProductRecord, *int, error)
+	FindByTrashed(ctx context.Context, req *requests.FindAllProduct) ([]*record.ProductRecord, *int, error)
+	FindByMerchant(ctx context.Context, req *requests.FindAllProductByMerchant) ([]*record.ProductRecord, *int, error)
+	FindByCategory(ctx context.Context, req *requests.FindAllProductByCategory) ([]*record.ProductRecord, *int, error)
 
-	FindByIdTrashed(product_id int) (*record.ProductRecord, error)
-	FindById(product_id int) (*record.ProductRecord, error)
+	FindByIdTrashed(ctx context.Context, productID int) (*record.ProductRecord, error)
+	FindById(ctx context.Context, productID int) (*record.ProductRecord, error)
 }
 
 type ProductCommandRepository interface {
-	CreateProduct(request *requests.CreateProductRequest) (*record.ProductRecord, error)
-	UpdateProduct(request *requests.UpdateProductRequest) (*record.ProductRecord, error)
-	UpdateProductCountStock(product_id int, stock int) (*record.ProductRecord, error)
-	TrashedProduct(product_id int) (*record.ProductRecord, error)
-	RestoreProduct(product_id int) (*record.ProductRecord, error)
-	DeleteProductPermanent(product_id int) (bool, error)
-	RestoreAllProducts() (bool, error)
-	DeleteAllProductPermanent() (bool, error)
+	CreateProduct(ctx context.Context, request *requests.CreateProductRequest) (*record.ProductRecord, error)
+	UpdateProduct(ctx context.Context, request *requests.UpdateProductRequest) (*record.ProductRecord, error)
+	UpdateProductCountStock(ctx context.Context, productID int, stock int) (*record.ProductRecord, error)
+	TrashedProduct(ctx context.Context, productID int) (*record.ProductRecord, error)
+	RestoreProduct(ctx context.Context, productID int) (*record.ProductRecord, error)
+	DeleteProductPermanent(ctx context.Context, productID int) (bool, error)
+	RestoreAllProducts(ctx context.Context) (bool, error)
+	DeleteAllProductPermanent(ctx context.Context) (bool, error)
 }

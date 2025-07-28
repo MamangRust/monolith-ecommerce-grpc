@@ -11,17 +11,16 @@ import (
 )
 
 type CacheStore struct {
-	ctx    context.Context
 	redis  *redis.Client
 	logger logger.LoggerInterface
 }
 
-func NewCacheStore(ctx context.Context, redis *redis.Client, logger logger.LoggerInterface) *CacheStore {
-	return &CacheStore{ctx: ctx, redis: redis, logger: logger}
+func NewCacheStore(redis *redis.Client, logger logger.LoggerInterface) *CacheStore {
+	return &CacheStore{redis: redis, logger: logger}
 }
 
-func GetFromCache[T any](store *CacheStore, key string) (*T, bool) {
-	cached, err := store.redis.Get(store.ctx, key).Result()
+func GetFromCache[T any](ctx context.Context, store *CacheStore, key string) (*T, bool) {
+	cached, err := store.redis.Get(ctx, key).Result()
 	if err == redis.Nil {
 		return nil, false
 	}
@@ -39,14 +38,14 @@ func GetFromCache[T any](store *CacheStore, key string) (*T, bool) {
 	return &result, true
 }
 
-func SetToCache[T any](store *CacheStore, key string, data *T, expiration time.Duration) {
+func SetToCache[T any](ctx context.Context, store *CacheStore, key string, data *T, expiration time.Duration) {
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		store.logger.Error("Failed to marshal cache", zap.Error(err), zap.String("cacheKey", key))
 		return
 	}
 
-	if err := store.redis.Set(store.ctx, key, jsonData, expiration).Err(); err != nil {
+	if err := store.redis.Set(ctx, key, jsonData, expiration).Err(); err != nil {
 		store.logger.Error("Failed to set cache", zap.Error(err), zap.String("cacheKey", key))
 	} else {
 		store.logger.Debug("Successfully cached data",
@@ -55,8 +54,8 @@ func SetToCache[T any](store *CacheStore, key string, data *T, expiration time.D
 	}
 }
 
-func DeleteFromCache(store *CacheStore, key string) {
-	if err := store.redis.Del(store.ctx, key).Err(); err != nil {
+func DeleteFromCache(ctx context.Context, store *CacheStore, key string) {
+	if err := store.redis.Del(ctx, key).Err(); err != nil {
 		store.logger.Error("Failed to delete cache", zap.Error(err), zap.String("cacheKey", key))
 	}
 }

@@ -3,12 +3,13 @@ module github.com/MamangRust/monolith-ecommerce-grpc-apigateway
 go 1.23.4
 
 require (
-	github.com/MamangRust/monolith-ecommerce-pkg v1.0.10
+	github.com/MamangRust/monolith-ecommerce-pkg v1.0.11
 	github.com/MamangRust/monolith-ecommerce-shared v1.0.15
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/labstack/echo-jwt/v4 v4.3.1
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/prometheus/client_golang v1.22.0
+	github.com/redis/go-redis/v9 v9.11.0
 	github.com/spf13/viper v1.20.1
 	github.com/swaggo/echo-swagger v1.4.1
 	go.opentelemetry.io/otel v1.35.0
@@ -17,6 +18,8 @@ require (
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
 )
+
+require github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 
 require (
 	github.com/IBM/sarama v1.45.1

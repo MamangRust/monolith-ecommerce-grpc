@@ -12,6 +12,7 @@ import (
 
 	"github.com/MamangRust/monolith-ecommerce-auth/internal/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-auth/internal/handler"
+	"github.com/MamangRust/monolith-ecommerce-auth/internal/middleware"
 	mencache "github.com/MamangRust/monolith-ecommerce-auth/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-auth/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-auth/internal/service"
@@ -23,8 +24,6 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	otel_pkg "github.com/MamangRust/monolith-ecommerce-pkg/otel"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
@@ -57,7 +56,7 @@ type Server struct {
 	Ctx          context.Context
 }
 
-func NewServer() (*Server, func(context.Context) error, error) {
+func NewServer(ctx context.Context) (*Server, func(context.Context) error, error) {
 	flag.Parse()
 
 	logger, err := logger.NewLogger("auth")
@@ -80,18 +79,8 @@ func NewServer() (*Server, func(context.Context) error, error) {
 	}
 	DB := db.New(conn)
 
-	ctx := context.Background()
 	hash := hash.NewHashingPassword()
-	mapperRecord := recordmapper.NewRecordMapper()
-	mapperResponse := response_service.NewResponseServiceMapper()
-
-	depsRepo := &repository.Deps{
-		DB:           DB,
-		Ctx:          ctx,
-		MapperRecord: mapperRecord,
-	}
-
-	repositories := repository.NewRepositories(depsRepo)
+	repositories := repository.NewRepositories(DB)
 
 	kafka := kafka.NewKafka(logger, []string{viper.GetString("KAFKA_BROKERS")})
 
@@ -121,7 +110,6 @@ func NewServer() (*Server, func(context.Context) error, error) {
 	}
 
 	mencache := mencache.NewMencache(&mencache.Deps{
-		Ctx:    ctx,
 		Redis:  myredis,
 		Logger: logger,
 	})
@@ -129,14 +117,12 @@ func NewServer() (*Server, func(context.Context) error, error) {
 	errorhandler := errorhandler.NewErrorHandler(logger)
 
 	services := service.NewService(&service.Deps{
-		Context:      ctx,
 		ErrorHandler: errorhandler,
 		Mencache:     mencache,
 		Repositories: repositories,
 		Hash:         hash,
 		Token:        tokenManager,
 		Logger:       logger,
-		Mapper:       mapperResponse.UserResponseMapper,
 		Kafka:        kafka,
 	})
 
@@ -176,6 +162,10 @@ func (s *Server) Run() {
 				otelgrpc.WithTracerProvider(otel.GetTracerProvider()),
 				otelgrpc.WithPropagators(otel.GetTextMapPropagator()),
 			),
+		),
+		grpc.ChainUnaryInterceptor(
+			middleware.RecoveryMiddleware(s.Logger),
+			middleware.ContextMiddleware(60*time.Second, s.Logger),
 		),
 	)
 

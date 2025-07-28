@@ -11,6 +11,7 @@ import (
 
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/internal/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/internal/handler"
+	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/internal/middleware"
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/internal/service"
@@ -50,7 +51,7 @@ type Server struct {
 	Ctx      context.Context
 }
 
-func NewServer() (*Server, func(context.Context) error, error) {
+func NewServer(ctx context.Context) (*Server, func(context.Context) error, error) {
 	logger, err := logger.NewLogger("merchant-detail")
 
 	if err != nil {
@@ -71,14 +72,7 @@ func NewServer() (*Server, func(context.Context) error, error) {
 
 	DB := db.New(conn)
 
-	ctx := context.Background()
-
-	depsRepo := &repository.Deps{
-		DB:  DB,
-		Ctx: ctx,
-	}
-
-	repositories := repository.NewRepositories(depsRepo)
+	repositories := repository.NewRepositories(DB)
 
 	shutdownTracerProvider, err := otel_pkg.InitTracerProvider("MerchantDetail-service", ctx)
 
@@ -108,7 +102,6 @@ func NewServer() (*Server, func(context.Context) error, error) {
 	}
 
 	mencache := mencache.NewMencache(&mencache.Deps{
-		Ctx:    ctx,
 		Redis:  myredis,
 		Logger: logger,
 	})
@@ -118,7 +111,6 @@ func NewServer() (*Server, func(context.Context) error, error) {
 	services := service.NewService(&service.Deps{
 		ErrorHandler: errorhandler,
 		Mencache:     mencache,
-		Ctx:          ctx,
 		Repositories: repositories,
 		Logger:       logger,
 	})
@@ -158,6 +150,10 @@ func (s *Server) Run() {
 				otelgrpc.WithTracerProvider(otel.GetTracerProvider()),
 				otelgrpc.WithPropagators(otel.GetTextMapPropagator()),
 			),
+		),
+		grpc.ChainUnaryInterceptor(
+			middleware.RecoveryMiddleware(s.Logger),
+			middleware.ContextMiddleware(60*time.Second, s.Logger),
 		),
 	)
 

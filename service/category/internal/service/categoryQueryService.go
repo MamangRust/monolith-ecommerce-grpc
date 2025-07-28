@@ -21,7 +21,6 @@ import (
 )
 
 type categoryQueryService struct {
-	ctx                     context.Context
 	errorhandler            errorhandler.CategoryQueryError
 	mencache                mencache.CategoryQueryCache
 	trace                   trace.Tracer
@@ -32,7 +31,7 @@ type categoryQueryService struct {
 	requestDuration         *prometheus.HistogramVec
 }
 
-func NewCategoryQueryService(ctx context.Context,
+func NewCategoryQueryService(
 	errorhandler errorhandler.CategoryQueryError,
 	mencache mencache.CategoryQueryCache,
 	categoryQueryRepository repository.CategoryQueryRepository, logger logger.LoggerInterface, mapping response_service.CategoryResponseMapper) *categoryQueryService {
@@ -56,7 +55,6 @@ func NewCategoryQueryService(ctx context.Context,
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &categoryQueryService{
-		ctx:                     ctx,
 		errorhandler:            errorhandler,
 		mencache:                mencache,
 		trace:                   otel.Tracer("category-query-service"),
@@ -68,24 +66,24 @@ func NewCategoryQueryService(ctx context.Context,
 	}
 }
 
-func (s *categoryQueryService) FindAll(req *requests.FindAllCategory) ([]*response.CategoryResponse, *int, *response.ErrorResponse) {
+func (s *categoryQueryService) FindAll(ctx context.Context, req *requests.FindAllCategory) ([]*response.CategoryResponse, *int, *response.ErrorResponse) {
 	const method = "FindAll"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedCategoriesCache(req); found {
+	if data, total, found := s.mencache.GetCachedCategoriesCache(ctx, req); found {
 		logSuccess("Successfully fetched categories from cache", zap.Int("totalRecords", *total), zap.Int("page", page), zap.Int("pageSize", pageSize))
 		return data, total, nil
 	}
 
-	category, totalRecords, err := s.categoryQueryRepository.FindAllCategory(req)
+	category, totalRecords, err := s.categoryQueryRepository.FindAllCategory(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationError(err, method, "FAILED_FIND_ALL_CATEGORY", span, &status, zap.Error(err))
@@ -93,32 +91,32 @@ func (s *categoryQueryService) FindAll(req *requests.FindAllCategory) ([]*respon
 
 	categoriesResponse := s.mapping.ToCategorysResponse(category)
 
-	s.mencache.SetCachedCategoriesCache(req, categoriesResponse, totalRecords)
+	s.mencache.SetCachedCategoriesCache(ctx, req, categoriesResponse, totalRecords)
 
 	logSuccess("Successfully fetched categories", zap.Int("totalRecords", *totalRecords), zap.Int("page", page), zap.Int("pageSize", pageSize))
 
 	return categoriesResponse, totalRecords, nil
 }
 
-func (s *categoryQueryService) FindByActive(req *requests.FindAllCategory) ([]*response.CategoryResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *categoryQueryService) FindByActive(ctx context.Context, req *requests.FindAllCategory) ([]*response.CategoryResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByActive"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedCategoryActiveCache(req); found {
+	if data, total, found := s.mencache.GetCachedCategoryActiveCache(ctx, req); found {
 		logSuccess("Successfully fetched categories from cache", zap.Int("totalRecords", *total), zap.Int("page", page), zap.Int("pageSize", pageSize))
 
 		return data, total, nil
 	}
 
-	category, totalRecords, err := s.categoryQueryRepository.FindByActive(req)
+	category, totalRecords, err := s.categoryQueryRepository.FindByActive(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_BY_ACTIVE_CATEGORY", span, &status, category_errors.ErrFailedFindActiveCategories, zap.Error(err))
@@ -126,32 +124,32 @@ func (s *categoryQueryService) FindByActive(req *requests.FindAllCategory) ([]*r
 
 	so := s.mapping.ToCategorysResponseDeleteAt(category)
 
-	s.mencache.SetCachedCategoryActiveCache(req, so, totalRecords)
+	s.mencache.SetCachedCategoryActiveCache(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched categories", zap.Int("totalRecords", *totalRecords), zap.Int("page", page), zap.Int("pageSize", pageSize))
 
 	return so, totalRecords, nil
 }
 
-func (s *categoryQueryService) FindByTrashed(req *requests.FindAllCategory) ([]*response.CategoryResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *categoryQueryService) FindByTrashed(ctx context.Context, req *requests.FindAllCategory) ([]*response.CategoryResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByTrashed"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedCategoryTrashedCache(req); found {
+	if data, total, found := s.mencache.GetCachedCategoryTrashedCache(ctx,req); found {
 		logSuccess("Successfully fetched categories from cache", zap.Int("totalRecords", *total), zap.Int("page", page), zap.Int("pageSize", pageSize))
 
 		return data, total, nil
 	}
 
-	categories, totalRecords, err := s.categoryQueryRepository.FindByTrashed(req)
+	categories, totalRecords, err := s.categoryQueryRepository.FindByTrashed(ctx,req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_BY_TRASHED_CATEGORY", span, &status, category_errors.ErrFailedFindTrashedCategories, zap.Error(err))
@@ -159,29 +157,29 @@ func (s *categoryQueryService) FindByTrashed(req *requests.FindAllCategory) ([]*
 
 	so := s.mapping.ToCategorysResponseDeleteAt(categories)
 
-	s.mencache.SetCachedCategoryTrashedCache(req, so, totalRecords)
+	s.mencache.SetCachedCategoryTrashedCache(ctx,req, so, totalRecords)
 
 	logSuccess("Successfully fetched categories", zap.Int("totalRecords", *totalRecords), zap.Int("page", page), zap.Int("pageSize", pageSize))
 
 	return so, totalRecords, nil
 }
 
-func (s *categoryQueryService) FindById(category_id int) (*response.CategoryResponse, *response.ErrorResponse) {
+func (s *categoryQueryService) FindById(ctx context.Context,category_id int) (*response.CategoryResponse, *response.ErrorResponse) {
 	const method = "FindById"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("category.id", category_id))
+	ctx,span, end, status, logSuccess := s.startTracingAndLogging(ctx,method, attribute.Int("category.id", category_id))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedCategoryCache(category_id); found {
+	if data, found := s.mencache.GetCachedCategoryCache(ctx,category_id); found {
 		logSuccess("Successfully fetched category from cache", zap.Int("category.id", category_id))
 
 		return data, nil
 	}
 
-	category, err := s.categoryQueryRepository.FindById(category_id)
+	category, err := s.categoryQueryRepository.FindById(ctx,category_id)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_CATEGORY_BY_ID", span, &status, category_errors.ErrFailedFindCategoryById, zap.Error(err))
@@ -189,14 +187,15 @@ func (s *categoryQueryService) FindById(category_id int) (*response.CategoryResp
 
 	so := s.mapping.ToCategoryResponse(category)
 
-	s.mencache.SetCachedCategoryCache(so)
+	s.mencache.SetCachedCategoryCache(ctx,so)
 
 	logSuccess("Successfully fetched category", zap.Int("category.id", category_id))
 
 	return so, nil
 }
 
-func (s *categoryQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *categoryQueryService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -205,7 +204,7 @@ func (s *categoryQueryService) startTracingAndLogging(method string, attrs ...at
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -230,7 +229,7 @@ func (s *categoryQueryService) startTracingAndLogging(method string, attrs ...at
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *categoryQueryService) normalizePagination(page, pageSize int) (int, int) {

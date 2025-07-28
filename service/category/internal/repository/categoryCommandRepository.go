@@ -13,19 +13,17 @@ import (
 
 type categoryCommandRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.CategoryRecordMapper
 }
 
-func NewCategoryCommandRepository(db *db.Queries, ctx context.Context, mapping recordmapper.CategoryRecordMapper) *categoryCommandRepository {
+func NewCategoryCommandRepository(db *db.Queries, mapping recordmapper.CategoryRecordMapper) *categoryCommandRepository {
 	return &categoryCommandRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *categoryCommandRepository) CreateCategory(request *requests.CreateCategoryRequest) (*record.CategoriesRecord, error) {
+func (r *categoryCommandRepository) CreateCategory(ctx context.Context, request *requests.CreateCategoryRequest) (*record.CategoriesRecord, error) {
 	req := db.CreateCategoryParams{
 		Name: request.Name,
 		Description: sql.NullString{
@@ -42,7 +40,7 @@ func (r *categoryCommandRepository) CreateCategory(request *requests.CreateCateg
 		},
 	}
 
-	category, err := r.db.CreateCategory(r.ctx, req)
+	category, err := r.db.CreateCategory(ctx, req)
 	if err != nil {
 		return nil, category_errors.ErrCreateCategory
 	}
@@ -50,7 +48,7 @@ func (r *categoryCommandRepository) CreateCategory(request *requests.CreateCateg
 	return r.mapping.ToCategoryRecord(category), nil
 }
 
-func (r *categoryCommandRepository) UpdateCategory(request *requests.UpdateCategoryRequest) (*record.CategoriesRecord, error) {
+func (r *categoryCommandRepository) UpdateCategory(ctx context.Context, request *requests.UpdateCategoryRequest) (*record.CategoriesRecord, error) {
 	req := db.UpdateCategoryParams{
 		CategoryID: int32(*request.CategoryID),
 		Name:       request.Name,
@@ -68,7 +66,7 @@ func (r *categoryCommandRepository) UpdateCategory(request *requests.UpdateCateg
 		},
 	}
 
-	res, err := r.db.UpdateCategory(r.ctx, req)
+	res, err := r.db.UpdateCategory(ctx, req)
 
 	if err != nil {
 		return nil, category_errors.ErrUpdateCategory
@@ -77,8 +75,8 @@ func (r *categoryCommandRepository) UpdateCategory(request *requests.UpdateCateg
 	return r.mapping.ToCategoryRecord(res), nil
 }
 
-func (r *categoryCommandRepository) TrashedCategory(category_id int) (*record.CategoriesRecord, error) {
-	res, err := r.db.TrashCategory(r.ctx, int32(category_id))
+func (r *categoryCommandRepository) TrashedCategory(ctx context.Context, category_id int) (*record.CategoriesRecord, error) {
+	res, err := r.db.TrashCategory(ctx, int32(category_id))
 
 	if err != nil {
 		return nil, category_errors.ErrTrashedCategory
@@ -87,8 +85,8 @@ func (r *categoryCommandRepository) TrashedCategory(category_id int) (*record.Ca
 	return r.mapping.ToCategoryRecord(res), nil
 }
 
-func (r *categoryCommandRepository) RestoreCategory(category_id int) (*record.CategoriesRecord, error) {
-	res, err := r.db.RestoreCategory(r.ctx, int32(category_id))
+func (r *categoryCommandRepository) RestoreCategory(ctx context.Context, category_id int) (*record.CategoriesRecord, error) {
+	res, err := r.db.RestoreCategory(ctx, int32(category_id))
 
 	if err != nil {
 		return nil, category_errors.ErrRestoreCategory
@@ -97,8 +95,8 @@ func (r *categoryCommandRepository) RestoreCategory(category_id int) (*record.Ca
 	return r.mapping.ToCategoryRecord(res), nil
 }
 
-func (r *categoryCommandRepository) DeleteCategoryPermanently(category_id int) (bool, error) {
-	err := r.db.DeleteCategoryPermanently(r.ctx, int32(category_id))
+func (r *categoryCommandRepository) DeleteCategoryPermanently(ctx context.Context, category_id int) (bool, error) {
+	err := r.db.DeleteCategoryPermanently(ctx, int32(category_id))
 
 	if err != nil {
 		return false, category_errors.ErrDeleteCategoryPermanently
@@ -107,8 +105,8 @@ func (r *categoryCommandRepository) DeleteCategoryPermanently(category_id int) (
 	return true, nil
 }
 
-func (r *categoryCommandRepository) RestoreAllCategories() (bool, error) {
-	err := r.db.RestoreAllCategories(r.ctx)
+func (r *categoryCommandRepository) RestoreAllCategories(ctx context.Context) (bool, error) {
+	err := r.db.RestoreAllCategories(ctx)
 
 	if err != nil {
 		return false, category_errors.ErrRestoreAllCategories
@@ -116,8 +114,8 @@ func (r *categoryCommandRepository) RestoreAllCategories() (bool, error) {
 	return true, nil
 }
 
-func (r *categoryCommandRepository) DeleteAllPermanentCategories() (bool, error) {
-	err := r.db.DeleteAllPermanentCategories(r.ctx)
+func (r *categoryCommandRepository) DeleteAllPermanentCategories(ctx context.Context) (bool, error) {
+	err := r.db.DeleteAllPermanentCategories(ctx)
 
 	if err != nil {
 		return false, category_errors.ErrDeleteAllPermanentCategories

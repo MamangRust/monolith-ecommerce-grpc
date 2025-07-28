@@ -1,24 +1,26 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 )
 
 type ReviewDetailQueryRepository interface {
-	FindAllReviews(req *requests.FindAllReview) ([]*record.ReviewDetailRecord, *int, error)
-	FindByActive(req *requests.FindAllReview) ([]*record.ReviewDetailRecord, *int, error)
-	FindByTrashed(req *requests.FindAllReview) ([]*record.ReviewDetailRecord, *int, error)
-	FindById(user_id int) (*record.ReviewDetailRecord, error)
-	FindByIdTrashed(user_id int) (*record.ReviewDetailRecord, error)
+	FindAllReviews(ctx context.Context, req *requests.FindAllReview) ([]*record.ReviewDetailRecord, *int, error)
+	FindByActive(ctx context.Context, req *requests.FindAllReview) ([]*record.ReviewDetailRecord, *int, error)
+	FindByTrashed(ctx context.Context, req *requests.FindAllReview) ([]*record.ReviewDetailRecord, *int, error)
+	FindById(ctx context.Context, userID int) (*record.ReviewDetailRecord, error)
+	FindByIdTrashed(ctx context.Context, userID int) (*record.ReviewDetailRecord, error)
 }
 
 type ReviewDetailCommandRepository interface {
-	CreateReviewDetail(request *requests.CreateReviewDetailRequest) (*record.ReviewDetailRecord, error)
-	UpdateReviewDetail(request *requests.UpdateReviewDetailRequest) (*record.ReviewDetailRecord, error)
-	TrashedReviewDetail(ReviewDetail_id int) (*record.ReviewDetailRecord, error)
-	RestoreReviewDetail(ReviewDetail_id int) (*record.ReviewDetailRecord, error)
-	DeleteReviewDetailPermanent(ReviewDetail_id int) (bool, error)
-	RestoreAllReviewDetail() (bool, error)
-	DeleteAllReviewDetailPermanent() (bool, error)
+	CreateReviewDetail(ctx context.Context, request *requests.CreateReviewDetailRequest) (*record.ReviewDetailRecord, error)
+	UpdateReviewDetail(ctx context.Context, request *requests.UpdateReviewDetailRequest) (*record.ReviewDetailRecord, error)
+	TrashedReviewDetail(ctx context.Context, reviewDetailID int) (*record.ReviewDetailRecord, error)
+	RestoreReviewDetail(ctx context.Context, reviewDetailID int) (*record.ReviewDetailRecord, error)
+	DeleteReviewDetailPermanent(ctx context.Context, reviewDetailID int) (bool, error)
+	RestoreAllReviewDetail(ctx context.Context) (bool, error)
+	DeleteAllReviewDetailPermanent(ctx context.Context) (bool, error)
 }

@@ -14,9 +14,21 @@ spec:
         app: apigateway
     spec:
       initContainers:
+        - name: init-log-permission
+          image: busybox:1.35
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "[INIT] Setting ownership for /var/log/app"
+              chown -R 1000:1000 /var/log/app
+          volumeMounts:
+            - name: app-logs
+              mountPath: /var/log/app
+          securityContext:
+            runAsUser: 0
         - name: wait-for-kafka
           image: busybox:1.35
-          command: ['sh', '-c']
+          command: ["sh", "-c"]
           args:
             - |
               echo "Waiting for Kafka to be ready (TCP)..."
@@ -33,20 +45,21 @@ spec:
               memory: "64Mi"
               cpu: "100m"
       containers:
-      - name: apigateway
-        image: apigateway-ecommerce-service:1.0
-        envFrom:
-        - configMapRef:
-            name: app-config
-        - secretRef:
-            name: app-secrets
-        ports:
-        - containerPort: 5000
-        resources:
-          requests:
-            memory: "64Mi"
-            cpu: "100m"
-          limits:
-            memory: "128Mi"
-            cpu: "250m"
-        imagePullPolicy: IfNotPresent
+        - name: apigateway
+          image: apigateway-ecommerce-service:1.0
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+          ports:
+            - containerPort: 5000
+            - containerPort: 8100
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "250m"
+          imagePullPolicy: IfNotPresent

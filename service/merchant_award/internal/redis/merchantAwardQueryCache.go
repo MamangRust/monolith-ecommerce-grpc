@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -37,10 +38,10 @@ func NewMerchantAwardQueryCache(store *CacheStore) *merchantAwardQueryCache {
 	}
 }
 
-func (m *merchantAwardQueryCache) GetCachedMerchantAwardAll(req *requests.FindAllMerchant) ([]*response.MerchantAwardResponse, *int, bool) {
+func (m *merchantAwardQueryCache) GetCachedMerchantAwardAll(ctx context.Context, req *requests.FindAllMerchant) ([]*response.MerchantAwardResponse, *int, bool) {
 	key := fmt.Sprintf(merchantAwardAllCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[merchantAwardCacheResponse](m.store, key)
+	result, found := GetFromCache[merchantAwardCacheResponse](ctx, m.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -49,7 +50,7 @@ func (m *merchantAwardQueryCache) GetCachedMerchantAwardAll(req *requests.FindAl
 	return result.Data, result.TotalRecords, true
 }
 
-func (m *merchantAwardQueryCache) SetCachedMerchantAwardAll(req *requests.FindAllMerchant, data []*response.MerchantAwardResponse, totalRecords *int) {
+func (m *merchantAwardQueryCache) SetCachedMerchantAwardAll(ctx context.Context, req *requests.FindAllMerchant, data []*response.MerchantAwardResponse, totalRecords *int) {
 	if totalRecords == nil {
 		zero := 0
 		totalRecords = &zero
@@ -62,13 +63,13 @@ func (m *merchantAwardQueryCache) SetCachedMerchantAwardAll(req *requests.FindAl
 	key := fmt.Sprintf(merchantAwardAllCacheKey, req.Page, req.PageSize, req.Search)
 
 	payload := &merchantAwardCacheResponse{Data: data, TotalRecords: totalRecords}
-	SetToCache(m.store, key, payload, ttlDefault)
+	SetToCache(ctx, m.store, key, payload, ttlDefault)
 }
 
-func (m *merchantAwardQueryCache) GetCachedMerchantAwardActive(req *requests.FindAllMerchant) ([]*response.MerchantAwardResponseDeleteAt, *int, bool) {
+func (m *merchantAwardQueryCache) GetCachedMerchantAwardActive(ctx context.Context, req *requests.FindAllMerchant) ([]*response.MerchantAwardResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(merchantAwardActiveCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[merchantAwardCacheResponseDeleteAt](m.store, key)
+	result, found := GetFromCache[merchantAwardCacheResponseDeleteAt](ctx, m.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -77,7 +78,7 @@ func (m *merchantAwardQueryCache) GetCachedMerchantAwardActive(req *requests.Fin
 	return result.Data, result.TotalRecords, true
 }
 
-func (m *merchantAwardQueryCache) SetCachedMerchantAwardActive(req *requests.FindAllMerchant, data []*response.MerchantAwardResponseDeleteAt, totalRecords *int) {
+func (m *merchantAwardQueryCache) SetCachedMerchantAwardActive(ctx context.Context, req *requests.FindAllMerchant, data []*response.MerchantAwardResponseDeleteAt, totalRecords *int) {
 	if totalRecords == nil {
 		zero := 0
 		totalRecords = &zero
@@ -85,13 +86,13 @@ func (m *merchantAwardQueryCache) SetCachedMerchantAwardActive(req *requests.Fin
 	key := fmt.Sprintf(merchantAwardActiveCacheKey, req.Page, req.PageSize, req.Search)
 
 	payload := &merchantAwardCacheResponseDeleteAt{Data: data, TotalRecords: totalRecords}
-	SetToCache(m.store, key, payload, ttlDefault)
+	SetToCache(ctx, m.store, key, payload, ttlDefault)
 }
 
-func (m *merchantAwardQueryCache) GetCachedMerchantAwardTrashed(req *requests.FindAllMerchant) ([]*response.MerchantAwardResponseDeleteAt, *int, bool) {
+func (m *merchantAwardQueryCache) GetCachedMerchantAwardTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*response.MerchantAwardResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(merchantAwardTrashedCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[merchantAwardCacheResponseDeleteAt](m.store, key)
+	result, found := GetFromCache[merchantAwardCacheResponseDeleteAt](ctx, m.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -100,7 +101,7 @@ func (m *merchantAwardQueryCache) GetCachedMerchantAwardTrashed(req *requests.Fi
 	return result.Data, result.TotalRecords, true
 }
 
-func (m *merchantAwardQueryCache) SetCachedMerchantAwardTrashed(req *requests.FindAllMerchant, data []*response.MerchantAwardResponseDeleteAt, totalRecords *int) {
+func (m *merchantAwardQueryCache) SetCachedMerchantAwardTrashed(ctx context.Context, req *requests.FindAllMerchant, data []*response.MerchantAwardResponseDeleteAt, totalRecords *int) {
 	if totalRecords == nil {
 		zero := 0
 		totalRecords = &zero
@@ -113,13 +114,13 @@ func (m *merchantAwardQueryCache) SetCachedMerchantAwardTrashed(req *requests.Fi
 	key := fmt.Sprintf(merchantAwardTrashedCacheKey, req.Page, req.PageSize, req.Search)
 
 	payload := &merchantAwardCacheResponseDeleteAt{Data: data, TotalRecords: totalRecords}
-	SetToCache(m.store, key, payload, ttlDefault)
+	SetToCache(ctx, m.store, key, payload, ttlDefault)
 }
 
-func (m *merchantAwardQueryCache) GetCachedMerchantAward(id int) (*response.MerchantAwardResponse, bool) {
+func (m *merchantAwardQueryCache) GetCachedMerchantAward(ctx context.Context, id int) (*response.MerchantAwardResponse, bool) {
 	key := fmt.Sprintf(merchantAwardByIdCacheKey, id)
 
-	result, found := GetFromCache[*response.MerchantAwardResponse](m.store, key)
+	result, found := GetFromCache[*response.MerchantAwardResponse](ctx, m.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -128,11 +129,11 @@ func (m *merchantAwardQueryCache) GetCachedMerchantAward(id int) (*response.Merc
 	return *result, true
 }
 
-func (m *merchantAwardQueryCache) SetCachedMerchantAward(data *response.MerchantAwardResponse) {
+func (m *merchantAwardQueryCache) SetCachedMerchantAward(ctx context.Context, data *response.MerchantAwardResponse) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(merchantAwardByIdCacheKey, data.ID)
-	SetToCache(m.store, key, data, ttlDefault)
+	SetToCache(ctx, m.store, key, data, ttlDefault)
 }

@@ -1,8 +1,6 @@
 package service
 
 import (
-	"context"
-
 	"github.com/MamangRust/monolith-ecommerce-grpc-order-item/internal/errorhandler"
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-order-item/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-order-item/internal/repository"
@@ -15,7 +13,6 @@ type Service struct {
 }
 
 type Deps struct {
-	Ctx          context.Context
 	ErrorHandler *errorhandler.ErrorHandler
 	Mencache     *mencache.Mencache
 	Repositories *repository.Repositories
@@ -26,6 +23,6 @@ func NewService(deps *Deps) *Service {
 	mapper := response_service.NewOrderItemResponseMapper()
 
 	return &Service{
-		OrderItemQuery: NewOrderItemQueryService(deps.Ctx, deps.ErrorHandler.OrderItemQueryError, deps.Mencache.OrderItemQueryCache, deps.Repositories.OrderItemQuery, deps.Logger, mapper),
+		OrderItemQuery: NewOrderItemQueryService(deps.ErrorHandler.OrderItemQueryError, deps.Mencache.OrderItemQueryCache, deps.Repositories.OrderItemQuery, deps.Logger, mapper),
 	}
 }

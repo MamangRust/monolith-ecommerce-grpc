@@ -26,7 +26,6 @@ import (
 )
 
 type registerService struct {
-	ctx               context.Context
 	errohandler       errorhandler.RegisterErrorHandler
 	errorPassword     errorhandler.PasswordErrorHandler
 	errorRandomString errorhandler.RandomStringErrorHandler
@@ -45,7 +44,7 @@ type registerService struct {
 	requestDuration   *prometheus.HistogramVec
 }
 
-func NewRegisterService(ctx context.Context,
+func NewRegisterService(
 	errorhandler errorhandler.RegisterErrorHandler,
 	errorPassword errorhandler.PasswordErrorHandler,
 	errorRandomString errorhandler.RandomStringErrorHandler,
@@ -73,7 +72,6 @@ func NewRegisterService(ctx context.Context,
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &registerService{
-		ctx:               ctx,
 		errorPassword:     errorPassword,
 		errohandler:       errorhandler,
 		errorRandomString: errorRandomString,
@@ -93,16 +91,16 @@ func NewRegisterService(ctx context.Context,
 	}
 }
 
-func (s *registerService) Register(request *requests.RegisterRequest) (*response.UserResponse, *response.ErrorResponse) {
+func (s *registerService) Register(ctx context.Context, request *requests.RegisterRequest) (*response.UserResponse, *response.ErrorResponse) {
 	const method = "Register"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.String("email", request.Email))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("email", request.Email))
 
 	defer func() {
 		end(status)
 	}()
 
-	existingUser, err := s.user.FindByEmail(request.Email)
+	existingUser, err := s.user.FindByEmail(ctx, request.Email)
 	if err == nil && existingUser != nil {
 		return s.errohandler.HandleFindEmailError(err, "Register", "REGISTER_ERR", span, &status,
 			zap.String("email", request.Email), zap.Error(err))
@@ -116,7 +114,7 @@ func (s *registerService) Register(request *requests.RegisterRequest) (*response
 
 	const defaultRoleName = "Admin Access 1"
 
-	role, err := s.role.FindByName(defaultRoleName)
+	role, err := s.role.FindByName(ctx, defaultRoleName)
 
 	if err != nil || role == nil {
 		return s.errohandler.HandleFindRoleError(err, "Register", "REGISTER_ERR", span, &status,
@@ -131,7 +129,7 @@ func (s *registerService) Register(request *requests.RegisterRequest) (*response
 	request.VerifiedCode = random
 	request.IsVerified = false
 
-	newUser, err := s.user.CreateUser(request)
+	newUser, err := s.user.CreateUser(ctx, request)
 	if err != nil {
 		return s.errohandler.HandleCreateUserError(err, "Register", "REGISTER_ERR", span, &status, zap.Error(err))
 	}
@@ -159,7 +157,7 @@ func (s *registerService) Register(request *requests.RegisterRequest) (*response
 		return s.errorKafka.HandleSendEmailRegister(err, "Register", "SEND_EMAIL_ERR", span, &status, zap.Error(err))
 	}
 
-	_, err = s.userRole.AssignRoleToUser(&requests.CreateUserRoleRequest{
+	_, err = s.userRole.AssignRoleToUser(ctx, &requests.CreateUserRoleRequest{
 		UserId: newUser.ID,
 		RoleId: role.ID,
 	})
@@ -167,7 +165,7 @@ func (s *registerService) Register(request *requests.RegisterRequest) (*response
 		return s.errohandler.HandleAssignRoleError(err, "Register", "ASSIGN_ROLE_ERR", span, &status, zap.Error(err))
 	}
 
-	s.mencache.SetVerificationCodeCache(request.Email, random, 15*time.Minute)
+	s.mencache.SetVerificationCodeCache(ctx, request.Email, random, 15*time.Minute)
 
 	userResponse := s.mapping.ToUserResponse(newUser)
 
@@ -180,7 +178,8 @@ func (s *registerService) Register(request *requests.RegisterRequest) (*response
 	return userResponse, nil
 }
 
-func (s *registerService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *registerService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -189,7 +188,7 @@ func (s *registerService) startTracingAndLogging(method string, attrs ...attribu
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -214,7 +213,7 @@ func (s *registerService) startTracingAndLogging(method string, attrs ...attribu
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *registerService) recordMetrics(method string, status string, start time.Time) {

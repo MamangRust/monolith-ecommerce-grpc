@@ -11,20 +11,18 @@ import (
 
 type merchantQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.MerchantRecordMapping
 }
 
-func NewMerchantQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.MerchantRecordMapping) *merchantQueryRepository {
+func NewMerchantQueryRepository(db *db.Queries, mapping recordmapper.MerchantRecordMapping) *merchantQueryRepository {
 	return &merchantQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *merchantQueryRepository) FindById(user_id int) (*record.MerchantRecord, error) {
-	res, err := r.db.GetMerchantByID(r.ctx, int32(user_id))
+func (r *merchantQueryRepository) FindById(ctx context.Context, user_id int) (*record.MerchantRecord, error) {
+	res, err := r.db.GetMerchantByID(ctx, int32(user_id))
 
 	if err != nil {
 		return nil, merchant_errors.ErrFindByIdMerchant

@@ -13,20 +13,18 @@ import (
 
 type userQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.UserRecordMapping
 }
 
-func NewUserQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.UserRecordMapping) *userQueryRepository {
+func NewUserQueryRepository(db *db.Queries, mapping recordmapper.UserRecordMapping) *userQueryRepository {
 	return &userQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *userQueryRepository) FindById(user_id int) (*record.UserRecord, error) {
-	res, err := r.db.GetUserByID(r.ctx, int32(user_id))
+func (r *userQueryRepository) FindById(ctx context.Context, user_id int) (*record.UserRecord, error) {
+	res, err := r.db.GetUserByID(ctx, int32(user_id))
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

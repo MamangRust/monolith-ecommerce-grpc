@@ -10,20 +10,18 @@ import (
 
 type productQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.ProductRecordMapping
 }
 
-func NewProductQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.ProductRecordMapping) *productQueryRepository {
+func NewProductQueryRepository(db *db.Queries, mapping recordmapper.ProductRecordMapping) *productQueryRepository {
 	return &productQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *productQueryRepository) FindById(product_id int) (*record.ProductRecord, error) {
-	res, err := r.db.GetProductByID(r.ctx, int32(product_id))
+func (r *productQueryRepository) FindById(ctx context.Context, product_id int) (*record.ProductRecord, error) {
+	res, err := r.db.GetProductByID(ctx, int32(product_id))
 
 	if err != nil {
 		return nil, product_errors.ErrFindById

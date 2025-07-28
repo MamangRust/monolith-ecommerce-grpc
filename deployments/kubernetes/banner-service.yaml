@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: banner
+  namespace: ecommerce
+spec:
+  selector:
+    app: banner
+  ports:
+    - name: http-metrics
+      port: 8094
+      targetPort: 8094
+    - name: grpc
+      port: 50064
+      targetPort: 50064
+  type: ClusterIP

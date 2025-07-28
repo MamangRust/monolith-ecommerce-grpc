@@ -1,0 +1,237 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promtail-config
+  namespace: ecommerce
+data:
+  promtail-config.yaml: |
+    server:
+      http_listen_port: 9080
+      grpc_listen_port: 0
+
+    positions:
+      filename: /tmp/positions.yaml
+
+    clients:
+      - url: http://loki.ecommerce.svc.cluster.local:3100/loki/api/v1/push
+
+    scrape_configs:
+      - job_name: apigateway
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: apigateway
+              __path__: /var/log/app/apigateway.log
+        pipeline_stages:
+          - json:
+              expressions:
+                level: level
+                ts: ts
+                msg: msg
+                caller: caller
+          - labels:
+              level:
+          - output:
+              source: msg
+
+      - job_name: auth-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: auth-service
+              __path__: /var/log/app/auth-service.log
+        pipeline_stages:
+          - json:
+              expressions:
+                level: level
+                ts: ts
+                msg: msg
+                caller: caller
+          - labels:
+              level:
+          - output:
+              source: msg
+
+      - job_name: user-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: user-service
+              __path__: /var/log/app/user-service.log
+        pipeline_stages:
+          - json:
+              expressions:
+                level: level
+                ts: ts
+                msg: msg
+                caller: caller
+          - labels:
+              level:
+          - output:
+              source: msg
+
+      - job_name: role-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: role-service
+              __path__: /var/log/app/role-service.log
+        pipeline_stages:
+          - json:
+              expressions:
+                level: level
+                ts: ts
+                msg: msg
+                caller: caller
+          - labels:
+              level:
+          - output:
+              source: msg
+
+      - job_name: card-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: card-service
+              __path__: /var/log/app/card-service.log
+        pipeline_stages:
+          - json:
+              expressions:
+                level: level
+                ts: ts
+                msg: msg
+                caller: caller
+          - labels:
+              level:
+          - output:
+              source: msg
+
+      - job_name: merchant-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: merchant-service
+              __path__: /var/log/app/merchant-service.log
+        pipeline_stages:
+          - json:
+              expressions:
+                level: level
+                ts: ts
+                msg: msg
+                caller: caller
+          - labels:
+              level:
+          - output:
+              source: msg
+
+      - job_name: saldo-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: saldo-service
+              __path__: /var/log/app/saldo-service.log
+        pipeline_stages:
+          - json:
+              expressions:
+                level: level
+                ts: ts
+                msg: msg
+                caller: caller
+          - labels:
+              level:
+          - output:
+              source: msg
+
+      - job_name: topup-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: topup-service
+              __path__: /var/log/app/topup-service.log
+        pipeline_stages:
+          - json:
+              expressions:
+                level: level
+                ts: ts
+                msg: msg
+                caller: caller
+          - labels:
+              level:
+          - output:
+              source: msg
+
+
+      - job_name: transaction-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: transaction-service
+              __path__: /var/log/app/transaction-service.log
+        pipeline_stages:
+          - json:
+              expressions:
+                level: level
+                ts: ts
+                msg: msg
+                caller: caller
+          - labels:
+              level:
+          - output:
+              source: msg
+
+
+      - job_name: transfer-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: transfer-service
+              __path__: /var/log/app/transfer-service.log
+        pipeline_stages:
+          - json:
+              expressions:
+                level: level
+                ts: ts
+                msg: msg
+                caller: caller
+          - labels:
+              level:
+          - output:
+              source: msg
+
+
+      - job_name: withdraw-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: withdraw-service
+              __path__: /var/log/app/withdraw-service.log
+        pipeline_stages:
+          - json:
+              expressions:
+                level: level
+                ts: ts
+                msg: msg
+                caller: caller
+          - labels:
+              level:
+          - output:
+              source: msg
+
+
+      - job_name: email-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: email-service
+              __path__: /var/log/app/email-service.log
+        pipeline_stages:
+          - json:
+              expressions:
+                level: level
+                ts: ts
+                msg: msg
+                caller: caller
+          - labels:
+              level:
+          - output:
+              source: msg

@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"context"
-
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
@@ -12,16 +10,11 @@ type Repositories struct {
 	ReviewDetailCommand ReviewDetailCommandRepository
 }
 
-type Deps struct {
-	DB  *db.Queries
-	Ctx context.Context
-}
-
-func NewRepositories(deps *Deps) *Repositories {
+func NewRepositories(DB *db.Queries) *Repositories {
 	mapper := recordmapper.NewReviewDetailRecordMapper()
 
 	return &Repositories{
-		ReviewDetailQuery:   NewReviewDetailQueryRepository(deps.DB, deps.Ctx, mapper),
-		ReviewDetailCommand: NewReviewDetailCommandRepository(deps.DB, deps.Ctx, mapper),
+		ReviewDetailQuery:   NewReviewDetailQueryRepository(DB, mapper),
+		ReviewDetailCommand: NewReviewDetailCommandRepository(DB, mapper),
 	}
 }

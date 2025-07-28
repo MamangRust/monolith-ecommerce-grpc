@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -37,10 +38,10 @@ func NewMerchantBusinessQueryCache(store *CacheStore) *merchantBusinessQueryCach
 	}
 }
 
-func (m *merchantBusinessQueryCache) GetCachedMerchantBusinessAll(req *requests.FindAllMerchant) ([]*response.MerchantBusinessResponse, *int, bool) {
+func (m *merchantBusinessQueryCache) GetCachedMerchantBusinessAll(ctx context.Context, req *requests.FindAllMerchant) ([]*response.MerchantBusinessResponse, *int, bool) {
 	key := fmt.Sprintf(merchantBusinessAllCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[merchantBusinessCacheResponse](m.store, key)
+	result, found := GetFromCache[merchantBusinessCacheResponse](ctx, m.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -49,7 +50,7 @@ func (m *merchantBusinessQueryCache) GetCachedMerchantBusinessAll(req *requests.
 	return result.Data, result.TotalRecords, true
 }
 
-func (m *merchantBusinessQueryCache) SetCachedMerchantBusinessAll(req *requests.FindAllMerchant, data []*response.MerchantBusinessResponse, totalRecords *int) {
+func (m *merchantBusinessQueryCache) SetCachedMerchantBusinessAll(ctx context.Context, req *requests.FindAllMerchant, data []*response.MerchantBusinessResponse, totalRecords *int) {
 	if totalRecords == nil {
 		zero := 0
 		totalRecords = &zero
@@ -62,13 +63,13 @@ func (m *merchantBusinessQueryCache) SetCachedMerchantBusinessAll(req *requests.
 	key := fmt.Sprintf(merchantBusinessAllCacheKey, req.Page, req.PageSize, req.Search)
 
 	payload := &merchantBusinessCacheResponse{Data: data, TotalRecords: totalRecords}
-	SetToCache(m.store, key, payload, ttlDefault)
+	SetToCache(ctx, m.store, key, payload, ttlDefault)
 }
 
-func (m *merchantBusinessQueryCache) GetCachedMerchantBusinessActive(req *requests.FindAllMerchant) ([]*response.MerchantBusinessResponseDeleteAt, *int, bool) {
+func (m *merchantBusinessQueryCache) GetCachedMerchantBusinessActive(ctx context.Context, req *requests.FindAllMerchant) ([]*response.MerchantBusinessResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(merchantBusinessActiveCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[merchantBusinessCacheResponseDeleteAt](m.store, key)
+	result, found := GetFromCache[merchantBusinessCacheResponseDeleteAt](ctx, m.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -77,7 +78,7 @@ func (m *merchantBusinessQueryCache) GetCachedMerchantBusinessActive(req *reques
 	return result.Data, result.TotalRecords, true
 }
 
-func (m *merchantBusinessQueryCache) SetCachedMerchantBusinessActive(req *requests.FindAllMerchant, data []*response.MerchantBusinessResponseDeleteAt, totalRecords *int) {
+func (m *merchantBusinessQueryCache) SetCachedMerchantBusinessActive(ctx context.Context, req *requests.FindAllMerchant, data []*response.MerchantBusinessResponseDeleteAt, totalRecords *int) {
 	if totalRecords == nil {
 		zero := 0
 		totalRecords = &zero
@@ -90,13 +91,13 @@ func (m *merchantBusinessQueryCache) SetCachedMerchantBusinessActive(req *reques
 	key := fmt.Sprintf(merchantBusinessActiveCacheKey, req.Page, req.PageSize, req.Search)
 
 	payload := &merchantBusinessCacheResponseDeleteAt{Data: data, TotalRecords: totalRecords}
-	SetToCache(m.store, key, payload, ttlDefault)
+	SetToCache(ctx, m.store, key, payload, ttlDefault)
 }
 
-func (m *merchantBusinessQueryCache) GetCachedMerchantBusinessTrashed(req *requests.FindAllMerchant) ([]*response.MerchantBusinessResponseDeleteAt, *int, bool) {
+func (m *merchantBusinessQueryCache) GetCachedMerchantBusinessTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*response.MerchantBusinessResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(merchantBusinessTrashedCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[merchantBusinessCacheResponseDeleteAt](m.store, key)
+	result, found := GetFromCache[merchantBusinessCacheResponseDeleteAt](ctx, m.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -105,7 +106,7 @@ func (m *merchantBusinessQueryCache) GetCachedMerchantBusinessTrashed(req *reque
 	return result.Data, result.TotalRecords, true
 }
 
-func (m *merchantBusinessQueryCache) SetCachedMerchantBusinessTrashed(req *requests.FindAllMerchant, data []*response.MerchantBusinessResponseDeleteAt, totalRecords *int) {
+func (m *merchantBusinessQueryCache) SetCachedMerchantBusinessTrashed(ctx context.Context, req *requests.FindAllMerchant, data []*response.MerchantBusinessResponseDeleteAt, totalRecords *int) {
 	if totalRecords == nil {
 		zero := 0
 		totalRecords = &zero
@@ -118,13 +119,13 @@ func (m *merchantBusinessQueryCache) SetCachedMerchantBusinessTrashed(req *reque
 	key := fmt.Sprintf(merchantBusinessTrashedCacheKey, req.Page, req.PageSize, req.Search)
 
 	payload := &merchantBusinessCacheResponseDeleteAt{Data: data, TotalRecords: totalRecords}
-	SetToCache(m.store, key, payload, ttlDefault)
+	SetToCache(ctx, m.store, key, payload, ttlDefault)
 }
 
-func (m *merchantBusinessQueryCache) GetCachedMerchantBusiness(id int) (*response.MerchantBusinessResponse, bool) {
+func (m *merchantBusinessQueryCache) GetCachedMerchantBusiness(ctx context.Context, id int) (*response.MerchantBusinessResponse, bool) {
 	key := fmt.Sprintf(merchantBusinessByIdCacheKey, id)
 
-	result, found := GetFromCache[*response.MerchantBusinessResponse](m.store, key)
+	result, found := GetFromCache[*response.MerchantBusinessResponse](ctx, m.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -133,11 +134,11 @@ func (m *merchantBusinessQueryCache) GetCachedMerchantBusiness(id int) (*respons
 	return *result, true
 }
 
-func (m *merchantBusinessQueryCache) SetCachedMerchantBusiness(data *response.MerchantBusinessResponse) {
+func (m *merchantBusinessQueryCache) SetCachedMerchantBusiness(ctx context.Context, data *response.MerchantBusinessResponse) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(merchantBusinessByIdCacheKey, data.ID)
-	SetToCache(m.store, key, data, ttlDefault)
+	SetToCache(ctx, m.store, key, data, ttlDefault)
 }

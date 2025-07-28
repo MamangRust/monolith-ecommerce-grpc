@@ -1,46 +1,48 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 )
 
 type MerchantDocumentQueryRepository interface {
-	FindAllDocuments(req *requests.FindAllMerchantDocuments) ([]*record.MerchantDocumentRecord, *int, error)
-	FindById(id int) (*record.MerchantDocumentRecord, error)
-
-	FindByActive(req *requests.FindAllMerchantDocuments) ([]*record.MerchantDocumentRecord, *int, error)
-	FindByTrashed(req *requests.FindAllMerchantDocuments) ([]*record.MerchantDocumentRecord, *int, error)
+	FindAllDocuments(ctx context.Context, req *requests.FindAllMerchantDocuments) ([]*record.MerchantDocumentRecord, *int, error)
+	FindById(ctx context.Context, id int) (*record.MerchantDocumentRecord, error)
+	FindByActive(ctx context.Context, req *requests.FindAllMerchantDocuments) ([]*record.MerchantDocumentRecord, *int, error)
+	FindByTrashed(ctx context.Context, req *requests.FindAllMerchantDocuments) ([]*record.MerchantDocumentRecord, *int, error)
 }
+
 type MerchantDocumentCommandRepository interface {
-	CreateMerchantDocument(request *requests.CreateMerchantDocumentRequest) (*record.MerchantDocumentRecord, error)
-	UpdateMerchantDocument(request *requests.UpdateMerchantDocumentRequest) (*record.MerchantDocumentRecord, error)
-	UpdateMerchantDocumentStatus(request *requests.UpdateMerchantDocumentStatusRequest) (*record.MerchantDocumentRecord, error)
-	TrashedMerchantDocument(merchant_document_id int) (*record.MerchantDocumentRecord, error)
-	RestoreMerchantDocument(merchant_document_id int) (*record.MerchantDocumentRecord, error)
-	DeleteMerchantDocumentPermanent(merchant_document_id int) (bool, error)
-	RestoreAllMerchantDocument() (bool, error)
-	DeleteAllMerchantDocumentPermanent() (bool, error)
+	CreateMerchantDocument(ctx context.Context, request *requests.CreateMerchantDocumentRequest) (*record.MerchantDocumentRecord, error)
+	UpdateMerchantDocument(ctx context.Context, request *requests.UpdateMerchantDocumentRequest) (*record.MerchantDocumentRecord, error)
+	UpdateMerchantDocumentStatus(ctx context.Context, request *requests.UpdateMerchantDocumentStatusRequest) (*record.MerchantDocumentRecord, error)
+	TrashedMerchantDocument(ctx context.Context, merchant_document_id int) (*record.MerchantDocumentRecord, error)
+	RestoreMerchantDocument(ctx context.Context, merchant_document_id int) (*record.MerchantDocumentRecord, error)
+	DeleteMerchantDocumentPermanent(ctx context.Context, merchant_document_id int) (bool, error)
+	RestoreAllMerchantDocument(ctx context.Context) (bool, error)
+	DeleteAllMerchantDocumentPermanent(ctx context.Context) (bool, error)
 }
 
 type MerchantQueryRepository interface {
-	FindAllMerchants(req *requests.FindAllMerchant) ([]*record.MerchantRecord, *int, error)
-	FindByActive(req *requests.FindAllMerchant) ([]*record.MerchantRecord, *int, error)
-	FindByTrashed(req *requests.FindAllMerchant) ([]*record.MerchantRecord, *int, error)
-	FindById(user_id int) (*record.MerchantRecord, error)
+	FindAllMerchants(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantRecord, *int, error)
+	FindByActive(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantRecord, *int, error)
+	FindByTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantRecord, *int, error)
+	FindById(ctx context.Context, user_id int) (*record.MerchantRecord, error)
 }
 
 type MerchantCommandRepository interface {
-	CreateMerchant(request *requests.CreateMerchantRequest) (*record.MerchantRecord, error)
-	UpdateMerchant(request *requests.UpdateMerchantRequest) (*record.MerchantRecord, error)
-	UpdateMerchantStatus(request *requests.UpdateMerchantStatusRequest) (*record.MerchantRecord, error)
-	TrashedMerchant(merchant_id int) (*record.MerchantRecord, error)
-	RestoreMerchant(merchant_id int) (*record.MerchantRecord, error)
-	DeleteMerchantPermanent(Merchant_id int) (bool, error)
-	RestoreAllMerchant() (bool, error)
-	DeleteAllMerchantPermanent() (bool, error)
+	CreateMerchant(ctx context.Context, request *requests.CreateMerchantRequest) (*record.MerchantRecord, error)
+	UpdateMerchant(ctx context.Context, request *requests.UpdateMerchantRequest) (*record.MerchantRecord, error)
+	UpdateMerchantStatus(ctx context.Context, request *requests.UpdateMerchantStatusRequest) (*record.MerchantRecord, error)
+	TrashedMerchant(ctx context.Context, merchant_id int) (*record.MerchantRecord, error)
+	RestoreMerchant(ctx context.Context, merchant_id int) (*record.MerchantRecord, error)
+	DeleteMerchantPermanent(ctx context.Context, merchant_id int) (bool, error)
+	RestoreAllMerchant(ctx context.Context) (bool, error)
+	DeleteAllMerchantPermanent(ctx context.Context) (bool, error)
 }
 
 type UserQueryRepository interface {
-	FindById(user_id int) (*record.UserRecord, error)
+	FindById(ctx context.Context, user_id int) (*record.UserRecord, error)
 }

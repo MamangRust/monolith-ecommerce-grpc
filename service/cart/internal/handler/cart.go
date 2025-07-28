@@ -47,7 +47,7 @@ func (s *cartHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllCartReq
 		Search:   search,
 	}
 
-	cartItems, totalRecords, err := s.cardQuery.FindAll(&reqService)
+	cartItems, totalRecords, err := s.cardQuery.FindAll(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -77,7 +77,7 @@ func (s *cartHandleGrpc) Create(ctx context.Context, request *pb.CreateCartReque
 		return nil, cart_errors.ErrGrpcValidateCreateCart
 	}
 
-	cartItem, err := s.cardCommand.CreateCart(req)
+	cartItem, err := s.cardCommand.CreateCart(ctx, req)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -95,7 +95,7 @@ func (s *cartHandleGrpc) Delete(ctx context.Context, request *pb.DeleteCartReque
 		return nil, cart_errors.ErrGrpcCartInvalidId
 	}
 
-	_, err := s.cardCommand.DeletePermanent(&requests.DeleteCartRequest{
+	_, err := s.cardCommand.DeletePermanent(ctx, &requests.DeleteCartRequest{
 		UserID: int(userId),
 		CartID: int(cartId),
 	})
@@ -126,7 +126,7 @@ func (s *cartHandleGrpc) DeleteAll(ctx context.Context, req *pb.DeleteAllCartReq
 		CartIds: cartIDs,
 	}
 
-	_, err := s.cardCommand.DeleteAllPermanently(deleteRequest)
+	_, err := s.cardCommand.DeleteAllPermanently(ctx, deleteRequest)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)

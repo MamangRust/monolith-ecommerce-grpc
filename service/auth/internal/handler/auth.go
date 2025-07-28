@@ -30,7 +30,7 @@ func NewAuthHandleGrpc(authService service.Service) pb.AuthServiceServer {
 }
 
 func (s *authHandleGrpc) VerifyCode(ctx context.Context, req *pb.VerifyCodeRequest) (*pb.ApiResponseVerifyCode, error) {
-	_, err := s.passwordResetService.VerifyCode(req.Code)
+	_, err := s.passwordResetService.VerifyCode(ctx, req.Code)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -41,7 +41,7 @@ func (s *authHandleGrpc) VerifyCode(ctx context.Context, req *pb.VerifyCodeReque
 }
 
 func (s *authHandleGrpc) ForgotPassword(ctx context.Context, req *pb.ForgotPasswordRequest) (*pb.ApiResponseForgotPassword, error) {
-	_, err := s.passwordResetService.ForgotPassword(req.Email)
+	_, err := s.passwordResetService.ForgotPassword(ctx, req.Email)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -51,7 +51,7 @@ func (s *authHandleGrpc) ForgotPassword(ctx context.Context, req *pb.ForgotPassw
 }
 
 func (s *authHandleGrpc) ResetPassword(ctx context.Context, req *pb.ResetPasswordRequest) (*pb.ApiResponseResetPassword, error) {
-	_, err := s.passwordResetService.ResetPassword(&requests.CreateResetPasswordRequest{
+	_, err := s.passwordResetService.ResetPassword(ctx, &requests.CreateResetPasswordRequest{
 		ResetToken:      req.ResetToken,
 		Password:        req.Password,
 		ConfirmPassword: req.ConfirmPassword,
@@ -70,7 +70,7 @@ func (s *authHandleGrpc) LoginUser(ctx context.Context, req *pb.LoginRequest) (*
 		Password: req.Password,
 	}
 
-	res, err := s.loginService.Login(request)
+	res, err := s.loginService.Login(ctx, request)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -79,7 +79,7 @@ func (s *authHandleGrpc) LoginUser(ctx context.Context, req *pb.LoginRequest) (*
 }
 
 func (s *authHandleGrpc) RefreshToken(ctx context.Context, req *pb.RefreshTokenRequest) (*pb.ApiResponseRefreshToken, error) {
-	res, err := s.identifyService.RefreshToken(req.RefreshToken)
+	res, err := s.identifyService.RefreshToken(ctx, req.RefreshToken)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -89,7 +89,7 @@ func (s *authHandleGrpc) RefreshToken(ctx context.Context, req *pb.RefreshTokenR
 }
 
 func (s *authHandleGrpc) GetMe(ctx context.Context, req *pb.GetMeRequest) (*pb.ApiResponseGetMe, error) {
-	res, err := s.identifyService.GetMe(req.AccessToken)
+	res, err := s.identifyService.GetMe(ctx, req.AccessToken)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -107,7 +107,7 @@ func (s *authHandleGrpc) RegisterUser(ctx context.Context, req *pb.RegisterReque
 		ConfirmPassword: req.ConfirmPassword,
 	}
 
-	res, err := s.registerService.Register(request)
+	res, err := s.registerService.Register(ctx, request)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}

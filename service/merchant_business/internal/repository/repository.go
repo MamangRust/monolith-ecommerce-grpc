@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"context"
-
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
@@ -13,18 +11,13 @@ type Repositories struct {
 	MerchantBusinessCmd   MerchantBusinessCommandRepository
 }
 
-type Deps struct {
-	DB  *db.Queries
-	Ctx context.Context
-}
-
-func NewRepositories(deps *Deps) *Repositories {
+func NewRepositories(DB *db.Queries) *Repositories {
 	mapper := recordmapper.NewMerchantRecordMapper()
 	mapperBusiness := recordmapper.NewMerchantBusinessRecordMapper()
 
 	return &Repositories{
-		MerchantQuery:         NewMerchantQueryRepository(deps.DB, deps.Ctx, mapper),
-		MerchantBusinessQuery: NewMerchantBusinessQueryRepository(deps.DB, deps.Ctx, mapperBusiness),
-		MerchantBusinessCmd:   NewMerchantBusinessCommandRepository(deps.DB, deps.Ctx, mapperBusiness),
+		MerchantQuery:         NewMerchantQueryRepository(DB, mapper),
+		MerchantBusinessQuery: NewMerchantBusinessQueryRepository(DB, mapperBusiness),
+		MerchantBusinessCmd:   NewMerchantBusinessCommandRepository(DB, mapperBusiness),
 	}
 }

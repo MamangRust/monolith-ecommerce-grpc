@@ -52,7 +52,7 @@ func (s *orderHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllOrderR
 		Search:   search,
 	}
 
-	merchant, totalRecords, err := s.orderQuery.FindAll(&reqService)
+	merchant, totalRecords, err := s.orderQuery.FindAll(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -78,7 +78,7 @@ func (s *orderHandleGrpc) FindById(ctx context.Context, request *pb.FindByIdOrde
 		return nil, order_errors.ErrGrpcFailedInvalidId
 	}
 
-	merchant, err := s.orderQuery.FindById(id)
+	merchant, err := s.orderQuery.FindById(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -108,7 +108,7 @@ func (s *orderHandleGrpc) FindByActive(ctx context.Context, request *pb.FindAllO
 		Search:   search,
 	}
 
-	merchant, totalRecords, err := s.orderQuery.FindByActive(&reqService)
+	merchant, totalRecords, err := s.orderQuery.FindByActive(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -145,7 +145,7 @@ func (s *orderHandleGrpc) FindByTrashed(ctx context.Context, request *pb.FindAll
 		Search:   search,
 	}
 
-	users, totalRecords, err := s.orderQuery.FindByTrashed(&reqService)
+	users, totalRecords, err := s.orderQuery.FindByTrashed(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -182,7 +182,7 @@ func (s *orderHandleGrpc) FindMonthlyTotalRevenue(ctx context.Context, req *pb.F
 		Month: month,
 	}
 
-	methods, err := s.orderStats.FindMonthlyTotalRevenue(&reqService)
+	methods, err := s.orderStats.FindMonthlyTotalRevenue(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -198,7 +198,7 @@ func (s *orderHandleGrpc) FindYearlyTotalRevenue(ctx context.Context, req *pb.Fi
 		return nil, order_errors.ErrGrpcInvalidYear
 	}
 
-	methods, err := s.orderStats.FindYearlyTotalRevenue(year)
+	methods, err := s.orderStats.FindYearlyTotalRevenue(ctx, year)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -230,7 +230,7 @@ func (s *orderHandleGrpc) FindMonthlyTotalRevenueByMerchant(ctx context.Context,
 		MerchantID: id,
 	}
 
-	methods, err := s.orderStatsByMerchant.FindMonthlyTotalRevenueByMerchant(&reqService)
+	methods, err := s.orderStatsByMerchant.FindMonthlyTotalRevenueByMerchant(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -256,7 +256,7 @@ func (s *orderHandleGrpc) FindYearlyTotalRevenueByMerchant(ctx context.Context, 
 		MerchantID: id,
 	}
 
-	methods, err := s.orderStatsByMerchant.FindYearlyTotalRevenueByMerchant(&reqService)
+	methods, err := s.orderStatsByMerchant.FindYearlyTotalRevenueByMerchant(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -272,7 +272,7 @@ func (s *orderHandleGrpc) FindMonthlyRevenue(ctx context.Context, request *pb.Fi
 		return nil, order_errors.ErrGrpcFailedInvalidId
 	}
 
-	res, err := s.orderStats.FindMonthlyOrder(year)
+	res, err := s.orderStats.FindMonthlyOrder(ctx, year)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -288,7 +288,7 @@ func (s *orderHandleGrpc) FindYearlyRevenue(ctx context.Context, request *pb.Fin
 		return nil, order_errors.ErrGrpcFailedInvalidId
 	}
 
-	res, err := s.orderStats.FindYearlyOrder(year)
+	res, err := s.orderStats.FindYearlyOrder(ctx, year)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -314,7 +314,7 @@ func (s *orderHandleGrpc) FindMonthlyRevenueByMerchant(ctx context.Context, requ
 		MerchantID: id,
 	}
 
-	res, err := s.orderStatsByMerchant.FindMonthlyOrderByMerchant(&reqService)
+	res, err := s.orderStatsByMerchant.FindMonthlyOrderByMerchant(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -341,7 +341,7 @@ func (s *orderHandleGrpc) FindYearlyRevenueByMerchant(ctx context.Context, reque
 		MerchantID: id,
 	}
 
-	res, err := s.orderStatsByMerchant.FindYearlyOrderByMerchant(&reqService)
+	res, err := s.orderStatsByMerchant.FindYearlyOrderByMerchant(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -384,7 +384,7 @@ func (s *orderHandleGrpc) Create(ctx context.Context, request *pb.CreateOrderReq
 		return nil, order_errors.ErrGrpcValidateCreateOrder
 	}
 
-	order, err := s.orderCommand.CreateOrder(req)
+	order, err := s.orderCommand.CreateOrder(ctx, req)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -434,7 +434,7 @@ func (s *orderHandleGrpc) Update(ctx context.Context, request *pb.UpdateOrderReq
 		return nil, order_errors.ErrGrpcValidateUpdateOrder
 	}
 
-	order, err := s.orderCommand.UpdateOrder(req)
+	order, err := s.orderCommand.UpdateOrder(ctx, req)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -451,7 +451,7 @@ func (s *orderHandleGrpc) TrashedOrder(ctx context.Context, request *pb.FindById
 		return nil, order_errors.ErrGrpcFailedInvalidId
 	}
 
-	merchant, err := s.orderCommand.TrashedOrder(id)
+	merchant, err := s.orderCommand.TrashedOrder(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -469,7 +469,7 @@ func (s *orderHandleGrpc) RestoreOrder(ctx context.Context, request *pb.FindById
 		return nil, order_errors.ErrGrpcFailedInvalidId
 	}
 
-	merchant, err := s.orderCommand.RestoreOrder(id)
+	merchant, err := s.orderCommand.RestoreOrder(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -487,7 +487,7 @@ func (s *orderHandleGrpc) DeleteOrderPermanent(ctx context.Context, request *pb.
 		return nil, order_errors.ErrGrpcFailedInvalidId
 	}
 
-	_, err := s.orderCommand.DeleteOrderPermanent(id)
+	_, err := s.orderCommand.DeleteOrderPermanent(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -499,7 +499,7 @@ func (s *orderHandleGrpc) DeleteOrderPermanent(ctx context.Context, request *pb.
 }
 
 func (s *orderHandleGrpc) RestoreAllOrder(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseOrderAll, error) {
-	_, err := s.orderCommand.RestoreAllOrder()
+	_, err := s.orderCommand.RestoreAllOrder(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -511,7 +511,7 @@ func (s *orderHandleGrpc) RestoreAllOrder(ctx context.Context, _ *emptypb.Empty)
 }
 
 func (s *orderHandleGrpc) DeleteAllOrderPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseOrderAll, error) {
-	_, err := s.orderCommand.DeleteAllOrderPermanent()
+	_, err := s.orderCommand.DeleteAllOrderPermanent(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)

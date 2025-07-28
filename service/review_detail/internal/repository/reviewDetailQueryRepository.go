@@ -12,19 +12,17 @@ import (
 
 type reviewDetailQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.ReviewDetailRecordMapping
 }
 
-func NewReviewDetailQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.ReviewDetailRecordMapping) *reviewDetailQueryRepository {
+func NewReviewDetailQueryRepository(db *db.Queries, mapping recordmapper.ReviewDetailRecordMapping) *reviewDetailQueryRepository {
 	return &reviewDetailQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *reviewDetailQueryRepository) FindAllReviews(req *requests.FindAllReview) ([]*record.ReviewDetailRecord, *int, error) {
+func (r *reviewDetailQueryRepository) FindAllReviews(ctx context.Context, req *requests.FindAllReview) ([]*record.ReviewDetailRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetReviewDetailsParams{
@@ -33,7 +31,7 @@ func (r *reviewDetailQueryRepository) FindAllReviews(req *requests.FindAllReview
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetReviewDetails(r.ctx, reqDb)
+	res, err := r.db.GetReviewDetails(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, reviewdetail_errors.ErrFindAllReviewDetails
@@ -50,7 +48,7 @@ func (r *reviewDetailQueryRepository) FindAllReviews(req *requests.FindAllReview
 	return r.mapping.ToReviewDetailsRecordPagination(res), &totalCount, nil
 }
 
-func (r *reviewDetailQueryRepository) FindByActive(req *requests.FindAllReview) ([]*record.ReviewDetailRecord, *int, error) {
+func (r *reviewDetailQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllReview) ([]*record.ReviewDetailRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetReviewDetailsActiveParams{
@@ -59,7 +57,7 @@ func (r *reviewDetailQueryRepository) FindByActive(req *requests.FindAllReview) 
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetReviewDetailsActive(r.ctx, reqDb)
+	res, err := r.db.GetReviewDetailsActive(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, reviewdetail_errors.ErrFindActiveReviewDetails
@@ -76,7 +74,7 @@ func (r *reviewDetailQueryRepository) FindByActive(req *requests.FindAllReview) 
 	return r.mapping.ToReviewDetailsRecordActivePagination(res), &totalCount, nil
 }
 
-func (r *reviewDetailQueryRepository) FindByTrashed(req *requests.FindAllReview) ([]*record.ReviewDetailRecord, *int, error) {
+func (r *reviewDetailQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllReview) ([]*record.ReviewDetailRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetReviewDetailsTrashedParams{
@@ -85,7 +83,7 @@ func (r *reviewDetailQueryRepository) FindByTrashed(req *requests.FindAllReview)
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetReviewDetailsTrashed(r.ctx, reqDb)
+	res, err := r.db.GetReviewDetailsTrashed(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, reviewdetail_errors.ErrFindTrashedReviewDetails
@@ -102,8 +100,8 @@ func (r *reviewDetailQueryRepository) FindByTrashed(req *requests.FindAllReview)
 	return r.mapping.ToReviewDetailsRecordTrashedPagination(res), &totalCount, nil
 }
 
-func (r *reviewDetailQueryRepository) FindById(user_id int) (*record.ReviewDetailRecord, error) {
-	res, err := r.db.GetReviewDetail(r.ctx, int32(user_id))
+func (r *reviewDetailQueryRepository) FindById(ctx context.Context, user_id int) (*record.ReviewDetailRecord, error) {
+	res, err := r.db.GetReviewDetail(ctx, int32(user_id))
 
 	if err != nil {
 		return nil, reviewdetail_errors.ErrFindByIdReviewDetail
@@ -112,8 +110,8 @@ func (r *reviewDetailQueryRepository) FindById(user_id int) (*record.ReviewDetai
 	return r.mapping.ToReviewDetailRecord(res), nil
 }
 
-func (r *reviewDetailQueryRepository) FindByIdTrashed(user_id int) (*record.ReviewDetailRecord, error) {
-	res, err := r.db.GetReviewDetailTrashed(r.ctx, int32(user_id))
+func (r *reviewDetailQueryRepository) FindByIdTrashed(ctx context.Context, user_id int) (*record.ReviewDetailRecord, error) {
+	res, err := r.db.GetReviewDetailTrashed(ctx, int32(user_id))
 
 	if err != nil {
 		return nil, reviewdetail_errors.ErrFindByIdTrashedReviewDetail

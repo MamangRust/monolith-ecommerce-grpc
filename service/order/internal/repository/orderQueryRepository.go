@@ -12,19 +12,17 @@ import (
 
 type orderQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.OrderRecordMapping
 }
 
-func NewOrderQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.OrderRecordMapping) *orderQueryRepository {
+func NewOrderQueryRepository(db *db.Queries, mapping recordmapper.OrderRecordMapping) *orderQueryRepository {
 	return &orderQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *orderQueryRepository) FindAllOrders(req *requests.FindAllOrder) ([]*record.OrderRecord, *int, error) {
+func (r *orderQueryRepository) FindAllOrders(ctx context.Context, req *requests.FindAllOrder) ([]*record.OrderRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetOrdersParams{
@@ -33,7 +31,7 @@ func (r *orderQueryRepository) FindAllOrders(req *requests.FindAllOrder) ([]*rec
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetOrders(r.ctx, reqDb)
+	res, err := r.db.GetOrders(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, order_errors.ErrFindAllOrders
@@ -50,7 +48,7 @@ func (r *orderQueryRepository) FindAllOrders(req *requests.FindAllOrder) ([]*rec
 	return r.mapping.ToOrdersRecordPagination(res), &totalCount, nil
 }
 
-func (r *orderQueryRepository) FindByActive(req *requests.FindAllOrder) ([]*record.OrderRecord, *int, error) {
+func (r *orderQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllOrder) ([]*record.OrderRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetOrdersActiveParams{
@@ -59,7 +57,7 @@ func (r *orderQueryRepository) FindByActive(req *requests.FindAllOrder) ([]*reco
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetOrdersActive(r.ctx, reqDb)
+	res, err := r.db.GetOrdersActive(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, order_errors.ErrFindByActive
@@ -76,7 +74,7 @@ func (r *orderQueryRepository) FindByActive(req *requests.FindAllOrder) ([]*reco
 	return r.mapping.ToOrdersRecordActivePagination(res), &totalCount, nil
 }
 
-func (r *orderQueryRepository) FindByTrashed(req *requests.FindAllOrder) ([]*record.OrderRecord, *int, error) {
+func (r *orderQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllOrder) ([]*record.OrderRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetOrdersTrashedParams{
@@ -85,7 +83,7 @@ func (r *orderQueryRepository) FindByTrashed(req *requests.FindAllOrder) ([]*rec
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetOrdersTrashed(r.ctx, reqDb)
+	res, err := r.db.GetOrdersTrashed(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, order_errors.ErrFindByTrashed
@@ -102,7 +100,7 @@ func (r *orderQueryRepository) FindByTrashed(req *requests.FindAllOrder) ([]*rec
 	return r.mapping.ToOrdersRecordTrashedPagination(res), &totalCount, nil
 }
 
-func (r *orderQueryRepository) FindByMerchant(req *requests.FindAllOrderByMerchant) ([]*record.OrderRecord, *int, error) {
+func (r *orderQueryRepository) FindByMerchant(ctx context.Context, req *requests.FindAllOrderByMerchant) ([]*record.OrderRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetOrdersByMerchantParams{
@@ -112,7 +110,7 @@ func (r *orderQueryRepository) FindByMerchant(req *requests.FindAllOrderByMercha
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetOrdersByMerchant(r.ctx, reqDb)
+	res, err := r.db.GetOrdersByMerchant(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, order_errors.ErrFindByMerchant
@@ -129,8 +127,8 @@ func (r *orderQueryRepository) FindByMerchant(req *requests.FindAllOrderByMercha
 	return r.mapping.ToOrdersRecordByMerchantPagination(res), &totalCount, nil
 }
 
-func (r *orderQueryRepository) FindById(user_id int) (*record.OrderRecord, error) {
-	res, err := r.db.GetOrderByID(r.ctx, int32(user_id))
+func (r *orderQueryRepository) FindById(ctx context.Context, user_id int) (*record.OrderRecord, error) {
+	res, err := r.db.GetOrderByID(ctx, int32(user_id))
 
 	if err != nil {
 		return nil, order_errors.ErrFindById

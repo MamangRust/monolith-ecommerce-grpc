@@ -1,70 +1,73 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 )
 
 type UserQueryRepository interface {
-	FindById(user_id int) (*record.UserRecord, error)
+	FindById(ctx context.Context, user_id int) (*record.UserRecord, error)
 }
 
 type MerchantQueryRepository interface {
-	FindById(id int) (*record.MerchantRecord, error)
+	FindById(ctx context.Context, id int) (*record.MerchantRecord, error)
 }
 
 type OrderItemRepository interface {
-	FindOrderItemByOrder(order_id int) ([]*record.OrderItemRecord, error)
+	FindOrderItemByOrder(ctx context.Context, order_id int) ([]*record.OrderItemRecord, error)
 }
+
 type OrderQueryRepository interface {
-	FindById(id int) (*record.OrderRecord, error)
+	FindById(ctx context.Context, id int) (*record.OrderRecord, error)
 }
 
 type ShippingAddressQueryRepository interface {
-	FindByOrder(order_id int) (*record.ShippingAddressRecord, error)
+	FindByOrder(ctx context.Context, order_id int) (*record.ShippingAddressRecord, error)
 }
 
 type TransactionStatsRepository interface {
-	GetMonthlyAmountSuccess(req *requests.MonthAmountTransaction) ([]*record.TransactionMonthlyAmountSuccessRecord, error)
-	GetYearlyAmountSuccess(year int) ([]*record.TransactionYearlyAmountSuccessRecord, error)
-	GetMonthlyAmountFailed(req *requests.MonthAmountTransaction) ([]*record.TransactionMonthlyAmountFailedRecord, error)
-	GetYearlyAmountFailed(year int) ([]*record.TransactionYearlyAmountFailedRecord, error)
+	GetMonthlyAmountSuccess(ctx context.Context, req *requests.MonthAmountTransaction) ([]*record.TransactionMonthlyAmountSuccessRecord, error)
+	GetYearlyAmountSuccess(ctx context.Context, year int) ([]*record.TransactionYearlyAmountSuccessRecord, error)
+	GetMonthlyAmountFailed(ctx context.Context, req *requests.MonthAmountTransaction) ([]*record.TransactionMonthlyAmountFailedRecord, error)
+	GetYearlyAmountFailed(ctx context.Context, year int) ([]*record.TransactionYearlyAmountFailedRecord, error)
 
-	GetMonthlyTransactionMethodSuccess(req *requests.MonthMethodTransaction) ([]*record.TransactionMonthlyMethodRecord, error)
-	GetYearlyTransactionMethodSuccess(year int) ([]*record.TransactionYearlyMethodRecord, error)
+	GetMonthlyTransactionMethodSuccess(ctx context.Context, req *requests.MonthMethodTransaction) ([]*record.TransactionMonthlyMethodRecord, error)
+	GetYearlyTransactionMethodSuccess(ctx context.Context, year int) ([]*record.TransactionYearlyMethodRecord, error)
 
-	GetMonthlyTransactionMethodFailed(req *requests.MonthMethodTransaction) ([]*record.TransactionMonthlyMethodRecord, error)
-	GetYearlyTransactionMethodFailed(year int) ([]*record.TransactionYearlyMethodRecord, error)
+	GetMonthlyTransactionMethodFailed(ctx context.Context, req *requests.MonthMethodTransaction) ([]*record.TransactionMonthlyMethodRecord, error)
+	GetYearlyTransactionMethodFailed(ctx context.Context, year int) ([]*record.TransactionYearlyMethodRecord, error)
 }
 
 type TransactonStatsByMerchantRepository interface {
-	GetMonthlyAmountSuccessByMerchant(req *requests.MonthAmountTransactionMerchant) ([]*record.TransactionMonthlyAmountSuccessRecord, error)
-	GetYearlyAmountSuccessByMerchant(req *requests.YearAmountTransactionMerchant) ([]*record.TransactionYearlyAmountSuccessRecord, error)
-	GetMonthlyAmountFailedByMerchant(req *requests.MonthAmountTransactionMerchant) ([]*record.TransactionMonthlyAmountFailedRecord, error)
-	GetYearlyAmountFailedByMerchant(req *requests.YearAmountTransactionMerchant) ([]*record.TransactionYearlyAmountFailedRecord, error)
+	GetMonthlyAmountSuccessByMerchant(ctx context.Context, req *requests.MonthAmountTransactionMerchant) ([]*record.TransactionMonthlyAmountSuccessRecord, error)
+	GetYearlyAmountSuccessByMerchant(ctx context.Context, req *requests.YearAmountTransactionMerchant) ([]*record.TransactionYearlyAmountSuccessRecord, error)
+	GetMonthlyAmountFailedByMerchant(ctx context.Context, req *requests.MonthAmountTransactionMerchant) ([]*record.TransactionMonthlyAmountFailedRecord, error)
+	GetYearlyAmountFailedByMerchant(ctx context.Context, req *requests.YearAmountTransactionMerchant) ([]*record.TransactionYearlyAmountFailedRecord, error)
 
-	GetMonthlyTransactionMethodByMerchantSuccess(req *requests.MonthMethodTransactionMerchant) ([]*record.TransactionMonthlyMethodRecord, error)
-	GetYearlyTransactionMethodByMerchantSuccess(req *requests.YearMethodTransactionMerchant) ([]*record.TransactionYearlyMethodRecord, error)
+	GetMonthlyTransactionMethodByMerchantSuccess(ctx context.Context, req *requests.MonthMethodTransactionMerchant) ([]*record.TransactionMonthlyMethodRecord, error)
+	GetYearlyTransactionMethodByMerchantSuccess(ctx context.Context, req *requests.YearMethodTransactionMerchant) ([]*record.TransactionYearlyMethodRecord, error)
 
-	GetMonthlyTransactionMethodByMerchantFailed(req *requests.MonthMethodTransactionMerchant) ([]*record.TransactionMonthlyMethodRecord, error)
-	GetYearlyTransactionMethodByMerchantFailed(req *requests.YearMethodTransactionMerchant) ([]*record.TransactionYearlyMethodRecord, error)
+	GetMonthlyTransactionMethodByMerchantFailed(ctx context.Context, req *requests.MonthMethodTransactionMerchant) ([]*record.TransactionMonthlyMethodRecord, error)
+	GetYearlyTransactionMethodByMerchantFailed(ctx context.Context, req *requests.YearMethodTransactionMerchant) ([]*record.TransactionYearlyMethodRecord, error)
 }
 
 type TransactionQueryRepository interface {
-	FindAllTransactions(req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error)
-	FindByActive(req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error)
-	FindByTrashed(req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error)
-	FindByMerchant(req *requests.FindAllTransactionByMerchant) ([]*record.TransactionRecord, *int, error)
-	FindById(transaction_id int) (*record.TransactionRecord, error)
-	FindByOrderId(order_id int) (*record.TransactionRecord, error)
+	FindAllTransactions(ctx context.Context, req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error)
+	FindByActive(ctx context.Context, req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error)
+	FindByTrashed(ctx context.Context, req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error)
+	FindByMerchant(ctx context.Context, req *requests.FindAllTransactionByMerchant) ([]*record.TransactionRecord, *int, error)
+	FindById(ctx context.Context, transaction_id int) (*record.TransactionRecord, error)
+	FindByOrderId(ctx context.Context, order_id int) (*record.TransactionRecord, error)
 }
 
 type TransactionCommandRepository interface {
-	CreateTransaction(request *requests.CreateTransactionRequest) (*record.TransactionRecord, error)
-	UpdateTransaction(request *requests.UpdateTransactionRequest) (*record.TransactionRecord, error)
-	TrashTransaction(transaction_id int) (*record.TransactionRecord, error)
-	RestoreTransaction(transaction_id int) (*record.TransactionRecord, error)
-	DeleteTransactionPermanently(transaction_id int) (bool, error)
-	RestoreAllTransactions() (bool, error)
-	DeleteAllTransactionPermanent() (bool, error)
+	CreateTransaction(ctx context.Context, request *requests.CreateTransactionRequest) (*record.TransactionRecord, error)
+	UpdateTransaction(ctx context.Context, request *requests.UpdateTransactionRequest) (*record.TransactionRecord, error)
+	TrashTransaction(ctx context.Context, transaction_id int) (*record.TransactionRecord, error)
+	RestoreTransaction(ctx context.Context, transaction_id int) (*record.TransactionRecord, error)
+	DeleteTransactionPermanently(ctx context.Context, transaction_id int) (bool, error)
+	RestoreAllTransactions(ctx context.Context) (bool, error)
+	DeleteAllTransactionPermanent(ctx context.Context) (bool, error)
 }

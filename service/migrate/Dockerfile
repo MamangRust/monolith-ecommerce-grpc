@@ -9,19 +9,23 @@ RUN go mod tidy && go mod download
 
 COPY . .
 
-RUN mkdir -p ./pkg/database/migrations
-
-RUN CGO_ENABLED=0 GOOS=linux go build -o migrate ./main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o migrate ./main.go
 
 FROM alpine:latest
 
 RUN apk --no-cache add ca-certificates
 
+RUN addgroup -g 1000 appuser && \
+    adduser -D -s /bin/sh -u 1000 -G appuser appuser
+
 WORKDIR /app
 
+COPY --from=builder /app/migrate ./migrate
+RUN chown appuser:appuser ./migrate
 
-COPY --from=builder /app/migrate /usr/local/bin/migrate
-COPY --from=builder /app/docker.env* ./
-COPY --from=builder /app/pkg/database/migrations ./pkg/database/migrations
+COPY --from=builder /app/migrations ./migrations
+RUN chown -R appuser:appuser ./migrations
 
-ENTRYPOINT ["/usr/local/bin/migrate", "up"]
+USER appuser
+
+ENTRYPOINT ["./migrate", "up"]

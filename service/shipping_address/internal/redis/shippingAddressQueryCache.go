@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -37,9 +38,9 @@ func NewShippingAddressQueryCache(store *CacheStore) *shippingAddressQueryCache 
 	return &shippingAddressQueryCache{store: store}
 }
 
-func (r *shippingAddressQueryCache) GetShippingAddressAllCache(req *requests.FindAllShippingAddress) ([]*response.ShippingAddressResponse, *int, bool) {
+func (r *shippingAddressQueryCache) GetShippingAddressAllCache(ctx context.Context, req *requests.FindAllShippingAddress) ([]*response.ShippingAddressResponse, *int, bool) {
 	key := fmt.Sprintf(shippingAddressAllCacheKey, req.Page, req.PageSize, req.Search)
-	result, found := GetFromCache[shippingAddressCacheResponse](r.store, key)
+	result, found := GetFromCache[shippingAddressCacheResponse](ctx, r.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -48,7 +49,7 @@ func (r *shippingAddressQueryCache) GetShippingAddressAllCache(req *requests.Fin
 	return result.Data, result.Total, true
 }
 
-func (r *shippingAddressQueryCache) SetShippingAddressAllCache(req *requests.FindAllShippingAddress, res []*response.ShippingAddressResponse, total *int) {
+func (r *shippingAddressQueryCache) SetShippingAddressAllCache(ctx context.Context, req *requests.FindAllShippingAddress, res []*response.ShippingAddressResponse, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -60,13 +61,13 @@ func (r *shippingAddressQueryCache) SetShippingAddressAllCache(req *requests.Fin
 
 	key := fmt.Sprintf(shippingAddressAllCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &shippingAddressCacheResponse{Data: res, Total: total}
-	SetToCache(r.store, key, payload, ttlDefault)
+	SetToCache(ctx, r.store, key, payload, ttlDefault)
 }
 
-func (r *shippingAddressQueryCache) GetShippingAddressTrashedCache(req *requests.FindAllShippingAddress) ([]*response.ShippingAddressResponseDeleteAt, *int, bool) {
+func (r *shippingAddressQueryCache) GetShippingAddressTrashedCache(ctx context.Context, req *requests.FindAllShippingAddress) ([]*response.ShippingAddressResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(shippingAddressTrashedCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[shippingAddressCacheResponseDeleteAt](r.store, key)
+	result, found := GetFromCache[shippingAddressCacheResponseDeleteAt](ctx, r.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -75,7 +76,7 @@ func (r *shippingAddressQueryCache) GetShippingAddressTrashedCache(req *requests
 	return result.Data, result.Total, true
 }
 
-func (r *shippingAddressQueryCache) SetShippingAddressTrashedCache(req *requests.FindAllShippingAddress, res []*response.ShippingAddressResponseDeleteAt, total *int) {
+func (r *shippingAddressQueryCache) SetShippingAddressTrashedCache(ctx context.Context, req *requests.FindAllShippingAddress, res []*response.ShippingAddressResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -87,12 +88,12 @@ func (r *shippingAddressQueryCache) SetShippingAddressTrashedCache(req *requests
 
 	key := fmt.Sprintf(shippingAddressTrashedCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &shippingAddressCacheResponseDeleteAt{Data: res, Total: total}
-	SetToCache(r.store, key, payload, ttlDefault)
+	SetToCache(ctx, r.store, key, payload, ttlDefault)
 }
 
-func (r *shippingAddressQueryCache) GetShippingAddressActiveCache(req *requests.FindAllShippingAddress) ([]*response.ShippingAddressResponseDeleteAt, *int, bool) {
+func (r *shippingAddressQueryCache) GetShippingAddressActiveCache(ctx context.Context, req *requests.FindAllShippingAddress) ([]*response.ShippingAddressResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(shippingAddressActiveCacheKey, req.Page, req.PageSize, req.Search)
-	result, found := GetFromCache[shippingAddressCacheResponseDeleteAt](r.store, key)
+	result, found := GetFromCache[shippingAddressCacheResponseDeleteAt](ctx, r.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -101,7 +102,7 @@ func (r *shippingAddressQueryCache) GetShippingAddressActiveCache(req *requests.
 	return result.Data, result.Total, true
 }
 
-func (r *shippingAddressQueryCache) SetShippingAddressActiveCache(req *requests.FindAllShippingAddress, res []*response.ShippingAddressResponseDeleteAt, total *int) {
+func (r *shippingAddressQueryCache) SetShippingAddressActiveCache(ctx context.Context, req *requests.FindAllShippingAddress, res []*response.ShippingAddressResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -115,12 +116,12 @@ func (r *shippingAddressQueryCache) SetShippingAddressActiveCache(req *requests.
 
 	payload := &shippingAddressCacheResponseDeleteAt{Data: res, Total: total}
 
-	SetToCache(r.store, key, payload, ttlDefault)
+	SetToCache(ctx, r.store, key, payload, ttlDefault)
 }
 
-func (r *shippingAddressQueryCache) GetCachedShippingAddressCache(shipping_id int) (*response.ShippingAddressResponse, bool) {
+func (r *shippingAddressQueryCache) GetCachedShippingAddressCache(ctx context.Context, shipping_id int) (*response.ShippingAddressResponse, bool) {
 	key := fmt.Sprintf(shippingAddressByIdCacheKey, shipping_id)
-	result, found := GetFromCache[*response.ShippingAddressResponse](r.store, key)
+	result, found := GetFromCache[*response.ShippingAddressResponse](ctx, r.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -129,18 +130,18 @@ func (r *shippingAddressQueryCache) GetCachedShippingAddressCache(shipping_id in
 	return *result, true
 }
 
-func (r *shippingAddressQueryCache) SetCachedShippingAddressCache(data *response.ShippingAddressResponse) {
+func (r *shippingAddressQueryCache) SetCachedShippingAddressCache(ctx context.Context, data *response.ShippingAddressResponse) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(shippingAddressByIdCacheKey, data.ID)
-	SetToCache(r.store, key, data, ttlDefault)
+	SetToCache(ctx, r.store, key, data, ttlDefault)
 }
 
-func (r *shippingAddressQueryCache) GetCachedShippingAddressByOrderCache(order_id int) (*response.ShippingAddressResponse, bool) {
+func (r *shippingAddressQueryCache) GetCachedShippingAddressByOrderCache(ctx context.Context, order_id int) (*response.ShippingAddressResponse, bool) {
 	key := fmt.Sprintf(shiippingAddressByOrderIdCacheKey, order_id)
-	result, found := GetFromCache[*response.ShippingAddressResponse](r.store, key)
+	result, found := GetFromCache[*response.ShippingAddressResponse](ctx, r.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -149,11 +150,11 @@ func (r *shippingAddressQueryCache) GetCachedShippingAddressByOrderCache(order_i
 	return *result, true
 }
 
-func (r *shippingAddressQueryCache) SetCachedShippingAddressByOrderCache(data *response.ShippingAddressResponse) {
+func (r *shippingAddressQueryCache) SetCachedShippingAddressByOrderCache(ctx context.Context, data *response.ShippingAddressResponse) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(shiippingAddressByOrderIdCacheKey, data.OrderID)
-	SetToCache(r.store, key, data, ttlDefault)
+	SetToCache(ctx, r.store, key, data, ttlDefault)
 }

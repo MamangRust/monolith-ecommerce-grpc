@@ -11,20 +11,19 @@ import (
 )
 
 type merchantDetailQueryRepository struct {
-	db      *db.Queries
-	ctx     context.Context
+	db *db.Queries
+
 	mapping recordmapper.MerchantDetailMapping
 }
 
-func NewMerchantDetailQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.MerchantDetailMapping) *merchantDetailQueryRepository {
+func NewMerchantDetailQueryRepository(db *db.Queries, mapping recordmapper.MerchantDetailMapping) *merchantDetailQueryRepository {
 	return &merchantDetailQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *merchantDetailQueryRepository) FindAllMerchants(req *requests.FindAllMerchant) ([]*record.MerchantDetailRecord, *int, error) {
+func (r *merchantDetailQueryRepository) FindAllMerchants(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantDetailRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantDetailsParams{
@@ -33,7 +32,7 @@ func (r *merchantDetailQueryRepository) FindAllMerchants(req *requests.FindAllMe
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetMerchantDetails(r.ctx, reqDb)
+	res, err := r.db.GetMerchantDetails(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, merchantdetail_errors.ErrFindAllMerchantDetails
@@ -50,7 +49,7 @@ func (r *merchantDetailQueryRepository) FindAllMerchants(req *requests.FindAllMe
 	return r.mapping.ToMerchantDetailsRecordPagination(res), &totalCount, nil
 }
 
-func (r *merchantDetailQueryRepository) FindByActive(req *requests.FindAllMerchant) ([]*record.MerchantDetailRecord, *int, error) {
+func (r *merchantDetailQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantDetailRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantDetailsActiveParams{
@@ -59,7 +58,7 @@ func (r *merchantDetailQueryRepository) FindByActive(req *requests.FindAllMercha
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetMerchantDetailsActive(r.ctx, reqDb)
+	res, err := r.db.GetMerchantDetailsActive(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, merchantdetail_errors.ErrFindByActiveMerchantDetails
@@ -76,7 +75,7 @@ func (r *merchantDetailQueryRepository) FindByActive(req *requests.FindAllMercha
 	return r.mapping.ToMerchantDetailsRecordActivePagination(res), &totalCount, nil
 }
 
-func (r *merchantDetailQueryRepository) FindByTrashed(req *requests.FindAllMerchant) ([]*record.MerchantDetailRecord, *int, error) {
+func (r *merchantDetailQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantDetailRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantDetailsTrashedParams{
@@ -85,7 +84,7 @@ func (r *merchantDetailQueryRepository) FindByTrashed(req *requests.FindAllMerch
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetMerchantDetailsTrashed(r.ctx, reqDb)
+	res, err := r.db.GetMerchantDetailsTrashed(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, merchantdetail_errors.ErrFindByTrashedMerchantDetails
@@ -102,8 +101,8 @@ func (r *merchantDetailQueryRepository) FindByTrashed(req *requests.FindAllMerch
 	return r.mapping.ToMerchantDetailsRecordTrashedPagination(res), &totalCount, nil
 }
 
-func (r *merchantDetailQueryRepository) FindById(user_id int) (*record.MerchantDetailRecord, error) {
-	res, err := r.db.GetMerchantDetail(r.ctx, int32(user_id))
+func (r *merchantDetailQueryRepository) FindById(ctx context.Context, user_id int) (*record.MerchantDetailRecord, error) {
+	res, err := r.db.GetMerchantDetail(ctx, int32(user_id))
 
 	if err != nil {
 		return nil, merchantdetail_errors.ErrFindByIdMerchantDetail
@@ -112,8 +111,8 @@ func (r *merchantDetailQueryRepository) FindById(user_id int) (*record.MerchantD
 	return r.mapping.ToMerchantDetailRelationRecord(res), nil
 }
 
-func (r *merchantDetailQueryRepository) FindByIdTrashed(user_id int) (*record.MerchantDetailRecord, error) {
-	res, err := r.db.GetMerchantDetailTrashed(r.ctx, int32(user_id))
+func (r *merchantDetailQueryRepository) FindByIdTrashed(ctx context.Context, user_id int) (*record.MerchantDetailRecord, error) {
+	res, err := r.db.GetMerchantDetailTrashed(ctx, int32(user_id))
 
 	if err != nil {
 		return nil, merchantdetail_errors.ErrFindByIdTrashedMerchantDetail

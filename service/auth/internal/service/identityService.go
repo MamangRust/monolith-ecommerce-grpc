@@ -23,7 +23,6 @@ import (
 )
 
 type identityService struct {
-	ctx             context.Context
 	errorhandler    errorhandler.IdentityErrorHandler
 	errorToken      errorhandler.TokenErrorHandler
 	mencache        mencache.IdentityCache
@@ -38,7 +37,7 @@ type identityService struct {
 	requestDuration *prometheus.HistogramVec
 }
 
-func NewIdentityService(ctx context.Context, errohandler errorhandler.IdentityErrorHandler, errorToken errorhandler.TokenErrorHandler, mencache mencache.IdentityCache, token auth.TokenManager, refreshToken repository.RefreshTokenRepository, user repository.UserRepository, logger logger.LoggerInterface, mapping response_service.UserResponseMapper, tokenService tokenService) *identityService {
+func NewIdentityService(errohandler errorhandler.IdentityErrorHandler, errorToken errorhandler.TokenErrorHandler, mencache mencache.IdentityCache, token auth.TokenManager, refreshToken repository.RefreshTokenRepository, user repository.UserRepository, logger logger.LoggerInterface, mapping response_service.UserResponseMapper, tokenService tokenService) *identityService {
 	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "identity_service_requests_total",
@@ -56,7 +55,6 @@ func NewIdentityService(ctx context.Context, errohandler errorhandler.IdentityEr
 	)
 
 	return &identityService{
-		ctx:             ctx,
 		errorhandler:    errohandler,
 		errorToken:      errorToken,
 		mencache:        mencache,
@@ -72,27 +70,27 @@ func NewIdentityService(ctx context.Context, errohandler errorhandler.IdentityEr
 	}
 }
 
-func (s *identityService) RefreshToken(token string) (*response.TokenResponse, *response.ErrorResponse) {
+func (s *identityService) RefreshToken(ctx context.Context, token string) (*response.TokenResponse, *response.ErrorResponse) {
 	const method = "RefreshToken"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.String("token", token))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("token", token))
 
 	defer func() {
 		end(status)
 	}()
 
-	if cachedUserID, found := s.mencache.GetRefreshToken(token); found {
+	if cachedUserID, found := s.mencache.GetRefreshToken(ctx, token); found {
 		userId, err := strconv.Atoi(cachedUserID)
 		if err == nil {
-			s.mencache.DeleteRefreshToken(token)
+			s.mencache.DeleteRefreshToken(ctx, token)
 			s.logger.Debug("Invalidated old refresh token from cache", zap.String("token", token))
 
-			accessToken, err := s.tokenService.createAccessToken(userId)
+			accessToken, err := s.tokenService.createAccessToken(ctx, userId)
 			if err != nil {
 				return s.errorToken.HandleCreateAccessTokenError(err, method, "CREATE_ACCESS_TOKEN_FAILED", span, &status, zap.Int("user.id", userId))
 			}
 
-			refreshToken, err := s.tokenService.createRefreshToken(userId)
+			refreshToken, err := s.tokenService.createRefreshToken(ctx, userId)
 			if err != nil {
 				return s.errorToken.HandleCreateRefreshTokenError(err, method, "CREATE_REFRESH_TOKEN_FAILED", span, &status, zap.Int("user.id", userId))
 			}
@@ -100,7 +98,7 @@ func (s *identityService) RefreshToken(token string) (*response.TokenResponse, *
 			expiryTime := time.Now().Add(24 * time.Hour)
 			expirationDuration := time.Until(expiryTime)
 
-			s.mencache.SetRefreshToken(refreshToken, expirationDuration)
+			s.mencache.SetRefreshToken(ctx, refreshToken, expirationDuration)
 			s.logger.Debug("Stored new refresh token in cache",
 				zap.String("new_token", refreshToken),
 				zap.Duration("expiration", expirationDuration))
@@ -118,8 +116,8 @@ func (s *identityService) RefreshToken(token string) (*response.TokenResponse, *
 	userIdStr, err := s.token.ValidateToken(token)
 	if err != nil {
 		if errors.Is(err, auth.ErrTokenExpired) {
-			s.mencache.DeleteRefreshToken(token)
-			if err := s.refreshToken.DeleteRefreshToken(token); err != nil {
+			s.mencache.DeleteRefreshToken(ctx, token)
+			if err := s.refreshToken.DeleteRefreshToken(ctx, token); err != nil {
 
 				return s.errorhandler.HandleDeleteRefreshTokenError(err, method, "DELETE_REFRESH_TOKEN", span, &status, zap.String("token", token))
 			}
@@ -138,20 +136,20 @@ func (s *identityService) RefreshToken(token string) (*response.TokenResponse, *
 
 	span.SetAttributes(attribute.Int("user.id", userId))
 
-	s.mencache.DeleteRefreshToken(token)
-	if err := s.refreshToken.DeleteRefreshToken(token); err != nil {
+	s.mencache.DeleteRefreshToken(ctx, token)
+	if err := s.refreshToken.DeleteRefreshToken(ctx, token); err != nil {
 		s.logger.Debug("Failed to delete old refresh token", zap.Error(err))
 
 		return s.errorhandler.HandleDeleteRefreshTokenError(err, method, "DELETE_REFRESH_TOKEN", span, &status, zap.String("token", token))
 	}
 
-	accessToken, err := s.tokenService.createAccessToken(userId)
+	accessToken, err := s.tokenService.createAccessToken(ctx, userId)
 	if err != nil {
 
 		return s.errorToken.HandleCreateAccessTokenError(err, method, "CREATE_ACCESS_TOKEN_FAILED", span, &status, zap.Int("user.id", userId))
 	}
 
-	refreshToken, err := s.tokenService.createRefreshToken(userId)
+	refreshToken, err := s.tokenService.createRefreshToken(ctx, userId)
 	if err != nil {
 
 		return s.errorToken.HandleCreateRefreshTokenError(err, method, "CREATE_REFRESH_TOKEN_FAILED", span, &status, zap.Int("user.id", userId))
@@ -164,14 +162,14 @@ func (s *identityService) RefreshToken(token string) (*response.TokenResponse, *
 		ExpiresAt: expiryTime.Format("2006-01-02 15:04:05"),
 	}
 
-	if _, err = s.refreshToken.UpdateRefreshToken(updateRequest); err != nil {
-		s.mencache.DeleteRefreshToken(refreshToken)
+	if _, err = s.refreshToken.UpdateRefreshToken(ctx, updateRequest); err != nil {
+		s.mencache.DeleteRefreshToken(ctx, refreshToken)
 
 		return s.errorhandler.HandleUpdateRefreshTokenError(err, method, "UPDATE_REFRESH_TOKEN_FAILED", span, &status, zap.Int("user.id", userId))
 	}
 
 	expirationDuration := time.Until(expiryTime)
-	s.mencache.SetRefreshToken(refreshToken, expirationDuration)
+	s.mencache.SetRefreshToken(ctx, refreshToken, expirationDuration)
 
 	logSuccess("Refresh token refreshed successfully", zap.Int("user.id", userId))
 
@@ -180,9 +178,9 @@ func (s *identityService) RefreshToken(token string) (*response.TokenResponse, *
 		RefreshToken: refreshToken,
 	}, nil
 }
-func (s *identityService) GetMe(token string) (*response.UserResponse, *response.ErrorResponse) {
+func (s *identityService) GetMe(ctx context.Context, token string) (*response.UserResponse, *response.ErrorResponse) {
 	const method = "GetMe"
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.String("token", token))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("token", token))
 
 	defer func() {
 		end(status)
@@ -208,12 +206,12 @@ func (s *identityService) GetMe(token string) (*response.UserResponse, *response
 
 	span.SetAttributes(attribute.Int("user.id", userId))
 
-	if cachedUser, found := s.mencache.GetCachedUserInfo(userIdStr); found {
+	if cachedUser, found := s.mencache.GetCachedUserInfo(ctx, userIdStr); found {
 		logSuccess("User info retrieved from cache", zap.Int("user.id", userId))
 		return cachedUser, nil
 	}
 
-	user, err := s.user.FindById(userId)
+	user, err := s.user.FindById(ctx, userId)
 	if err != nil {
 		status = "error"
 
@@ -222,14 +220,15 @@ func (s *identityService) GetMe(token string) (*response.UserResponse, *response
 
 	userResponse := s.mapping.ToUserResponse(user)
 
-	s.mencache.SetCachedUserInfo(userResponse, time.Minute*5)
+	s.mencache.SetCachedUserInfo(ctx, userResponse, time.Minute*5)
 
 	logSuccess("User details fetched successfully", zap.Int("user.id", userId))
 
 	return userResponse, nil
 }
 
-func (s *identityService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *identityService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -238,7 +237,7 @@ func (s *identityService) startTracingAndLogging(method string, attrs ...attribu
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -263,7 +262,7 @@ func (s *identityService) startTracingAndLogging(method string, attrs ...attribu
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *identityService) recordMetrics(method string, status string, start time.Time) {

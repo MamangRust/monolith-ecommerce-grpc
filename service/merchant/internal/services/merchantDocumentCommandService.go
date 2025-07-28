@@ -28,7 +28,6 @@ import (
 
 type merchantDocumentCommandService struct {
 	kafka                             *kafka.Kafka
-	ctx                               context.Context
 	mencache                          mencache.MerchantDocumentCommandCache
 	errorMerchantDocumentCommand      errorhandler.MerchantDocumentCommandErrorHandler
 	trace                             trace.Tracer
@@ -43,7 +42,6 @@ type merchantDocumentCommandService struct {
 
 func NewMerchantDocumentCommandService(
 	kafka *kafka.Kafka,
-	ctx context.Context,
 	mencache mencache.MerchantDocumentCommandCache,
 	errorMerchantDocumentCommand errorhandler.MerchantDocumentCommandErrorHandler,
 	merchantDocumentCommandRepository repository.MerchantDocumentCommandRepository,
@@ -69,7 +67,6 @@ func NewMerchantDocumentCommandService(
 		kafka:                             kafka,
 		mencache:                          mencache,
 		errorMerchantDocumentCommand:      errorMerchantDocumentCommand,
-		ctx:                               ctx,
 		trace:                             otel.Tracer("merchant-document-command-service"),
 		merchantQueryRepository:           merchantQueryRepository,
 		merchantDocumentCommandRepository: merchantDocumentCommandRepository,
@@ -81,28 +78,28 @@ func NewMerchantDocumentCommandService(
 	}
 }
 
-func (s *merchantDocumentCommandService) CreateMerchantDocument(request *requests.CreateMerchantDocumentRequest) (*response.MerchantDocumentResponse, *response.ErrorResponse) {
+func (s *merchantDocumentCommandService) CreateMerchantDocument(ctx context.Context, request *requests.CreateMerchantDocumentRequest) (*response.MerchantDocumentResponse, *response.ErrorResponse) {
 	const method = "CreateMerchantDocument"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchant.id", request.MerchantID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchant.id", request.MerchantID))
 
 	defer func() {
 		end(status)
 	}()
 
-	merchant, err := s.merchantQueryRepository.FindById(request.MerchantID)
+	merchant, err := s.merchantQueryRepository.FindById(ctx, request.MerchantID)
 
 	if err != nil {
 		return errorhandler.HandleRepositorySingleError[*response.MerchantDocumentResponse](s.logger, err, method, "FAILED_FIND_MERCHANT_BY_ID", span, &status, merchant_errors.ErrFailedFindMerchantById, zap.Int("merchant.id", request.MerchantID))
 	}
 
-	user, err := s.userRepository.FindById(merchant.UserID)
+	user, err := s.userRepository.FindById(ctx, merchant.UserID)
 
 	if err != nil {
 		return errorhandler.HandleRepositorySingleError[*response.MerchantDocumentResponse](s.logger, err, method, "FAILED_FIND_USER_BY_ID", span, &status, user_errors.ErrUserNotFoundRes, zap.Int("user.id", merchant.UserID))
 	}
 
-	merchantDocument, err := s.merchantDocumentCommandRepository.CreateMerchantDocument(request)
+	merchantDocument, err := s.merchantDocumentCommandRepository.CreateMerchantDocument(ctx, request)
 
 	if err != nil {
 		return s.errorMerchantDocumentCommand.HandleCreateMerchantDocumentError(err, method, "FAILED_CREATE_MERCHANT_DOCUMENT", span, &status, zap.Int("merchant.id", request.MerchantID))
@@ -138,51 +135,51 @@ func (s *merchantDocumentCommandService) CreateMerchantDocument(request *request
 	return so, nil
 }
 
-func (s *merchantDocumentCommandService) UpdateMerchantDocument(request *requests.UpdateMerchantDocumentRequest) (*response.MerchantDocumentResponse, *response.ErrorResponse) {
+func (s *merchantDocumentCommandService) UpdateMerchantDocument(ctx context.Context, request *requests.UpdateMerchantDocumentRequest) (*response.MerchantDocumentResponse, *response.ErrorResponse) {
 	const method = "UpdateMerchantDocument"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("document_id", *request.DocumentID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("document_id", *request.DocumentID))
 
 	defer func() {
 		end(status)
 	}()
 
-	merchantDocument, err := s.merchantDocumentCommandRepository.UpdateMerchantDocument(request)
+	merchantDocument, err := s.merchantDocumentCommandRepository.UpdateMerchantDocument(ctx, request)
 	if err != nil {
 		return s.errorMerchantDocumentCommand.HandleUpdateMerchantDocumentError(err, method, "FAILED_UPDATE_MERCHANT_DOCUMENT", span, &status, zap.Int("merchantDocument.id", *request.DocumentID))
 	}
 
 	so := s.mapping.ToMerchantDocumentResponse(merchantDocument)
 
-	s.mencache.DeleteCachedMerchantDocuments(merchantDocument.ID)
+	s.mencache.DeleteCachedMerchantDocuments(ctx, merchantDocument.ID)
 
 	logSuccess("Successfully updated merchant document", zap.Int("merchantDocument.id", *request.DocumentID))
 
 	return so, nil
 }
 
-func (s *merchantDocumentCommandService) UpdateMerchantDocumentStatus(request *requests.UpdateMerchantDocumentStatusRequest) (*response.MerchantDocumentResponse, *response.ErrorResponse) {
+func (s *merchantDocumentCommandService) UpdateMerchantDocumentStatus(ctx context.Context, request *requests.UpdateMerchantDocumentStatusRequest) (*response.MerchantDocumentResponse, *response.ErrorResponse) {
 	const method = "UpdateMerchantDocumentStatus"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchantDocument.id", *request.DocumentID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantDocument.id", *request.DocumentID))
 
 	defer func() {
 		end(status)
 	}()
 
-	merchant, err := s.merchantQueryRepository.FindById(request.MerchantID)
+	merchant, err := s.merchantQueryRepository.FindById(ctx, request.MerchantID)
 
 	if err != nil {
 		return errorhandler.HandleRepositorySingleError[*response.MerchantDocumentResponse](s.logger, err, method, "FAILED_FIND_MERCHANT", span, &status, merchant_errors.ErrFailedFindMerchantById, zap.Int("merchant.id", request.MerchantID))
 	}
 
-	user, err := s.userRepository.FindById(merchant.UserID)
+	user, err := s.userRepository.FindById(ctx, merchant.UserID)
 
 	if err != nil {
 		return errorhandler.HandleRepositorySingleError[*response.MerchantDocumentResponse](s.logger, err, method, "FAILED_FIND_USER", span, &status, user_errors.ErrUserNotFoundRes, zap.Int("user.id", merchant.UserID))
 	}
 
-	merchantDocument, err := s.merchantDocumentCommandRepository.UpdateMerchantDocumentStatus(request)
+	merchantDocument, err := s.merchantDocumentCommandRepository.UpdateMerchantDocumentStatus(ctx, request)
 	if err != nil {
 		return s.errorMerchantDocumentCommand.HandleUpdateMerchantDocumentStatusError(err, method, "FAILED_UPDATE_MERCHANT_DOCUMENT_STATUS", span, &status, zap.Int("merchantDocument.id", *request.DocumentID))
 	}
@@ -241,23 +238,23 @@ func (s *merchantDocumentCommandService) UpdateMerchantDocumentStatus(request *r
 
 	so := s.mapping.ToMerchantDocumentResponse(merchantDocument)
 
-	s.mencache.DeleteCachedMerchantDocuments(merchantDocument.ID)
+	s.mencache.DeleteCachedMerchantDocuments(ctx, merchantDocument.ID)
 
 	logSuccess("Successfully updated merchant document status", zap.Int("merchantDocument.id", *request.DocumentID))
 
 	return so, nil
 }
 
-func (s *merchantDocumentCommandService) TrashedMerchantDocument(documentID int) (*response.MerchantDocumentResponse, *response.ErrorResponse) {
+func (s *merchantDocumentCommandService) TrashedMerchantDocument(ctx context.Context, documentID int) (*response.MerchantDocumentResponse, *response.ErrorResponse) {
 	const method = "TrashedDocument"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchantDocument.id", documentID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantDocument.id", documentID))
 
 	defer func() {
 		end(status)
 	}()
 
-	res, err := s.merchantDocumentCommandRepository.TrashedMerchantDocument(documentID)
+	res, err := s.merchantDocumentCommandRepository.TrashedMerchantDocument(ctx, documentID)
 	if err != nil {
 		return s.errorMerchantDocumentCommand.HandleTrashedMerchantDocumentError(err, method, "FAILED_TRASH_DOCUMENT", span, &status, zap.Int("document_id", documentID))
 	}
@@ -267,16 +264,16 @@ func (s *merchantDocumentCommandService) TrashedMerchantDocument(documentID int)
 	return s.mapping.ToMerchantDocumentResponse(res), nil
 }
 
-func (s *merchantDocumentCommandService) RestoreMerchantDocument(documentID int) (*response.MerchantDocumentResponse, *response.ErrorResponse) {
+func (s *merchantDocumentCommandService) RestoreMerchantDocument(ctx context.Context, documentID int) (*response.MerchantDocumentResponse, *response.ErrorResponse) {
 	const method = "RestoreDocument"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchantDocument.id", documentID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantDocument.id", documentID))
 
 	defer func() {
 		end(status)
 	}()
 
-	res, err := s.merchantDocumentCommandRepository.RestoreMerchantDocument(documentID)
+	res, err := s.merchantDocumentCommandRepository.RestoreMerchantDocument(ctx, documentID)
 	if err != nil {
 		return s.errorMerchantDocumentCommand.HandleRestoreMerchantDocumentError(err, method, "FAILED_RESTORE_DOCUMENT", span, &status, zap.Int("merchantDocument.id", documentID))
 	}
@@ -288,16 +285,16 @@ func (s *merchantDocumentCommandService) RestoreMerchantDocument(documentID int)
 	return so, nil
 }
 
-func (s *merchantDocumentCommandService) DeleteMerchantDocumentPermanent(documentID int) (bool, *response.ErrorResponse) {
+func (s *merchantDocumentCommandService) DeleteMerchantDocumentPermanent(ctx context.Context, documentID int) (bool, *response.ErrorResponse) {
 	const method = "DeleteDocumentPermanent"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchantDocument.id", documentID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantDocument.id", documentID))
 
 	defer func() {
 		end(status)
 	}()
 
-	_, err := s.merchantDocumentCommandRepository.DeleteMerchantDocumentPermanent(documentID)
+	_, err := s.merchantDocumentCommandRepository.DeleteMerchantDocumentPermanent(ctx, documentID)
 	if err != nil {
 		return s.errorMerchantDocumentCommand.HandleDeleteMerchantDocumentPermanentError(err, method, "FAILED_DELETE_DOCUMENT_PERMANENT", span, &status, zap.Int("merchantDocument.id", documentID))
 	}
@@ -307,16 +304,16 @@ func (s *merchantDocumentCommandService) DeleteMerchantDocumentPermanent(documen
 	return true, nil
 }
 
-func (s *merchantDocumentCommandService) RestoreAllMerchantDocument() (bool, *response.ErrorResponse) {
+func (s *merchantDocumentCommandService) RestoreAllMerchantDocument(ctx context.Context) (bool, *response.ErrorResponse) {
 	const method = "RestoreAllDocuments"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.merchantDocumentCommandRepository.RestoreAllMerchantDocument()
+	success, err := s.merchantDocumentCommandRepository.RestoreAllMerchantDocument(ctx)
 	if err != nil {
 		return s.errorMerchantDocumentCommand.HandleRestoreAllMerchantDocumentError(err, method, "FAILED_RESTORE_ALL_DOCUMENTS", span, &status, zap.Error(err))
 	}
@@ -326,16 +323,16 @@ func (s *merchantDocumentCommandService) RestoreAllMerchantDocument() (bool, *re
 	return success, nil
 }
 
-func (s *merchantDocumentCommandService) DeleteAllMerchantDocumentPermanent() (bool, *response.ErrorResponse) {
+func (s *merchantDocumentCommandService) DeleteAllMerchantDocumentPermanent(ctx context.Context) (bool, *response.ErrorResponse) {
 	const method = "DeleteAllDocumentsPermanent"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.merchantDocumentCommandRepository.DeleteAllMerchantDocumentPermanent()
+	success, err := s.merchantDocumentCommandRepository.DeleteAllMerchantDocumentPermanent(ctx)
 	if err != nil {
 		return s.errorMerchantDocumentCommand.HandleDeleteAllMerchantDocumentPermanentError(err, method, "FAILED_DELETE_ALL_DOCUMENTS_PERMANENT", span, &status, zap.Error(err))
 	}
@@ -345,7 +342,8 @@ func (s *merchantDocumentCommandService) DeleteAllMerchantDocumentPermanent() (b
 	return success, nil
 }
 
-func (s *merchantDocumentCommandService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *merchantDocumentCommandService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -354,7 +352,7 @@ func (s *merchantDocumentCommandService) startTracingAndLogging(method string, a
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	_, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -379,7 +377,7 @@ func (s *merchantDocumentCommandService) startTracingAndLogging(method string, a
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *merchantDocumentCommandService) recordMetrics(method string, status string, start time.Time) {

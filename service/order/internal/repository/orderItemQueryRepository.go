@@ -11,20 +11,18 @@ import (
 
 type orderItemQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.OrderItemRecordMapping
 }
 
-func NewOrderItemQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.OrderItemRecordMapping) *orderItemQueryRepository {
+func NewOrderItemQueryRepository(db *db.Queries, mapping recordmapper.OrderItemRecordMapping) *orderItemQueryRepository {
 	return &orderItemQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *orderItemQueryRepository) CalculateTotalPrice(order_id int) (*int32, error) {
-	res, err := r.db.CalculateTotalPrice(r.ctx, int32(order_id))
+func (r *orderItemQueryRepository) CalculateTotalPrice(ctx context.Context, order_id int) (*int32, error) {
+	res, err := r.db.CalculateTotalPrice(ctx, int32(order_id))
 
 	if err != nil {
 		return nil, orderitem_errors.ErrCalculateTotalPrice
@@ -34,8 +32,8 @@ func (r *orderItemQueryRepository) CalculateTotalPrice(order_id int) (*int32, er
 
 }
 
-func (r *orderItemQueryRepository) FindOrderItemByOrder(order_id int) ([]*record.OrderItemRecord, error) {
-	res, err := r.db.GetOrderItemsByOrder(r.ctx, int32(order_id))
+func (r *orderItemQueryRepository) FindOrderItemByOrder(ctx context.Context, order_id int) ([]*record.OrderItemRecord, error) {
+	res, err := r.db.GetOrderItemsByOrder(ctx, int32(order_id))
 
 	if err != nil {
 		return nil, orderitem_errors.ErrFindOrderItemByOrder

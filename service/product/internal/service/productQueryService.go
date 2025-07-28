@@ -21,7 +21,6 @@ import (
 )
 
 type productQueryService struct {
-	ctx                    context.Context
 	errorhandler           errorhandler.ProductQueryError
 	mencache               mencache.ProductQueryCache
 	trace                  trace.Tracer
@@ -33,7 +32,6 @@ type productQueryService struct {
 }
 
 func NewProductQueryService(
-	ctx context.Context,
 	errorhandler errorhandler.ProductQueryError,
 	mencache mencache.ProductQueryCache,
 	productQueryRepository repository.ProductQueryRepository,
@@ -60,7 +58,6 @@ func NewProductQueryService(
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &productQueryService{
-		ctx:                    ctx,
 		errorhandler:           errorhandler,
 		mencache:               mencache,
 		trace:                  otel.Tracer("product-query-service"),
@@ -72,24 +69,24 @@ func NewProductQueryService(
 	}
 }
 
-func (s *productQueryService) FindAll(req *requests.FindAllProduct) ([]*response.ProductResponse, *int, *response.ErrorResponse) {
+func (s *productQueryService) FindAll(ctx context.Context, req *requests.FindAllProduct) ([]*response.ProductResponse, *int, *response.ErrorResponse) {
 	const method = "FindAll"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedProducts(req); found {
+	if data, total, found := s.mencache.GetCachedProducts(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 		return data, total, nil
 	}
 
-	products, totalRecords, err := s.productQueryRepository.FindAllProducts(req)
+	products, totalRecords, err := s.productQueryRepository.FindAllProducts(ctx, req)
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationError(
 			err, method, "FAILED_FIND_PRODUCTS", span, &status, zap.Error(err),
@@ -97,32 +94,32 @@ func (s *productQueryService) FindAll(req *requests.FindAllProduct) ([]*response
 	}
 
 	result := s.mapping.ToProductsResponse(products)
-	s.mencache.SetCachedProducts(req, result, totalRecords)
+	s.mencache.SetCachedProducts(ctx, req, result, totalRecords)
 
 	logSuccess("Successfully fetched all products", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return result, totalRecords, nil
 }
 
-func (s *productQueryService) FindByMerchant(req *requests.FindAllProductByMerchant) ([]*response.ProductResponse, *int, *response.ErrorResponse) {
+func (s *productQueryService) FindByMerchant(ctx context.Context, req *requests.FindAllProductByMerchant) ([]*response.ProductResponse, *int, *response.ErrorResponse) {
 	const method = "FindByMerchant"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 	merchantID := req.MerchantID
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search), attribute.Int("merchant.id", merchantID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search), attribute.Int("merchant.id", merchantID))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedProductsByMerchant(req); found {
+	if data, total, found := s.mencache.GetCachedProductsByMerchant(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search), zap.Int("merchant.id", merchantID))
 		return data, total, nil
 	}
 
-	products, totalRecords, err := s.productQueryRepository.FindByMerchant(req)
+	products, totalRecords, err := s.productQueryRepository.FindByMerchant(ctx, req)
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationError(
 			err, method, "FAILED_FIND_PRODUCTS_BY_MERCHANT", span, &status, zap.Error(err),
@@ -130,32 +127,32 @@ func (s *productQueryService) FindByMerchant(req *requests.FindAllProductByMerch
 	}
 
 	result := s.mapping.ToProductsResponse(products)
-	s.mencache.SetCachedProductsByMerchant(req, result, totalRecords)
+	s.mencache.SetCachedProductsByMerchant(ctx, req, result, totalRecords)
 
 	logSuccess("Successfully fetched all products by merchant", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search), zap.Int("merchant.id", merchantID))
 
 	return result, totalRecords, nil
 }
 
-func (s *productQueryService) FindByCategory(req *requests.FindAllProductByCategory) ([]*response.ProductResponse, *int, *response.ErrorResponse) {
+func (s *productQueryService) FindByCategory(ctx context.Context, req *requests.FindAllProductByCategory) ([]*response.ProductResponse, *int, *response.ErrorResponse) {
 	const method = "FindByCategory"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 	categoryName := req.CategoryName
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search), attribute.String("category.name", categoryName))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search), attribute.String("category.name", categoryName))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedProductsByCategory(req); found {
+	if data, total, found := s.mencache.GetCachedProductsByCategory(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search), zap.String("category.name", categoryName))
 		return data, total, nil
 	}
 
-	products, totalRecords, err := s.productQueryRepository.FindByCategory(req)
+	products, totalRecords, err := s.productQueryRepository.FindByCategory(ctx, req)
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationError(
 			err, method, "FAILED_FIND_PRODUCTS_BY_CATEGORY", span, &status, zap.Error(err),
@@ -163,28 +160,28 @@ func (s *productQueryService) FindByCategory(req *requests.FindAllProductByCateg
 	}
 
 	result := s.mapping.ToProductsResponse(products)
-	s.mencache.SetCachedProductsByCategory(req, result, totalRecords)
+	s.mencache.SetCachedProductsByCategory(ctx, req, result, totalRecords)
 
 	logSuccess("Successfully fetched all products by category", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search), zap.String("category.name", categoryName))
 
 	return result, totalRecords, nil
 }
 
-func (s *productQueryService) FindById(productID int) (*response.ProductResponse, *response.ErrorResponse) {
+func (s *productQueryService) FindById(ctx context.Context, productID int) (*response.ProductResponse, *response.ErrorResponse) {
 	const method = "FindById"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("product.id", productID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("product.id", productID))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedProduct(productID); found {
+	if data, found := s.mencache.GetCachedProduct(ctx, productID); found {
 		logSuccess("Data found in cache", zap.Int("product.id", productID))
 		return data, nil
 	}
 
-	product, err := s.productQueryRepository.FindById(productID)
+	product, err := s.productQueryRepository.FindById(ctx, productID)
 	if err != nil {
 		return errorhandler.HandleRepositorySingleError[*response.ProductResponse](
 			s.logger, err, method, "FAILED_FIND_PRODUCT_BY_ID", span, &status,
@@ -193,32 +190,32 @@ func (s *productQueryService) FindById(productID int) (*response.ProductResponse
 	}
 
 	so := s.mapping.ToProductResponse(product)
-	s.mencache.SetCachedProduct(so)
+	s.mencache.SetCachedProduct(ctx, so)
 
 	logSuccess("Successfully fetched product by id", zap.Int("product.id", productID))
 
 	return so, nil
 }
 
-func (s *productQueryService) FindByActive(req *requests.FindAllProduct) ([]*response.ProductResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *productQueryService) FindByActive(ctx context.Context, req *requests.FindAllProduct) ([]*response.ProductResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByActive"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedProductActive(req); found {
+	if data, total, found := s.mencache.GetCachedProductActive(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	products, totalRecords, err := s.productQueryRepository.FindByActive(req)
+	products, totalRecords, err := s.productQueryRepository.FindByActive(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_PRODUCTS_ACTIVE", span, &status, product_errors.ErrFailedFindProductsByActive, zap.Error(err))
@@ -226,32 +223,32 @@ func (s *productQueryService) FindByActive(req *requests.FindAllProduct) ([]*res
 
 	so := s.mapping.ToProductsResponseDeleteAt(products)
 
-	s.mencache.SetCachedProductActive(req, so, totalRecords)
+	s.mencache.SetCachedProductActive(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched all products", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *productQueryService) FindByTrashed(req *requests.FindAllProduct) ([]*response.ProductResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *productQueryService) FindByTrashed(ctx context.Context, req *requests.FindAllProduct) ([]*response.ProductResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByTrashed"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedProductTrashed(req); found {
+	if data, total, found := s.mencache.GetCachedProductTrashed(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	products, totalRecords, err := s.productQueryRepository.FindByTrashed(req)
+	products, totalRecords, err := s.productQueryRepository.FindByTrashed(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_PRODUCTS_TRASHED", span, &status, product_errors.ErrFailedFindProductsByTrashed, zap.Error(err))
@@ -259,14 +256,15 @@ func (s *productQueryService) FindByTrashed(req *requests.FindAllProduct) ([]*re
 
 	so := s.mapping.ToProductsResponseDeleteAt(products)
 
-	s.mencache.SetCachedProductTrashed(req, so, totalRecords)
+	s.mencache.SetCachedProductTrashed(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched all products", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *productQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *productQueryService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -275,7 +273,7 @@ func (s *productQueryService) startTracingAndLogging(method string, attrs ...att
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	_, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -300,7 +298,7 @@ func (s *productQueryService) startTracingAndLogging(method string, attrs ...att
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *productQueryService) normalizePagination(page, pageSize int) (int, int) {

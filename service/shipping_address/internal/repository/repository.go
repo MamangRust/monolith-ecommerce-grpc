@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"context"
-
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
@@ -12,16 +10,11 @@ type Repositories struct {
 	ShippingAddressCommand ShippingAddressCommandRepository
 }
 
-type Deps struct {
-	DB  *db.Queries
-	Ctx context.Context
-}
-
-func NewRepositories(deps *Deps) *Repositories {
+func NewRepositories(DB *db.Queries) *Repositories {
 	mapper := recordmapper.NewShippingAddressRecordMapper()
 
 	return &Repositories{
-		ShippingAddressQuery:   NewShippingAddressQueryRepository(deps.DB, deps.Ctx, mapper),
-		ShippingAddressCommand: NewShippingAddressCommandRepository(deps.DB, deps.Ctx, mapper),
+		ShippingAddressQuery:   NewShippingAddressQueryRepository(DB, mapper),
+		ShippingAddressCommand: NewShippingAddressCommandRepository(DB, mapper),
 	}
 }

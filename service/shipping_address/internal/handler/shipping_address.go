@@ -46,7 +46,7 @@ func (s *shippingAddressHandleGrpc) FindAll(ctx context.Context, request *pb.Fin
 		Search:   search,
 	}
 
-	Shipping, totalRecords, err := s.shippingAddressQueryService.FindAll(&reqService)
+	Shipping, totalRecords, err := s.shippingAddressQueryService.FindAll(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -72,7 +72,7 @@ func (s *shippingAddressHandleGrpc) FindById(ctx context.Context, request *pb.Fi
 		return nil, shippingaddress_errors.ErrGrpcInvalidID
 	}
 
-	shipping, err := s.shippingAddressQueryService.FindById(id)
+	shipping, err := s.shippingAddressQueryService.FindById(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -102,7 +102,7 @@ func (s *shippingAddressHandleGrpc) FindByActive(ctx context.Context, request *p
 		Search:   search,
 	}
 
-	users, totalRecords, err := s.shippingAddressQueryService.FindByActive(&reqService)
+	users, totalRecords, err := s.shippingAddressQueryService.FindByActive(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -140,7 +140,7 @@ func (s *shippingAddressHandleGrpc) FindByTrashed(ctx context.Context, request *
 		Search:   search,
 	}
 
-	users, totalRecords, err := s.shippingAddressQueryService.FindByTrashed(&reqService)
+	users, totalRecords, err := s.shippingAddressQueryService.FindByTrashed(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -167,7 +167,7 @@ func (s *shippingAddressHandleGrpc) TrashedShipping(ctx context.Context, request
 		return nil, shippingaddress_errors.ErrGrpcInvalidID
 	}
 
-	Shipping, err := s.shippingAddressCommandService.TrashShippingAddress(id)
+	Shipping, err := s.shippingAddressCommandService.TrashShippingAddress(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -185,7 +185,7 @@ func (s *shippingAddressHandleGrpc) RestoreShipping(ctx context.Context, request
 		return nil, shippingaddress_errors.ErrGrpcInvalidID
 	}
 
-	Shipping, err := s.shippingAddressCommandService.RestoreShippingAddress(id)
+	Shipping, err := s.shippingAddressCommandService.RestoreShippingAddress(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -203,7 +203,7 @@ func (s *shippingAddressHandleGrpc) DeleteShippingPermanent(ctx context.Context,
 		return nil, shippingaddress_errors.ErrGrpcInvalidID
 	}
 
-	_, err := s.shippingAddressCommandService.DeleteShippingAddressPermanently(id)
+	_, err := s.shippingAddressCommandService.DeleteShippingAddressPermanently(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -215,7 +215,7 @@ func (s *shippingAddressHandleGrpc) DeleteShippingPermanent(ctx context.Context,
 }
 
 func (s *shippingAddressHandleGrpc) RestoreAllShipping(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseShippingAll, error) {
-	_, err := s.shippingAddressCommandService.RestoreAllShippingAddress()
+	_, err := s.shippingAddressCommandService.RestoreAllShippingAddress(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -227,7 +227,7 @@ func (s *shippingAddressHandleGrpc) RestoreAllShipping(ctx context.Context, _ *e
 }
 
 func (s *shippingAddressHandleGrpc) DeleteShippingAddressPermanently(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseShippingAll, error) {
-	_, err := s.shippingAddressCommandService.DeleteAllPermanentShippingAddress()
+	_, err := s.shippingAddressCommandService.DeleteAllPermanentShippingAddress(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)

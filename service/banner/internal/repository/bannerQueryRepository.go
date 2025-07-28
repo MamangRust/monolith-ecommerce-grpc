@@ -12,19 +12,17 @@ import (
 
 type bannerQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.BannerRecordMapping
 }
 
-func NewBannerQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.BannerRecordMapping) *bannerQueryRepository {
+func NewBannerQueryRepository(db *db.Queries, mapping recordmapper.BannerRecordMapping) *bannerQueryRepository {
 	return &bannerQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *bannerQueryRepository) FindAllBanners(req *requests.FindAllBanner) ([]*record.BannerRecord, *int, error) {
+func (r *bannerQueryRepository) FindAllBanners(ctx context.Context, req *requests.FindAllBanner) ([]*record.BannerRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetBannersParams{
@@ -33,7 +31,7 @@ func (r *bannerQueryRepository) FindAllBanners(req *requests.FindAllBanner) ([]*
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetBanners(r.ctx, reqDb)
+	res, err := r.db.GetBanners(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, banner_errors.ErrFindAllBanners
@@ -50,7 +48,7 @@ func (r *bannerQueryRepository) FindAllBanners(req *requests.FindAllBanner) ([]*
 	return r.mapping.ToBannersRecordPagination(res), &totalCount, nil
 }
 
-func (r *bannerQueryRepository) FindByActive(req *requests.FindAllBanner) ([]*record.BannerRecord, *int, error) {
+func (r *bannerQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllBanner) ([]*record.BannerRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetBannersActiveParams{
@@ -59,7 +57,7 @@ func (r *bannerQueryRepository) FindByActive(req *requests.FindAllBanner) ([]*re
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetBannersActive(r.ctx, reqDb)
+	res, err := r.db.GetBannersActive(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, banner_errors.ErrFindActiveBanners
@@ -76,7 +74,7 @@ func (r *bannerQueryRepository) FindByActive(req *requests.FindAllBanner) ([]*re
 	return r.mapping.ToBannersRecordActivePagination(res), &totalCount, nil
 }
 
-func (r *bannerQueryRepository) FindByTrashed(req *requests.FindAllBanner) ([]*record.BannerRecord, *int, error) {
+func (r *bannerQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllBanner) ([]*record.BannerRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetBannersTrashedParams{
@@ -85,7 +83,7 @@ func (r *bannerQueryRepository) FindByTrashed(req *requests.FindAllBanner) ([]*r
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetBannersTrashed(r.ctx, reqDb)
+	res, err := r.db.GetBannersTrashed(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, banner_errors.ErrFindTrashedBanners
@@ -102,8 +100,8 @@ func (r *bannerQueryRepository) FindByTrashed(req *requests.FindAllBanner) ([]*r
 	return r.mapping.ToBannersRecordTrashedPagination(res), &totalCount, nil
 }
 
-func (r *bannerQueryRepository) FindById(user_id int) (*record.BannerRecord, error) {
-	res, err := r.db.GetBanner(r.ctx, int32(user_id))
+func (r *bannerQueryRepository) FindById(ctx context.Context, user_id int) (*record.BannerRecord, error) {
+	res, err := r.db.GetBanner(ctx, int32(user_id))
 
 	if err != nil {
 		return nil, banner_errors.ErrBannerNotFound

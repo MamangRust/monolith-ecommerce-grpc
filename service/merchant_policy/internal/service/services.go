@@ -1,8 +1,6 @@
 package service
 
 import (
-	"context"
-
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/internal/errorhandler"
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/internal/repository"
@@ -16,7 +14,6 @@ type Service struct {
 }
 
 type Deps struct {
-	Ctx          context.Context
 	ErrorHandler *errorhandler.ErrorHandler
 	Mencache     *mencache.Mencache
 	Repositories *repository.Repositories
@@ -27,7 +24,7 @@ func NewServices(deps *Deps) *Service {
 	mapper := response_service.NewMerchantPolicyResponseMapper()
 
 	return &Service{
-		MerchantPolicyQuery: NewMerchantPolicyQueryService(deps.Ctx, deps.ErrorHandler.MerchantPolicyQueryError, deps.Mencache.MerchantPolicyQueryCache, deps.Logger, deps.Repositories.MerchantPolicyQuery, mapper),
-		MerchantPolicyCmd:   NewMerchantPolicyCommandService(deps.Ctx, deps.ErrorHandler.MerchantPolicyCommandError, deps.Mencache.MerchantPolicyCommandCache, deps.Logger, deps.Repositories.MerchantPolicyCmd, deps.Repositories.MerchantQuery, mapper),
+		MerchantPolicyQuery: NewMerchantPolicyQueryService(deps.ErrorHandler.MerchantPolicyQueryError, deps.Mencache.MerchantPolicyQueryCache, deps.Logger, deps.Repositories.MerchantPolicyQuery, mapper),
+		MerchantPolicyCmd:   NewMerchantPolicyCommandService(deps.ErrorHandler.MerchantPolicyCommandError, deps.Mencache.MerchantPolicyCommandCache, deps.Logger, deps.Repositories.MerchantPolicyCmd, deps.Repositories.MerchantQuery, mapper),
 	}
 }

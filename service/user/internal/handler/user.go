@@ -46,7 +46,7 @@ func (s *userHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllUserReq
 		Search:   search,
 	}
 
-	users, totalRecords, err := s.userQueryService.FindAll(&reqService)
+	users, totalRecords, err := s.userQueryService.FindAll(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -72,7 +72,7 @@ func (s *userHandleGrpc) FindById(ctx context.Context, request *pb.FindByIdUserR
 		return nil, user_errors.ErrGrpcUserNotFound
 	}
 
-	user, err := s.userQueryService.FindByID(id)
+	user, err := s.userQueryService.FindByID(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -102,7 +102,7 @@ func (s *userHandleGrpc) FindByActive(ctx context.Context, request *pb.FindAllUs
 		Search:   search,
 	}
 
-	users, totalRecords, err := s.userQueryService.FindByActive(&reqService)
+	users, totalRecords, err := s.userQueryService.FindByActive(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -139,7 +139,7 @@ func (s *userHandleGrpc) FindByTrashed(ctx context.Context, request *pb.FindAllU
 		Search:   search,
 	}
 
-	users, totalRecords, err := s.userQueryService.FindByTrashed(&reqService)
+	users, totalRecords, err := s.userQueryService.FindByTrashed(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -172,7 +172,7 @@ func (s *userHandleGrpc) Create(ctx context.Context, request *pb.CreateUserReque
 		return nil, user_errors.ErrGrpcValidateCreateUser
 	}
 
-	user, err := s.userCommandService.CreateUser(req)
+	user, err := s.userCommandService.CreateUser(ctx, req)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -203,7 +203,7 @@ func (s *userHandleGrpc) Update(ctx context.Context, request *pb.UpdateUserReque
 		return nil, user_errors.ErrGrpcValidateCreateUser
 	}
 
-	user, err := s.userCommandService.UpdateUser(req)
+	user, err := s.userCommandService.UpdateUser(ctx, req)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -221,7 +221,7 @@ func (s *userHandleGrpc) TrashedUser(ctx context.Context, request *pb.FindByIdUs
 		return nil, user_errors.ErrGrpcUserInvalidId
 	}
 
-	user, err := s.userCommandService.TrashedUser(id)
+	user, err := s.userCommandService.TrashedUser(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -239,7 +239,7 @@ func (s *userHandleGrpc) RestoreUser(ctx context.Context, request *pb.FindByIdUs
 		return nil, user_errors.ErrGrpcUserInvalidId
 	}
 
-	user, err := s.userCommandService.RestoreUser(id)
+	user, err := s.userCommandService.RestoreUser(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -257,7 +257,7 @@ func (s *userHandleGrpc) DeleteUserPermanent(ctx context.Context, request *pb.Fi
 		return nil, user_errors.ErrGrpcUserInvalidId
 	}
 
-	_, err := s.userCommandService.DeleteUserPermanent(id)
+	_, err := s.userCommandService.DeleteUserPermanent(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -269,7 +269,7 @@ func (s *userHandleGrpc) DeleteUserPermanent(ctx context.Context, request *pb.Fi
 }
 
 func (s *userHandleGrpc) RestoreAllUser(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseUserAll, error) {
-	_, err := s.userCommandService.RestoreAllUser()
+	_, err := s.userCommandService.RestoreAllUser(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -281,7 +281,7 @@ func (s *userHandleGrpc) RestoreAllUser(ctx context.Context, _ *emptypb.Empty) (
 }
 
 func (s *userHandleGrpc) DeleteAllUserPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseUserAll, error) {
-	_, err := s.userCommandService.DeleteAllUserPermanent()
+	_, err := s.userCommandService.DeleteAllUserPermanent(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)

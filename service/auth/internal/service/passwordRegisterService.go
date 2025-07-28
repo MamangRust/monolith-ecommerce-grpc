@@ -25,7 +25,6 @@ import (
 )
 
 type passwordResetService struct {
-	ctx               context.Context
 	errorhandler      errorhandler.PasswordResetErrorHandler
 	errorRandomString errorhandler.RandomStringErrorHandler
 	errorMarshal      errorhandler.MarshalErrorHandler
@@ -41,7 +40,7 @@ type passwordResetService struct {
 	requestDuration   *prometheus.HistogramVec
 }
 
-func NewPasswordResetService(ctx context.Context,
+func NewPasswordResetService(
 	errorhandler errorhandler.PasswordResetErrorHandler,
 	errorRandomString errorhandler.RandomStringErrorHandler,
 	errorMarshal errorhandler.MarshalErrorHandler,
@@ -69,7 +68,6 @@ func NewPasswordResetService(ctx context.Context,
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &passwordResetService{
-		ctx:               ctx,
 		errorhandler:      errorhandler,
 		errorRandomString: errorRandomString,
 		errorPassword:     errorPassword,
@@ -86,16 +84,16 @@ func NewPasswordResetService(ctx context.Context,
 	}
 }
 
-func (s *passwordResetService) ForgotPassword(email string) (bool, *response.ErrorResponse) {
+func (s *passwordResetService) ForgotPassword(ctx context.Context, email string) (bool, *response.ErrorResponse) {
 	const method = "ForgotPassword"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.String("email", email))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("email", email))
 
 	defer func() {
 		end(status)
 	}()
 
-	res, err := s.user.FindByEmail(email)
+	res, err := s.user.FindByEmail(ctx, email)
 	if err != nil {
 		return s.errorhandler.HandleFindEmailError(err, method, "FORGOT_PASSWORD_ERR", span, &status, zap.String("email", email))
 	}
@@ -107,7 +105,7 @@ func (s *passwordResetService) ForgotPassword(email string) (bool, *response.Err
 		return s.errorRandomString.HandleRandomStringErrorForgotPassword(err, method, "FORGOT_PASSWORD_ERR", span, &status, zap.String("email", email), zap.Error(err))
 	}
 
-	_, err = s.resetToken.CreateResetToken(&requests.CreateResetTokenRequest{
+	_, err = s.resetToken.CreateResetToken(ctx, &requests.CreateResetTokenRequest{
 		UserID:     res.ID,
 		ResetToken: random,
 		ExpiredAt:  time.Now().Add(24 * time.Hour).Format("2006-01-02 15:04:05"),
@@ -116,7 +114,7 @@ func (s *passwordResetService) ForgotPassword(email string) (bool, *response.Err
 		return s.errorhandler.HandleCreateResetTokenError(err, method, "FORGOT_PASSWORD_ERR", span, &status, zap.String("email", email), zap.Error(err))
 	}
 
-	s.mencache.SetResetTokenCache(random, res.ID, 5*time.Minute)
+	s.mencache.SetResetTokenCache(ctx, random, res.ID, 5*time.Minute)
 
 	htmlBody := emails.GenerateEmailHTML(map[string]string{
 		"Title":   "Reset Your Password",
@@ -146,10 +144,10 @@ func (s *passwordResetService) ForgotPassword(email string) (bool, *response.Err
 	return true, nil
 }
 
-func (s *passwordResetService) ResetPassword(req *requests.CreateResetPasswordRequest) (bool, *response.ErrorResponse) {
+func (s *passwordResetService) ResetPassword(ctx context.Context, req *requests.CreateResetPasswordRequest) (bool, *response.ErrorResponse) {
 	const method = "ResetPassword"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.String("reset_token", req.ResetToken))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("reset_token", req.ResetToken))
 
 	defer func() {
 		end(status)
@@ -158,15 +156,15 @@ func (s *passwordResetService) ResetPassword(req *requests.CreateResetPasswordRe
 	var userID int
 	var found bool
 
-	userID, found = s.mencache.GetResetTokenCache(req.ResetToken)
+	userID, found = s.mencache.GetResetTokenCache(ctx, req.ResetToken)
 	if !found {
-		res, err := s.resetToken.FindByToken(req.ResetToken)
+		res, err := s.resetToken.FindByToken(ctx, req.ResetToken)
 		if err != nil {
 			return s.errorhandler.HandleFindTokenError(err, method, "RESET_PASSWORD_ERR", span, &status, zap.String("reset_token", req.ResetToken))
 		}
 		userID = int(res.UserID)
 
-		s.mencache.SetResetTokenCache(req.ResetToken, userID, 5*time.Minute)
+		s.mencache.SetResetTokenCache(ctx, req.ResetToken, userID, 5*time.Minute)
 	}
 
 	if req.Password != req.ConfirmPassword {
@@ -174,39 +172,39 @@ func (s *passwordResetService) ResetPassword(req *requests.CreateResetPasswordRe
 		return s.errorPassword.HandlePasswordNotMatchError(err, method, "RESET_PASSWORD_ERR", span, &status, zap.String("reset_token", req.ResetToken))
 	}
 
-	_, err := s.user.UpdateUserPassword(userID, req.Password)
+	_, err := s.user.UpdateUserPassword(ctx, userID, req.Password)
 	if err != nil {
 		return s.errorhandler.HandleUpdatePasswordError(err, method, "RESET_PASSWORD_ERR", span, &status, zap.String("reset_token", req.ResetToken))
 	}
 
-	_ = s.resetToken.DeleteResetToken(userID)
-	s.mencache.DeleteResetTokenCache(req.ResetToken)
+	_ = s.resetToken.DeleteResetToken(ctx, userID)
+	s.mencache.DeleteResetTokenCache(ctx, req.ResetToken)
 
 	logSuccess("Successfully reset password", zap.String("reset_token", req.ResetToken))
 
 	return true, nil
 }
 
-func (s *passwordResetService) VerifyCode(code string) (bool, *response.ErrorResponse) {
+func (s *passwordResetService) VerifyCode(ctx context.Context, code string) (bool, *response.ErrorResponse) {
 	const method = "VerifyCode"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.String("code", code))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("code", code))
 
 	defer func() {
 		end(status)
 	}()
 
-	res, err := s.user.FindByVerificationCode(code)
+	res, err := s.user.FindByVerificationCode(ctx, code)
 	if err != nil {
 		return s.errorhandler.HandleVerifyCodeError(err, method, "VERIFY_CODE_ERR", span, &status, zap.String("code", code))
 	}
 
-	_, err = s.user.UpdateUserIsVerified(res.ID, true)
+	_, err = s.user.UpdateUserIsVerified(ctx, res.ID, true)
 	if err != nil {
 		return s.errorhandler.HandleUpdateVerifiedError(err, method, "VERIFY_CODE_ERR", span, &status, zap.Int("user.id", res.ID))
 	}
 
-	s.mencache.DeleteVerificationCodeCache(res.Email)
+	s.mencache.DeleteVerificationCodeCache(ctx, res.Email)
 
 	htmlBody := emails.GenerateEmailHTML(map[string]string{
 		"Title":   "Verification Success",
@@ -230,7 +228,8 @@ func (s *passwordResetService) VerifyCode(code string) (bool, *response.ErrorRes
 	return true, nil
 }
 
-func (s *passwordResetService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *passwordResetService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -239,7 +238,7 @@ func (s *passwordResetService) startTracingAndLogging(method string, attrs ...at
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -264,7 +263,7 @@ func (s *passwordResetService) startTracingAndLogging(method string, attrs ...at
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *passwordResetService) recordMetrics(method string, status string, start time.Time) {

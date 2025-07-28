@@ -14,9 +14,21 @@ spec:
         app: auth
     spec:
       initContainers:
+        - name: init-log-permission
+          image: busybox:1.35
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "[INIT] Setting ownership for /var/log/app"
+              chown -R 1000:1000 /var/log/app
+          volumeMounts:
+            - name: app-logs
+              mountPath: /var/log/app
+          securityContext:
+            runAsUser: 0
         - name: wait-for-kafka
           image: busybox:1.35
-          command: ['sh', '-c']
+          command: ["sh", "-c"]
           args:
             - |
               echo "Waiting for Kafka to be ready (TCP)..."
@@ -33,30 +45,35 @@ spec:
               memory: "64Mi"
               cpu: "100m"
       containers:
-      - name: auth
-        image: auth-ecommerce-service:1.0
-        envFrom:
-        - configMapRef:
-            name: app-config
-        - secretRef:
-            name: app-secrets
-        ports:
-          - containerPort: 8081 
-          - containerPort: 50051 
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "250m"
-          limits:
-            memory: "256Mi"
-            cpu: "500m"
-        readinessProbe:
-          httpGet:
-            path: /metrics
-            port: 8081
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          failureThreshold: 5
-        imagePullPolicy: IfNotPresent
-
-
+        - name: auth
+          image: auth-ecommerce-service:1.0
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+          ports:
+            - containerPort: 8081
+            - containerPort: 50051
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 5
+            volumeMounts:
+              - name: app-logs
+                mountPath: /var/log/app
+      volumes:
+        - name: app-logs
+          persistentVolumeClaim:
+            claimName: app-logs-pvc

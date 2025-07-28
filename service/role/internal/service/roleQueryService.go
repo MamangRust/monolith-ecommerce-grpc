@@ -21,7 +21,6 @@ import (
 )
 
 type roleQueryService struct {
-	ctx             context.Context
 	errorhandler    errorhandler.RoleQueryErrorHandler
 	mencache        mencache.RoleQueryCache
 	trace           trace.Tracer
@@ -32,7 +31,7 @@ type roleQueryService struct {
 	requestDuration *prometheus.HistogramVec
 }
 
-func NewRoleQueryService(ctx context.Context,
+func NewRoleQueryService(
 	errorhandler errorhandler.RoleQueryErrorHandler,
 	mencache mencache.RoleQueryCache,
 	roleQuery repository.RoleQueryRepository, logger logger.LoggerInterface, mapping response_service.RoleResponseMapper) *roleQueryService {
@@ -56,7 +55,6 @@ func NewRoleQueryService(ctx context.Context,
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &roleQueryService{
-		ctx:             ctx,
 		errorhandler:    errorhandler,
 		mencache:        mencache,
 		trace:           otel.Tracer("role-query-service"),
@@ -68,25 +66,25 @@ func NewRoleQueryService(ctx context.Context,
 	}
 }
 
-func (s *roleQueryService) FindAll(req *requests.FindAllRole) ([]*response.RoleResponse, *int, *response.ErrorResponse) {
+func (s *roleQueryService) FindAll(ctx context.Context, req *requests.FindAllRole) ([]*response.RoleResponse, *int, *response.ErrorResponse) {
 	const method = "FindAll"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedRoles(req); found {
+	if data, total, found := s.mencache.GetCachedRoles(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	res, totalRecords, err := s.roleQuery.FindAllRoles(req)
+	res, totalRecords, err := s.roleQuery.FindAllRoles(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationError(
@@ -95,29 +93,29 @@ func (s *roleQueryService) FindAll(req *requests.FindAllRole) ([]*response.RoleR
 
 	so := s.mapping.ToRolesResponse(res)
 
-	s.mencache.SetCachedRoles(req, so, totalRecords)
+	s.mencache.SetCachedRoles(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched roles", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *roleQueryService) FindById(id int) (*response.RoleResponse, *response.ErrorResponse) {
+func (s *roleQueryService) FindById(ctx context.Context, id int) (*response.RoleResponse, *response.ErrorResponse) {
 	const method = "FindById"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("role.id", id))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("role.id", id))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedRoleById(id); found {
+	if data, found := s.mencache.GetCachedRoleById(ctx, id); found {
 		logSuccess("Data found in cache", zap.Int("role.id", id))
 
 		return data, nil
 	}
 
-	res, err := s.roleQuery.FindById(id)
+	res, err := s.roleQuery.FindById(ctx, id)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(
@@ -126,29 +124,29 @@ func (s *roleQueryService) FindById(id int) (*response.RoleResponse, *response.E
 
 	so := s.mapping.ToRoleResponse(res)
 
-	s.mencache.SetCachedRoleById(so)
+	s.mencache.SetCachedRoleById(ctx, so)
 
 	logSuccess("Successfully fetched role", zap.Int("role.id", id), zap.Bool("success", true))
 
 	return so, nil
 }
 
-func (s *roleQueryService) FindByUserId(id int) ([]*response.RoleResponse, *response.ErrorResponse) {
+func (s *roleQueryService) FindByUserId(ctx context.Context, id int) ([]*response.RoleResponse, *response.ErrorResponse) {
 	const method = "FindByUserId"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("user.id", id))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("user.id", id))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedRoleByUserId(id); found {
+	if data, found := s.mencache.GetCachedRoleByUserId(ctx, id); found {
 		logSuccess("Data found in cache", zap.Int("user.id", id))
 
 		return data, nil
 	}
 
-	res, err := s.roleQuery.FindByUserId(id)
+	res, err := s.roleQuery.FindByUserId(ctx, id)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryListError(err, method, "FAILED_FIND_ROLE_BY_USER_ID", span, &status, zap.Error(err))
@@ -156,32 +154,32 @@ func (s *roleQueryService) FindByUserId(id int) ([]*response.RoleResponse, *resp
 
 	so := s.mapping.ToRolesResponse(res)
 
-	s.mencache.SetCachedRoleByUserId(id, so)
+	s.mencache.SetCachedRoleByUserId(ctx, id, so)
 
 	logSuccess("Successfully fetched role by user ID", zap.Int("user.id", id), zap.Bool("success", true))
 
 	return so, nil
 }
 
-func (s *roleQueryService) FindByActiveRole(req *requests.FindAllRole) ([]*response.RoleResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *roleQueryService) FindByActiveRole(ctx context.Context, req *requests.FindAllRole) ([]*response.RoleResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByActiveRole"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedRoleActive(req); found {
+	if data, total, found := s.mencache.GetCachedRoleActive(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	res, totalRecords, err := s.roleQuery.FindByActiveRole(req)
+	res, totalRecords, err := s.roleQuery.FindByActiveRole(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeletedError(err, method, "FAILED_FIND_BY_ACTIVE_ROLE", span, &status, role_errors.ErrRoleNotFoundRes, zap.Error(err))
@@ -189,46 +187,47 @@ func (s *roleQueryService) FindByActiveRole(req *requests.FindAllRole) ([]*respo
 
 	so := s.mapping.ToRolesResponseDeleteAt(res)
 
-	s.mencache.SetCachedRoleActive(req, so, totalRecords)
+	s.mencache.SetCachedRoleActive(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched active role", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *roleQueryService) FindByTrashedRole(req *requests.FindAllRole) ([]*response.RoleResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *roleQueryService) FindByTrashedRole(ctx context.Context, req *requests.FindAllRole) ([]*response.RoleResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByTrashedRole"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedRoleTrashed(req); found {
+	if data, total, found := s.mencache.GetCachedRoleTrashed(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	res, totalRecords, err := s.roleQuery.FindByTrashedRole(req)
+	res, totalRecords, err := s.roleQuery.FindByTrashedRole(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeletedError(err, "FindByTrashedRole", "FAILED_FIND_BY_TRASHED_ROLE", span, &status, role_errors.ErrRoleNotFoundRes)
 	}
 	so := s.mapping.ToRolesResponseDeleteAt(res)
 
-	s.mencache.SetCachedRoleTrashed(req, so, totalRecords)
+	s.mencache.SetCachedRoleTrashed(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched trashed role", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *roleQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *roleQueryService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -237,7 +236,7 @@ func (s *roleQueryService) startTracingAndLogging(method string, attrs ...attrib
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	_, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -262,7 +261,7 @@ func (s *roleQueryService) startTracingAndLogging(method string, attrs ...attrib
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *roleQueryService) normalizePagination(page, pageSize int) (int, int) {

@@ -21,7 +21,6 @@ import (
 )
 
 type merchantAwardQueryService struct {
-	ctx                          context.Context
 	errorhandler                 errorhandler.MerchantAwardQueryError
 	mencache                     mencache.MerchantAwardQueryCache
 	trace                        trace.Tracer
@@ -32,7 +31,7 @@ type merchantAwardQueryService struct {
 	requestDuration              *prometheus.HistogramVec
 }
 
-func NewMerchantAwardQueryService(ctx context.Context,
+func NewMerchantAwardQueryService(
 	errorhandler errorhandler.MerchantAwardQueryError,
 	mencache mencache.MerchantAwardQueryCache,
 	merchantAwardQueryRepositroy repository.MerchantAwardQueryRepository, logger logger.LoggerInterface, mapping response_service.MerchantAwardResponseMapper) *merchantAwardQueryService {
@@ -56,7 +55,6 @@ func NewMerchantAwardQueryService(ctx context.Context,
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &merchantAwardQueryService{
-		ctx:                          ctx,
 		errorhandler:                 errorhandler,
 		mencache:                     mencache,
 		trace:                        otel.Tracer("merchant-award-query-service"),
@@ -68,117 +66,117 @@ func NewMerchantAwardQueryService(ctx context.Context,
 	}
 }
 
-func (s *merchantAwardQueryService) FindAll(req *requests.FindAllMerchant) ([]*response.MerchantAwardResponse, *int, *response.ErrorResponse) {
+func (s *merchantAwardQueryService) FindAll(ctx context.Context, req *requests.FindAllMerchant) ([]*response.MerchantAwardResponse, *int, *response.ErrorResponse) {
 	const method = "FindAll"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedMerchantAwardAll(req); found {
+	if data, total, found := s.mencache.GetCachedMerchantAwardAll(ctx, req); found {
 		logSuccess("Successfully fetched merchants from cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	merchants, totalRecords, err := s.merchantAwardQueryRepositroy.FindAllMerchants(req)
+	merchants, totalRecords, err := s.merchantAwardQueryRepositroy.FindAllMerchants(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationError(err, method, "FAILED_TO_FIND_MERCHANTS", span, &status)
 	}
 
 	so := s.mapping.ToMerchantsAwardResponse(merchants)
-	s.mencache.SetCachedMerchantAwardAll(req, so, totalRecords)
+	s.mencache.SetCachedMerchantAwardAll(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched merchants", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *merchantAwardQueryService) FindByActive(req *requests.FindAllMerchant) ([]*response.MerchantAwardResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *merchantAwardQueryService) FindByActive(ctx context.Context, req *requests.FindAllMerchant) ([]*response.MerchantAwardResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByActive"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedMerchantAwardActive(req); found {
+	if data, total, found := s.mencache.GetCachedMerchantAwardActive(ctx, req); found {
 		logSuccess("Successfully fetched active merchants from cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	merchants, totalRecords, err := s.merchantAwardQueryRepositroy.FindByActive(req)
+	merchants, totalRecords, err := s.merchantAwardQueryRepositroy.FindByActive(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_TO_FIND_ACTIVE_MERCHANTS", span, &status, merchantaward_errors.ErrFailedFindActiveMerchantAwards, zap.Error(err))
 	}
 	so := s.mapping.ToMerchantsAwardResponseDeleteAt(merchants)
-	s.mencache.SetCachedMerchantAwardActive(req, so, totalRecords)
+	s.mencache.SetCachedMerchantAwardActive(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched active merchants", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *merchantAwardQueryService) FindByTrashed(req *requests.FindAllMerchant) ([]*response.MerchantAwardResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *merchantAwardQueryService) FindByTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*response.MerchantAwardResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByTrashed"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedMerchantAwardTrashed(req); found {
+	if data, total, found := s.mencache.GetCachedMerchantAwardTrashed(ctx, req); found {
 		logSuccess("Successfully fetched trashed merchants from cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	merchants, totalRecords, err := s.merchantAwardQueryRepositroy.FindByTrashed(req)
+	merchants, totalRecords, err := s.merchantAwardQueryRepositroy.FindByTrashed(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_TO_FIND_TRASHED_MERCHANTS", span, &status, merchantaward_errors.ErrFailedFindTrashedMerchantAwards, zap.Error(err))
 	}
 
 	so := s.mapping.ToMerchantsAwardResponseDeleteAt(merchants)
-	s.mencache.SetCachedMerchantAwardTrashed(req, so, totalRecords)
+	s.mencache.SetCachedMerchantAwardTrashed(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched trashed merchants", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *merchantAwardQueryService) FindById(merchantID int) (*response.MerchantAwardResponse, *response.ErrorResponse) {
+func (s *merchantAwardQueryService) FindById(ctx context.Context, merchantID int) (*response.MerchantAwardResponse, *response.ErrorResponse) {
 	const method = "FindById"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("merchantAward.id", merchantID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantAward.id", merchantID))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedMerchantAward(merchantID); found {
+	if data, found := s.mencache.GetCachedMerchantAward(ctx, merchantID); found {
 		logSuccess("Successfully fetched merchant from cache", zap.Int("merchantAward.id", merchantID))
 
 		return data, nil
 	}
 
-	merchant, err := s.merchantAwardQueryRepositroy.FindById(merchantID)
+	merchant, err := s.merchantAwardQueryRepositroy.FindById(ctx, merchantID)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_TO_FIND_MERCHANT_AWARD_BY_ID", span, &status, merchantaward_errors.ErrFailedFindMerchantAwardById, zap.Error(err))
@@ -186,14 +184,15 @@ func (s *merchantAwardQueryService) FindById(merchantID int) (*response.Merchant
 
 	so := s.mapping.ToMerchantAwardResponse(merchant)
 
-	s.mencache.SetCachedMerchantAward(so)
+	s.mencache.SetCachedMerchantAward(ctx, so)
 
 	logSuccess("Successfully fetched merchant", zap.Int("merchantAward.id", merchantID))
 
 	return so, nil
 }
 
-func (s *merchantAwardQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *merchantAwardQueryService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -202,7 +201,7 @@ func (s *merchantAwardQueryService) startTracingAndLogging(method string, attrs 
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -227,7 +226,7 @@ func (s *merchantAwardQueryService) startTracingAndLogging(method string, attrs 
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *merchantAwardQueryService) normalizePagination(page, pageSize int) (int, int) {

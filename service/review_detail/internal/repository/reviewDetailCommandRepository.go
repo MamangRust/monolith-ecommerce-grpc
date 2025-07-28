@@ -13,19 +13,17 @@ import (
 
 type reviewDetailCommandRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.ReviewDetailRecordMapping
 }
 
-func NewReviewDetailCommandRepository(db *db.Queries, ctx context.Context, mapping recordmapper.ReviewDetailRecordMapping) *reviewDetailCommandRepository {
+func NewReviewDetailCommandRepository(db *db.Queries, mapping recordmapper.ReviewDetailRecordMapping) *reviewDetailCommandRepository {
 	return &reviewDetailCommandRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *reviewDetailCommandRepository) CreateReviewDetail(request *requests.CreateReviewDetailRequest) (*record.ReviewDetailRecord, error) {
+func (r *reviewDetailCommandRepository) CreateReviewDetail(ctx context.Context, request *requests.CreateReviewDetailRequest) (*record.ReviewDetailRecord, error) {
 	req := db.CreateReviewDetailParams{
 		ReviewID: int32(request.ReviewID),
 		Type:     request.Type,
@@ -33,7 +31,7 @@ func (r *reviewDetailCommandRepository) CreateReviewDetail(request *requests.Cre
 		Caption:  sql.NullString{String: request.Caption, Valid: request.Caption != ""},
 	}
 
-	reviewDetail, err := r.db.CreateReviewDetail(r.ctx, req)
+	reviewDetail, err := r.db.CreateReviewDetail(ctx, req)
 	if err != nil {
 		return nil, reviewdetail_errors.ErrCreateReviewDetail
 	}
@@ -41,7 +39,7 @@ func (r *reviewDetailCommandRepository) CreateReviewDetail(request *requests.Cre
 	return r.mapping.ToReviewDetailRecord(reviewDetail), nil
 }
 
-func (r *reviewDetailCommandRepository) UpdateReviewDetail(request *requests.UpdateReviewDetailRequest) (*record.ReviewDetailRecord, error) {
+func (r *reviewDetailCommandRepository) UpdateReviewDetail(ctx context.Context, request *requests.UpdateReviewDetailRequest) (*record.ReviewDetailRecord, error) {
 	req := db.UpdateReviewDetailParams{
 		ReviewDetailID: int32(*request.ReviewDetailID),
 		Type:           request.Type,
@@ -49,7 +47,7 @@ func (r *reviewDetailCommandRepository) UpdateReviewDetail(request *requests.Upd
 		Caption:        sql.NullString{String: request.Caption, Valid: request.Caption != ""},
 	}
 
-	res, err := r.db.UpdateReviewDetail(r.ctx, req)
+	res, err := r.db.UpdateReviewDetail(ctx, req)
 	if err != nil {
 		return nil, reviewdetail_errors.ErrUpdateReviewDetail
 	}
@@ -57,8 +55,8 @@ func (r *reviewDetailCommandRepository) UpdateReviewDetail(request *requests.Upd
 	return r.mapping.ToReviewDetailRecord(res), nil
 }
 
-func (r *reviewDetailCommandRepository) TrashedReviewDetail(ReviewDetail_id int) (*record.ReviewDetailRecord, error) {
-	res, err := r.db.TrashReviewDetail(r.ctx, int32(ReviewDetail_id))
+func (r *reviewDetailCommandRepository) TrashedReviewDetail(ctx context.Context, ReviewDetail_id int) (*record.ReviewDetailRecord, error) {
+	res, err := r.db.TrashReviewDetail(ctx, int32(ReviewDetail_id))
 
 	if err != nil {
 		return nil, reviewdetail_errors.ErrTrashedReviewDetail
@@ -67,8 +65,8 @@ func (r *reviewDetailCommandRepository) TrashedReviewDetail(ReviewDetail_id int)
 	return r.mapping.ToReviewDetailRecord(res), nil
 }
 
-func (r *reviewDetailCommandRepository) RestoreReviewDetail(ReviewDetail_id int) (*record.ReviewDetailRecord, error) {
-	res, err := r.db.RestoreReviewDetail(r.ctx, int32(ReviewDetail_id))
+func (r *reviewDetailCommandRepository) RestoreReviewDetail(ctx context.Context, ReviewDetail_id int) (*record.ReviewDetailRecord, error) {
+	res, err := r.db.RestoreReviewDetail(ctx, int32(ReviewDetail_id))
 
 	if err != nil {
 		return nil, reviewdetail_errors.ErrRestoreReviewDetail
@@ -77,8 +75,8 @@ func (r *reviewDetailCommandRepository) RestoreReviewDetail(ReviewDetail_id int)
 	return r.mapping.ToReviewDetailRecord(res), nil
 }
 
-func (r *reviewDetailCommandRepository) DeleteReviewDetailPermanent(ReviewDetail_id int) (bool, error) {
-	err := r.db.DeletePermanentReviewDetail(r.ctx, int32(ReviewDetail_id))
+func (r *reviewDetailCommandRepository) DeleteReviewDetailPermanent(ctx context.Context, ReviewDetail_id int) (bool, error) {
+	err := r.db.DeletePermanentReviewDetail(ctx, int32(ReviewDetail_id))
 
 	if err != nil {
 		return false, reviewdetail_errors.ErrDeleteReviewDetailPermanent
@@ -87,8 +85,8 @@ func (r *reviewDetailCommandRepository) DeleteReviewDetailPermanent(ReviewDetail
 	return true, nil
 }
 
-func (r *reviewDetailCommandRepository) RestoreAllReviewDetail() (bool, error) {
-	err := r.db.RestoreAllReviewDetails(r.ctx)
+func (r *reviewDetailCommandRepository) RestoreAllReviewDetail(ctx context.Context) (bool, error) {
+	err := r.db.RestoreAllReviewDetails(ctx)
 
 	if err != nil {
 		return false, reviewdetail_errors.ErrRestoreAllReviewDetails
@@ -96,8 +94,8 @@ func (r *reviewDetailCommandRepository) RestoreAllReviewDetail() (bool, error) {
 	return true, nil
 }
 
-func (r *reviewDetailCommandRepository) DeleteAllReviewDetailPermanent() (bool, error) {
-	err := r.db.DeleteAllPermanentReviewDetails(r.ctx)
+func (r *reviewDetailCommandRepository) DeleteAllReviewDetailPermanent(ctx context.Context) (bool, error) {
+	err := r.db.DeleteAllPermanentReviewDetails(ctx)
 
 	if err != nil {
 		return false, reviewdetail_errors.ErrDeleteAllReviewDetails

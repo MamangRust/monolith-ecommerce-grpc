@@ -1,6 +1,9 @@
 package mencache
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 type orderCommandCache struct {
 	store *CacheStore
@@ -10,6 +13,6 @@ func NewOrderCommandCache(store *CacheStore) *orderCommandCache {
 	return &orderCommandCache{store: store}
 }
 
-func (s *orderCommandCache) DeleteOrderCache(order_id int) {
-	DeleteFromCache(s.store, fmt.Sprintf(orderByIdCacheKey, order_id))
+func (s *orderCommandCache) DeleteOrderCache(ctx context.Context, order_id int) {
+	DeleteFromCache(ctx, s.store, fmt.Sprintf(orderByIdCacheKey, order_id))
 }

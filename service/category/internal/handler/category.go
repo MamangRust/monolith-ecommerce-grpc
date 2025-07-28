@@ -54,7 +54,7 @@ func (s *categoryHandleGrpc) FindAll(ctx context.Context, request *pb.FindAllCat
 		Search:   search,
 	}
 
-	category, totalRecords, err := s.categoryQuery.FindAll(&reqService)
+	category, totalRecords, err := s.categoryQuery.FindAll(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -80,7 +80,7 @@ func (s *categoryHandleGrpc) FindById(ctx context.Context, request *pb.FindByIdC
 		return nil, category_errors.ErrGrpcCategoryInvalidId
 	}
 
-	category, err := s.categoryQuery.FindById(id)
+	category, err := s.categoryQuery.FindById(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -110,7 +110,7 @@ func (s *categoryHandleGrpc) FindByActive(ctx context.Context, request *pb.FindA
 		Search:   search,
 	}
 
-	users, totalRecords, err := s.categoryQuery.FindByActive(&reqService)
+	users, totalRecords, err := s.categoryQuery.FindByActive(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -148,7 +148,7 @@ func (s *categoryHandleGrpc) FindByTrashed(ctx context.Context, request *pb.Find
 		Search:   search,
 	}
 
-	categories, totalRecords, err := s.categoryQuery.FindByTrashed(&reqService)
+	categories, totalRecords, err := s.categoryQuery.FindByTrashed(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -185,7 +185,7 @@ func (s *categoryHandleGrpc) FindMonthlyTotalPrices(ctx context.Context, req *pb
 		Month: month,
 	}
 
-	methods, err := s.categoryStats.FindMonthlyTotalPrice(&reqService)
+	methods, err := s.categoryStats.FindMonthlyTotalPrice(ctx, &reqService)
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
@@ -200,7 +200,7 @@ func (s *categoryHandleGrpc) FindYearlyTotalPrices(ctx context.Context, req *pb.
 		return nil, category_errors.ErrGrpcCategoryInvalidYear
 	}
 
-	methods, err := s.categoryStats.FindYearlyTotalPrice(year)
+	methods, err := s.categoryStats.FindYearlyTotalPrice(ctx, year)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -232,7 +232,7 @@ func (s *categoryHandleGrpc) FindMonthlyTotalPricesById(ctx context.Context, req
 		CategoryID: id,
 	}
 
-	methods, err := s.categoryStatsById.FindMonthlyTotalPriceById(&reqService)
+	methods, err := s.categoryStatsById.FindMonthlyTotalPriceById(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -258,7 +258,7 @@ func (s *categoryHandleGrpc) FindYearlyTotalPricesById(ctx context.Context, req 
 		CategoryID: id,
 	}
 
-	methods, err := s.categoryStatsById.FindYearlyTotalPriceById(&reqService)
+	methods, err := s.categoryStatsById.FindYearlyTotalPriceById(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -290,7 +290,7 @@ func (s *categoryHandleGrpc) FindMonthlyTotalPricesByMerchant(ctx context.Contex
 		MerchantID: id,
 	}
 
-	methods, err := s.categoryStatsByMerchant.FindMonthlyTotalPriceByMerchant(&reqService)
+	methods, err := s.categoryStatsByMerchant.FindMonthlyTotalPriceByMerchant(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -316,7 +316,7 @@ func (s *categoryHandleGrpc) FindYearlyTotalPricesByMerchant(ctx context.Context
 		MerchantID: id,
 	}
 
-	methods, err := s.categoryStatsByMerchant.FindYearlyTotalPriceByMerchant(&reqService)
+	methods, err := s.categoryStatsByMerchant.FindYearlyTotalPriceByMerchant(ctx, &reqService)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -332,7 +332,7 @@ func (s *categoryHandleGrpc) FindMonthPrice(ctx context.Context, req *pb.FindYea
 		return nil, category_errors.ErrGrpcCategoryInvalidYear
 	}
 
-	methods, err := s.categoryStats.FindMonthPrice(year)
+	methods, err := s.categoryStats.FindMonthPrice(ctx, year)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -348,7 +348,7 @@ func (s *categoryHandleGrpc) FindYearPrice(ctx context.Context, req *pb.FindYear
 		return nil, category_errors.ErrGrpcCategoryInvalidYear
 	}
 
-	methods, err := s.categoryStats.FindYearPrice(year)
+	methods, err := s.categoryStats.FindYearPrice(ctx, year)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -374,7 +374,7 @@ func (s *categoryHandleGrpc) FindMonthPriceByMerchant(ctx context.Context, req *
 		MerchantID: id,
 	}
 
-	methods, err := s.categoryStatsByMerchant.FindMonthPriceByMerchant(
+	methods, err := s.categoryStatsByMerchant.FindMonthPriceByMerchant(ctx,
 		&reqService,
 	)
 
@@ -402,7 +402,7 @@ func (s *categoryHandleGrpc) FindYearPriceByMerchant(ctx context.Context, req *p
 		MerchantID: id,
 	}
 
-	methods, err := s.categoryStatsByMerchant.FindYearPriceByMerchant(
+	methods, err := s.categoryStatsByMerchant.FindYearPriceByMerchant(ctx,
 		&reqService,
 	)
 
@@ -431,6 +431,7 @@ func (s *categoryHandleGrpc) FindMonthPriceById(ctx context.Context, req *pb.Fin
 	}
 
 	methods, err := s.categoryStatsById.FindMonthPriceById(
+		ctx,
 		&reqService,
 	)
 
@@ -459,6 +460,7 @@ func (s *categoryHandleGrpc) FindYearPriceById(ctx context.Context, req *pb.Find
 	}
 
 	methods, err := s.categoryStatsById.FindYearPriceById(
+		ctx,
 		&reqService,
 	)
 
@@ -480,7 +482,7 @@ func (s *categoryHandleGrpc) Create(ctx context.Context, request *pb.CreateCateg
 		return nil, category_errors.ErrGrpcValidateCreateCategory
 	}
 
-	category, err := s.categoryCommand.CreateCategory(req)
+	category, err := s.categoryCommand.CreateCategory(ctx, req)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -508,7 +510,7 @@ func (s *categoryHandleGrpc) Update(ctx context.Context, request *pb.UpdateCateg
 		return nil, category_errors.ErrGrpcValidateUpdateCategory
 	}
 
-	category, err := s.categoryCommand.UpdateCategory(req)
+	category, err := s.categoryCommand.UpdateCategory(ctx, req)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -525,7 +527,7 @@ func (s *categoryHandleGrpc) TrashedCategory(ctx context.Context, request *pb.Fi
 		return nil, category_errors.ErrGrpcCategoryInvalidId
 	}
 
-	category, err := s.categoryCommand.TrashedCategory(id)
+	category, err := s.categoryCommand.TrashedCategory(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -543,7 +545,7 @@ func (s *categoryHandleGrpc) RestoreCategory(ctx context.Context, request *pb.Fi
 		return nil, category_errors.ErrGrpcCategoryInvalidId
 	}
 
-	category, err := s.categoryCommand.RestoreCategory(id)
+	category, err := s.categoryCommand.RestoreCategory(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -561,7 +563,7 @@ func (s *categoryHandleGrpc) DeleteCategoryPermanent(ctx context.Context, reques
 		return nil, category_errors.ErrGrpcCategoryInvalidId
 	}
 
-	_, err := s.categoryCommand.DeleteCategoryPermanent(id)
+	_, err := s.categoryCommand.DeleteCategoryPermanent(ctx, id)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -573,7 +575,7 @@ func (s *categoryHandleGrpc) DeleteCategoryPermanent(ctx context.Context, reques
 }
 
 func (s *categoryHandleGrpc) RestoreAllCategory(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseCategoryAll, error) {
-	_, err := s.categoryCommand.RestoreAllCategories()
+	_, err := s.categoryCommand.RestoreAllCategories(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
@@ -585,7 +587,7 @@ func (s *categoryHandleGrpc) RestoreAllCategory(ctx context.Context, _ *emptypb.
 }
 
 func (s *categoryHandleGrpc) DeleteAllCategoryPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseCategoryAll, error) {
-	_, err := s.categoryCommand.DeleteAllCategoriesPermanent()
+	_, err := s.categoryCommand.DeleteAllCategoriesPermanent(ctx)
 
 	if err != nil {
 		return nil, response.ToGrpcErrorFromErrorResponse(err)

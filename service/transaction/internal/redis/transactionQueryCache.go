@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -40,10 +41,10 @@ func NewTransactionQueryCache(store *CacheStore) *transactionQueryCache {
 	return &transactionQueryCache{store: store}
 }
 
-func (t *transactionQueryCache) GetCachedTransactionsCache(req *requests.FindAllTransaction) ([]*response.TransactionResponse, *int, bool) {
+func (t *transactionQueryCache) GetCachedTransactionsCache(ctx context.Context, req *requests.FindAllTransaction) ([]*response.TransactionResponse, *int, bool) {
 	key := fmt.Sprintf(transactionAllCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[transactionCacheResponse](t.store, key)
+	result, found := GetFromCache[transactionCacheResponse](ctx, t.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -52,7 +53,7 @@ func (t *transactionQueryCache) GetCachedTransactionsCache(req *requests.FindAll
 	return result.Data, result.TotalRecords, true
 }
 
-func (t *transactionQueryCache) SetCachedTransactionsCache(req *requests.FindAllTransaction, data []*response.TransactionResponse, total *int) {
+func (t *transactionQueryCache) SetCachedTransactionsCache(ctx context.Context, req *requests.FindAllTransaction, data []*response.TransactionResponse, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -64,13 +65,13 @@ func (t *transactionQueryCache) SetCachedTransactionsCache(req *requests.FindAll
 
 	key := fmt.Sprintf(transactionAllCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &transactionCacheResponse{Data: data, TotalRecords: total}
-	SetToCache(t.store, key, payload, ttlDefault)
+	SetToCache(ctx, t.store, key, payload, ttlDefault)
 }
 
-func (t *transactionQueryCache) GetCachedTransactionByMerchant(req *requests.FindAllTransactionByMerchant) ([]*response.TransactionResponse, *int, bool) {
+func (t *transactionQueryCache) GetCachedTransactionByMerchant(ctx context.Context, req *requests.FindAllTransactionByMerchant) ([]*response.TransactionResponse, *int, bool) {
 	key := fmt.Sprintf(transactionByMerchantCacheKey, req.MerchantID, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[transactionCacheResponse](t.store, key)
+	result, found := GetFromCache[transactionCacheResponse](ctx, t.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -79,7 +80,7 @@ func (t *transactionQueryCache) GetCachedTransactionByMerchant(req *requests.Fin
 	return result.Data, result.TotalRecords, true
 }
 
-func (t *transactionQueryCache) SetCachedTransactionByMerchant(req *requests.FindAllTransactionByMerchant, data []*response.TransactionResponse, total *int) {
+func (t *transactionQueryCache) SetCachedTransactionByMerchant(ctx context.Context, req *requests.FindAllTransactionByMerchant, data []*response.TransactionResponse, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -92,13 +93,13 @@ func (t *transactionQueryCache) SetCachedTransactionByMerchant(req *requests.Fin
 	key := fmt.Sprintf(transactionByMerchantCacheKey, req.MerchantID, req.Page, req.PageSize, req.Search)
 
 	payload := &transactionCacheResponse{Data: data, TotalRecords: total}
-	SetToCache(t.store, key, payload, ttlDefault)
+	SetToCache(ctx, t.store, key, payload, ttlDefault)
 }
 
-func (t *transactionQueryCache) GetCachedTransactionActiveCache(req *requests.FindAllTransaction) ([]*response.TransactionResponseDeleteAt, *int, bool) {
+func (t *transactionQueryCache) GetCachedTransactionActiveCache(ctx context.Context, req *requests.FindAllTransaction) ([]*response.TransactionResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(transactionActiveCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[transactionCacheResponseDeleteAt](t.store, key)
+	result, found := GetFromCache[transactionCacheResponseDeleteAt](ctx, t.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -107,7 +108,7 @@ func (t *transactionQueryCache) GetCachedTransactionActiveCache(req *requests.Fi
 	return result.Data, result.TotalRecords, true
 }
 
-func (t *transactionQueryCache) SetCachedTransactionActiveCache(req *requests.FindAllTransaction, data []*response.TransactionResponseDeleteAt, total *int) {
+func (t *transactionQueryCache) SetCachedTransactionActiveCache(ctx context.Context, req *requests.FindAllTransaction, data []*response.TransactionResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -119,13 +120,13 @@ func (t *transactionQueryCache) SetCachedTransactionActiveCache(req *requests.Fi
 
 	key := fmt.Sprintf(transactionActiveCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &transactionCacheResponseDeleteAt{Data: data, TotalRecords: total}
-	SetToCache(t.store, key, payload, ttlDefault)
+	SetToCache(ctx, t.store, key, payload, ttlDefault)
 }
 
-func (t *transactionQueryCache) GetCachedTransactionTrashedCache(req *requests.FindAllTransaction) ([]*response.TransactionResponseDeleteAt, *int, bool) {
+func (t *transactionQueryCache) GetCachedTransactionTrashedCache(ctx context.Context, req *requests.FindAllTransaction) ([]*response.TransactionResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(transactionTrashedCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[transactionCacheResponseDeleteAt](t.store, key)
+	result, found := GetFromCache[transactionCacheResponseDeleteAt](ctx, t.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -134,7 +135,7 @@ func (t *transactionQueryCache) GetCachedTransactionTrashedCache(req *requests.F
 	return result.Data, result.TotalRecords, true
 }
 
-func (t *transactionQueryCache) SetCachedTransactionTrashedCache(req *requests.FindAllTransaction, data []*response.TransactionResponseDeleteAt, total *int) {
+func (t *transactionQueryCache) SetCachedTransactionTrashedCache(ctx context.Context, req *requests.FindAllTransaction, data []*response.TransactionResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -148,13 +149,13 @@ func (t *transactionQueryCache) SetCachedTransactionTrashedCache(req *requests.F
 
 	payload := &transactionCacheResponseDeleteAt{Data: data, TotalRecords: total}
 
-	SetToCache(t.store, key, payload, ttlDefault)
+	SetToCache(ctx, t.store, key, payload, ttlDefault)
 }
 
-func (t *transactionQueryCache) GetCachedTransactionCache(id int) (*response.TransactionResponse, bool) {
+func (t *transactionQueryCache) GetCachedTransactionCache(ctx context.Context, id int) (*response.TransactionResponse, bool) {
 	key := fmt.Sprintf(transactionByIdCacheKey, id)
 
-	result, found := GetFromCache[*response.TransactionResponse](t.store, key)
+	result, found := GetFromCache[*response.TransactionResponse](ctx, t.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -163,19 +164,19 @@ func (t *transactionQueryCache) GetCachedTransactionCache(id int) (*response.Tra
 	return *result, true
 }
 
-func (t *transactionQueryCache) SetCachedTransactionCache(data *response.TransactionResponse) {
+func (t *transactionQueryCache) SetCachedTransactionCache(ctx context.Context, data *response.TransactionResponse) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(transactionByIdCacheKey, data.ID)
-	SetToCache(t.store, key, data, ttlDefault)
+	SetToCache(ctx, t.store, key, data, ttlDefault)
 }
 
-func (t *transactionQueryCache) GetCachedTransactionByOrderId(orderID int) (*response.TransactionResponse, bool) {
+func (t *transactionQueryCache) GetCachedTransactionByOrderId(ctx context.Context, orderID int) (*response.TransactionResponse, bool) {
 	key := fmt.Sprintf(transactionByOrderCacheKey, orderID)
 
-	result, found := GetFromCache[*response.TransactionResponse](t.store, key)
+	result, found := GetFromCache[*response.TransactionResponse](ctx, t.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -184,11 +185,11 @@ func (t *transactionQueryCache) GetCachedTransactionByOrderId(orderID int) (*res
 	return *result, true
 }
 
-func (t *transactionQueryCache) SetCachedTransactionByOrderId(orderID int, data *response.TransactionResponse) {
+func (t *transactionQueryCache) SetCachedTransactionByOrderId(ctx context.Context, orderID int, data *response.TransactionResponse) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(transactionByOrderCacheKey, orderID)
-	SetToCache(t.store, key, data, ttlDefault)
+	SetToCache(ctx, t.store, key, data, ttlDefault)
 }

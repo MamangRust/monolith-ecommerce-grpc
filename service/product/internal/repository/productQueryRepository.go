@@ -13,19 +13,17 @@ import (
 
 type productQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.ProductRecordMapping
 }
 
-func NewProductQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.ProductRecordMapping) *productQueryRepository {
+func NewProductQueryRepository(db *db.Queries, mapping recordmapper.ProductRecordMapping) *productQueryRepository {
 	return &productQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *productQueryRepository) FindAllProducts(req *requests.FindAllProduct) ([]*record.ProductRecord, *int, error) {
+func (r *productQueryRepository) FindAllProducts(ctx context.Context, req *requests.FindAllProduct) ([]*record.ProductRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetProductsParams{
@@ -34,7 +32,7 @@ func (r *productQueryRepository) FindAllProducts(req *requests.FindAllProduct) (
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetProducts(r.ctx, reqDb)
+	res, err := r.db.GetProducts(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, product_errors.ErrFindAllProducts
@@ -51,7 +49,7 @@ func (r *productQueryRepository) FindAllProducts(req *requests.FindAllProduct) (
 	return r.mapping.ToProductsRecordPagination(res), &totalCount, nil
 }
 
-func (r *productQueryRepository) FindByActive(req *requests.FindAllProduct) ([]*record.ProductRecord, *int, error) {
+func (r *productQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllProduct) ([]*record.ProductRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetProductsActiveParams{
@@ -60,7 +58,7 @@ func (r *productQueryRepository) FindByActive(req *requests.FindAllProduct) ([]*
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetProductsActive(r.ctx, reqDb)
+	res, err := r.db.GetProductsActive(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, product_errors.ErrFindByActive
@@ -77,7 +75,7 @@ func (r *productQueryRepository) FindByActive(req *requests.FindAllProduct) ([]*
 	return r.mapping.ToProductsRecordActivePagination(res), &totalCount, nil
 }
 
-func (r *productQueryRepository) FindByTrashed(req *requests.FindAllProduct) ([]*record.ProductRecord, *int, error) {
+func (r *productQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllProduct) ([]*record.ProductRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetProductsTrashedParams{
@@ -86,7 +84,7 @@ func (r *productQueryRepository) FindByTrashed(req *requests.FindAllProduct) ([]
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetProductsTrashed(r.ctx, reqDb)
+	res, err := r.db.GetProductsTrashed(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, product_errors.ErrFindByTrashed
@@ -103,7 +101,7 @@ func (r *productQueryRepository) FindByTrashed(req *requests.FindAllProduct) ([]
 	return r.mapping.ToProductsRecordTrashedPagination(res), &totalCount, nil
 }
 
-func (r *productQueryRepository) FindByMerchant(req *requests.FindAllProductByMerchant) ([]*record.ProductRecord, *int, error) {
+func (r *productQueryRepository) FindByMerchant(ctx context.Context, req *requests.FindAllProductByMerchant) ([]*record.ProductRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetProductsByMerchantParams{
@@ -116,7 +114,7 @@ func (r *productQueryRepository) FindByMerchant(req *requests.FindAllProductByMe
 		Offset:     int32(offset),
 	}
 
-	res, err := r.db.GetProductsByMerchant(r.ctx, reqDb)
+	res, err := r.db.GetProductsByMerchant(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, product_errors.ErrFindByMerchant
@@ -133,7 +131,7 @@ func (r *productQueryRepository) FindByMerchant(req *requests.FindAllProductByMe
 	return r.mapping.ToProductsRecordMerchantPagination(res), &totalCount, nil
 }
 
-func (r *productQueryRepository) FindByCategory(req *requests.FindAllProductByCategory) ([]*record.ProductRecord, *int, error) {
+func (r *productQueryRepository) FindByCategory(ctx context.Context, req *requests.FindAllProductByCategory) ([]*record.ProductRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetProductsByCategoryNameParams{
@@ -145,7 +143,7 @@ func (r *productQueryRepository) FindByCategory(req *requests.FindAllProductByCa
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetProductsByCategoryName(r.ctx, reqDb)
+	res, err := r.db.GetProductsByCategoryName(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, product_errors.ErrFindByCategory
@@ -162,8 +160,8 @@ func (r *productQueryRepository) FindByCategory(req *requests.FindAllProductByCa
 	return r.mapping.ToProductsRecordCategoryPagination(res), &totalCount, nil
 }
 
-func (r *productQueryRepository) FindById(product_id int) (*record.ProductRecord, error) {
-	res, err := r.db.GetProductByID(r.ctx, int32(product_id))
+func (r *productQueryRepository) FindById(ctx context.Context, product_id int) (*record.ProductRecord, error) {
+	res, err := r.db.GetProductByID(ctx, int32(product_id))
 
 	if err != nil {
 		return nil, product_errors.ErrFindById
@@ -172,8 +170,8 @@ func (r *productQueryRepository) FindById(product_id int) (*record.ProductRecord
 	return r.mapping.ToProductRecord(res), nil
 }
 
-func (r *productQueryRepository) FindByIdTrashed(product_id int) (*record.ProductRecord, error) {
-	res, err := r.db.GetProductByIdTrashed(r.ctx, int32(product_id))
+func (r *productQueryRepository) FindByIdTrashed(ctx context.Context, product_id int) (*record.ProductRecord, error) {
+	res, err := r.db.GetProductByIdTrashed(ctx, int32(product_id))
 
 	if err != nil {
 		return nil, product_errors.ErrFindByIdTrashed

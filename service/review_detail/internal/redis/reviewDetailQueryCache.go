@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -35,10 +36,10 @@ func NewReviewDetailQueryCache(store *CacheStore) *reviewDetailQueryCache {
 	return &reviewDetailQueryCache{store: store}
 }
 
-func (r *reviewDetailQueryCache) GetReviewDetailAllCache(req *requests.FindAllReview) ([]*response.ReviewDetailsResponse, *int, bool) {
+func (r *reviewDetailQueryCache) GetReviewDetailAllCache(ctx context.Context, req *requests.FindAllReview) ([]*response.ReviewDetailsResponse, *int, bool) {
 	key := fmt.Sprintf(reviewAllCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[reviewDetailCacheResponse](r.store, key)
+	result, found := GetFromCache[reviewDetailCacheResponse](ctx, r.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -47,7 +48,7 @@ func (r *reviewDetailQueryCache) GetReviewDetailAllCache(req *requests.FindAllRe
 	return result.Data, result.Total, true
 }
 
-func (r *reviewDetailQueryCache) SetReviewDetailAllCache(req *requests.FindAllReview, data []*response.ReviewDetailsResponse, total *int) {
+func (r *reviewDetailQueryCache) SetReviewDetailAllCache(ctx context.Context, req *requests.FindAllReview, data []*response.ReviewDetailsResponse, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -59,13 +60,13 @@ func (r *reviewDetailQueryCache) SetReviewDetailAllCache(req *requests.FindAllRe
 
 	key := fmt.Sprintf(reviewAllCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &reviewDetailCacheResponse{Data: data, Total: total}
-	SetToCache(r.store, key, payload, ttlDefault)
+	SetToCache(ctx, r.store, key, payload, ttlDefault)
 }
 
-func (r *reviewDetailQueryCache) GetRevieDetailActiveCache(req *requests.FindAllReview) ([]*response.ReviewDetailsResponseDeleteAt, *int, bool) {
+func (r *reviewDetailQueryCache) GetReviewDetailActiveCache(ctx context.Context, req *requests.FindAllReview) ([]*response.ReviewDetailsResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(reviewActiveCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[reviewDetailCacheResponseDeleteAt](r.store, key)
+	result, found := GetFromCache[reviewDetailCacheResponseDeleteAt](ctx, r.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -74,7 +75,7 @@ func (r *reviewDetailQueryCache) GetRevieDetailActiveCache(req *requests.FindAll
 	return result.Data, result.Total, true
 }
 
-func (r *reviewDetailQueryCache) SetReviewDetailActiveCache(req *requests.FindAllReview, data []*response.ReviewDetailsResponseDeleteAt, total *int) {
+func (r *reviewDetailQueryCache) SetReviewDetailActiveCache(ctx context.Context, req *requests.FindAllReview, data []*response.ReviewDetailsResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -86,12 +87,12 @@ func (r *reviewDetailQueryCache) SetReviewDetailActiveCache(req *requests.FindAl
 
 	key := fmt.Sprintf(reviewActiveCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &reviewDetailCacheResponseDeleteAt{Data: data, Total: total}
-	SetToCache(r.store, key, payload, ttlDefault)
+	SetToCache(ctx, r.store, key, payload, ttlDefault)
 }
 
-func (r *reviewDetailQueryCache) GetReviewDetailTrashedCache(req *requests.FindAllReview) ([]*response.ReviewDetailsResponseDeleteAt, *int, bool) {
+func (r *reviewDetailQueryCache) GetReviewDetailTrashedCache(ctx context.Context, req *requests.FindAllReview) ([]*response.ReviewDetailsResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(reviewTrashedCacheKey, req.Page, req.PageSize, req.Search)
-	result, found := GetFromCache[reviewDetailCacheResponseDeleteAt](r.store, key)
+	result, found := GetFromCache[reviewDetailCacheResponseDeleteAt](ctx, r.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -100,7 +101,7 @@ func (r *reviewDetailQueryCache) GetReviewDetailTrashedCache(req *requests.FindA
 	return result.Data, result.Total, true
 }
 
-func (r *reviewDetailQueryCache) SetReviewDetailTrashedCache(req *requests.FindAllReview, data []*response.ReviewDetailsResponseDeleteAt, total *int) {
+func (r *reviewDetailQueryCache) SetReviewDetailTrashedCache(ctx context.Context, req *requests.FindAllReview, data []*response.ReviewDetailsResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -112,12 +113,12 @@ func (r *reviewDetailQueryCache) SetReviewDetailTrashedCache(req *requests.FindA
 
 	key := fmt.Sprintf(reviewTrashedCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &reviewDetailCacheResponseDeleteAt{Data: data, Total: total}
-	SetToCache(r.store, key, payload, ttlDefault)
+	SetToCache(ctx, r.store, key, payload, ttlDefault)
 }
 
-func (r *reviewDetailQueryCache) GetCachedReviewDetailCache(review_id int) (*response.ReviewDetailsResponse, bool) {
+func (r *reviewDetailQueryCache) GetCachedReviewDetailCache(ctx context.Context, review_id int) (*response.ReviewDetailsResponse, bool) {
 	key := fmt.Sprintf(reviewByIdCacheKey, review_id)
-	result, found := GetFromCache[*response.ReviewDetailsResponse](r.store, key)
+	result, found := GetFromCache[*response.ReviewDetailsResponse](ctx, r.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -126,11 +127,11 @@ func (r *reviewDetailQueryCache) GetCachedReviewDetailCache(review_id int) (*res
 	return *result, true
 }
 
-func (r *reviewDetailQueryCache) SetCachedReviewDetailCache(data *response.ReviewDetailsResponse) {
+func (r *reviewDetailQueryCache) SetCachedReviewDetailCache(ctx context.Context, data *response.ReviewDetailsResponse) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(reviewByIdCacheKey, data.ID)
-	SetToCache(r.store, key, data, ttlDefault)
+	SetToCache(ctx, r.store, key, data, ttlDefault)
 }

@@ -12,23 +12,20 @@ import (
 
 type merchantBusinessQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.MerchantBusinessMapping
 }
 
 func NewMerchantBusinessQueryRepository(
 	db *db.Queries,
-	ctx context.Context,
 	mapping recordmapper.MerchantBusinessMapping,
 ) *merchantBusinessQueryRepository {
 	return &merchantBusinessQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *merchantBusinessQueryRepository) FindAllMerchants(req *requests.FindAllMerchant) ([]*record.MerchantBusinessRecord, *int, error) {
+func (r *merchantBusinessQueryRepository) FindAllMerchants(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantBusinessRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantsBusinessInformationParams{
@@ -37,7 +34,7 @@ func (r *merchantBusinessQueryRepository) FindAllMerchants(req *requests.FindAll
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetMerchantsBusinessInformation(r.ctx, reqDb)
+	res, err := r.db.GetMerchantsBusinessInformation(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, merchantbusiness_errors.ErrFindAllMerchantBusinesses
@@ -54,7 +51,7 @@ func (r *merchantBusinessQueryRepository) FindAllMerchants(req *requests.FindAll
 	return r.mapping.ToMerchantBusinesssRecordPagination(res), &totalCount, nil
 }
 
-func (r *merchantBusinessQueryRepository) FindByActive(req *requests.FindAllMerchant) ([]*record.MerchantBusinessRecord, *int, error) {
+func (r *merchantBusinessQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantBusinessRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantsBusinessInformationActiveParams{
@@ -63,7 +60,7 @@ func (r *merchantBusinessQueryRepository) FindByActive(req *requests.FindAllMerc
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetMerchantsBusinessInformationActive(r.ctx, reqDb)
+	res, err := r.db.GetMerchantsBusinessInformationActive(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, merchantbusiness_errors.ErrFindActiveMerchantBusinesses
@@ -80,7 +77,7 @@ func (r *merchantBusinessQueryRepository) FindByActive(req *requests.FindAllMerc
 	return r.mapping.ToMerchantBusinesssRecordActivePagination(res), &totalCount, nil
 }
 
-func (r *merchantBusinessQueryRepository) FindByTrashed(req *requests.FindAllMerchant) ([]*record.MerchantBusinessRecord, *int, error) {
+func (r *merchantBusinessQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantBusinessRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantsBusinessInformationTrashedParams{
@@ -89,7 +86,7 @@ func (r *merchantBusinessQueryRepository) FindByTrashed(req *requests.FindAllMer
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetMerchantsBusinessInformationTrashed(r.ctx, reqDb)
+	res, err := r.db.GetMerchantsBusinessInformationTrashed(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, merchantbusiness_errors.ErrFindTrashedMerchantBusinesses
@@ -106,8 +103,8 @@ func (r *merchantBusinessQueryRepository) FindByTrashed(req *requests.FindAllMer
 	return r.mapping.ToMerchantBusinesssRecordTrashedPagination(res), &totalCount, nil
 }
 
-func (r *merchantBusinessQueryRepository) FindById(user_id int) (*record.MerchantBusinessRecord, error) {
-	res, err := r.db.GetMerchantBusinessInformation(r.ctx, int32(user_id))
+func (r *merchantBusinessQueryRepository) FindById(ctx context.Context, user_id int) (*record.MerchantBusinessRecord, error) {
+	res, err := r.db.GetMerchantBusinessInformation(ctx, int32(user_id))
 
 	if err != nil {
 		return nil, merchantbusiness_errors.ErrMerchantBusinessNotFound

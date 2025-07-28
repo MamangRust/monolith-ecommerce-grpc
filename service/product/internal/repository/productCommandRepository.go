@@ -13,19 +13,17 @@ import (
 
 type productCommandRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.ProductRecordMapping
 }
 
-func NewProductCommandRepository(db *db.Queries, ctx context.Context, mapping recordmapper.ProductRecordMapping) *productCommandRepository {
+func NewProductCommandRepository(db *db.Queries, mapping recordmapper.ProductRecordMapping) *productCommandRepository {
 	return &productCommandRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *productCommandRepository) CreateProduct(request *requests.CreateProductRequest) (*record.ProductRecord, error) {
+func (r *productCommandRepository) CreateProduct(ctx context.Context, request *requests.CreateProductRequest) (*record.ProductRecord, error) {
 	req := db.CreateProductParams{
 		MerchantID:   int32(request.MerchantID),
 		CategoryID:   int32(request.CategoryID),
@@ -42,7 +40,7 @@ func (r *productCommandRepository) CreateProduct(request *requests.CreateProduct
 		ImageProduct: sql.NullString{String: request.ImageProduct, Valid: true},
 	}
 
-	product, err := r.db.CreateProduct(r.ctx, req)
+	product, err := r.db.CreateProduct(ctx, req)
 
 	if err != nil {
 		return nil, product_errors.ErrCreateProduct
@@ -51,7 +49,7 @@ func (r *productCommandRepository) CreateProduct(request *requests.CreateProduct
 	return r.mapping.ToProductRecord(product), nil
 }
 
-func (r *productCommandRepository) UpdateProduct(request *requests.UpdateProductRequest) (*record.ProductRecord, error) {
+func (r *productCommandRepository) UpdateProduct(ctx context.Context, request *requests.UpdateProductRequest) (*record.ProductRecord, error) {
 	req := db.UpdateProductParams{
 		ProductID:    int32(*request.ProductID),
 		CategoryID:   int32(request.CategoryID),
@@ -64,7 +62,7 @@ func (r *productCommandRepository) UpdateProduct(request *requests.UpdateProduct
 		ImageProduct: sql.NullString{String: request.ImageProduct, Valid: true},
 	}
 
-	res, err := r.db.UpdateProduct(r.ctx, req)
+	res, err := r.db.UpdateProduct(ctx, req)
 
 	if err != nil {
 		return nil, product_errors.ErrUpdateProduct
@@ -73,8 +71,8 @@ func (r *productCommandRepository) UpdateProduct(request *requests.UpdateProduct
 	return r.mapping.ToProductRecord(res), nil
 }
 
-func (r *productCommandRepository) UpdateProductCountStock(product_id int, stock int) (*record.ProductRecord, error) {
-	res, err := r.db.UpdateProductCountStock(r.ctx, db.UpdateProductCountStockParams{
+func (r *productCommandRepository) UpdateProductCountStock(ctx context.Context, product_id int, stock int) (*record.ProductRecord, error) {
+	res, err := r.db.UpdateProductCountStock(ctx, db.UpdateProductCountStockParams{
 		ProductID:    int32(product_id),
 		CountInStock: int32(stock),
 	})
@@ -86,8 +84,8 @@ func (r *productCommandRepository) UpdateProductCountStock(product_id int, stock
 	return r.mapping.ToProductRecord(res), nil
 }
 
-func (r *productCommandRepository) TrashedProduct(product_id int) (*record.ProductRecord, error) {
-	res, err := r.db.TrashProduct(r.ctx, int32(product_id))
+func (r *productCommandRepository) TrashedProduct(ctx context.Context, product_id int) (*record.ProductRecord, error) {
+	res, err := r.db.TrashProduct(ctx, int32(product_id))
 
 	if err != nil {
 		return nil, product_errors.ErrTrashedProduct
@@ -96,8 +94,8 @@ func (r *productCommandRepository) TrashedProduct(product_id int) (*record.Produ
 	return r.mapping.ToProductRecord(res), nil
 }
 
-func (r *productCommandRepository) RestoreProduct(product_id int) (*record.ProductRecord, error) {
-	res, err := r.db.RestoreProduct(r.ctx, int32(product_id))
+func (r *productCommandRepository) RestoreProduct(ctx context.Context, product_id int) (*record.ProductRecord, error) {
+	res, err := r.db.RestoreProduct(ctx, int32(product_id))
 
 	if err != nil {
 		return nil, product_errors.ErrRestoreProduct
@@ -106,8 +104,8 @@ func (r *productCommandRepository) RestoreProduct(product_id int) (*record.Produ
 	return r.mapping.ToProductRecord(res), nil
 }
 
-func (r *productCommandRepository) DeleteProductPermanent(product_id int) (bool, error) {
-	err := r.db.DeleteProductPermanently(r.ctx, int32(product_id))
+func (r *productCommandRepository) DeleteProductPermanent(ctx context.Context, product_id int) (bool, error) {
+	err := r.db.DeleteProductPermanently(ctx, int32(product_id))
 
 	if err != nil {
 		return false, product_errors.ErrDeleteProductPermanent
@@ -116,8 +114,8 @@ func (r *productCommandRepository) DeleteProductPermanent(product_id int) (bool,
 	return true, nil
 }
 
-func (r *productCommandRepository) RestoreAllProducts() (bool, error) {
-	err := r.db.RestoreAllProducts(r.ctx)
+func (r *productCommandRepository) RestoreAllProducts(ctx context.Context) (bool, error) {
+	err := r.db.RestoreAllProducts(ctx)
 
 	if err != nil {
 		return false, product_errors.ErrRestoreAllProducts
@@ -126,8 +124,8 @@ func (r *productCommandRepository) RestoreAllProducts() (bool, error) {
 	return true, nil
 }
 
-func (r *productCommandRepository) DeleteAllProductPermanent() (bool, error) {
-	err := r.db.DeleteAllPermanentProducts(r.ctx)
+func (r *productCommandRepository) DeleteAllProductPermanent(ctx context.Context) (bool, error) {
+	err := r.db.DeleteAllPermanentProducts(ctx)
 
 	if err != nil {
 		return false, product_errors.ErrDeleteAllProductPermanent

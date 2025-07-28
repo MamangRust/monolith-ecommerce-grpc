@@ -12,19 +12,17 @@ import (
 
 type reviewQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.ReviewRecordMapping
 }
 
-func NewReviewQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.ReviewRecordMapping) *reviewQueryRepository {
+func NewReviewQueryRepository(db *db.Queries, mapping recordmapper.ReviewRecordMapping) *reviewQueryRepository {
 	return &reviewQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *reviewQueryRepository) FindAllReview(req *requests.FindAllReview) ([]*record.ReviewRecord, *int, error) {
+func (r *reviewQueryRepository) FindAllReview(ctx context.Context, req *requests.FindAllReview) ([]*record.ReviewRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetReviewsParams{
@@ -33,7 +31,7 @@ func (r *reviewQueryRepository) FindAllReview(req *requests.FindAllReview) ([]*r
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetReviews(r.ctx, reqDb)
+	res, err := r.db.GetReviews(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, review_errors.ErrFindAllReviews
@@ -50,7 +48,7 @@ func (r *reviewQueryRepository) FindAllReview(req *requests.FindAllReview) ([]*r
 	return r.mapping.ToReviewsRecordPagination(res), &totalCount, nil
 }
 
-func (r *reviewQueryRepository) FindByProduct(req *requests.FindAllReviewByProduct) ([]*record.ReviewsDetailRecord, *int, error) {
+func (r *reviewQueryRepository) FindByProduct(ctx context.Context, req *requests.FindAllReviewByProduct) ([]*record.ReviewsDetailRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetReviewByProductIdParams{
@@ -60,7 +58,7 @@ func (r *reviewQueryRepository) FindByProduct(req *requests.FindAllReviewByProdu
 		Offset:    int32(offset),
 	}
 
-	res, err := r.db.GetReviewByProductId(r.ctx, reqDb)
+	res, err := r.db.GetReviewByProductId(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, review_errors.ErrFindReviewsByProduct
@@ -77,7 +75,7 @@ func (r *reviewQueryRepository) FindByProduct(req *requests.FindAllReviewByProdu
 	return r.mapping.ToReviewsProductRecordPagination(res), &totalCount, nil
 }
 
-func (r *reviewQueryRepository) FindByMerchant(req *requests.FindAllReviewByMerchant) ([]*record.ReviewsDetailRecord, *int, error) {
+func (r *reviewQueryRepository) FindByMerchant(ctx context.Context, req *requests.FindAllReviewByMerchant) ([]*record.ReviewsDetailRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetReviewByMerchantIdParams{
@@ -87,7 +85,7 @@ func (r *reviewQueryRepository) FindByMerchant(req *requests.FindAllReviewByMerc
 		Offset:     int32(offset),
 	}
 
-	res, err := r.db.GetReviewByMerchantId(r.ctx, reqDb)
+	res, err := r.db.GetReviewByMerchantId(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, review_errors.ErrFindReviewsByMerchant
@@ -104,7 +102,7 @@ func (r *reviewQueryRepository) FindByMerchant(req *requests.FindAllReviewByMerc
 	return r.mapping.ToReviewsMerchantRecordPagination(res), &totalCount, nil
 }
 
-func (r *reviewQueryRepository) FindByActive(req *requests.FindAllReview) ([]*record.ReviewRecord, *int, error) {
+func (r *reviewQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllReview) ([]*record.ReviewRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetReviewsActiveParams{
@@ -113,7 +111,7 @@ func (r *reviewQueryRepository) FindByActive(req *requests.FindAllReview) ([]*re
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetReviewsActive(r.ctx, reqDb)
+	res, err := r.db.GetReviewsActive(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, review_errors.ErrFindActiveReviews
@@ -130,7 +128,7 @@ func (r *reviewQueryRepository) FindByActive(req *requests.FindAllReview) ([]*re
 	return r.mapping.ToReviewsRecordActivePagination(res), &totalCount, nil
 }
 
-func (r *reviewQueryRepository) FindByTrashed(req *requests.FindAllReview) ([]*record.ReviewRecord, *int, error) {
+func (r *reviewQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllReview) ([]*record.ReviewRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetReviewsTrashedParams{
@@ -139,7 +137,7 @@ func (r *reviewQueryRepository) FindByTrashed(req *requests.FindAllReview) ([]*r
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetReviewsTrashed(r.ctx, reqDb)
+	res, err := r.db.GetReviewsTrashed(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, review_errors.ErrFindTrashedReviews
@@ -156,8 +154,8 @@ func (r *reviewQueryRepository) FindByTrashed(req *requests.FindAllReview) ([]*r
 	return r.mapping.ToReviewsRecordTrashedPagination(res), &totalCount, nil
 }
 
-func (r *reviewQueryRepository) FindById(id int) (*record.ReviewRecord, error) {
-	res, err := r.db.GetReviewByID(r.ctx, int32(id))
+func (r *reviewQueryRepository) FindById(ctx context.Context, id int) (*record.ReviewRecord, error) {
+	res, err := r.db.GetReviewByID(ctx, int32(id))
 
 	if err != nil {
 		return nil, review_errors.ErrFindReviewByID

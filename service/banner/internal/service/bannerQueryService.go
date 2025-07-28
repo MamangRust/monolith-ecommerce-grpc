@@ -21,7 +21,6 @@ import (
 )
 
 type bannerQueryService struct {
-	ctx                   context.Context
 	errorhandler          errorhandler.BannerQueryError
 	mencache              mencache.BannerQueryCache
 	trace                 trace.Tracer
@@ -32,7 +31,7 @@ type bannerQueryService struct {
 	requestDuration       *prometheus.HistogramVec
 }
 
-func NewBannerQueryService(ctx context.Context,
+func NewBannerQueryService(
 	errorhandler errorhandler.BannerQueryError,
 	mencache mencache.BannerQueryCache,
 	bannerQuery repository.BannerQueryRepository, logger logger.LoggerInterface, mapping response_service.BannerResponseMapper) *bannerQueryService {
@@ -56,7 +55,6 @@ func NewBannerQueryService(ctx context.Context,
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &bannerQueryService{
-		ctx:                   ctx,
 		errorhandler:          errorhandler,
 		mencache:              mencache,
 		trace:                 otel.Tracer("banner-query-service"),
@@ -68,53 +66,53 @@ func NewBannerQueryService(ctx context.Context,
 	}
 }
 
-func (s *bannerQueryService) FindAll(req *requests.FindAllBanner) ([]*response.BannerResponse, *int, *response.ErrorResponse) {
+func (s *bannerQueryService) FindAll(ctx context.Context, req *requests.FindAllBanner) ([]*response.BannerResponse, *int, *response.ErrorResponse) {
 	const method = "FindAll"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedBannersCache(req); found {
+	if data, total, found := s.mencache.GetCachedBannersCache(ctx, req); found {
 		logSuccess("Successfully fetched Banner records from cache", zap.Int("totalRecords", *total), zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	Banners, totalRecords, err := s.bannerQueryRepository.FindAllBanners(req)
+	Banners, totalRecords, err := s.bannerQueryRepository.FindAllBanners(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationError(err, method, "FAILED_FIND_ALL_BANNERS", span, &status, zap.Error(err))
 	}
 	so := s.mapping.ToBannersResponse(Banners)
 
-	s.mencache.SetCachedBannersCache(req, so, totalRecords)
+	s.mencache.SetCachedBannersCache(ctx, req, so, totalRecords)
 
 	return so, totalRecords, nil
 }
 
-func (s *bannerQueryService) FindByActive(req *requests.FindAllBanner) ([]*response.BannerResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *bannerQueryService) FindByActive(ctx context.Context, req *requests.FindAllBanner) ([]*response.BannerResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByActive"
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedBannerTrashedCache(req); found {
+	if data, total, found := s.mencache.GetCachedBannerTrashedCache(ctx, req); found {
 		logSuccess("Successfully fetched active Banners from cache", zap.Int("totalRecords", *total), zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 		return data, total, nil
 	}
 
-	Banners, totalRecords, err := s.bannerQueryRepository.FindByActive(req)
+	Banners, totalRecords, err := s.bannerQueryRepository.FindByActive(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_BY_ACTIVE", span, &status, zap.Error(err))
@@ -122,32 +120,32 @@ func (s *bannerQueryService) FindByActive(req *requests.FindAllBanner) ([]*respo
 
 	so := s.mapping.ToBannersResponseDeleteAt(Banners)
 
-	s.mencache.SetCachedBannerActiveCache(req, so, totalRecords)
+	s.mencache.SetCachedBannerActiveCache(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched active Banners", zap.Int("totalRecords", *totalRecords), zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 	return so, totalRecords, nil
 }
 
-func (s *bannerQueryService) FindByTrashed(req *requests.FindAllBanner) ([]*response.BannerResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *bannerQueryService) FindByTrashed(ctx context.Context, req *requests.FindAllBanner) ([]*response.BannerResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByTrashed"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedBannerTrashedCache(req); found {
+	if data, total, found := s.mencache.GetCachedBannerTrashedCache(ctx, req); found {
 		logSuccess("Successfully fetched trashed Banner records from cache", zap.Int("totalRecords", *total), zap.Int("page", page), zap.Int("pageSize", pageSize))
 
 		return data, total, nil
 	}
 
-	Banners, totalRecords, err := s.bannerQueryRepository.FindByTrashed(req)
+	Banners, totalRecords, err := s.bannerQueryRepository.FindByTrashed(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_FIND_BY_TRASHED", span, &status, zap.Error(err))
@@ -155,28 +153,28 @@ func (s *bannerQueryService) FindByTrashed(req *requests.FindAllBanner) ([]*resp
 
 	so := s.mapping.ToBannersResponseDeleteAt(Banners)
 
-	s.mencache.SetCachedBannerTrashedCache(req, so, totalRecords)
+	s.mencache.SetCachedBannerTrashedCache(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched trashed Banner records", zap.Int("totalRecords", *totalRecords), zap.Int("page", page), zap.Int("pageSize", pageSize))
 
 	return so, totalRecords, nil
 }
 
-func (s *bannerQueryService) FindById(BannerID int) (*response.BannerResponse, *response.ErrorResponse) {
+func (s *bannerQueryService) FindById(ctx context.Context, BannerID int) (*response.BannerResponse, *response.ErrorResponse) {
 	const method = "FindByCardNumber"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("banner.id", BannerID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("banner.id", BannerID))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedBannerCache(BannerID); found {
+	if data, found := s.mencache.GetCachedBannerCache(ctx, BannerID); found {
 		logSuccess("Successfully fetched Banner from cache", zap.Int("banner.id", BannerID))
 		return data, nil
 	}
 
-	Banner, err := s.bannerQueryRepository.FindById(BannerID)
+	Banner, err := s.bannerQueryRepository.FindById(ctx, BannerID)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_BY_ID", span, &status, banner_errors.ErrBannerNotFoundRes, zap.Error(err))
@@ -184,14 +182,15 @@ func (s *bannerQueryService) FindById(BannerID int) (*response.BannerResponse, *
 
 	so := s.mapping.ToBannerResponse(Banner)
 
-	s.mencache.SetCachedBannerCache(so)
+	s.mencache.SetCachedBannerCache(ctx, so)
 
 	logSuccess("Successfully fetched Banner", zap.Int("banner.id", int(so.ID)))
 
 	return so, nil
 }
 
-func (s *bannerQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *bannerQueryService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -200,7 +199,7 @@ func (s *bannerQueryService) startTracingAndLogging(method string, attrs ...attr
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -225,7 +224,7 @@ func (s *bannerQueryService) startTracingAndLogging(method string, attrs ...attr
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *bannerQueryService) normalizePagination(page, pageSize int) (int, int) {

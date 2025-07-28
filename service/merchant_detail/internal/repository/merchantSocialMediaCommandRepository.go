@@ -9,25 +9,23 @@ import (
 )
 
 type merchantSocialLinkCommandRepository struct {
-	db  *db.Queries
-	ctx context.Context
+	db *db.Queries
 }
 
-func NewMerchantSocialLinkCommandRepository(db *db.Queries, ctx context.Context) *merchantSocialLinkCommandRepository {
+func NewMerchantSocialLinkCommandRepository(db *db.Queries) *merchantSocialLinkCommandRepository {
 	return &merchantSocialLinkCommandRepository{
-		db:  db,
-		ctx: ctx,
+		db: db,
 	}
 }
 
-func (r *merchantSocialLinkCommandRepository) CreateSocialLink(req *requests.CreateMerchantSocialRequest) (bool, error) {
+func (r *merchantSocialLinkCommandRepository) CreateSocialLink(ctx context.Context, req *requests.CreateMerchantSocialRequest) (bool, error) {
 	params := db.CreateMerchantSocialMediaLinkParams{
 		MerchantDetailID: int32(*req.MerchantDetailID),
 		Platform:         req.Platform,
 		Url:              req.Url,
 	}
 
-	_, err := r.db.CreateMerchantSocialMediaLink(r.ctx, params)
+	_, err := r.db.CreateMerchantSocialMediaLink(ctx, params)
 	if err != nil {
 		return false, merchantsociallink_errors.ErrCreateMerchantSocialLink
 	}
@@ -35,14 +33,14 @@ func (r *merchantSocialLinkCommandRepository) CreateSocialLink(req *requests.Cre
 	return true, nil
 }
 
-func (r *merchantSocialLinkCommandRepository) UpdateSocialLink(req *requests.UpdateMerchantSocialRequest) (bool, error) {
+func (r *merchantSocialLinkCommandRepository) UpdateSocialLink(ctx context.Context, req *requests.UpdateMerchantSocialRequest) (bool, error) {
 	params := db.UpdateMerchantSocialMediaLinkParams{
 		MerchantSocialID: int32(req.ID),
 		Platform:         req.Platform,
 		Url:              req.Url,
 	}
 
-	_, err := r.db.UpdateMerchantSocialMediaLink(r.ctx, params)
+	_, err := r.db.UpdateMerchantSocialMediaLink(ctx, params)
 	if err != nil {
 		return false, merchantsociallink_errors.ErrUpdateMerchantSocialLink
 	}
@@ -50,8 +48,8 @@ func (r *merchantSocialLinkCommandRepository) UpdateSocialLink(req *requests.Upd
 	return true, nil
 }
 
-func (r *merchantSocialLinkCommandRepository) TrashSocialLink(socialID int) (bool, error) {
-	_, err := r.db.TrashMerchantSocialMediaLink(r.ctx, int32(socialID))
+func (r *merchantSocialLinkCommandRepository) TrashSocialLink(ctx context.Context, socialID int) (bool, error) {
+	_, err := r.db.TrashMerchantSocialMediaLink(ctx, int32(socialID))
 	if err != nil {
 		return false, merchantsociallink_errors.ErrTrashMerchantSocialLink
 	}
@@ -59,8 +57,8 @@ func (r *merchantSocialLinkCommandRepository) TrashSocialLink(socialID int) (boo
 	return true, nil
 }
 
-func (r *merchantSocialLinkCommandRepository) RestoreSocialLink(socialID int) (bool, error) {
-	_, err := r.db.RestoreMerchantSocialMediaLink(r.ctx, int32(socialID))
+func (r *merchantSocialLinkCommandRepository) RestoreSocialLink(ctx context.Context, socialID int) (bool, error) {
+	_, err := r.db.RestoreMerchantSocialMediaLink(ctx, int32(socialID))
 	if err != nil {
 		return false, merchantsociallink_errors.ErrRestoreMerchantSocialLink
 	}
@@ -68,8 +66,8 @@ func (r *merchantSocialLinkCommandRepository) RestoreSocialLink(socialID int) (b
 	return true, nil
 }
 
-func (r *merchantSocialLinkCommandRepository) DeletePermanentSocialLink(socialID int) (bool, error) {
-	err := r.db.DeleteMerchantSocialMediaLinkPermanently(r.ctx, int32(socialID))
+func (r *merchantSocialLinkCommandRepository) DeletePermanentSocialLink(ctx context.Context, socialID int) (bool, error) {
+	err := r.db.DeleteMerchantSocialMediaLinkPermanently(ctx, int32(socialID))
 	if err != nil {
 		return false, merchantsociallink_errors.ErrDeletePermanentMerchantSocialLink
 	}
@@ -77,8 +75,8 @@ func (r *merchantSocialLinkCommandRepository) DeletePermanentSocialLink(socialID
 	return true, nil
 }
 
-func (r *merchantSocialLinkCommandRepository) RestoreAllSocialLink() (bool, error) {
-	err := r.db.RestoreAllMerchantSocialMediaLinks(r.ctx)
+func (r *merchantSocialLinkCommandRepository) RestoreAllSocialLink(ctx context.Context) (bool, error) {
+	err := r.db.RestoreAllMerchantSocialMediaLinks(ctx)
 	if err != nil {
 		return false, merchantsociallink_errors.ErrRestoreAllMerchantSocialLinks
 	}
@@ -86,8 +84,8 @@ func (r *merchantSocialLinkCommandRepository) RestoreAllSocialLink() (bool, erro
 	return true, nil
 }
 
-func (r *merchantSocialLinkCommandRepository) DeleteAllPermanentSocialLink() (bool, error) {
-	err := r.db.DeleteAllMerchantSocialMediaLinksPermanently(r.ctx)
+func (r *merchantSocialLinkCommandRepository) DeleteAllPermanentSocialLink(ctx context.Context) (bool, error) {
+	err := r.db.DeleteAllMerchantSocialMediaLinksPermanently(ctx)
 	if err != nil {
 		return false, merchantsociallink_errors.ErrDeleteAllPermanentMerchantSocialLinks
 	}

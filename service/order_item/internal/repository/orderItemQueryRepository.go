@@ -12,19 +12,17 @@ import (
 
 type orderItemQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.OrderItemRecordMapping
 }
 
-func NewOrderItemQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.OrderItemRecordMapping) *orderItemQueryRepository {
+func NewOrderItemQueryRepository(db *db.Queries, mapping recordmapper.OrderItemRecordMapping) *orderItemQueryRepository {
 	return &orderItemQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *orderItemQueryRepository) FindAllOrderItems(req *requests.FindAllOrderItems) ([]*record.OrderItemRecord, *int, error) {
+func (r *orderItemQueryRepository) FindAllOrderItems(ctx context.Context, req *requests.FindAllOrderItems) ([]*record.OrderItemRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetOrderItemsParams{
@@ -33,7 +31,7 @@ func (r *orderItemQueryRepository) FindAllOrderItems(req *requests.FindAllOrderI
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetOrderItems(r.ctx, reqDb)
+	res, err := r.db.GetOrderItems(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, orderitem_errors.ErrFindAllOrderItems
@@ -50,7 +48,7 @@ func (r *orderItemQueryRepository) FindAllOrderItems(req *requests.FindAllOrderI
 	return r.mapping.ToOrderItemsRecordPagination(res), &totalCount, nil
 }
 
-func (r *orderItemQueryRepository) FindByActive(req *requests.FindAllOrderItems) ([]*record.OrderItemRecord, *int, error) {
+func (r *orderItemQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllOrderItems) ([]*record.OrderItemRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetOrderItemsActiveParams{
@@ -59,7 +57,7 @@ func (r *orderItemQueryRepository) FindByActive(req *requests.FindAllOrderItems)
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetOrderItemsActive(r.ctx, reqDb)
+	res, err := r.db.GetOrderItemsActive(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, orderitem_errors.ErrFindByActive
@@ -76,7 +74,7 @@ func (r *orderItemQueryRepository) FindByActive(req *requests.FindAllOrderItems)
 	return r.mapping.ToOrderItemsRecordActivePagination(res), &totalCount, nil
 }
 
-func (r *orderItemQueryRepository) FindByTrashed(req *requests.FindAllOrderItems) ([]*record.OrderItemRecord, *int, error) {
+func (r *orderItemQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllOrderItems) ([]*record.OrderItemRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetOrderItemsTrashedParams{
@@ -85,7 +83,7 @@ func (r *orderItemQueryRepository) FindByTrashed(req *requests.FindAllOrderItems
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetOrderItemsTrashed(r.ctx, reqDb)
+	res, err := r.db.GetOrderItemsTrashed(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, orderitem_errors.ErrFindByTrashed
@@ -102,8 +100,8 @@ func (r *orderItemQueryRepository) FindByTrashed(req *requests.FindAllOrderItems
 	return r.mapping.ToOrderItemsRecordTrashedPagination(res), &totalCount, nil
 }
 
-func (r *orderItemQueryRepository) FindOrderItemByOrder(order_id int) ([]*record.OrderItemRecord, error) {
-	res, err := r.db.GetOrderItemsByOrder(r.ctx, int32(order_id))
+func (r *orderItemQueryRepository) FindOrderItemByOrder(ctx context.Context, order_id int) ([]*record.OrderItemRecord, error) {
+	res, err := r.db.GetOrderItemsByOrder(ctx, int32(order_id))
 
 	if err != nil {
 		return nil, orderitem_errors.ErrFindOrderItemByOrder

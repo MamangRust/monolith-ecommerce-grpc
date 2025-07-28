@@ -12,19 +12,17 @@ import (
 
 type merchantPolicyCommandRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.MerchantPolicyMapping
 }
 
-func NewMerchantPolicyCommandRepository(db *db.Queries, ctx context.Context, mapping recordmapper.MerchantPolicyMapping) *merchantPolicyCommandRepository {
+func NewMerchantPolicyCommandRepository(db *db.Queries, mapping recordmapper.MerchantPolicyMapping) *merchantPolicyCommandRepository {
 	return &merchantPolicyCommandRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *merchantPolicyCommandRepository) CreateMerchantPolicy(request *requests.CreateMerchantPolicyRequest) (*record.MerchantPoliciesRecord, error) {
+func (r *merchantPolicyCommandRepository) CreateMerchantPolicy(ctx context.Context, request *requests.CreateMerchantPolicyRequest) (*record.MerchantPoliciesRecord, error) {
 	req := db.CreateMerchantPolicyParams{
 		MerchantID:  int32(request.MerchantID),
 		PolicyType:  request.PolicyType,
@@ -32,7 +30,7 @@ func (r *merchantPolicyCommandRepository) CreateMerchantPolicy(request *requests
 		Description: request.Description,
 	}
 
-	policy, err := r.db.CreateMerchantPolicy(r.ctx, req)
+	policy, err := r.db.CreateMerchantPolicy(ctx, req)
 	if err != nil {
 		return nil, merchantpolicy_errors.ErrCreateMerchantPolicy
 	}
@@ -40,7 +38,7 @@ func (r *merchantPolicyCommandRepository) CreateMerchantPolicy(request *requests
 	return r.mapping.ToMerchantPolicyRecord(policy), nil
 }
 
-func (r *merchantPolicyCommandRepository) UpdateMerchantPolicy(request *requests.UpdateMerchantPolicyRequest) (*record.MerchantPoliciesRecord, error) {
+func (r *merchantPolicyCommandRepository) UpdateMerchantPolicy(ctx context.Context, request *requests.UpdateMerchantPolicyRequest) (*record.MerchantPoliciesRecord, error) {
 	req := db.UpdateMerchantPolicyParams{
 		MerchantPolicyID: int32(*request.MerchantPolicyID),
 		PolicyType:       request.PolicyType,
@@ -48,7 +46,7 @@ func (r *merchantPolicyCommandRepository) UpdateMerchantPolicy(request *requests
 		Description:      request.Description,
 	}
 
-	res, err := r.db.UpdateMerchantPolicy(r.ctx, req)
+	res, err := r.db.UpdateMerchantPolicy(ctx, req)
 	if err != nil {
 		return nil, merchantpolicy_errors.ErrUpdateMerchantPolicy
 	}
@@ -56,8 +54,8 @@ func (r *merchantPolicyCommandRepository) UpdateMerchantPolicy(request *requests
 	return r.mapping.ToMerchantPolicyRecord(res), nil
 }
 
-func (r *merchantPolicyCommandRepository) TrashedMerchantPolicy(merchant_id int) (*record.MerchantPoliciesRecord, error) {
-	res, err := r.db.TrashMerchantPolicy(r.ctx, int32(merchant_id))
+func (r *merchantPolicyCommandRepository) TrashedMerchantPolicy(ctx context.Context, merchant_id int) (*record.MerchantPoliciesRecord, error) {
+	res, err := r.db.TrashMerchantPolicy(ctx, int32(merchant_id))
 
 	if err != nil {
 		return nil, merchantpolicy_errors.ErrTrashedMerchantPolicy
@@ -66,8 +64,8 @@ func (r *merchantPolicyCommandRepository) TrashedMerchantPolicy(merchant_id int)
 	return r.mapping.ToMerchantPolicyRecord(res), nil
 }
 
-func (r *merchantPolicyCommandRepository) RestoreMerchantPolicy(merchant_id int) (*record.MerchantPoliciesRecord, error) {
-	res, err := r.db.RestoreMerchantPolicy(r.ctx, int32(merchant_id))
+func (r *merchantPolicyCommandRepository) RestoreMerchantPolicy(ctx context.Context, merchant_id int) (*record.MerchantPoliciesRecord, error) {
+	res, err := r.db.RestoreMerchantPolicy(ctx, int32(merchant_id))
 
 	if err != nil {
 		return nil, merchantpolicy_errors.ErrRestoreMerchantPolicy
@@ -76,8 +74,8 @@ func (r *merchantPolicyCommandRepository) RestoreMerchantPolicy(merchant_id int)
 	return r.mapping.ToMerchantPolicyRecord(res), nil
 }
 
-func (r *merchantPolicyCommandRepository) DeleteMerchantPolicyPermanent(Merchant_id int) (bool, error) {
-	err := r.db.DeleteMerchantPermanently(r.ctx, int32(Merchant_id))
+func (r *merchantPolicyCommandRepository) DeleteMerchantPolicyPermanent(ctx context.Context, Merchant_id int) (bool, error) {
+	err := r.db.DeleteMerchantPermanently(ctx, int32(Merchant_id))
 
 	if err != nil {
 		return false, merchantpolicy_errors.ErrDeleteMerchantPolicyPermanent
@@ -86,8 +84,8 @@ func (r *merchantPolicyCommandRepository) DeleteMerchantPolicyPermanent(Merchant
 	return true, nil
 }
 
-func (r *merchantPolicyCommandRepository) RestoreAllMerchantPolicy() (bool, error) {
-	err := r.db.RestoreAllMerchants(r.ctx)
+func (r *merchantPolicyCommandRepository) RestoreAllMerchantPolicy(ctx context.Context) (bool, error) {
+	err := r.db.RestoreAllMerchants(ctx)
 
 	if err != nil {
 		return false, merchantpolicy_errors.ErrRestoreAllMerchantPolicy
@@ -95,8 +93,8 @@ func (r *merchantPolicyCommandRepository) RestoreAllMerchantPolicy() (bool, erro
 	return true, nil
 }
 
-func (r *merchantPolicyCommandRepository) DeleteAllMerchantPolicyPermanent() (bool, error) {
-	err := r.db.DeleteAllPermanentMerchants(r.ctx)
+func (r *merchantPolicyCommandRepository) DeleteAllMerchantPolicyPermanent(ctx context.Context) (bool, error) {
+	err := r.db.DeleteAllPermanentMerchants(ctx)
 
 	if err != nil {
 		return false, merchantpolicy_errors.ErrDeleteAllMerchantPolicyPermanent

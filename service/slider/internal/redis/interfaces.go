@@ -1,21 +1,23 @@
 package mencache
 
 import (
+	"context"
+
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
 type SliderQueryCache interface {
-	GetSliderAllCache(req *requests.FindAllSlider) ([]*response.SliderResponse, *int, bool)
-	SetSliderAllCache(req *requests.FindAllSlider, data []*response.SliderResponse, total *int)
+	GetSliderAllCache(ctx context.Context, req *requests.FindAllSlider) ([]*response.SliderResponse, *int, bool)
+	SetSliderAllCache(ctx context.Context, req *requests.FindAllSlider, data []*response.SliderResponse, total *int)
 
-	GetSliderActiveCache(req *requests.FindAllSlider) ([]*response.SliderResponseDeleteAt, *int, bool)
-	SetSliderActiveCache(req *requests.FindAllSlider, data []*response.SliderResponseDeleteAt, total *int)
+	GetSliderActiveCache(ctx context.Context, req *requests.FindAllSlider) ([]*response.SliderResponseDeleteAt, *int, bool)
+	SetSliderActiveCache(ctx context.Context, req *requests.FindAllSlider, data []*response.SliderResponseDeleteAt, total *int)
 
-	GetSliderTrashedCache(req *requests.FindAllSlider) ([]*response.SliderResponseDeleteAt, *int, bool)
-	SetSliderTrashedCache(req *requests.FindAllSlider, data []*response.SliderResponseDeleteAt, total *int)
+	GetSliderTrashedCache(ctx context.Context, req *requests.FindAllSlider) ([]*response.SliderResponseDeleteAt, *int, bool)
+	SetSliderTrashedCache(ctx context.Context, req *requests.FindAllSlider, data []*response.SliderResponseDeleteAt, total *int)
 }
 
 type SliderCommandCache interface {
-	DeleteSliderCache(review_id int)
+	DeleteSliderCache(ctx context.Context, review_id int)
 }

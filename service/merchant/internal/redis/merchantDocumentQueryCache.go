@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -32,10 +33,10 @@ func NewMerchantDocumentQueryCache(store *CacheStore) *merchantDocumentQueryCach
 	return &merchantDocumentQueryCache{store: store}
 }
 
-func (s *merchantDocumentQueryCache) GetCachedMerchantDocuments(req *requests.FindAllMerchantDocuments) ([]*response.MerchantDocumentResponse, *int, bool) {
+func (s *merchantDocumentQueryCache) GetCachedMerchantDocuments(ctx context.Context, req *requests.FindAllMerchantDocuments) ([]*response.MerchantDocumentResponse, *int, bool) {
 	key := fmt.Sprintf(merchantDocumentAllCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[merchantDocumentQueryCachedResponse](s.store, key)
+	result, found := GetFromCache[merchantDocumentQueryCachedResponse](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -44,7 +45,7 @@ func (s *merchantDocumentQueryCache) GetCachedMerchantDocuments(req *requests.Fi
 	return result.Data, result.TotalRecords, true
 }
 
-func (s *merchantDocumentQueryCache) SetCachedMerchantDocuments(req *requests.FindAllMerchantDocuments, data []*response.MerchantDocumentResponse, total *int) {
+func (s *merchantDocumentQueryCache) SetCachedMerchantDocuments(ctx context.Context, req *requests.FindAllMerchantDocuments, data []*response.MerchantDocumentResponse, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -58,13 +59,13 @@ func (s *merchantDocumentQueryCache) SetCachedMerchantDocuments(req *requests.Fi
 
 	payload := &merchantDocumentQueryCachedResponse{Data: data, TotalRecords: total}
 
-	SetToCache(s.store, key, payload, ttlDefault)
+	SetToCache(ctx, s.store, key, payload, ttlDefault)
 }
 
-func (s *merchantDocumentQueryCache) GetCachedMerchantDocumentsActive(req *requests.FindAllMerchantDocuments) ([]*response.MerchantDocumentResponseDeleteAt, *int, bool) {
+func (s *merchantDocumentQueryCache) GetCachedMerchantDocumentsActive(ctx context.Context, req *requests.FindAllMerchantDocuments) ([]*response.MerchantDocumentResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(merchantDocumentActiveCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[merchantDocumentQueryCachedResponseDeleteAt](s.store, key)
+	result, found := GetFromCache[merchantDocumentQueryCachedResponseDeleteAt](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -73,7 +74,7 @@ func (s *merchantDocumentQueryCache) GetCachedMerchantDocumentsActive(req *reque
 	return result.Data, result.TotalRecords, true
 }
 
-func (s *merchantDocumentQueryCache) SetCachedMerchantDocumentsActive(req *requests.FindAllMerchantDocuments, data []*response.MerchantDocumentResponseDeleteAt, total *int) {
+func (s *merchantDocumentQueryCache) SetCachedMerchantDocumentsActive(ctx context.Context, req *requests.FindAllMerchantDocuments, data []*response.MerchantDocumentResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -87,13 +88,13 @@ func (s *merchantDocumentQueryCache) SetCachedMerchantDocumentsActive(req *reque
 
 	payload := &merchantDocumentQueryCachedResponseDeleteAt{Data: data, TotalRecords: total}
 
-	SetToCache(s.store, key, payload, ttlDefault)
+	SetToCache(ctx, s.store, key, payload, ttlDefault)
 }
 
-func (s *merchantDocumentQueryCache) GetCachedMerchantDocumentsTrashed(req *requests.FindAllMerchantDocuments) ([]*response.MerchantDocumentResponseDeleteAt, *int, bool) {
+func (s *merchantDocumentQueryCache) GetCachedMerchantDocumentsTrashed(ctx context.Context, req *requests.FindAllMerchantDocuments) ([]*response.MerchantDocumentResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(merchantDocumentTrashedCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[merchantDocumentQueryCachedResponseDeleteAt](s.store, key)
+	result, found := GetFromCache[merchantDocumentQueryCachedResponseDeleteAt](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -102,7 +103,7 @@ func (s *merchantDocumentQueryCache) GetCachedMerchantDocumentsTrashed(req *requ
 	return result.Data, result.TotalRecords, true
 }
 
-func (s *merchantDocumentQueryCache) SetCachedMerchantDocumentsTrashed(req *requests.FindAllMerchantDocuments, data []*response.MerchantDocumentResponseDeleteAt, total *int) {
+func (s *merchantDocumentQueryCache) SetCachedMerchantDocumentsTrashed(ctx context.Context, req *requests.FindAllMerchantDocuments, data []*response.MerchantDocumentResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -116,13 +117,13 @@ func (s *merchantDocumentQueryCache) SetCachedMerchantDocumentsTrashed(req *requ
 
 	payload := &merchantDocumentQueryCachedResponseDeleteAt{Data: data, TotalRecords: total}
 
-	SetToCache(s.store, key, payload, ttlDefault)
+	SetToCache(ctx, s.store, key, payload, ttlDefault)
 }
 
-func (s *merchantDocumentQueryCache) GetCachedMerchantDocument(id int) (*response.MerchantDocumentResponse, bool) {
+func (s *merchantDocumentQueryCache) GetCachedMerchantDocument(ctx context.Context, id int) (*response.MerchantDocumentResponse, bool) {
 	key := fmt.Sprintf(merchantDocumentByIdCacheKey, id)
 
-	result, found := GetFromCache[*response.MerchantDocumentResponse](s.store, key)
+	result, found := GetFromCache[*response.MerchantDocumentResponse](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -131,12 +132,12 @@ func (s *merchantDocumentQueryCache) GetCachedMerchantDocument(id int) (*respons
 	return *result, true
 }
 
-func (s *merchantDocumentQueryCache) SetCachedMerchantDocument(data *response.MerchantDocumentResponse) {
+func (s *merchantDocumentQueryCache) SetCachedMerchantDocument(ctx context.Context, data *response.MerchantDocumentResponse) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(merchantDocumentByIdCacheKey, data.ID)
 
-	SetToCache(s.store, key, data, ttlDefault)
+	SetToCache(ctx, s.store, key, data, ttlDefault)
 }

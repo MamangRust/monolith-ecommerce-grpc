@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: merchant_detail
+  namespace: ecommerce
+spec:
+  selector:
+    app: merchant_detail
+  ports:
+    - name: http-metrics
+      port: 8097
+      targetPort: 8097
+    - name: grpc
+      port: 50067
+      targetPort: 50067
+  type: ClusterIP

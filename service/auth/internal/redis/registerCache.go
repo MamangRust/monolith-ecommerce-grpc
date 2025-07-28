@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
@@ -13,8 +14,8 @@ func NewRegisterCache(store *CacheStore) *registerCache {
 	return &registerCache{store: store}
 }
 
-func (c *registerCache) SetVerificationCodeCache(email string, code string, expiration time.Duration) {
+func (c *registerCache) SetVerificationCodeCache(ctx context.Context, email string, code string, expiration time.Duration) {
 	key := fmt.Sprintf(keyVerifyCode, email)
 
-	SetToCache(c.store, key, &code, expiration)
+	SetToCache(ctx, c.store, key, &code, expiration)
 }

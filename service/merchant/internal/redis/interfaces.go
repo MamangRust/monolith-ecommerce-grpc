@@ -1,41 +1,47 @@
 package mencache
 
 import (
+	"context"
+
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
 type MerchantQueryCache interface {
-	GetCachedMerchants(req *requests.FindAllMerchant) ([]*response.MerchantResponse, *int, bool)
-	SetCachedMerchants(req *requests.FindAllMerchant, data []*response.MerchantResponse, total *int)
-	GetCachedMerchantActive(req *requests.FindAllMerchant) ([]*response.MerchantResponseDeleteAt, *int, bool)
-	SetCachedMerchantActive(req *requests.FindAllMerchant, data []*response.MerchantResponseDeleteAt, total *int)
-	GetCachedMerchantTrashed(req *requests.FindAllMerchant) ([]*response.MerchantResponseDeleteAt, *int, bool)
-	SetCachedMerchantTrashed(req *requests.FindAllMerchant, data []*response.MerchantResponseDeleteAt, total *int)
+	GetCachedMerchants(ctx context.Context, req *requests.FindAllMerchant) ([]*response.MerchantResponse, *int, bool)
+	SetCachedMerchants(ctx context.Context, req *requests.FindAllMerchant, data []*response.MerchantResponse, total *int)
 
-	GetCachedMerchant(id int) (*response.MerchantResponse, bool)
-	SetCachedMerchant(data *response.MerchantResponse)
+	GetCachedMerchantActive(ctx context.Context, req *requests.FindAllMerchant) ([]*response.MerchantResponseDeleteAt, *int, bool)
+	SetCachedMerchantActive(ctx context.Context, req *requests.FindAllMerchant, data []*response.MerchantResponseDeleteAt, total *int)
 
-	GetCachedMerchantsByUserId(id int) ([]*response.MerchantResponse, bool)
-	SetCachedMerchantsByUserId(userId int, data []*response.MerchantResponse)
+	GetCachedMerchantTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*response.MerchantResponseDeleteAt, *int, bool)
+	SetCachedMerchantTrashed(ctx context.Context, req *requests.FindAllMerchant, data []*response.MerchantResponseDeleteAt, total *int)
+
+	GetCachedMerchant(ctx context.Context, id int) (*response.MerchantResponse, bool)
+	SetCachedMerchant(ctx context.Context, data *response.MerchantResponse)
+
+	GetCachedMerchantsByUserId(ctx context.Context, id int) ([]*response.MerchantResponse, bool)
+	SetCachedMerchantsByUserId(ctx context.Context, userId int, data []*response.MerchantResponse)
 }
 
 type MerchantDocumentQueryCache interface {
-	GetCachedMerchantDocuments(req *requests.FindAllMerchantDocuments) ([]*response.MerchantDocumentResponse, *int, bool)
-	SetCachedMerchantDocuments(req *requests.FindAllMerchantDocuments, data []*response.MerchantDocumentResponse, total *int)
-	SetCachedMerchantDocumentsTrashed(req *requests.FindAllMerchantDocuments, data []*response.MerchantDocumentResponseDeleteAt, total *int)
-	GetCachedMerchantDocumentsActive(req *requests.FindAllMerchantDocuments) ([]*response.MerchantDocumentResponseDeleteAt, *int, bool)
-	SetCachedMerchantDocumentsActive(req *requests.FindAllMerchantDocuments, data []*response.MerchantDocumentResponseDeleteAt, total *int)
-	GetCachedMerchantDocumentsTrashed(req *requests.FindAllMerchantDocuments) ([]*response.MerchantDocumentResponseDeleteAt, *int, bool)
+	GetCachedMerchantDocuments(ctx context.Context, req *requests.FindAllMerchantDocuments) ([]*response.MerchantDocumentResponse, *int, bool)
+	SetCachedMerchantDocuments(ctx context.Context, req *requests.FindAllMerchantDocuments, data []*response.MerchantDocumentResponse, total *int)
 
-	GetCachedMerchantDocument(id int) (*response.MerchantDocumentResponse, bool)
-	SetCachedMerchantDocument(data *response.MerchantDocumentResponse)
+	GetCachedMerchantDocumentsActive(ctx context.Context, req *requests.FindAllMerchantDocuments) ([]*response.MerchantDocumentResponseDeleteAt, *int, bool)
+	SetCachedMerchantDocumentsActive(ctx context.Context, req *requests.FindAllMerchantDocuments, data []*response.MerchantDocumentResponseDeleteAt, total *int)
+
+	GetCachedMerchantDocumentsTrashed(ctx context.Context, req *requests.FindAllMerchantDocuments) ([]*response.MerchantDocumentResponseDeleteAt, *int, bool)
+	SetCachedMerchantDocumentsTrashed(ctx context.Context, req *requests.FindAllMerchantDocuments, data []*response.MerchantDocumentResponseDeleteAt, total *int)
+
+	GetCachedMerchantDocument(ctx context.Context, id int) (*response.MerchantDocumentResponse, bool)
+	SetCachedMerchantDocument(ctx context.Context, data *response.MerchantDocumentResponse)
 }
 
 type MerchantCommandCache interface {
-	DeleteCachedMerchant(id int)
+	DeleteCachedMerchant(ctx context.Context, id int)
 }
 
 type MerchantDocumentCommandCache interface {
-	DeleteCachedMerchantDocuments(id int)
+	DeleteCachedMerchantDocuments(ctx context.Context, id int)
 }

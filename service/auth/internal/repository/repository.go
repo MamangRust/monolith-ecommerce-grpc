@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"context"
-
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
@@ -15,18 +13,18 @@ type Repositories struct {
 	ResetToken   ResetTokenRepository
 }
 
-type Deps struct {
-	DB           *db.Queries
-	Ctx          context.Context
-	MapperRecord *recordmapper.RecordMapper
-}
+func NewRepositories(DB *db.Queries) *Repositories {
+	mapperUserRole := recordmapper.NewUserRoleRecordMapper()
+	mapperUser := recordmapper.NewUserRecordMapper()
+	mapperRefreshToken := recordmapper.NewRefreshTokenRecordMapper()
+	mapperRole := recordmapper.NewRoleRecordMapper()
+	mapperResetToken := recordmapper.NewResetTokenRecordMapper()
 
-func NewRepositories(deps *Deps) *Repositories {
 	return &Repositories{
-		User:         NewUserRepository(deps.DB, deps.Ctx, deps.MapperRecord.UserRecordMapper),
-		UserRole:     NewUserRoleRepository(deps.DB, deps.Ctx, deps.MapperRecord.UserRoleRecordMapper),
-		RefreshToken: NewRefreshTokenRepository(deps.DB, deps.Ctx, deps.MapperRecord.RefreshTokenRecordMapper),
-		Role:         NewRoleRepository(deps.DB, deps.Ctx, deps.MapperRecord.RoleRecordMapper),
-		ResetToken:   NewResetTokenRepository(deps.DB, deps.Ctx, deps.MapperRecord.ResetTokenRecordMapper),
+		User:         NewUserRepository(DB, mapperUser),
+		RefreshToken: NewRefreshTokenRepository(DB, mapperRefreshToken),
+		UserRole:     NewUserRoleRepository(DB, mapperUserRole),
+		Role:         NewRoleRepository(DB, mapperRole),
+		ResetToken:   NewResetTokenRepository(DB, mapperResetToken),
 	}
 }

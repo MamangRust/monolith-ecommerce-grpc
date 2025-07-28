@@ -14,19 +14,17 @@ import (
 
 type userQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.UserRecordMapping
 }
 
-func NewUserQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.UserRecordMapping) *userQueryRepository {
+func NewUserQueryRepository(db *db.Queries, mapping recordmapper.UserRecordMapping) *userQueryRepository {
 	return &userQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *userQueryRepository) FindAllUsers(req *requests.FindAllUsers) ([]*record.UserRecord, *int, error) {
+func (r *userQueryRepository) FindAllUsers(ctx context.Context, req *requests.FindAllUsers) ([]*record.UserRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetUsersParams{
@@ -35,7 +33,7 @@ func (r *userQueryRepository) FindAllUsers(req *requests.FindAllUsers) ([]*recor
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetUsers(r.ctx, reqDb)
+	res, err := r.db.GetUsers(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, user_errors.ErrFindAllUsers
@@ -51,8 +49,8 @@ func (r *userQueryRepository) FindAllUsers(req *requests.FindAllUsers) ([]*recor
 	return r.mapping.ToUsersRecordPagination(res), &totalCount, nil
 }
 
-func (r *userQueryRepository) FindById(user_id int) (*record.UserRecord, error) {
-	res, err := r.db.GetUserByID(r.ctx, int32(user_id))
+func (r *userQueryRepository) FindById(ctx context.Context, user_id int) (*record.UserRecord, error) {
+	res, err := r.db.GetUserByID(ctx, int32(user_id))
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -65,7 +63,7 @@ func (r *userQueryRepository) FindById(user_id int) (*record.UserRecord, error) 
 	return r.mapping.ToUserRecord(res), nil
 }
 
-func (r *userQueryRepository) FindByActive(req *requests.FindAllUsers) ([]*record.UserRecord, *int, error) {
+func (r *userQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllUsers) ([]*record.UserRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetUsersActiveParams{
@@ -74,7 +72,7 @@ func (r *userQueryRepository) FindByActive(req *requests.FindAllUsers) ([]*recor
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetUsersActive(r.ctx, reqDb)
+	res, err := r.db.GetUsersActive(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, user_errors.ErrFindActiveUsers
@@ -90,7 +88,7 @@ func (r *userQueryRepository) FindByActive(req *requests.FindAllUsers) ([]*recor
 	return r.mapping.ToUsersRecordActivePagination(res), &totalCount, nil
 }
 
-func (r *userQueryRepository) FindByTrashed(req *requests.FindAllUsers) ([]*record.UserRecord, *int, error) {
+func (r *userQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllUsers) ([]*record.UserRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetUserTrashedParams{
@@ -99,7 +97,7 @@ func (r *userQueryRepository) FindByTrashed(req *requests.FindAllUsers) ([]*reco
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetUserTrashed(r.ctx, reqDb)
+	res, err := r.db.GetUserTrashed(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, user_errors.ErrFindTrashedUsers
@@ -115,8 +113,8 @@ func (r *userQueryRepository) FindByTrashed(req *requests.FindAllUsers) ([]*reco
 	return r.mapping.ToUsersRecordTrashedPagination(res), &totalCount, nil
 }
 
-func (r *userQueryRepository) FindByEmail(email string) (*record.UserRecord, error) {
-	res, err := r.db.GetUserByEmail(r.ctx, email)
+func (r *userQueryRepository) FindByEmail(ctx context.Context, email string) (*record.UserRecord, error) {
+	res, err := r.db.GetUserByEmail(ctx, email)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

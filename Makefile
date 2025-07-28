@@ -37,14 +37,6 @@ image-load:
 	@echo "✅ All services loaded successfully."
 
 
-go-mod-tidy:
-	@for service in $(SERVICES); do \
-		echo "🔧 Running go mod tidy for $$service..."; \
-		cd service/$$service && go mod tidy || exit 1; \
-	done
-	@echo "✅ All go.mod tidy completed."
-
-
 ps:
 	${DOCKER_COMPOSE} -f $(COMPOSE_FILE) ps
 

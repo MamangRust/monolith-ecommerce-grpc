@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/internal/middlewares"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -31,9 +32,11 @@ type roleHandleApi struct {
 	trace           trace.Tracer
 	requestCounter  *prometheus.CounterVec
 	requestDuration *prometheus.HistogramVec
+
+	cache mencache.RoleCache
 }
 
-func NewHandlerRole(router *echo.Echo, role pb.RoleServiceClient, logger logger.LoggerInterface, mapping response_api.RoleResponseMapper, kafka *kafka.Kafka) *roleHandleApi {
+func NewHandlerRole(cache mencache.RoleCache, router *echo.Echo, role pb.RoleServiceClient, logger logger.LoggerInterface, mapping response_api.RoleResponseMapper, kafka *kafka.Kafka) *roleHandleApi {
 	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "role_handler_requests_total",
@@ -61,9 +64,10 @@ func NewHandlerRole(router *echo.Echo, role pb.RoleServiceClient, logger logger.
 		requestCounter:  requestCounter,
 		requestDuration: requestDuration,
 		kafka:           kafka,
+		cache:           cache,
 	}
 
-	roleMiddleware := middlewares.NewRoleValidator(kafka, "request-role", "response-role", 5*time.Second, logger)
+	roleMiddleware := middlewares.NewRoleValidator(kafka, "request-role", "response-role", 5*time.Second, logger, cache)
 
 	routerRole := router.Group("/api/role")
 

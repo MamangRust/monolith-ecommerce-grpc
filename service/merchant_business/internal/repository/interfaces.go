@@ -1,27 +1,29 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 )
 
 type MerchantQueryRepository interface {
-	FindById(user_id int) (*record.MerchantRecord, error)
+	FindById(ctx context.Context, user_id int) (*record.MerchantRecord, error)
 }
 
 type MerchantBusinessQueryRepository interface {
-	FindAllMerchants(req *requests.FindAllMerchant) ([]*record.MerchantBusinessRecord, *int, error)
-	FindByActive(req *requests.FindAllMerchant) ([]*record.MerchantBusinessRecord, *int, error)
-	FindByTrashed(req *requests.FindAllMerchant) ([]*record.MerchantBusinessRecord, *int, error)
-	FindById(user_id int) (*record.MerchantBusinessRecord, error)
+	FindAllMerchants(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantBusinessRecord, *int, error)
+	FindByActive(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantBusinessRecord, *int, error)
+	FindByTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantBusinessRecord, *int, error)
+	FindById(ctx context.Context, user_id int) (*record.MerchantBusinessRecord, error)
 }
 
 type MerchantBusinessCommandRepository interface {
-	CreateMerchantBusiness(request *requests.CreateMerchantBusinessInformationRequest) (*record.MerchantBusinessRecord, error)
-	UpdateMerchantBusiness(request *requests.UpdateMerchantBusinessInformationRequest) (*record.MerchantBusinessRecord, error)
-	TrashedMerchantBusiness(merchant_id int) (*record.MerchantBusinessRecord, error)
-	RestoreMerchantBusiness(merchant_id int) (*record.MerchantBusinessRecord, error)
-	DeleteMerchantBusinessPermanent(Merchant_id int) (bool, error)
-	RestoreAllMerchantBusiness() (bool, error)
-	DeleteAllMerchantBusinessPermanent() (bool, error)
+	CreateMerchantBusiness(ctx context.Context, request *requests.CreateMerchantBusinessInformationRequest) (*record.MerchantBusinessRecord, error)
+	UpdateMerchantBusiness(ctx context.Context, request *requests.UpdateMerchantBusinessInformationRequest) (*record.MerchantBusinessRecord, error)
+	TrashedMerchantBusiness(ctx context.Context, merchant_id int) (*record.MerchantBusinessRecord, error)
+	RestoreMerchantBusiness(ctx context.Context, merchant_id int) (*record.MerchantBusinessRecord, error)
+	DeleteMerchantBusinessPermanent(ctx context.Context, merchant_id int) (bool, error)
+	RestoreAllMerchantBusiness(ctx context.Context) (bool, error)
+	DeleteAllMerchantBusinessPermanent(ctx context.Context) (bool, error)
 }

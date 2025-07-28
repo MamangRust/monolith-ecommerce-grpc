@@ -1,8 +1,6 @@
 package service
 
 import (
-	"context"
-
 	"github.com/MamangRust/monolith-ecommerce-grpc-banner/internal/errorhandler"
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-banner/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-banner/internal/repository"
@@ -16,7 +14,6 @@ type Service struct {
 }
 
 type Deps struct {
-	Ctx          context.Context
 	Repositories *repository.Repositories
 	ErrorHandler *errorhandler.ErroHandler
 	Mencache     *mencache.Mencache
@@ -27,7 +24,7 @@ func NewService(deps *Deps) *Service {
 	bannerMapper := response_service.NewBannerResponseMapper()
 
 	return &Service{
-		BannerQuery:   NewBannerQueryService(deps.Ctx, deps.ErrorHandler.BannerQueryError, deps.Mencache.BannerQueryCache, deps.Repositories.BannerQuery, deps.Logger, bannerMapper),
-		BannerCommand: NewBannerCommandService(deps.Ctx, deps.ErrorHandler.BannerCommandError, deps.Mencache.BannerCommandCache, deps.Repositories.BannerCommand, deps.Logger, bannerMapper),
+		BannerQuery:   NewBannerQueryService(deps.ErrorHandler.BannerQueryError, deps.Mencache.BannerQueryCache, deps.Repositories.BannerQuery, deps.Logger, bannerMapper),
+		BannerCommand: NewBannerCommandService(deps.ErrorHandler.BannerCommandError, deps.Mencache.BannerCommandCache, deps.Repositories.BannerCommand, deps.Logger, bannerMapper),
 	}
 }

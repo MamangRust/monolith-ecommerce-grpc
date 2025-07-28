@@ -1,24 +1,26 @@
 package mencache
 
 import (
+	"context"
+
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
 type ReviewDetailQueryCache interface {
-	GetReviewDetailAllCache(req *requests.FindAllReview) ([]*response.ReviewDetailsResponse, *int, bool)
-	SetReviewDetailAllCache(req *requests.FindAllReview, data []*response.ReviewDetailsResponse, total *int)
+	GetReviewDetailAllCache(ctx context.Context, req *requests.FindAllReview) ([]*response.ReviewDetailsResponse, *int, bool)
+	SetReviewDetailAllCache(ctx context.Context, req *requests.FindAllReview, data []*response.ReviewDetailsResponse, total *int)
 
-	GetRevieDetailActiveCache(req *requests.FindAllReview) ([]*response.ReviewDetailsResponseDeleteAt, *int, bool)
-	SetReviewDetailActiveCache(req *requests.FindAllReview, data []*response.ReviewDetailsResponseDeleteAt, total *int)
+	GetReviewDetailActiveCache(ctx context.Context, req *requests.FindAllReview) ([]*response.ReviewDetailsResponseDeleteAt, *int, bool)
+	SetReviewDetailActiveCache(ctx context.Context, req *requests.FindAllReview, data []*response.ReviewDetailsResponseDeleteAt, total *int)
 
-	GetReviewDetailTrashedCache(req *requests.FindAllReview) ([]*response.ReviewDetailsResponseDeleteAt, *int, bool)
-	SetReviewDetailTrashedCache(req *requests.FindAllReview, data []*response.ReviewDetailsResponseDeleteAt, total *int)
+	GetReviewDetailTrashedCache(ctx context.Context, req *requests.FindAllReview) ([]*response.ReviewDetailsResponseDeleteAt, *int, bool)
+	SetReviewDetailTrashedCache(ctx context.Context, req *requests.FindAllReview, data []*response.ReviewDetailsResponseDeleteAt, total *int)
 
-	GetCachedReviewDetailCache(review_id int) (*response.ReviewDetailsResponse, bool)
-	SetCachedReviewDetailCache(data *response.ReviewDetailsResponse)
+	GetCachedReviewDetailCache(ctx context.Context, reviewID int) (*response.ReviewDetailsResponse, bool)
+	SetCachedReviewDetailCache(ctx context.Context, data *response.ReviewDetailsResponse)
 }
 
 type ReviewDetailCommandCache interface {
-	DeleteReviewDetailCache(review_id int)
+	DeleteReviewDetailCache(ctx context.Context, reviewID int)
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/handler"
 	myhandlerkafka "github.com/MamangRust/monolith-ecommerce-grpc-role/internal/kafka"
+	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/middleware"
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-role/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/service"
@@ -52,7 +53,7 @@ type Server struct {
 	Ctx      context.Context
 }
 
-func NewServer() (*Server, func(context.Context) error, error) {
+func NewServer(ctx context.Context) (*Server, func(context.Context) error, error) {
 	logger, err := logger.NewLogger("role")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize logger: %w", err)
@@ -69,14 +70,7 @@ func NewServer() (*Server, func(context.Context) error, error) {
 	}
 	DB := db.New(conn)
 
-	ctx := context.Background()
-
-	depsRepo := &repository.Deps{
-		DB:  DB,
-		Ctx: ctx,
-	}
-
-	repositories := repository.NewRepositories(depsRepo)
+	repositories := repository.NewRepositories(DB)
 
 	myKafka := kafka.NewKafka(logger, []string{viper.GetString("KAFKA_BROKERS")})
 
@@ -107,7 +101,6 @@ func NewServer() (*Server, func(context.Context) error, error) {
 	}
 
 	mencache := mencache.NewMencache(&mencache.Deps{
-		Ctx:    ctx,
 		Redis:  myredis,
 		Logger: logger,
 	})
@@ -115,14 +108,13 @@ func NewServer() (*Server, func(context.Context) error, error) {
 	errorhandler := errorhandler.NewErrorHandler(logger)
 
 	services := service.NewService(&service.Deps{
-		Ctx:          ctx,
 		Repositories: repositories,
 		Logger:       logger,
 		ErrorHandler: errorhandler,
 		Mencache:     mencache,
 	})
 
-	handler_kafka_role := myhandlerkafka.NewRoleKafkaHandler(services.RoleQuery, myKafka, logger)
+	handler_kafka_role := myhandlerkafka.NewRoleKafkaHandler(ctx, services.RoleQuery, myKafka, logger)
 
 	err = myKafka.StartConsumers([]string{"request-role"}, "role-service-group", handler_kafka_role)
 
@@ -165,6 +157,10 @@ func (s *Server) Run() {
 				otelgrpc.WithTracerProvider(otel.GetTracerProvider()),
 				otelgrpc.WithPropagators(otel.GetTextMapPropagator()),
 			),
+		),
+		grpc.ChainUnaryInterceptor(
+			middleware.RecoveryMiddleware(s.Logger),
+			middleware.ContextMiddleware(60*time.Second, s.Logger),
 		),
 	)
 

@@ -20,7 +20,6 @@ import (
 )
 
 type cardCommandService struct {
-	ctx                    context.Context
 	errorhandler           errorhandler.CartCommandError
 	trace                  trace.Tracer
 	cartCommandRepository  repository.CartCommandRepository
@@ -32,7 +31,7 @@ type cardCommandService struct {
 	requestDuration        *prometheus.HistogramVec
 }
 
-func NewCardCommandService(ctx context.Context, errorhandler errorhandler.CartCommandError, cardCommandRepository repository.CartCommandRepository,
+func NewCardCommandService(errorhandler errorhandler.CartCommandError, cardCommandRepository repository.CartCommandRepository,
 	productQueryRepository repository.ProductQueryRepository, userQueryRepository repository.UserQueryRepository,
 	logger logger.LoggerInterface, mapping response_service.CartResponseMapper) *cardCommandService {
 	requestCounter := prometheus.NewCounterVec(
@@ -55,7 +54,6 @@ func NewCardCommandService(ctx context.Context, errorhandler errorhandler.CartCo
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &cardCommandService{
-		ctx:                    ctx,
 		errorhandler:           errorhandler,
 		trace:                  otel.Tracer("cart-command-service"),
 		cartCommandRepository:  cardCommandRepository,
@@ -68,22 +66,22 @@ func NewCardCommandService(ctx context.Context, errorhandler errorhandler.CartCo
 	}
 }
 
-func (s *cardCommandService) CreateCart(req *requests.CreateCartRequest) (*response.CartResponse, *response.ErrorResponse) {
+func (s *cardCommandService) CreateCart(ctx context.Context, req *requests.CreateCartRequest) (*response.CartResponse, *response.ErrorResponse) {
 	const method = "CreateCart"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("product.id", req.ProductID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("product.id", req.ProductID))
 
 	defer func() {
 		end(status)
 	}()
 
-	product, err := s.productQueryRepository.FindById(req.ProductID)
+	product, err := s.productQueryRepository.FindById(ctx, req.ProductID)
 
 	if err != nil {
 		return s.errorhandler.HandleCreateCartError(err, method, "FAILED_FIND_PRODUCT", span, &status, zap.Int("product.id", req.ProductID), zap.Error(err))
 	}
 
-	_, err = s.userQueryRepository.FindById(req.UserID)
+	_, err = s.userQueryRepository.FindById(ctx, req.UserID)
 
 	if err != nil {
 		return errorhandler.HandleRepositorySingleError[*response.CartResponse](s.logger, err, method, "FAILED_FIND_USER", span, &status, user_errors.ErrUserNotFoundRes, zap.Int("user.id", req.UserID), zap.Error(err))
@@ -99,7 +97,7 @@ func (s *cardCommandService) CreateCart(req *requests.CreateCartRequest) (*respo
 		Weight:       product.Weight,
 	}
 
-	res, err := s.cartCommandRepository.CreateCart(cartRecord)
+	res, err := s.cartCommandRepository.CreateCart(ctx, cartRecord)
 
 	if err != nil {
 		return s.errorhandler.HandleCreateCartError(err, method, "FAILED_CREATE_CART", span, &status, zap.Int("product.id", req.ProductID), zap.Error(err))
@@ -112,16 +110,16 @@ func (s *cardCommandService) CreateCart(req *requests.CreateCartRequest) (*respo
 	return so, nil
 }
 
-func (s *cardCommandService) DeletePermanent(req *requests.DeleteCartRequest) (bool, *response.ErrorResponse) {
+func (s *cardCommandService) DeletePermanent(ctx context.Context, req *requests.DeleteCartRequest) (bool, *response.ErrorResponse) {
 	const method = "DeletePermanent"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("cart.id", req.CartID), attribute.Int("user.id", req.UserID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("cart.id", req.CartID), attribute.Int("user.id", req.UserID))
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.cartCommandRepository.DeletePermanent(req)
+	success, err := s.cartCommandRepository.DeletePermanent(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleDeletePermanentError(err, method, "FAILED_DELETE_CART_PERMANENTLY", span, &status, zap.Int("cart.id", req.CartID), zap.Error(err))
@@ -132,16 +130,16 @@ func (s *cardCommandService) DeletePermanent(req *requests.DeleteCartRequest) (b
 	return success, nil
 }
 
-func (s *cardCommandService) DeleteAllPermanently(req *requests.DeleteAllCartRequest) (bool, *response.ErrorResponse) {
+func (s *cardCommandService) DeleteAllPermanently(ctx context.Context, req *requests.DeleteAllCartRequest) (bool, *response.ErrorResponse) {
 	const method = "DeleteAllPermanently"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.cartCommandRepository.DeleteAllPermanently(req)
+	success, err := s.cartCommandRepository.DeleteAllPermanently(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleDeleteAllPermanentlyError(err, method, "FAILED_DELETE_ALL_CART_PERMANENTLY", span, &status, zap.Any("cart.id", req.CartIds), zap.Error(err))
@@ -152,7 +150,8 @@ func (s *cardCommandService) DeleteAllPermanently(req *requests.DeleteAllCartReq
 	return success, nil
 }
 
-func (s *cardCommandService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *cardCommandService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -161,7 +160,7 @@ func (s *cardCommandService) startTracingAndLogging(method string, attrs ...attr
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -186,7 +185,7 @@ func (s *cardCommandService) startTracingAndLogging(method string, attrs ...attr
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *cardCommandService) recordMetrics(method string, status string, start time.Time) {

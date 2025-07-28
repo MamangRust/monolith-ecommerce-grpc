@@ -23,7 +23,6 @@ import (
 )
 
 type categoryCommandService struct {
-	ctx                       context.Context
 	mencache                  mencache.CategoryCommandCache
 	errorHandler              errorhandler.CategoryCommandError
 	trace                     trace.Tracer
@@ -35,7 +34,7 @@ type categoryCommandService struct {
 	requestDuration           *prometheus.HistogramVec
 }
 
-func NewCategoryCommandService(ctx context.Context,
+func NewCategoryCommandService(
 	mencache mencache.CategoryCommandCache,
 	errorHandler errorhandler.CategoryCommandError,
 	categoryCommandRepository repository.CategoryCommandRepository,
@@ -61,7 +60,6 @@ func NewCategoryCommandService(ctx context.Context,
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &categoryCommandService{
-		ctx:                       ctx,
 		errorHandler:              errorHandler,
 		mencache:                  mencache,
 		trace:                     otel.Tracer("category-command-service"),
@@ -74,10 +72,10 @@ func NewCategoryCommandService(ctx context.Context,
 	}
 }
 
-func (s *categoryCommandService) CreateCategory(req *requests.CreateCategoryRequest) (*response.CategoryResponse, *response.ErrorResponse) {
+func (s *categoryCommandService) CreateCategory(ctx context.Context, req *requests.CreateCategoryRequest) (*response.CategoryResponse, *response.ErrorResponse) {
 	const method = "CreateCategory"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.String("name", req.Name))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("name", req.Name))
 
 	defer func() {
 		end(status)
@@ -87,7 +85,7 @@ func (s *categoryCommandService) CreateCategory(req *requests.CreateCategoryRequ
 
 	req.Name = slug
 
-	cashier, err := s.categoryCommandRepository.CreateCategory(req)
+	cashier, err := s.categoryCommandRepository.CreateCategory(ctx, req)
 
 	if err != nil {
 		return s.errorHandler.HandleCreateCategoryError(err, method, "FAILED_CREATE_CATEGORY", span, &status, zap.Error(err))
@@ -100,10 +98,10 @@ func (s *categoryCommandService) CreateCategory(req *requests.CreateCategoryRequ
 	return so, nil
 }
 
-func (s *categoryCommandService) UpdateCategory(req *requests.UpdateCategoryRequest) (*response.CategoryResponse, *response.ErrorResponse) {
+func (s *categoryCommandService) UpdateCategory(ctx context.Context, req *requests.UpdateCategoryRequest) (*response.CategoryResponse, *response.ErrorResponse) {
 	const method = "UpdateCategory"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.String("name", req.Name))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("name", req.Name))
 
 	defer func() {
 		end(status)
@@ -113,7 +111,7 @@ func (s *categoryCommandService) UpdateCategory(req *requests.UpdateCategoryRequ
 
 	req.Name = slug
 
-	category, err := s.categoryCommandRepository.UpdateCategory(req)
+	category, err := s.categoryCommandRepository.UpdateCategory(ctx, req)
 
 	if err != nil {
 		return s.errorHandler.HandleUpdateCategoryError(err, method, "FAILED_UPDATE_CATEGORY", span, &status, zap.Error(err))
@@ -121,46 +119,46 @@ func (s *categoryCommandService) UpdateCategory(req *requests.UpdateCategoryRequ
 
 	so := s.mapping.ToCategoryResponse(category)
 
-	s.mencache.DeleteCachedCategoryCache(*req.CategoryID)
+	s.mencache.DeleteCachedCategoryCache(ctx, *req.CategoryID)
 
 	logSuccess("Successfully updated category", zap.Int("category.id", category.ID))
 
 	return so, nil
 }
 
-func (s *categoryCommandService) TrashedCategory(category_id int) (*response.CategoryResponseDeleteAt, *response.ErrorResponse) {
+func (s *categoryCommandService) TrashedCategory(ctx context.Context, category_id int) (*response.CategoryResponseDeleteAt, *response.ErrorResponse) {
 	const method = "TrashedCategory"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("category.id", category_id))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("category.id", category_id))
 
 	defer func() {
 		end(status)
 	}()
 
-	category, err := s.categoryCommandRepository.TrashedCategory(category_id)
+	category, err := s.categoryCommandRepository.TrashedCategory(ctx, category_id)
 
 	if err != nil {
 		return s.errorHandler.HandleTrashedCategoryError(err, method, "FAILED_TRASH_CATEGORY", span, &status, zap.Error(err))
 	}
 	so := s.mapping.ToCategoryResponseDeleteAt(category)
 
-	s.mencache.DeleteCachedCategoryCache(category_id)
+	s.mencache.DeleteCachedCategoryCache(ctx, category_id)
 
 	logSuccess("Successfully trashed category", zap.Int("category.id", category_id))
 
 	return so, nil
 }
 
-func (s *categoryCommandService) RestoreCategory(categoryID int) (*response.CategoryResponseDeleteAt, *response.ErrorResponse) {
+func (s *categoryCommandService) RestoreCategory(ctx context.Context, categoryID int) (*response.CategoryResponseDeleteAt, *response.ErrorResponse) {
 	const method = "RestoreCategory"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("category.id", categoryID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("category.id", categoryID))
 
 	defer func() {
 		end(status)
 	}()
 
-	category, err := s.categoryCommandRepository.RestoreCategory(categoryID)
+	category, err := s.categoryCommandRepository.RestoreCategory(ctx, categoryID)
 
 	if err != nil {
 		return s.errorHandler.HandleRestoreError(err, method, "FAILED_RESTORE_CATEGORY", span, &status, zap.Error(err))
@@ -168,23 +166,23 @@ func (s *categoryCommandService) RestoreCategory(categoryID int) (*response.Cate
 
 	so := s.mapping.ToCategoryResponseDeleteAt(category)
 
-	s.mencache.DeleteCachedCategoryCache(categoryID)
+	s.mencache.DeleteCachedCategoryCache(ctx, categoryID)
 
 	logSuccess("Successfully restored category", zap.Int("category.id", categoryID))
 
 	return so, nil
 }
 
-func (s *categoryCommandService) DeleteCategoryPermanent(categoryID int) (bool, *response.ErrorResponse) {
+func (s *categoryCommandService) DeleteCategoryPermanent(ctx context.Context, categoryID int) (bool, *response.ErrorResponse) {
 	const method = "DeleteCategoryPermanent"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("category.id", categoryID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("category.id", categoryID))
 
 	defer func() {
 		end(status)
 	}()
 
-	res, err := s.categoryQueryRepository.FindByIdTrashed(categoryID)
+	res, err := s.categoryQueryRepository.FindByIdTrashed(ctx, categoryID)
 
 	if err != nil {
 		return s.errorHandler.HandleDeleteAllPermanentlyError(err, method, "FAILED_DELETE_CATEGORY_PERMANENT", span, &status, zap.Error(err))
@@ -207,7 +205,7 @@ func (s *categoryCommandService) DeleteCategoryPermanent(categoryID int) (bool, 
 		}
 	}
 
-	success, err := s.categoryCommandRepository.DeleteCategoryPermanently(categoryID)
+	success, err := s.categoryCommandRepository.DeleteCategoryPermanently(ctx, categoryID)
 
 	if err != nil {
 		return s.errorHandler.HandleDeleteError(err, method, "FAILED_DELETE_CATEGORY_PERMANENT", span, &status, zap.Error(err))
@@ -218,16 +216,16 @@ func (s *categoryCommandService) DeleteCategoryPermanent(categoryID int) (bool, 
 	return success, nil
 }
 
-func (s *categoryCommandService) RestoreAllCategories() (bool, *response.ErrorResponse) {
+func (s *categoryCommandService) RestoreAllCategories(ctx context.Context) (bool, *response.ErrorResponse) {
 	const method = "RestoreAllCategories"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.categoryCommandRepository.RestoreAllCategories()
+	success, err := s.categoryCommandRepository.RestoreAllCategories(ctx)
 
 	if err != nil {
 		return s.errorHandler.HandleRestoreAllError(err, method, "FAILED_RESTORE_ALL_TRASHED_CATEGORIES", span, &status, zap.Error(err))
@@ -238,16 +236,16 @@ func (s *categoryCommandService) RestoreAllCategories() (bool, *response.ErrorRe
 	return success, nil
 }
 
-func (s *categoryCommandService) DeleteAllCategoriesPermanent() (bool, *response.ErrorResponse) {
+func (s *categoryCommandService) DeleteAllCategoriesPermanent(ctx context.Context) (bool, *response.ErrorResponse) {
 	const method = "DeleteAllCategoriesPermanent"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method)
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.categoryCommandRepository.DeleteAllPermanentCategories()
+	success, err := s.categoryCommandRepository.DeleteAllPermanentCategories(ctx)
 
 	if err != nil {
 		return s.errorHandler.HandleDeleteAllPermanentlyError(err, "DeleteAllCategoriesPermanent", "FAILED_DELETE_ALL_CATEGORIES_PERMANENT", span, &status, zap.Error(err))
@@ -258,7 +256,8 @@ func (s *categoryCommandService) DeleteAllCategoriesPermanent() (bool, *response
 	return success, nil
 }
 
-func (s *categoryCommandService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *categoryCommandService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -267,7 +266,7 @@ func (s *categoryCommandService) startTracingAndLogging(method string, attrs ...
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -292,7 +291,7 @@ func (s *categoryCommandService) startTracingAndLogging(method string, attrs ...
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *categoryCommandService) recordMetrics(method string, status string, start time.Time) {

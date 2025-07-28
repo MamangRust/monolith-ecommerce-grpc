@@ -14,19 +14,17 @@ import (
 
 type merchantAwardCommandRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.MerchantAwardMapping
 }
 
-func NewMerchantAwardCommandRepository(db *db.Queries, ctx context.Context, mapping recordmapper.MerchantAwardMapping) *merchantAwardCommandRepository {
+func NewMerchantAwardCommandRepository(db *db.Queries, mapping recordmapper.MerchantAwardMapping) *merchantAwardCommandRepository {
 	return &merchantAwardCommandRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *merchantAwardCommandRepository) CreateMerchantAward(request *requests.CreateMerchantCertificationOrAwardRequest) (*record.MerchantAwardRecord, error) {
+func (r *merchantAwardCommandRepository) CreateMerchantAward(ctx context.Context, request *requests.CreateMerchantCertificationOrAwardRequest) (*record.MerchantAwardRecord, error) {
 	req := db.CreateMerchantCertificationOrAwardParams{
 		MerchantID:     int32(request.MerchantID),
 		Title:          request.Title,
@@ -37,7 +35,7 @@ func (r *merchantAwardCommandRepository) CreateMerchantAward(request *requests.C
 		CertificateUrl: sql.NullString{String: request.CertificateUrl, Valid: request.CertificateUrl != ""},
 	}
 
-	award, err := r.db.CreateMerchantCertificationOrAward(r.ctx, req)
+	award, err := r.db.CreateMerchantCertificationOrAward(ctx, req)
 	if err != nil {
 		return nil, merchantaward_errors.ErrCreateMerchantAward
 	}
@@ -45,7 +43,7 @@ func (r *merchantAwardCommandRepository) CreateMerchantAward(request *requests.C
 	return r.mapping.ToMerchantAwardRecord(award), nil
 }
 
-func (r *merchantAwardCommandRepository) UpdateMerchantAward(request *requests.UpdateMerchantCertificationOrAwardRequest) (*record.MerchantAwardRecord, error) {
+func (r *merchantAwardCommandRepository) UpdateMerchantAward(ctx context.Context, request *requests.UpdateMerchantCertificationOrAwardRequest) (*record.MerchantAwardRecord, error) {
 	req := db.UpdateMerchantCertificationOrAwardParams{
 		MerchantCertificationID: int32(*request.MerchantCertificationID),
 		Title:                   request.Title,
@@ -56,7 +54,7 @@ func (r *merchantAwardCommandRepository) UpdateMerchantAward(request *requests.U
 		CertificateUrl:          sql.NullString{String: request.CertificateUrl, Valid: request.CertificateUrl != ""},
 	}
 
-	res, err := r.db.UpdateMerchantCertificationOrAward(r.ctx, req)
+	res, err := r.db.UpdateMerchantCertificationOrAward(ctx, req)
 	if err != nil {
 		return nil, merchantaward_errors.ErrUpdateMerchantAward
 	}
@@ -64,8 +62,8 @@ func (r *merchantAwardCommandRepository) UpdateMerchantAward(request *requests.U
 	return r.mapping.ToMerchantAwardRecord(res), nil
 }
 
-func (r *merchantAwardCommandRepository) TrashedMerchantAward(merchant_id int) (*record.MerchantAwardRecord, error) {
-	res, err := r.db.TrashMerchantCertificationOrAward(r.ctx, int32(merchant_id))
+func (r *merchantAwardCommandRepository) TrashedMerchantAward(ctx context.Context, merchant_id int) (*record.MerchantAwardRecord, error) {
+	res, err := r.db.TrashMerchantCertificationOrAward(ctx, int32(merchant_id))
 
 	if err != nil {
 		return nil, merchantaward_errors.ErrTrashedMerchantAward
@@ -74,8 +72,8 @@ func (r *merchantAwardCommandRepository) TrashedMerchantAward(merchant_id int) (
 	return r.mapping.ToMerchantAwardRecord(res), nil
 }
 
-func (r *merchantAwardCommandRepository) RestoreMerchantAward(merchant_id int) (*record.MerchantAwardRecord, error) {
-	res, err := r.db.RestoreMerchantCertificationOrAward(r.ctx, int32(merchant_id))
+func (r *merchantAwardCommandRepository) RestoreMerchantAward(ctx context.Context, merchant_id int) (*record.MerchantAwardRecord, error) {
+	res, err := r.db.RestoreMerchantCertificationOrAward(ctx, int32(merchant_id))
 
 	if err != nil {
 		return nil, merchantaward_errors.ErrRestoreMerchantAward
@@ -84,8 +82,8 @@ func (r *merchantAwardCommandRepository) RestoreMerchantAward(merchant_id int) (
 	return r.mapping.ToMerchantAwardRecord(res), nil
 }
 
-func (r *merchantAwardCommandRepository) DeleteMerchantPermanent(Merchant_id int) (bool, error) {
-	err := r.db.DeleteMerchantCertificationOrAwardPermanently(r.ctx, int32(Merchant_id))
+func (r *merchantAwardCommandRepository) DeleteMerchantPermanent(ctx context.Context, Merchant_id int) (bool, error) {
+	err := r.db.DeleteMerchantCertificationOrAwardPermanently(ctx, int32(Merchant_id))
 
 	if err != nil {
 		return false, merchantaward_errors.ErrDeleteMerchantAwardPermanent
@@ -94,8 +92,8 @@ func (r *merchantAwardCommandRepository) DeleteMerchantPermanent(Merchant_id int
 	return true, nil
 }
 
-func (r *merchantAwardCommandRepository) RestoreAllMerchantAward() (bool, error) {
-	err := r.db.RestoreAllMerchantCertificationsAndAwards(r.ctx)
+func (r *merchantAwardCommandRepository) RestoreAllMerchantAward(ctx context.Context) (bool, error) {
+	err := r.db.RestoreAllMerchantCertificationsAndAwards(ctx)
 
 	if err != nil {
 		return false, merchantaward_errors.ErrRestoreAllMerchantAwards
@@ -103,8 +101,8 @@ func (r *merchantAwardCommandRepository) RestoreAllMerchantAward() (bool, error)
 	return true, nil
 }
 
-func (r *merchantAwardCommandRepository) DeleteAllMerchantAwardPermanent() (bool, error) {
-	err := r.db.DeleteAllPermanentMerchantCertificationsAndAwards(r.ctx)
+func (r *merchantAwardCommandRepository) DeleteAllMerchantAwardPermanent(ctx context.Context) (bool, error) {
+	err := r.db.DeleteAllPermanentMerchantCertificationsAndAwards(ctx)
 
 	if err != nil {
 		return false, merchantaward_errors.ErrDeleteAllMerchantAwardsPermanent

@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -35,10 +36,10 @@ func NewUserQueryCache(store *CacheStore) *userQueryCache {
 	return &userQueryCache{store: store}
 }
 
-func (s *userQueryCache) GetCachedUsersCache(req *requests.FindAllUsers) ([]*response.UserResponse, *int, bool) {
+func (s *userQueryCache) GetCachedUsersCache(ctx context.Context, req *requests.FindAllUsers) ([]*response.UserResponse, *int, bool) {
 	key := fmt.Sprintf(userAllCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[userCacheResponse](s.store, key)
+	result, found := GetFromCache[userCacheResponse](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -47,7 +48,7 @@ func (s *userQueryCache) GetCachedUsersCache(req *requests.FindAllUsers) ([]*res
 	return result.Data, result.TotalRecords, true
 }
 
-func (s *userQueryCache) SetCachedUsersCache(req *requests.FindAllUsers, data []*response.UserResponse, total *int) {
+func (s *userQueryCache) SetCachedUsersCache(ctx context.Context, req *requests.FindAllUsers, data []*response.UserResponse, total *int) {
 	if total == nil {
 		zero := 0
 
@@ -60,14 +61,14 @@ func (s *userQueryCache) SetCachedUsersCache(req *requests.FindAllUsers, data []
 
 	key := fmt.Sprintf(userAllCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &userCacheResponse{Data: data, TotalRecords: total}
-	SetToCache(s.store, key, payload, ttlDefault)
+	SetToCache(ctx, s.store, key, payload, ttlDefault)
 
 }
 
-func (s *userQueryCache) GetCachedUserActiveCache(req *requests.FindAllUsers) ([]*response.UserResponseDeleteAt, *int, bool) {
+func (s *userQueryCache) GetCachedUserActiveCache(ctx context.Context, req *requests.FindAllUsers) ([]*response.UserResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(userActiveCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[userCacheResponseDeleteAt](s.store, key)
+	result, found := GetFromCache[userCacheResponseDeleteAt](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -76,7 +77,7 @@ func (s *userQueryCache) GetCachedUserActiveCache(req *requests.FindAllUsers) ([
 	return result.Data, result.TotalRecords, true
 }
 
-func (s *userQueryCache) SetCachedUserActiveCache(req *requests.FindAllUsers, data []*response.UserResponseDeleteAt, total *int) {
+func (s *userQueryCache) SetCachedUserActiveCache(ctx context.Context, req *requests.FindAllUsers, data []*response.UserResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 
@@ -89,13 +90,13 @@ func (s *userQueryCache) SetCachedUserActiveCache(req *requests.FindAllUsers, da
 
 	key := fmt.Sprintf(userActiveCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &userCacheResponseDeleteAt{Data: data, TotalRecords: total}
-	SetToCache(s.store, key, payload, ttlDefault)
+	SetToCache(ctx, s.store, key, payload, ttlDefault)
 }
 
-func (s *userQueryCache) GetCachedUserTrashedCache(req *requests.FindAllUsers) ([]*response.UserResponseDeleteAt, *int, bool) {
+func (s *userQueryCache) GetCachedUserTrashedCache(ctx context.Context, req *requests.FindAllUsers) ([]*response.UserResponseDeleteAt, *int, bool) {
 	key := fmt.Sprintf(userTrashedCacheKey, req.Page, req.PageSize, req.Search)
 
-	result, found := GetFromCache[userCacheResponseDeleteAt](s.store, key)
+	result, found := GetFromCache[userCacheResponseDeleteAt](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -104,7 +105,7 @@ func (s *userQueryCache) GetCachedUserTrashedCache(req *requests.FindAllUsers) (
 	return result.Data, result.TotalRecords, true
 }
 
-func (s *userQueryCache) SetCachedUserTrashedCache(req *requests.FindAllUsers, data []*response.UserResponseDeleteAt, total *int) {
+func (s *userQueryCache) SetCachedUserTrashedCache(ctx context.Context, req *requests.FindAllUsers, data []*response.UserResponseDeleteAt, total *int) {
 	if total == nil {
 		zero := 0
 
@@ -117,13 +118,13 @@ func (s *userQueryCache) SetCachedUserTrashedCache(req *requests.FindAllUsers, d
 
 	key := fmt.Sprintf(userTrashedCacheKey, req.Page, req.PageSize, req.Search)
 	payload := &userCacheResponseDeleteAt{Data: data, TotalRecords: total}
-	SetToCache(s.store, key, payload, ttlDefault)
+	SetToCache(ctx, s.store, key, payload, ttlDefault)
 }
 
-func (s *userQueryCache) GetCachedUserCache(id int) (*response.UserResponse, bool) {
+func (s *userQueryCache) GetCachedUserCache(ctx context.Context, id int) (*response.UserResponse, bool) {
 	key := fmt.Sprintf(userByIdCacheKey, id)
 
-	result, found := GetFromCache[*response.UserResponse](s.store, key)
+	result, found := GetFromCache[*response.UserResponse](ctx, s.store, key)
 
 	if !found || result == nil {
 		return nil, false
@@ -132,11 +133,11 @@ func (s *userQueryCache) GetCachedUserCache(id int) (*response.UserResponse, boo
 	return *result, true
 
 }
-func (s *userQueryCache) SetCachedUserCache(data *response.UserResponse) {
+func (s *userQueryCache) SetCachedUserCache(ctx context.Context, data *response.UserResponse) {
 	if data == nil {
 		return
 	}
 
 	key := fmt.Sprintf(userByIdCacheKey, data.ID)
-	SetToCache(s.store, key, data, ttlDefault)
+	SetToCache(ctx, s.store, key, data, ttlDefault)
 }

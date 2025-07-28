@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"context"
-
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
@@ -12,16 +10,11 @@ type Repositories struct {
 	SliderCommand SliderCommandRepository
 }
 
-type Deps struct {
-	DB  *db.Queries
-	Ctx context.Context
-}
-
-func NewRepositories(deps *Deps) *Repositories {
+func NewRepositories(DB *db.Queries) *Repositories {
 	mapper := recordmapper.NewSliderRecordMapper()
 
 	return &Repositories{
-		SliderQuery:   NewSliderQueryRepository(deps.DB, deps.Ctx, mapper),
-		SliderCommand: NewSliderCommandRepository(deps.DB, deps.Ctx, mapper),
+		SliderQuery:   NewSliderQueryRepository(DB, mapper),
+		SliderCommand: NewSliderCommandRepository(DB, mapper),
 	}
 }

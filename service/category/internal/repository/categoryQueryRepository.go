@@ -12,19 +12,17 @@ import (
 
 type categoryQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.CategoryRecordMapper
 }
 
-func NewCategoryQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.CategoryRecordMapper) *categoryQueryRepository {
+func NewCategoryQueryRepository(db *db.Queries, mapping recordmapper.CategoryRecordMapper) *categoryQueryRepository {
 	return &categoryQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *categoryQueryRepository) FindAllCategory(req *requests.FindAllCategory) ([]*record.CategoriesRecord, *int, error) {
+func (r *categoryQueryRepository) FindAllCategory(ctx context.Context, req *requests.FindAllCategory) ([]*record.CategoriesRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetCategoriesParams{
@@ -33,7 +31,7 @@ func (r *categoryQueryRepository) FindAllCategory(req *requests.FindAllCategory)
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetCategories(r.ctx, reqDb)
+	res, err := r.db.GetCategories(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, category_errors.ErrFindAllCategory
@@ -49,7 +47,7 @@ func (r *categoryQueryRepository) FindAllCategory(req *requests.FindAllCategory)
 	return r.mapping.ToCategoriesRecordPagination(res), &totalCount, nil
 }
 
-func (r *categoryQueryRepository) FindByActive(req *requests.FindAllCategory) ([]*record.CategoriesRecord, *int, error) {
+func (r *categoryQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllCategory) ([]*record.CategoriesRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetCategoriesActiveParams{
@@ -58,7 +56,7 @@ func (r *categoryQueryRepository) FindByActive(req *requests.FindAllCategory) ([
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetCategoriesActive(r.ctx, reqDb)
+	res, err := r.db.GetCategoriesActive(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, category_errors.ErrFindByActiveCategory
@@ -74,7 +72,7 @@ func (r *categoryQueryRepository) FindByActive(req *requests.FindAllCategory) ([
 	return r.mapping.ToCategoriesRecordActivePagination(res), &totalCount, nil
 }
 
-func (r *categoryQueryRepository) FindByTrashed(req *requests.FindAllCategory) ([]*record.CategoriesRecord, *int, error) {
+func (r *categoryQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllCategory) ([]*record.CategoriesRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetCategoriesTrashedParams{
@@ -83,7 +81,7 @@ func (r *categoryQueryRepository) FindByTrashed(req *requests.FindAllCategory) (
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetCategoriesTrashed(r.ctx, reqDb)
+	res, err := r.db.GetCategoriesTrashed(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, category_errors.ErrFindByTrashedCategory
@@ -99,8 +97,8 @@ func (r *categoryQueryRepository) FindByTrashed(req *requests.FindAllCategory) (
 	return r.mapping.ToCategoriesRecordTrashedPagination(res), &totalCount, nil
 }
 
-func (r *categoryQueryRepository) FindById(category_id int) (*record.CategoriesRecord, error) {
-	res, err := r.db.GetCategoryByID(r.ctx, int32(category_id))
+func (r *categoryQueryRepository) FindById(ctx context.Context, category_id int) (*record.CategoriesRecord, error) {
+	res, err := r.db.GetCategoryByID(ctx, int32(category_id))
 
 	if err != nil {
 		return nil, category_errors.ErrFindCategoryById
@@ -109,8 +107,8 @@ func (r *categoryQueryRepository) FindById(category_id int) (*record.CategoriesR
 	return r.mapping.ToCategoryRecord(res), nil
 }
 
-func (r *categoryQueryRepository) FindByIdTrashed(category_id int) (*record.CategoriesRecord, error) {
-	res, err := r.db.GetCategoryByIDTrashed(r.ctx, int32(category_id))
+func (r *categoryQueryRepository) FindByIdTrashed(ctx context.Context, category_id int) (*record.CategoriesRecord, error) {
+	res, err := r.db.GetCategoryByIDTrashed(ctx, int32(category_id))
 
 	if err != nil {
 		return nil, category_errors.ErrFindCategoryByIdTrashed

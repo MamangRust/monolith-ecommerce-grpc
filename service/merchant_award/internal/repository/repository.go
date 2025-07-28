@@ -17,13 +17,13 @@ type Deps struct {
 	Ctx context.Context
 }
 
-func NewRepositories(deps *Deps) *Repositories {
+func NewRepositories(DB *db.Queries) *Repositories {
 	merchantMapper := recordmapper.NewMerchantRecordMapper()
 	merchantAwardMapper := recordmapper.NewMerchantAwardRecordMapper()
 
 	return &Repositories{
-		MerchantAwardQuery:   NewMerchantAwardQueryRepository(deps.DB, deps.Ctx, merchantAwardMapper),
-		MerchantAwardCommand: NewMerchantAwardCommandRepository(deps.DB, deps.Ctx, merchantAwardMapper),
-		MerchantQuery:        NewMerchantQueryRepository(deps.DB, deps.Ctx, merchantMapper),
+		MerchantAwardQuery:   NewMerchantAwardQueryRepository(DB, merchantAwardMapper),
+		MerchantAwardCommand: NewMerchantAwardCommandRepository(DB, merchantAwardMapper),
+		MerchantQuery:        NewMerchantQueryRepository(DB, merchantMapper),
 	}
 }

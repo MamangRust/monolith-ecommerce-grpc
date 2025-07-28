@@ -12,19 +12,17 @@ import (
 
 type shippingAddressQueryRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.ShippingAddressMapping
 }
 
-func NewShippingAddressQueryRepository(db *db.Queries, ctx context.Context, mapping recordmapper.ShippingAddressMapping) *shippingAddressQueryRepository {
+func NewShippingAddressQueryRepository(db *db.Queries, mapping recordmapper.ShippingAddressMapping) *shippingAddressQueryRepository {
 	return &shippingAddressQueryRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *shippingAddressQueryRepository) FindAllShippingAddress(req *requests.FindAllShippingAddress) ([]*record.ShippingAddressRecord, *int, error) {
+func (r *shippingAddressQueryRepository) FindAllShippingAddress(ctx context.Context, req *requests.FindAllShippingAddress) ([]*record.ShippingAddressRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetShippingAddressParams{
@@ -33,7 +31,7 @@ func (r *shippingAddressQueryRepository) FindAllShippingAddress(req *requests.Fi
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetShippingAddress(r.ctx, reqDb)
+	res, err := r.db.GetShippingAddress(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, shippingaddress_errors.ErrFindAllShippingAddress
@@ -50,7 +48,7 @@ func (r *shippingAddressQueryRepository) FindAllShippingAddress(req *requests.Fi
 	return r.mapping.ToShippingAddresssRecordPagination(res), &totalCount, nil
 }
 
-func (r *shippingAddressQueryRepository) FindByActive(req *requests.FindAllShippingAddress) ([]*record.ShippingAddressRecord, *int, error) {
+func (r *shippingAddressQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllShippingAddress) ([]*record.ShippingAddressRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetShippingAddressActiveParams{
@@ -59,7 +57,7 @@ func (r *shippingAddressQueryRepository) FindByActive(req *requests.FindAllShipp
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetShippingAddressActive(r.ctx, reqDb)
+	res, err := r.db.GetShippingAddressActive(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, shippingaddress_errors.ErrFindActiveShippingAddress
@@ -76,7 +74,7 @@ func (r *shippingAddressQueryRepository) FindByActive(req *requests.FindAllShipp
 	return r.mapping.ToShippingAddresssRecordActivePagination(res), &totalCount, nil
 }
 
-func (r *shippingAddressQueryRepository) FindByTrashed(req *requests.FindAllShippingAddress) ([]*record.ShippingAddressRecord, *int, error) {
+func (r *shippingAddressQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllShippingAddress) ([]*record.ShippingAddressRecord, *int, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetShippingAddressTrashedParams{
@@ -85,7 +83,7 @@ func (r *shippingAddressQueryRepository) FindByTrashed(req *requests.FindAllShip
 		Offset:  int32(offset),
 	}
 
-	res, err := r.db.GetShippingAddressTrashed(r.ctx, reqDb)
+	res, err := r.db.GetShippingAddressTrashed(ctx, reqDb)
 
 	if err != nil {
 		return nil, nil, shippingaddress_errors.ErrFindTrashedShippingAddress
@@ -102,8 +100,8 @@ func (r *shippingAddressQueryRepository) FindByTrashed(req *requests.FindAllShip
 	return r.mapping.ToShippingAddresssRecordTrashedPagination(res), &totalCount, nil
 }
 
-func (r *shippingAddressQueryRepository) FindById(shipping_id int) (*record.ShippingAddressRecord, error) {
-	res, err := r.db.GetShippingByID(r.ctx, int32(shipping_id))
+func (r *shippingAddressQueryRepository) FindById(ctx context.Context, shipping_id int) (*record.ShippingAddressRecord, error) {
+	res, err := r.db.GetShippingByID(ctx, int32(shipping_id))
 
 	if err != nil {
 		return nil, shippingaddress_errors.ErrFindShippingAddressByID
@@ -112,8 +110,8 @@ func (r *shippingAddressQueryRepository) FindById(shipping_id int) (*record.Ship
 	return r.mapping.ToShippingAddressRecord(res), nil
 }
 
-func (r *shippingAddressQueryRepository) FindByOrder(order_id int) (*record.ShippingAddressRecord, error) {
-	res, err := r.db.GetShippingAddressByOrderID(r.ctx, int32(order_id))
+func (r *shippingAddressQueryRepository) FindByOrder(ctx context.Context, order_id int) (*record.ShippingAddressRecord, error) {
+	res, err := r.db.GetShippingAddressByOrderID(ctx, int32(order_id))
 
 	if err != nil {
 		return nil, shippingaddress_errors.ErrFindShippingAddressByOrder

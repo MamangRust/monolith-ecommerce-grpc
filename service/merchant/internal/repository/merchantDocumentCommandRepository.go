@@ -13,19 +13,17 @@ import (
 
 type merchantDocumentCommandRepository struct {
 	db      *db.Queries
-	ctx     context.Context
 	mapping recordmapper.MerchantDocumentMapping
 }
 
-func NewMerchantDocumentCommandRepository(db *db.Queries, ctx context.Context, mapping recordmapper.MerchantDocumentMapping) *merchantDocumentCommandRepository {
+func NewMerchantDocumentCommandRepository(db *db.Queries, mapping recordmapper.MerchantDocumentMapping) *merchantDocumentCommandRepository {
 	return &merchantDocumentCommandRepository{
 		db:      db,
-		ctx:     ctx,
 		mapping: mapping,
 	}
 }
 
-func (r *merchantDocumentCommandRepository) CreateMerchantDocument(request *requests.CreateMerchantDocumentRequest) (*record.MerchantDocumentRecord, error) {
+func (r *merchantDocumentCommandRepository) CreateMerchantDocument(ctx context.Context, request *requests.CreateMerchantDocumentRequest) (*record.MerchantDocumentRecord, error) {
 	req := db.CreateMerchantDocumentParams{
 		MerchantID:   int32(request.MerchantID),
 		DocumentType: request.DocumentType,
@@ -34,7 +32,7 @@ func (r *merchantDocumentCommandRepository) CreateMerchantDocument(request *requ
 		Note:         sql.NullString{String: "", Valid: true},
 	}
 
-	res, err := r.db.CreateMerchantDocument(r.ctx, req)
+	res, err := r.db.CreateMerchantDocument(ctx, req)
 	if err != nil {
 		return nil, merchantdocument_errors.ErrCreateMerchantDocumentFailed
 	}
@@ -42,7 +40,7 @@ func (r *merchantDocumentCommandRepository) CreateMerchantDocument(request *requ
 	return r.mapping.ToGetMerchantDocument(res), nil
 }
 
-func (r *merchantDocumentCommandRepository) UpdateMerchantDocument(request *requests.UpdateMerchantDocumentRequest) (*record.MerchantDocumentRecord, error) {
+func (r *merchantDocumentCommandRepository) UpdateMerchantDocument(ctx context.Context, request *requests.UpdateMerchantDocumentRequest) (*record.MerchantDocumentRecord, error) {
 	req := db.UpdateMerchantDocumentParams{
 		DocumentID:   int32(request.MerchantID),
 		DocumentType: request.DocumentType,
@@ -51,7 +49,7 @@ func (r *merchantDocumentCommandRepository) UpdateMerchantDocument(request *requ
 		Note:         sql.NullString{String: request.Note, Valid: true},
 	}
 
-	res, err := r.db.UpdateMerchantDocument(r.ctx, req)
+	res, err := r.db.UpdateMerchantDocument(ctx, req)
 	if err != nil {
 		return nil, merchantdocument_errors.ErrUpdateMerchantDocumentFailed
 	}
@@ -59,14 +57,14 @@ func (r *merchantDocumentCommandRepository) UpdateMerchantDocument(request *requ
 	return r.mapping.ToGetMerchantDocument(res), nil
 }
 
-func (r *merchantDocumentCommandRepository) UpdateMerchantDocumentStatus(request *requests.UpdateMerchantDocumentStatusRequest) (*record.MerchantDocumentRecord, error) {
+func (r *merchantDocumentCommandRepository) UpdateMerchantDocumentStatus(ctx context.Context, request *requests.UpdateMerchantDocumentStatusRequest) (*record.MerchantDocumentRecord, error) {
 	req := db.UpdateMerchantDocumentStatusParams{
 		DocumentID: int32(request.MerchantID),
 		Status:     request.Status,
 		Note:       sql.NullString{String: request.Note, Valid: true},
 	}
 
-	res, err := r.db.UpdateMerchantDocumentStatus(r.ctx, req)
+	res, err := r.db.UpdateMerchantDocumentStatus(ctx, req)
 	if err != nil {
 		return nil, merchantdocument_errors.ErrUpdateMerchantDocumentStatusFailed
 	}
@@ -74,8 +72,8 @@ func (r *merchantDocumentCommandRepository) UpdateMerchantDocumentStatus(request
 	return r.mapping.ToGetMerchantDocument(res), nil
 }
 
-func (r *merchantDocumentCommandRepository) TrashedMerchantDocument(documentID int) (*record.MerchantDocumentRecord, error) {
-	res, err := r.db.TrashMerchantDocument(r.ctx, int32(documentID))
+func (r *merchantDocumentCommandRepository) TrashedMerchantDocument(ctx context.Context, documentID int) (*record.MerchantDocumentRecord, error) {
+	res, err := r.db.TrashMerchantDocument(ctx, int32(documentID))
 	if err != nil {
 		return nil, merchantdocument_errors.ErrTrashedMerchantDocumentFailed
 	}
@@ -83,8 +81,8 @@ func (r *merchantDocumentCommandRepository) TrashedMerchantDocument(documentID i
 	return r.mapping.ToGetMerchantDocument(res), nil
 }
 
-func (r *merchantDocumentCommandRepository) RestoreMerchantDocument(documentID int) (*record.MerchantDocumentRecord, error) {
-	res, err := r.db.RestoreMerchantDocument(r.ctx, int32(documentID))
+func (r *merchantDocumentCommandRepository) RestoreMerchantDocument(ctx context.Context, documentID int) (*record.MerchantDocumentRecord, error) {
+	res, err := r.db.RestoreMerchantDocument(ctx, int32(documentID))
 	if err != nil {
 		return nil, merchantdocument_errors.ErrRestoreMerchantDocumentFailed
 	}
@@ -92,8 +90,8 @@ func (r *merchantDocumentCommandRepository) RestoreMerchantDocument(documentID i
 	return r.mapping.ToGetMerchantDocument(res), nil
 }
 
-func (r *merchantDocumentCommandRepository) DeleteMerchantDocumentPermanent(documentID int) (bool, error) {
-	err := r.db.DeleteMerchantDocumentPermanently(r.ctx, int32(documentID))
+func (r *merchantDocumentCommandRepository) DeleteMerchantDocumentPermanent(ctx context.Context, documentID int) (bool, error) {
+	err := r.db.DeleteMerchantDocumentPermanently(ctx, int32(documentID))
 	if err != nil {
 		return false, merchantdocument_errors.ErrDeleteMerchantDocumentPermanentFailed
 	}
@@ -101,8 +99,8 @@ func (r *merchantDocumentCommandRepository) DeleteMerchantDocumentPermanent(docu
 	return true, nil
 }
 
-func (r *merchantDocumentCommandRepository) RestoreAllMerchantDocument() (bool, error) {
-	err := r.db.RestoreAllMerchantDocuments(r.ctx)
+func (r *merchantDocumentCommandRepository) RestoreAllMerchantDocument(ctx context.Context) (bool, error) {
+	err := r.db.RestoreAllMerchantDocuments(ctx)
 	if err != nil {
 		return false, merchantdocument_errors.ErrRestoreAllMerchantDocumentsFailed
 	}
@@ -110,8 +108,8 @@ func (r *merchantDocumentCommandRepository) RestoreAllMerchantDocument() (bool, 
 	return true, nil
 }
 
-func (r *merchantDocumentCommandRepository) DeleteAllMerchantDocumentPermanent() (bool, error) {
-	err := r.db.DeleteAllPermanentMerchantDocuments(r.ctx)
+func (r *merchantDocumentCommandRepository) DeleteAllMerchantDocumentPermanent(ctx context.Context) (bool, error) {
+	err := r.db.DeleteAllPermanentMerchantDocuments(ctx)
 	if err != nil {
 		return false, merchantdocument_errors.ErrDeleteAllMerchantDocumentsPermanentFailed
 	}

@@ -1,6 +1,7 @@
 package mencache
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -26,10 +27,10 @@ func NewCartQueryCache(store *CacheStore) *cartQueryCache {
 	return &cartQueryCache{store: store}
 }
 
-func (c *cartQueryCache) GetCachedCartsCache(request *requests.FindAllCarts) ([]*response.CartResponse, *int, bool) {
+func (c *cartQueryCache) GetCachedCartsCache(ctx context.Context, request *requests.FindAllCarts) ([]*response.CartResponse, *int, bool) {
 	key := fmt.Sprintf(cartAllCacheKey, request.Page, request.PageSize, request.Search)
 
-	result, found := GetFromCache[cartCacheResponse](c.store, key)
+	result, found := GetFromCache[cartCacheResponse](ctx, c.store, key)
 
 	if !found || result == nil {
 		return nil, nil, false
@@ -38,7 +39,7 @@ func (c *cartQueryCache) GetCachedCartsCache(request *requests.FindAllCarts) ([]
 	return result.Data, result.Total, true
 }
 
-func (c *cartQueryCache) SetCartsCache(request *requests.FindAllCarts, response []*response.CartResponse, total *int) {
+func (c *cartQueryCache) SetCartsCache(ctx context.Context, request *requests.FindAllCarts, response []*response.CartResponse, total *int) {
 	if total == nil {
 		zero := 0
 		total = &zero
@@ -46,5 +47,5 @@ func (c *cartQueryCache) SetCartsCache(request *requests.FindAllCarts, response 
 
 	key := fmt.Sprintf(cartAllCacheKey, request.Page, request.PageSize, request.Search)
 	payload := &cartCacheResponse{Data: response, Total: total}
-	SetToCache(c.store, key, payload, ttlDefault)
+	SetToCache(ctx, c.store, key, payload, ttlDefault)
 }

@@ -19,7 +19,7 @@ const (
 
 var (
 	flags = flag.NewFlagSet("migrate", flag.ExitOnError)
-	dir   = flags.String("dir", "./pkg/database/migrations", "directory with migration files")
+	dir   = flags.String("dir", "/app/migrations", "directory with migration files")
 )
 
 func main() {

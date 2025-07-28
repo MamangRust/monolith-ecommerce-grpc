@@ -21,7 +21,6 @@ import (
 )
 
 type orderItemQueryService struct {
-	ctx             context.Context
 	errorhandler    errorhandler.OrderItemQueryError
 	mencache        mencache.OrderItemQueryCache
 	trace           trace.Tracer
@@ -33,7 +32,6 @@ type orderItemQueryService struct {
 }
 
 func NewOrderItemQueryService(
-	ctx context.Context,
 	errorhandler errorhandler.OrderItemQueryError,
 	mencache mencache.OrderItemQueryCache,
 	repo repository.OrderItemQueryRepository,
@@ -60,7 +58,6 @@ func NewOrderItemQueryService(
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &orderItemQueryService{
-		ctx:             ctx,
 		errorhandler:    errorhandler,
 		mencache:        mencache,
 		trace:           otel.Tracer("order-item-query-service"),
@@ -72,57 +69,57 @@ func NewOrderItemQueryService(
 	}
 }
 
-func (s *orderItemQueryService) FindAllOrderItems(req *requests.FindAllOrderItems) ([]*response.OrderItemResponse, *int, *response.ErrorResponse) {
+func (s *orderItemQueryService) FindAllOrderItems(ctx context.Context, req *requests.FindAllOrderItems) ([]*response.OrderItemResponse, *int, *response.ErrorResponse) {
 	const method = "FindAllOrderItems"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedOrderItemsAll(req); found {
+	if data, total, found := s.mencache.GetCachedOrderItemsAll(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	orderItems, totalRecords, err := s.repo.FindAllOrderItems(req)
+	orderItems, totalRecords, err := s.repo.FindAllOrderItems(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationError(err, method, "FindAllOrderItems", span, &status, zap.Error(err))
 	}
 	so := s.mapping.ToOrderItemsResponse(orderItems)
 
-	s.mencache.SetCachedOrderItemsAll(req, so, totalRecords)
+	s.mencache.SetCachedOrderItemsAll(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched order-items", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search), zap.Int("totalRecords", *totalRecords))
 
 	return so, totalRecords, nil
 }
 
-func (s *orderItemQueryService) FindByActive(req *requests.FindAllOrderItems) ([]*response.OrderItemResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *orderItemQueryService) FindByActive(ctx context.Context, req *requests.FindAllOrderItems) ([]*response.OrderItemResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByActive"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedOrderItemActive(req); found {
+	if data, total, found := s.mencache.GetCachedOrderItemActive(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	orderItems, totalRecords, err := s.repo.FindByActive(req)
+	orderItems, totalRecords, err := s.repo.FindByActive(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, method, "FAILED_TO_FIND_ACTIVE_ORDER_ITEMS", span, &status, orderitem_errors.ErrFailedFindOrderItemsByActive, zap.Error(err))
@@ -130,32 +127,32 @@ func (s *orderItemQueryService) FindByActive(req *requests.FindAllOrderItems) ([
 
 	so := s.mapping.ToOrderItemsResponseDeleteAt(orderItems)
 
-	s.mencache.SetCachedOrderItemActive(req, so, totalRecords)
+	s.mencache.SetCachedOrderItemActive(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched order-items", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search), zap.Int("totalRecords", *totalRecords))
 
 	return so, totalRecords, nil
 }
 
-func (s *orderItemQueryService) FindByTrashed(req *requests.FindAllOrderItems) ([]*response.OrderItemResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *orderItemQueryService) FindByTrashed(ctx context.Context, req *requests.FindAllOrderItems) ([]*response.OrderItemResponseDeleteAt, *int, *response.ErrorResponse) {
 	const method = "FindByTrashed"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedOrderItemTrashed(req); found {
+	if data, total, found := s.mencache.GetCachedOrderItemTrashed(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
 		return data, total, nil
 	}
 
-	orderItems, totalRecords, err := s.repo.FindByTrashed(req)
+	orderItems, totalRecords, err := s.repo.FindByTrashed(ctx, req)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryPaginationDeleteAtError(err, "FindByTrashed", "FindByTrashed", span, &status, orderitem_errors.ErrFailedFindOrderItemsByTrashed, zap.Error(err))
@@ -163,29 +160,29 @@ func (s *orderItemQueryService) FindByTrashed(req *requests.FindAllOrderItems) (
 
 	so := s.mapping.ToOrderItemsResponseDeleteAt(orderItems)
 
-	s.mencache.SetCachedOrderItemTrashed(req, so, totalRecords)
+	s.mencache.SetCachedOrderItemTrashed(ctx, req, so, totalRecords)
 
 	logSuccess("Successfully fetched order-items", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search), zap.Int("totalRecords", *totalRecords))
 
 	return so, totalRecords, nil
 }
 
-func (s *orderItemQueryService) FindOrderItemByOrder(orderID int) ([]*response.OrderItemResponse, *response.ErrorResponse) {
+func (s *orderItemQueryService) FindOrderItemByOrder(ctx context.Context, orderID int) ([]*response.OrderItemResponse, *response.ErrorResponse) {
 	const method = "FindOrderItemByOrder"
 
-	span, end, status, logSuccess := s.startTracingAndLogging(method, attribute.Int("order.id", orderID))
+	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("order.id", orderID))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedOrderItems(orderID); found {
+	if data, found := s.mencache.GetCachedOrderItems(ctx, orderID); found {
 		logSuccess("Successfully fetched order items from cache", zap.Int("order.id", orderID))
 
 		return data, nil
 	}
 
-	orderItems, err := s.repo.FindOrderItemByOrder(orderID)
+	orderItems, err := s.repo.FindOrderItemByOrder(ctx, orderID)
 
 	if err != nil {
 		return s.errorhandler.HandleRepositoryListError(err, method, "FindOrderItemByOrder", span, &status, orderitem_errors.ErrFailedFindOrderItemByOrder, zap.Error(err))
@@ -193,7 +190,7 @@ func (s *orderItemQueryService) FindOrderItemByOrder(orderID int) ([]*response.O
 
 	so := s.mapping.ToOrderItemsResponse(orderItems)
 
-	s.mencache.SetCachedOrderItems(so)
+	s.mencache.SetCachedOrderItems(ctx, so)
 
 	logSuccess("Successfully fetched order items", zap.Int("order.id", orderID))
 
@@ -210,7 +207,8 @@ func (s *orderItemQueryService) normalizePagination(page, pageSize int) (int, in
 	return page, pageSize
 }
 
-func (s *orderItemQueryService) startTracingAndLogging(method string, attrs ...attribute.KeyValue) (
+func (s *orderItemQueryService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
+	context.Context,
 	trace.Span,
 	func(string),
 	string,
@@ -219,7 +217,7 @@ func (s *orderItemQueryService) startTracingAndLogging(method string, attrs ...a
 	start := time.Now()
 	status := "success"
 
-	_, span := s.trace.Start(s.ctx, method)
+	ctx, span := s.trace.Start(ctx, method)
 
 	if len(attrs) > 0 {
 		span.SetAttributes(attrs...)
@@ -244,7 +242,7 @@ func (s *orderItemQueryService) startTracingAndLogging(method string, attrs ...a
 		s.logger.Debug(msg, fields...)
 	}
 
-	return span, end, status, logSuccess
+	return ctx, span, end, status, logSuccess
 }
 
 func (s *orderItemQueryService) recordMetrics(method string, status string, start time.Time) {

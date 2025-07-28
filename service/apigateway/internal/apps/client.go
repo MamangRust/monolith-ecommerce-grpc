@@ -12,6 +12,7 @@ import (
 
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/internal/handler"
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/internal/middlewares"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-pkg/auth"
 	"github.com/MamangRust/monolith-ecommerce-pkg/dotenv"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
@@ -22,6 +23,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"go.uber.org/zap"
@@ -56,8 +58,8 @@ type ServiceAddresses struct {
 	ReviewDetail     string
 }
 
-func loadServiceAddresses() ServiceAddresses {
-	return ServiceAddresses{
+func loadServiceAddresses() *ServiceAddresses {
+	return &ServiceAddresses{
 		Auth:             getEnvOrDefault("GRPC_AUTH_ADDR", "localhost:50051"),
 		Role:             getEnvOrDefault("GRPC_ROLE_ADDR", "localhost:50052"),
 		User:             getEnvOrDefault("GRPC_USER_ADDR", "localhost:50053"),
@@ -80,7 +82,7 @@ func loadServiceAddresses() ServiceAddresses {
 	}
 }
 
-func createServiceConnections(addresses ServiceAddresses, logger logger.LoggerInterface) (handler.ServiceConnections, error) {
+func createServiceConnections(addresses *ServiceAddresses, logger logger.LoggerInterface) (handler.ServiceConnections, error) {
 	var connections handler.ServiceConnections
 
 	conns := map[string]*string{
@@ -211,15 +213,37 @@ func RunClient() (*Client, func(), error) {
 	mapping := response_api.NewResponseApiMapper()
 	image_upload := upload_image.NewImageUpload()
 
+	myredis := redis.NewClient(&redis.Options{
+		Addr:         fmt.Sprintf("%s:%s", viper.GetString("REDIS_HOST"), viper.GetString("REDIS_PORT")),
+		Password:     viper.GetString("REDIS_PASSWORD"),
+		DB:           viper.GetInt("REDIS_DB_APIGATEWAY"),
+		DialTimeout:  5 * time.Second,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
+		PoolSize:     10,
+		MinIdleConns: 3,
+	})
+
+	if err := myredis.Ping(ctx).Err(); err != nil {
+		log.Fatal("Failed to ping redis", zap.Error(err))
+	}
+
+	mencache := mencache.NewCacheApiGateway(&mencache.Deps{
+		Redis:  myredis,
+		Logger: log,
+	})
+
 	myKafka := kafka.NewKafka(log, []string{os.Getenv("KAFKA_BROKERS")})
 
 	depsHandler := &handler.Deps{
-		Token:   token,
-		E:       e,
-		Logger:  log,
-		Mapping: mapping,
-		Image:   image_upload,
-		Kafka:   myKafka,
+		Caceh:              mencache.RoleCache,
+		Kafka:              myKafka,
+		Token:              token,
+		E:                  e,
+		Logger:             log,
+		Mapping:            mapping,
+		Image:              image_upload,
+		ServiceConnections: &conns,
 	}
 
 	handler.NewHandler(depsHandler)
