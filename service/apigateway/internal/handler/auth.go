@@ -48,7 +48,7 @@ func NewHandlerAuth(router *echo.Echo, client pb.AuthServiceClient, logger logge
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	authHandler := &authHandleApi{
 		client:          client,

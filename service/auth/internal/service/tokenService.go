@@ -30,30 +30,30 @@ type tokenService struct {
 
 func NewTokenService(
 	refreshToken repository.RefreshTokenRepository, token auth.TokenManager, logger logger.LoggerInterface) *tokenService {
-	prometheus.MustRegister(prometheus.NewCounterVec(
+	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "token_service_requests_total",
 			Help: "Total number of auth requests",
 		},
 		[]string{"method", "status"},
-	))
-
-	prometheus.MustRegister(prometheus.NewHistogramVec(
+	)
+	requestDuration := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    "token_service_request_duration_seconds",
 			Help:    "Duration of auth requests",
 			Buckets: prometheus.DefBuckets,
 		},
 		[]string{"method", "status"},
-	))
+	)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
-	return &tokenService{trace: otel.Tracer("token-service"), refreshToken: refreshToken, token: token, logger: logger}
+	return &tokenService{trace: otel.Tracer("token-service"), refreshToken: refreshToken, token: token, logger: logger, requestCounter: requestCounter, requestDuration: requestDuration}
 }
 
 func (s *tokenService) createAccessToken(ctx context.Context, id int) (string, error) {
 	const method = "createAccessToken"
 
-	ctx, end, logSuccess, status, logError := s.startTracingAndLogging(ctx, method, attribute.Int("user.id", id))
+	_, end, logSuccess, status, logError := s.startTracingAndLogging(ctx, method, attribute.Int("user.id", id))
 
 	defer func() {
 		end(status)

@@ -23,3 +23,8 @@ type MerchantDetailCommandService interface {
 	RestoreAllMerchant(ctx context.Context) (bool, *response.ErrorResponse)
 	DeleteAllMerchantPermanent(ctx context.Context) (bool, *response.ErrorResponse)
 }
+
+type MerchantSocialLinkService interface {
+	CreateMerchant(ctx context.Context, req *requests.CreateMerchantSocialRequest) (*response.MerchantSocialLinkResponse, *response.ErrorResponse)
+	UpdateMerchant(ctx context.Context, req *requests.UpdateMerchantSocialRequest) (*response.MerchantSocialLinkResponse, *response.ErrorResponse)
+}

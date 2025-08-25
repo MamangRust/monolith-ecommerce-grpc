@@ -53,7 +53,7 @@ func NewHandleBanner(
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	bannerHandler := &bannerHandleApi{
 		client:          client,

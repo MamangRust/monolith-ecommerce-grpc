@@ -83,7 +83,7 @@ func (s *categoryCommandService) CreateCategory(ctx context.Context, req *reques
 
 	slug := utils.GenerateSlug(req.Name)
 
-	req.Name = slug
+	req.SlugCategory = &slug
 
 	cashier, err := s.categoryCommandRepository.CreateCategory(ctx, req)
 
@@ -109,7 +109,7 @@ func (s *categoryCommandService) UpdateCategory(ctx context.Context, req *reques
 
 	slug := utils.GenerateSlug(req.Name)
 
-	req.Name = slug
+	req.SlugCategory = &slug
 
 	category, err := s.categoryCommandRepository.UpdateCategory(ctx, req)
 
@@ -296,5 +296,5 @@ func (s *categoryCommandService) startTracingAndLogging(ctx context.Context, met
 
 func (s *categoryCommandService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

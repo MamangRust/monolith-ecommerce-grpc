@@ -55,7 +55,7 @@ func NewHandlerMerchantAward(
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	merchantAwardHandler := &merchantAwardHandleApi{
 		client:          client,

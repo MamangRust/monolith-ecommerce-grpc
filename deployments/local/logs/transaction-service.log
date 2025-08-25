@@ -1,0 +1,132 @@
+{"level":"debug","ts":"2025-08-14T03:17:24.766Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T03:17:24.772Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T03:17:24.775Z","caller":"apps/server.go:161","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-14T03:17:24.776Z","caller":"apps/server.go:168","msg":"Metrics server listening on :8089"}
+{"level":"info","ts":"2025-08-14T03:17:24.776Z","caller":"apps/server.go:176","msg":"gRPC server listening on :50059"}
+{"level":"debug","ts":"2025-08-14T05:59:06.828Z","caller":"service/transactionQueryService.go:282","msg":"Start: FindAllTransactions"}
+{"level":"debug","ts":"2025-08-14T05:59:06.855Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"transaction:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T05:59:06.856Z","caller":"service/transactionQueryService.go:296","msg":"Successfully fetched all transactions","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-14T05:59:06.856Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.TransactionService/FindAll","request_id":"req_1755151146828850656_ClmlBCoW","duration":"27.256835ms"}
+{"level":"debug","ts":"2025-08-14T11:16:13.829Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:16:13.837Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T11:16:13.855Z","caller":"apps/server.go:156","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-14T11:16:13.855Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50059"}
+{"level":"info","ts":"2025-08-14T11:16:13.856Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8089"}
+{"level":"debug","ts":"2025-08-14T11:40:40.884Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:40:40.890Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T11:40:40.895Z","caller":"apps/server.go:156","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-14T11:40:40.895Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50059"}
+{"level":"info","ts":"2025-08-14T11:40:40.895Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8089"}
+{"level":"debug","ts":"2025-08-14T15:57:29.566Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T15:57:29.574Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T15:57:29.583Z","caller":"apps/server.go:156","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-14T15:57:29.583Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50059"}
+{"level":"info","ts":"2025-08-14T15:57:29.583Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8089"}
+{"level":"debug","ts":"2025-08-14T16:08:11.250Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T16:08:11.301Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T16:08:11.328Z","caller":"apps/server.go:156","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-14T16:08:11.329Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8089"}
+{"level":"info","ts":"2025-08-14T16:08:11.329Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50059"}
+{"level":"debug","ts":"2025-08-14T22:19:18.845Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T22:19:18.864Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T22:19:18.871Z","caller":"apps/server.go:156","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-14T22:19:18.871Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50059"}
+{"level":"info","ts":"2025-08-14T22:19:18.872Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8089"}
+{"level":"debug","ts":"2025-08-15T00:57:14.850Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-15T00:57:14.888Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-15T00:57:14.915Z","caller":"apps/server.go:156","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-15T00:57:14.916Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8089"}
+{"level":"info","ts":"2025-08-15T00:57:14.916Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50059"}
+{"level":"debug","ts":"2025-08-18T06:35:19.228Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-18T06:35:19.238Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-18T06:35:19.246Z","caller":"apps/server.go:156","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-18T06:35:19.248Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50059"}
+{"level":"info","ts":"2025-08-18T06:35:19.248Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8089"}
+{"level":"debug","ts":"2025-08-24T06:59:48.663Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T06:59:48.686Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-24T06:59:48.715Z","caller":"apps/server.go:156","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-24T06:59:48.715Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50059"}
+{"level":"info","ts":"2025-08-24T06:59:48.717Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8089"}
+{"level":"debug","ts":"2025-08-24T16:25:32.313Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T16:25:32.318Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-24T16:25:32.328Z","caller":"apps/server.go:157","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-24T16:25:32.328Z","caller":"apps/server.go:172","msg":"gRPC server listening on :50059"}
+{"level":"info","ts":"2025-08-24T16:25:32.328Z","caller":"apps/server.go:164","msg":"Metrics server listening on :8089"}
+{"level":"debug","ts":"2025-08-24T17:47:52.065Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T17:47:52.116Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-24T17:47:52.151Z","caller":"apps/server.go:157","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-24T17:47:52.151Z","caller":"apps/server.go:164","msg":"Metrics server listening on :8089"}
+{"level":"info","ts":"2025-08-24T17:47:52.151Z","caller":"apps/server.go:172","msg":"gRPC server listening on :50059"}
+{"level":"debug","ts":"2025-08-25T08:07:38.427Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T08:07:38.441Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T08:07:38.456Z","caller":"apps/server.go:157","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-25T08:07:38.457Z","caller":"apps/server.go:172","msg":"gRPC server listening on :50059"}
+{"level":"info","ts":"2025-08-25T08:07:38.457Z","caller":"apps/server.go:164","msg":"Metrics server listening on :8089"}
+{"level":"debug","ts":"2025-08-25T11:40:57.329Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T11:40:57.342Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T11:40:57.348Z","caller":"apps/server.go:157","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-25T11:40:57.349Z","caller":"apps/server.go:172","msg":"gRPC server listening on :50059"}
+{"level":"info","ts":"2025-08-25T11:40:57.350Z","caller":"apps/server.go:164","msg":"Metrics server listening on :8089"}
+{"level":"info","ts":"2025-08-25T11:47:59.852Z","caller":"handler/transaction.go:937","msg":"Creating new transaction","user_id":12,"order_id":8,"merchant_id":1,"payment_method":"bank_transfer","amount":6600000}
+{"level":"debug","ts":"2025-08-25T11:47:59.853Z","caller":"service/transactionCommandService.go:404","msg":"Start: CreateTransaction"}
+{"level":"debug","ts":"2025-08-25T11:47:59.883Z","caller":"service/transactionCommandService.go:153","msg":"Calculated amount","amount":124670}
+{"level":"info","ts":"2025-08-25T11:47:59.941Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-transaction-create","partition":0,"offset":0}
+{"level":"debug","ts":"2025-08-25T11:47:59.941Z","caller":"service/transactionCommandService.go:418","msg":"Successfully created transaction","transaction.id":9,"success":true}
+{"level":"info","ts":"2025-08-25T11:47:59.942Z","caller":"handler/transaction.go:973","msg":"Transaction created successfully","transaction_id":9,"amount":124670}
+{"level":"info","ts":"2025-08-25T11:47:59.942Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.TransactionService/Create","request_id":"req_1756122479852486860_7w8OFLTs","duration":"89.60933ms"}
+{"level":"info","ts":"2025-08-25T11:48:09.416Z","caller":"handler/transaction.go:990","msg":"Updating transaction","transaction_id":11}
+{"level":"debug","ts":"2025-08-25T11:48:09.416Z","caller":"service/transactionCommandService.go:404","msg":"Start: UpdateTransaction"}
+{"level":"error","ts":"2025-08-25T11:48:09.418Z","caller":"errorhandler/errorhandler_helpers.go:82","msg":"Repository error in UpdateTransaction","error":"failed to find transaction by ID","error":"failed to find transaction by ID","trace.id":"FAILED_FIND_TRANSACTION_BY_ID_20250825_4cccb5f6"}
+{"level":"error","ts":"2025-08-25T11:48:09.419Z","caller":"handler/transaction.go:1011","msg":"Failed to update transaction","transaction_id":11,"payment_method":"bank_transfer","error":{"status":"error","message":"Failed to find transaction by ID","code":500}}
+{"level":"info","ts":"2025-08-25T11:48:09.419Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.TransactionService/Update","request_id":"req_1756122489416464228_ymSsYl9O","duration":"3.08556ms","error":"rpc error: code = Code(500) desc = {\"status\":\"error\",\"message\":\"Failed to find transaction by ID\",\"code\":500}"}
+{"level":"info","ts":"2025-08-25T11:48:40.331Z","caller":"handler/transaction.go:990","msg":"Updating transaction","transaction_id":9}
+{"level":"debug","ts":"2025-08-25T11:48:40.331Z","caller":"service/transactionCommandService.go:404","msg":"Start: UpdateTransaction"}
+{"level":"error","ts":"2025-08-25T11:48:40.332Z","caller":"errorhandler/errorhandler_helpers.go:82","msg":"Payment method Cannot modified in UpdateTransaction","trace.id":"FAILED_PAYMENT_STATUS_CANNOT_BE_MODIFIED_20250825_c2798e4e"}
+{"level":"error","ts":"2025-08-25T11:48:40.332Z","caller":"handler/transaction.go:1011","msg":"Failed to update transaction","transaction_id":9,"payment_method":"bank_transfer","error":{"status":"error","message":"Cannot modify payment status","code":400}}
+{"level":"info","ts":"2025-08-25T11:48:40.332Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.TransactionService/Update","request_id":"req_1756122520331178077_HMw7BJvK","duration":"1.189361ms","error":"rpc error: code = Code(400) desc = {\"status\":\"error\",\"message\":\"Cannot modify payment status\",\"code\":400}"}
+{"level":"info","ts":"2025-08-25T11:50:47.977Z","caller":"handler/transaction.go:990","msg":"Updating transaction","transaction_id":9}
+{"level":"debug","ts":"2025-08-25T11:50:47.978Z","caller":"service/transactionCommandService.go:404","msg":"Start: UpdateTransaction"}
+{"level":"debug","ts":"2025-08-25T11:50:47.982Z","caller":"service/transactionCommandService.go:251","msg":"Calculated amount","amount":124670}
+{"level":"debug","ts":"2025-08-25T11:50:47.990Z","caller":"service/transactionCommandService.go:418","msg":"Successfully updated transaction","transaction.id":9,"success":true}
+{"level":"info","ts":"2025-08-25T11:50:47.990Z","caller":"handler/transaction.go:1019","msg":"Transaction updated successfully","transaction_id":9,"amount":124670}
+{"level":"info","ts":"2025-08-25T11:50:47.990Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.TransactionService/Update","request_id":"req_1756122647977723999_LOa7HrwO","duration":"13.155242ms"}
+{"level":"debug","ts":"2025-08-25T13:48:14.235Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:48:14.245Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T13:48:14.256Z","caller":"apps/server.go:157","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-25T13:48:14.256Z","caller":"apps/server.go:172","msg":"gRPC server listening on :50059"}
+{"level":"info","ts":"2025-08-25T13:48:14.256Z","caller":"apps/server.go:164","msg":"Metrics server listening on :8089"}
+{"level":"debug","ts":"2025-08-25T13:54:47.243Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:54:47.279Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T13:54:47.317Z","caller":"apps/server.go:157","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-25T13:54:47.318Z","caller":"apps/server.go:164","msg":"Metrics server listening on :8089"}
+{"level":"info","ts":"2025-08-25T13:54:47.319Z","caller":"apps/server.go:172","msg":"gRPC server listening on :50059"}
+{"level":"debug","ts":"2025-08-25T15:00:37.155Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T15:00:37.207Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T15:00:37.241Z","caller":"apps/server.go:157","msg":"Server running on port 50059"}
+{"level":"info","ts":"2025-08-25T15:00:37.241Z","caller":"apps/server.go:172","msg":"gRPC server listening on :50059"}
+{"level":"info","ts":"2025-08-25T15:00:37.241Z","caller":"apps/server.go:164","msg":"Metrics server listening on :8089"}
+{"level":"info","ts":"2025-08-25T15:11:57.148Z","caller":"handler/transaction.go:937","msg":"Creating new transaction","user_id":11,"order_id":8,"merchant_id":1,"payment_method":"bank_transfer","amount":6600000}
+{"level":"debug","ts":"2025-08-25T15:11:57.149Z","caller":"service/transactionCommandService.go:404","msg":"Start: CreateTransaction"}
+{"level":"debug","ts":"2025-08-25T15:11:57.166Z","caller":"service/transactionCommandService.go:153","msg":"Calculated amount","amount":124670}
+{"level":"info","ts":"2025-08-25T15:11:57.175Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-transaction-create","partition":0,"offset":1}
+{"level":"debug","ts":"2025-08-25T15:11:57.176Z","caller":"service/transactionCommandService.go:418","msg":"Successfully created transaction","transaction.id":9,"success":true}
+{"level":"info","ts":"2025-08-25T15:11:57.176Z","caller":"handler/transaction.go:973","msg":"Transaction created successfully","transaction_id":9,"amount":124670}
+{"level":"info","ts":"2025-08-25T15:11:57.176Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.TransactionService/Create","request_id":"req_1756134717147998631_yxqSr64X","duration":"28.228984ms"}
+{"level":"info","ts":"2025-08-25T15:55:27.641Z","caller":"handler/transaction.go:937","msg":"Creating new transaction","user_id":11,"order_id":8,"merchant_id":1,"payment_method":"bank_transfer","amount":6600000}
+{"level":"debug","ts":"2025-08-25T15:55:27.641Z","caller":"service/transactionCommandService.go:404","msg":"Start: CreateTransaction"}
+{"level":"debug","ts":"2025-08-25T15:55:27.669Z","caller":"service/transactionCommandService.go:153","msg":"Calculated amount","amount":124670}
+{"level":"info","ts":"2025-08-25T15:55:27.683Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-transaction-create","partition":0,"offset":2}
+{"level":"debug","ts":"2025-08-25T15:55:27.683Z","caller":"service/transactionCommandService.go:418","msg":"Successfully created transaction","transaction.id":10,"success":true}
+{"level":"info","ts":"2025-08-25T15:55:27.683Z","caller":"handler/transaction.go:973","msg":"Transaction created successfully","transaction_id":10,"amount":124670}
+{"level":"info","ts":"2025-08-25T15:55:27.683Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.TransactionService/Create","request_id":"req_1756137327641100441_eKcYZxxc","duration":"42.231544ms"}
+{"level":"info","ts":"2025-08-25T16:06:39.373Z","caller":"handler/transaction.go:54","msg":"Fetching all transactions","page":1,"page_size":10,"search":""}
+{"level":"debug","ts":"2025-08-25T16:06:39.374Z","caller":"service/transactionQueryService.go:282","msg":"Start: FindAllTransactions"}
+{"level":"debug","ts":"2025-08-25T16:06:39.382Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"transaction:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-25T16:06:39.382Z","caller":"service/transactionQueryService.go:296","msg":"Successfully fetched all transactions","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-25T16:06:39.382Z","caller":"handler/transaction.go:86","msg":"Successfully fetched all transactions","page":1,"total_records":10,"total_pages":1,"fetched_transactions_count":10}
+{"level":"info","ts":"2025-08-25T16:06:39.382Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.TransactionService/FindAll","request_id":"req_1756137999373943463_nYFxY4ls","duration":"8.724622ms"}
+{"level":"info","ts":"2025-08-25T16:11:31.900Z","caller":"handler/transaction.go:54","msg":"Fetching all transactions","page":1,"page_size":10,"search":""}
+{"level":"debug","ts":"2025-08-25T16:11:31.901Z","caller":"service/transactionQueryService.go:282","msg":"Start: FindAllTransactions"}
+{"level":"debug","ts":"2025-08-25T16:11:31.902Z","caller":"service/transactionQueryService.go:296","msg":"Successfully fetched transactions from cache","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-25T16:11:31.902Z","caller":"handler/transaction.go:86","msg":"Successfully fetched all transactions","page":1,"total_records":10,"total_pages":1,"fetched_transactions_count":10}
+{"level":"info","ts":"2025-08-25T16:11:31.902Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.TransactionService/FindAll","request_id":"req_1756138291900227590_eEJafD4K","duration":"2.741549ms"}

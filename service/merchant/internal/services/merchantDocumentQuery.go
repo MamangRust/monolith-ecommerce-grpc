@@ -41,13 +41,13 @@ func NewMerchantDocumentQueryService(
 	requestCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "merchant_document_query_request_count",
 		Help: "Number of merchant document query requests MerchantDocumentQueryService",
-	}, []string{"status"})
+	}, []string{"method", "status"})
 
 	requestDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "merchant_document_query_request_duration_seconds",
 		Help:    "The duration of requests MerchantDocumentQueryService",
 		Buckets: prometheus.DefBuckets,
-	}, []string{"status"})
+	}, []string{"method", "status"})
 
 	prometheus.MustRegister(requestCounter, requestDuration)
 
@@ -241,5 +241,5 @@ func (s *merchantDocumentQueryService) normalizePagination(page, pageSize int) (
 
 func (s *merchantDocumentQueryService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

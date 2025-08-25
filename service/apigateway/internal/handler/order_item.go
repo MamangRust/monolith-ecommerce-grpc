@@ -51,7 +51,7 @@ func NewHandlerOrderItem(
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	categoryHandler := &orderItemHandleApi{
 		client:          client,

@@ -1,0 +1,183 @@
+{"level":"debug","ts":"2025-08-14T03:17:24.443Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T03:17:24.450Z","caller":"apps/server.go:164","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-14T03:17:24.450Z","caller":"apps/server.go:179","msg":"gRPC server listening on :50054"}
+{"level":"info","ts":"2025-08-14T03:17:24.450Z","caller":"apps/server.go:171","msg":"Metrics server listening on :8084"}
+{"level":"info","ts":"2025-08-14T04:33:37.986Z","caller":"service/categoryQueryService.go:215","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T04:33:38.012Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T04:33:38.012Z","caller":"service/categoryQueryService.go:229","msg":"Successfully fetched categories","totalRecords":8,"page":1,"pageSize":10}
+{"level":"info","ts":"2025-08-14T04:33:38.012Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindAll","request_id":"req_1755146017986031723_eabzOy9w","duration":"26.56344ms"}
+{"level":"info","ts":"2025-08-14T05:54:50.300Z","caller":"service/categoryQueryService.go:215","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T05:54:50.322Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T05:54:50.322Z","caller":"service/categoryQueryService.go:229","msg":"Successfully fetched categories","totalRecords":8,"page":1,"pageSize":10}
+{"level":"info","ts":"2025-08-14T05:54:50.322Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindAll","request_id":"req_1755150890300712337_pNQZ8tJ0","duration":"22.270896ms"}
+{"level":"debug","ts":"2025-08-14T11:16:13.590Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:16:13.609Z","caller":"apps/server.go:158","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-14T11:16:13.609Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50054"}
+{"level":"info","ts":"2025-08-14T11:16:13.610Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8084"}
+{"level":"debug","ts":"2025-08-14T11:40:40.618Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:40:40.635Z","caller":"apps/server.go:158","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-14T11:40:40.635Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50054"}
+{"level":"info","ts":"2025-08-14T11:40:40.635Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8084"}
+{"level":"debug","ts":"2025-08-14T14:49:54.259Z","caller":"service/categoryStatsService.go:210","msg":"Start: FindMonthPrice"}
+{"level":"debug","ts":"2025-08-14T14:49:54.315Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:stats:month:2025","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:49:54.316Z","caller":"service/categoryStatsService.go:224","msg":"Successfully fetched monthly category prices","year":2025}
+{"level":"info","ts":"2025-08-14T14:49:54.316Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindMonthPrice","request_id":"req_1755182994259250390_km29OXyP","duration":"57.597755ms"}
+{"level":"debug","ts":"2025-08-14T14:53:46.292Z","caller":"service/categoryStatsService.go:210","msg":"Start: FindMonthlyTotalPrice"}
+{"level":"debug","ts":"2025-08-14T14:53:46.303Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:stats:month:5:year:2025","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:53:46.304Z","caller":"service/categoryStatsService.go:224","msg":"Successfully fetched monthly total price","year":2025,"month":5}
+{"level":"info","ts":"2025-08-14T14:53:46.304Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindMonthlyTotalPrices","request_id":"req_1755183226292712185_90nh5rFI","duration":"11.752216ms"}
+{"level":"debug","ts":"2025-08-14T14:53:52.103Z","caller":"service/categoryStatsService.go:210","msg":"Start: FindYearlyTotalPrice"}
+{"level":"debug","ts":"2025-08-14T14:53:52.110Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:stats:year:2025","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:53:52.110Z","caller":"service/categoryStatsService.go:224","msg":"Successfully fetched yearly total price","year":2025}
+{"level":"info","ts":"2025-08-14T14:53:52.111Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindYearlyTotalPrices","request_id":"req_1755183232103849134_HBRRHV9N","duration":"7.284084ms"}
+{"level":"debug","ts":"2025-08-14T14:53:58.821Z","caller":"service/categoryStatsByMerchantService.go:217","msg":"Start: FindYearlyTotalPriceByMerchant"}
+{"level":"debug","ts":"2025-08-14T14:53:58.824Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:stats:bymerchant:1:year:2025","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:53:58.824Z","caller":"service/categoryStatsByMerchantService.go:231","msg":"Successfully fetched yearly total price by merchant","year":2025,"merchant.id":1}
+{"level":"info","ts":"2025-08-14T14:53:58.824Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindYearlyTotalPricesByMerchant","request_id":"req_1755183238821302916_Wf1eU9fj","duration":"3.430394ms"}
+{"level":"debug","ts":"2025-08-14T14:54:04.087Z","caller":"service/categoryStatsByIdService.go:216","msg":"Start: FindMonthlyTotalPriceById"}
+{"level":"debug","ts":"2025-08-14T14:54:04.092Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:stats:byid:1:month:5:year:2025","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:54:04.092Z","caller":"service/categoryStatsByIdService.go:230","msg":"Successfully fetched monthly total price by ID","year":2025,"month":5}
+{"level":"info","ts":"2025-08-14T14:54:04.092Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindMonthlyTotalPricesById","request_id":"req_1755183244087000066_IzzjlA4e","duration":"5.9391ms"}
+{"level":"debug","ts":"2025-08-14T14:54:09.559Z","caller":"service/categoryStatsByIdService.go:216","msg":"Start: FindYearlyTotalPriceById"}
+{"level":"debug","ts":"2025-08-14T14:54:09.566Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:stats:byid:1:year:2025","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:54:09.566Z","caller":"service/categoryStatsByIdService.go:230","msg":"Successfully fetched yearly total price by ID","year":2025}
+{"level":"info","ts":"2025-08-14T14:54:09.566Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindYearlyTotalPricesById","request_id":"req_1755183249559325437_sEhCO64T","duration":"7.126309ms"}
+{"level":"debug","ts":"2025-08-14T14:54:15.475Z","caller":"service/categoryStatsByMerchantService.go:217","msg":"Start: FindMonthlyTotalPriceByMerchant"}
+{"level":"debug","ts":"2025-08-14T14:54:15.481Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:stats:bymerchant:1:month:5:year:2025","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:54:15.481Z","caller":"service/categoryStatsByMerchantService.go:231","msg":"Successfully fetched monthly total price by merchant","year":2025,"month":5}
+{"level":"info","ts":"2025-08-14T14:54:15.481Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindMonthlyTotalPricesByMerchant","request_id":"req_1755183255475394742_zKR4gbTM","duration":"6.460856ms"}
+{"level":"debug","ts":"2025-08-14T14:54:21.744Z","caller":"service/categoryStatsService.go:210","msg":"Start: FindMonthPrice"}
+{"level":"debug","ts":"2025-08-14T14:54:21.745Z","caller":"service/categoryStatsService.go:224","msg":"Successfully fetched monthly category prices from cache","year":2025}
+{"level":"info","ts":"2025-08-14T14:54:21.745Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindMonthPrice","request_id":"req_1755183261744522204_YSeEUjRB","duration":"1.321933ms"}
+{"level":"debug","ts":"2025-08-14T14:54:27.991Z","caller":"service/categoryStatsService.go:210","msg":"Start: FindYearPrice"}
+{"level":"debug","ts":"2025-08-14T14:54:27.991Z","caller":"service/categoryStatsService.go:224","msg":"Successfully fetched yearly category prices from cache","year":2025}
+{"level":"info","ts":"2025-08-14T14:54:27.991Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindYearPrice","request_id":"req_1755183267991163134_JOm5BY75","duration":"561.83µs"}
+{"level":"debug","ts":"2025-08-14T14:54:34.912Z","caller":"service/categoryStatsByMerchantService.go:217","msg":"Start: FindYearPriceByMerchant"}
+{"level":"debug","ts":"2025-08-14T14:54:34.913Z","caller":"service/categoryStatsByMerchantService.go:231","msg":"Successfully fetched yearly category prices by merchant from cache","year":2025,"merchant.id":1}
+{"level":"info","ts":"2025-08-14T14:54:34.913Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindYearPriceByMerchant","request_id":"req_1755183274912200470_wWb7omTM","duration":"1.188267ms"}
+{"level":"debug","ts":"2025-08-14T14:55:04.441Z","caller":"service/categoryStatsByIdService.go:216","msg":"Start: FindMonthPriceById"}
+{"level":"debug","ts":"2025-08-14T14:55:04.446Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:stats:byid:2:month:2025","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:55:04.447Z","caller":"service/categoryStatsByIdService.go:230","msg":"Successfully fetched monthly category prices by ID","year":2025,"category.id":2}
+{"level":"info","ts":"2025-08-14T14:55:04.447Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindMonthPriceById","request_id":"req_1755183304441303850_BRqu6SVw","duration":"5.9308ms"}
+{"level":"debug","ts":"2025-08-14T14:55:12.044Z","caller":"service/categoryStatsByIdService.go:216","msg":"Start: FindYearPriceById"}
+{"level":"debug","ts":"2025-08-14T14:55:12.044Z","caller":"service/categoryStatsByIdService.go:230","msg":"Successfully fetched yearly category prices by ID from cache","year":2025,"category.id":1}
+{"level":"info","ts":"2025-08-14T14:55:12.044Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindYearPriceById","request_id":"req_1755183312044124660_6TjHjTDM","duration":"584.974µs"}
+{"level":"debug","ts":"2025-08-14T14:55:26.714Z","caller":"service/categoryStatsByMerchantService.go:217","msg":"Start: FindMonthPriceByMerchant"}
+{"level":"debug","ts":"2025-08-14T14:55:26.718Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:stats:bymerchant:1:month:2025","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:55:26.718Z","caller":"service/categoryStatsByMerchantService.go:231","msg":"Successfully fetched monthly category prices by merchant","year":2025,"merchant.id":1}
+{"level":"info","ts":"2025-08-14T14:55:26.718Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindMonthPriceByMerchant","request_id":"req_1755183326714409812_jPe2gyJU","duration":"4.445122ms"}
+{"level":"info","ts":"2025-08-14T14:55:44.947Z","caller":"service/categoryQueryService.go:215","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T14:55:44.950Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:55:44.950Z","caller":"service/categoryQueryService.go:229","msg":"Successfully fetched categories","totalRecords":8,"page":1,"pageSize":10}
+{"level":"info","ts":"2025-08-14T14:55:44.950Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindAll","request_id":"req_1755183344947018950_9wa7fXBZ","duration":"3.746172ms"}
+{"level":"info","ts":"2025-08-14T14:55:59.705Z","caller":"service/categoryQueryService.go:215","msg":"Start: FindById"}
+{"level":"debug","ts":"2025-08-14T14:55:59.706Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:id:1","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:55:59.706Z","caller":"service/categoryQueryService.go:229","msg":"Successfully fetched category","category.id":1}
+{"level":"info","ts":"2025-08-14T14:55:59.706Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindById","request_id":"req_1755183359705249974_2wkQkj7S","duration":"1.568925ms"}
+{"level":"info","ts":"2025-08-14T14:56:11.076Z","caller":"service/categoryQueryService.go:215","msg":"Start: FindByActive"}
+{"level":"debug","ts":"2025-08-14T14:56:11.081Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:active:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:56:11.081Z","caller":"service/categoryQueryService.go:229","msg":"Successfully fetched categories","totalRecords":8,"page":1,"pageSize":10}
+{"level":"info","ts":"2025-08-14T14:56:11.081Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindByActive","request_id":"req_1755183371076920009_dyLsMNJV","duration":"4.566505ms"}
+{"level":"info","ts":"2025-08-14T14:56:21.422Z","caller":"service/categoryQueryService.go:215","msg":"Start: FindByTrashed"}
+{"level":"debug","ts":"2025-08-14T14:56:21.424Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:trashed:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:56:21.424Z","caller":"service/categoryQueryService.go:229","msg":"Successfully fetched categories","totalRecords":0,"page":1,"pageSize":10}
+{"level":"info","ts":"2025-08-14T14:56:21.424Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindByTrashed","request_id":"req_1755183381422678308_9omj7kLb","duration":"2.163542ms"}
+{"level":"info","ts":"2025-08-14T15:50:44.039Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/Create","request_id":"req_1755186644037439019_t8DrVucs","duration":"1.872002ms","error":"rpc error: code = InvalidArgument desc = {\"status\":\"error\",\"message\":\"Validation failed: invalid create category request\",\"code\":3}"}
+{"level":"debug","ts":"2025-08-14T15:57:29.071Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T15:57:29.092Z","caller":"apps/server.go:158","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-14T15:57:29.093Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8084"}
+{"level":"info","ts":"2025-08-14T15:57:29.093Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50054"}
+{"level":"info","ts":"2025-08-14T15:58:08.392Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/Create","request_id":"req_1755187088391988810_0iXzIl5h","duration":"226.672µs","error":"rpc error: code = InvalidArgument desc = {\"status\":\"error\",\"message\":\"Validation failed: invalid create category request\",\"code\":3}"}
+{"level":"info","ts":"2025-08-14T16:05:55.438Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/Create","request_id":"req_1755187555436842666_Re89ca0F","duration":"1.800575ms","error":"rpc error: code = InvalidArgument desc = {\"status\":\"error\",\"message\":\"Validation failed: invalid create category request\",\"code\":3}"}
+{"level":"debug","ts":"2025-08-14T16:08:12.774Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T16:08:12.784Z","caller":"apps/server.go:158","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-14T16:08:12.784Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50054"}
+{"level":"info","ts":"2025-08-14T16:08:12.784Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8084"}
+{"level":"info","ts":"2025-08-14T16:37:36.128Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/Create","request_id":"req_1755189456127528133_My8yvUPG","duration":"1.06225ms","error":"rpc error: code = InvalidArgument desc = {\"status\":\"error\",\"message\":\"Validation failed: invalid create category request\",\"code\":3}"}
+{"level":"debug","ts":"2025-08-14T16:53:18.825Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T16:53:18.830Z","caller":"apps/server.go:158","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-14T16:53:18.830Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8084"}
+{"level":"info","ts":"2025-08-14T16:53:18.831Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50054"}
+{"level":"info","ts":"2025-08-14T16:54:22.454Z","caller":"service/categoryCommandService.go:277","msg":"Start: CreateCategory"}
+{"level":"debug","ts":"2025-08-14T16:54:22.491Z","caller":"service/categoryCommandService.go:291","msg":"Successfully created category","category.id":9}
+{"level":"info","ts":"2025-08-14T16:54:22.491Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/Create","request_id":"req_1755190462454635741_mDGObeHo","duration":"36.539918ms"}
+{"level":"info","ts":"2025-08-14T16:58:27.232Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/Update","request_id":"req_1755190707232615950_xUZe7iv8","duration":"114.705µs","error":"rpc error: code = InvalidArgument desc = {\"status\":\"error\",\"message\":\"Validation failed: invalid update category request\",\"code\":3}"}
+{"level":"debug","ts":"2025-08-14T17:14:16.613Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T17:14:16.617Z","caller":"apps/server.go:158","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-14T17:14:16.617Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50054"}
+{"level":"info","ts":"2025-08-14T17:14:16.617Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8084"}
+{"level":"info","ts":"2025-08-14T17:14:20.404Z","caller":"service/categoryCommandService.go:277","msg":"Start: UpdateCategory"}
+{"level":"debug","ts":"2025-08-14T17:14:20.439Z","caller":"service/categoryCommandService.go:291","msg":"Successfully updated category","category.id":9}
+{"level":"info","ts":"2025-08-14T17:14:20.439Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/Update","request_id":"req_1755191660404265970_Yc6uJDx1","duration":"34.927896ms"}
+{"level":"info","ts":"2025-08-14T17:15:07.594Z","caller":"service/categoryCommandService.go:277","msg":"Start: TrashedCategory"}
+{"level":"debug","ts":"2025-08-14T17:15:07.596Z","caller":"service/categoryCommandService.go:291","msg":"Successfully trashed category","category.id":9}
+{"level":"info","ts":"2025-08-14T17:15:07.596Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/TrashedCategory","request_id":"req_1755191707594003290_gMkGaj9w","duration":"2.439012ms"}
+{"level":"info","ts":"2025-08-14T17:16:14.332Z","caller":"service/categoryCommandService.go:277","msg":"Start: RestoreCategory"}
+{"level":"debug","ts":"2025-08-14T17:16:14.334Z","caller":"service/categoryCommandService.go:291","msg":"Successfully restored category","category.id":9}
+{"level":"info","ts":"2025-08-14T17:16:14.334Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/RestoreCategory","request_id":"req_1755191774332469318_4Tj904Lr","duration":"2.237974ms"}
+{"level":"info","ts":"2025-08-14T17:16:27.777Z","caller":"service/categoryCommandService.go:277","msg":"Start: TrashedCategory"}
+{"level":"debug","ts":"2025-08-14T17:16:27.781Z","caller":"service/categoryCommandService.go:291","msg":"Successfully trashed category","category.id":9}
+{"level":"info","ts":"2025-08-14T17:16:27.781Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/TrashedCategory","request_id":"req_1755191787777187191_mEMMOpfn","duration":"4.514145ms"}
+{"level":"info","ts":"2025-08-14T17:16:43.726Z","caller":"service/categoryCommandService.go:277","msg":"Start: DeleteCategoryPermanent"}
+{"level":"debug","ts":"2025-08-14T17:16:43.730Z","caller":"service/categoryCommandService.go:195","msg":"Image file does not exist, skipping deletion","image_path":"uploads/category/1755191660399678668.png"}
+{"level":"debug","ts":"2025-08-14T17:16:43.738Z","caller":"service/categoryCommandService.go:291","msg":"Successfully deleted category permanently","success":true}
+{"level":"info","ts":"2025-08-14T17:16:43.738Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/DeleteCategoryPermanent","request_id":"req_1755191803726753772_K0ar4yqt","duration":"11.605416ms"}
+{"level":"info","ts":"2025-08-14T17:17:00.081Z","caller":"service/categoryQueryService.go:215","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T17:17:00.096Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T17:17:00.096Z","caller":"service/categoryQueryService.go:229","msg":"Successfully fetched categories","totalRecords":8,"page":1,"pageSize":10}
+{"level":"info","ts":"2025-08-14T17:17:00.096Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindAll","request_id":"req_1755191820081826238_7DGMWVVN","duration":"14.94316ms"}
+{"level":"debug","ts":"2025-08-14T22:19:18.725Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T22:19:18.736Z","caller":"apps/server.go:158","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-14T22:19:18.737Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50054"}
+{"level":"info","ts":"2025-08-14T22:19:18.737Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8084"}
+{"level":"debug","ts":"2025-08-15T00:57:15.996Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-15T00:57:16.002Z","caller":"apps/server.go:158","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-15T00:57:16.003Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50054"}
+{"level":"info","ts":"2025-08-15T00:57:16.003Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8084"}
+{"level":"debug","ts":"2025-08-18T06:35:18.555Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-18T06:35:18.576Z","caller":"apps/server.go:158","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-18T06:35:18.578Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8084"}
+{"level":"info","ts":"2025-08-18T06:35:18.578Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50054"}
+{"level":"debug","ts":"2025-08-24T06:59:48.792Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T06:59:48.812Z","caller":"apps/server.go:158","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-24T06:59:48.813Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50054"}
+{"level":"info","ts":"2025-08-24T06:59:48.814Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8084"}
+{"level":"debug","ts":"2025-08-24T16:25:32.213Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T16:25:32.234Z","caller":"apps/server.go:159","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-24T16:25:32.235Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8084"}
+{"level":"info","ts":"2025-08-24T16:25:32.236Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50054"}
+{"level":"debug","ts":"2025-08-24T17:47:52.580Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T17:47:52.600Z","caller":"apps/server.go:159","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-24T17:47:52.601Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8084"}
+{"level":"info","ts":"2025-08-24T17:47:52.601Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50054"}
+{"level":"debug","ts":"2025-08-25T08:07:38.040Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T08:07:38.077Z","caller":"apps/server.go:159","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-25T08:07:38.079Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50054"}
+{"level":"info","ts":"2025-08-25T08:07:38.079Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8084"}
+{"level":"debug","ts":"2025-08-25T11:40:56.730Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T11:40:56.734Z","caller":"apps/server.go:159","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-25T11:40:56.734Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8084"}
+{"level":"info","ts":"2025-08-25T11:40:56.735Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50054"}
+{"level":"debug","ts":"2025-08-25T13:48:14.748Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:48:14.750Z","caller":"apps/server.go:159","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-25T13:48:14.751Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50054"}
+{"level":"info","ts":"2025-08-25T13:48:14.751Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8084"}
+{"level":"debug","ts":"2025-08-25T13:54:46.594Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:54:46.635Z","caller":"apps/server.go:159","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-25T13:54:46.636Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8084"}
+{"level":"info","ts":"2025-08-25T13:54:46.636Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50054"}
+{"level":"debug","ts":"2025-08-25T15:00:37.905Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T15:00:37.929Z","caller":"apps/server.go:159","msg":"Server running on port 50054"}
+{"level":"info","ts":"2025-08-25T15:00:37.930Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8084"}
+{"level":"info","ts":"2025-08-25T15:00:37.931Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50054"}
+{"level":"info","ts":"2025-08-25T15:02:41.111Z","caller":"handler/category.go:716","msg":"Creating new category","name":"hello","slug":"hello"}
+{"level":"info","ts":"2025-08-25T15:02:41.112Z","caller":"service/categoryCommandService.go:277","msg":"Start: CreateCategory"}
+{"level":"debug","ts":"2025-08-25T15:02:41.135Z","caller":"service/categoryCommandService.go:291","msg":"Successfully created category","category.id":9}
+{"level":"info","ts":"2025-08-25T15:02:41.136Z","caller":"handler/category.go:745","msg":"Category created successfully","category_id":9,"name":"hello"}
+{"level":"info","ts":"2025-08-25T15:02:41.136Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/Create","request_id":"req_1756134161111683565_bOzbrZxC","duration":"24.599729ms"}
+{"level":"info","ts":"2025-08-25T16:07:50.993Z","caller":"handler/category.go:56","msg":"Fetching all categories","page":1,"page_size":10,"search":""}
+{"level":"info","ts":"2025-08-25T16:07:50.993Z","caller":"service/categoryQueryService.go:215","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-25T16:07:51.018Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"category:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-25T16:07:51.018Z","caller":"service/categoryQueryService.go:229","msg":"Successfully fetched categories","totalRecords":9,"page":1,"pageSize":10}
+{"level":"info","ts":"2025-08-25T16:07:51.018Z","caller":"handler/category.go:88","msg":"Successfully fetched all categories","page":1,"total_records":9,"total_pages":1}
+{"level":"info","ts":"2025-08-25T16:07:51.018Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CategoryService/FindAll","request_id":"req_1756138070993662597_5jGTa8vZ","duration":"25.005322ms"}

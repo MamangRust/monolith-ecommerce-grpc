@@ -229,5 +229,5 @@ func (s *categoryStatsService) startTracingAndLogging(ctx context.Context, metho
 
 func (s *categoryStatsService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

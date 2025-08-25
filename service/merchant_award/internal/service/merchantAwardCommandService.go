@@ -48,7 +48,7 @@ func NewMerchantAwardCommandService(
 			Help:    "Histogram of request durations for the MerchantAwardCommandService",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
 
 	prometheus.MustRegister(requestCounter, requestDuration)
@@ -257,5 +257,5 @@ func (s *merchantAwardCommandService) startTracingAndLogging(ctx context.Context
 
 func (s *merchantAwardCommandService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

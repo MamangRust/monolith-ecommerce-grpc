@@ -1,0 +1,22 @@
+{"level":"debug","ts":"2025-08-25T20:51:26.848+0700","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"debug","ts":"2025-08-25T20:51:26.848+0700","caller":"seeder/main.go:39","msg":"Seeding database","seeder":"true"}
+{"level":"info","ts":"2025-08-25T20:51:28.273+0700","caller":"seeder/user.go:65","msg":"User seeding completed successfully"}
+{"level":"debug","ts":"2025-08-25T20:55:59.441+0700","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"debug","ts":"2025-08-25T20:55:59.441+0700","caller":"seeder/main.go:39","msg":"Seeding database","seeder":"true"}
+{"level":"info","ts":"2025-08-25T20:56:00.870+0700","caller":"seeder/user.go:65","msg":"User seeding completed successfully"}
+{"level":"debug","ts":"2025-08-25T20:56:20.896+0700","caller":"seeder/role.go:40","msg":"role seeded successfully","totalRoles":4}
+{"level":"info","ts":"2025-08-25T20:56:40.929+0700","caller":"seeder/user_role.go:70","msg":"user roles assigned successfully"}
+{"level":"info","ts":"2025-08-25T20:57:35.995+0700","caller":"seeder/merchant.go:110","msg":"merchant succesfully seeded"}
+{"level":"info","ts":"2025-08-25T20:57:56.057+0700","caller":"seeder/merchant_detail.go:130","msg":"merchant detail & merchant social link successfully seeded"}
+{"level":"info","ts":"2025-08-25T20:58:16.086+0700","caller":"seeder/merchant_award.go:111","msg":"merchant awards seeded successfully"}
+{"level":"info","ts":"2025-08-25T20:58:36.115+0700","caller":"seeder/merchant_policy.go:85","msg":"merchant policy seeded successfully"}
+{"level":"info","ts":"2025-08-25T20:58:56.180+0700","caller":"seeder/merchant_business.go:102","msg":"merchant business successfully seeded"}
+{"level":"info","ts":"2025-08-25T20:59:51.256+0700","caller":"seeder/category.go:86","msg":"Successfully seeded 10 categories"}
+{"level":"info","ts":"2025-08-25T21:00:11.291+0700","caller":"seeder/product.go:142","msg":"product successfully seeded"}
+{"level":"info","ts":"2025-08-25T21:00:31.334+0700","caller":"seeder/order.go:50","msg":"order & order-item successfully seeded"}
+{"level":"info","ts":"2025-08-25T21:00:51.366+0700","caller":"seeder/shipping_address.go:45","msg":"shipping address successfully seeded"}
+{"level":"info","ts":"2025-08-25T21:01:11.399+0700","caller":"seeder/transaction.go:46","msg":"transaction successfully seeded"}
+{"level":"info","ts":"2025-08-25T21:01:31.431+0700","caller":"seeder/banner.go:103","msg":"banner successfully seeded"}
+{"level":"info","ts":"2025-08-25T21:01:51.474+0700","caller":"seeder/review.go:58","msg":"review & review detail successfully seeded"}
+{"level":"info","ts":"2025-08-25T21:02:11.506+0700","caller":"seeder/slider.go:47","msg":"slider successfully seeded"}
+{"level":"info","ts":"2025-08-25T21:02:31.521+0700","caller":"seeder/main.go:51","msg":"Database seeded successfully"}

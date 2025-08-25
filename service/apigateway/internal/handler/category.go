@@ -57,7 +57,7 @@ func NewHandlerCategory(
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	categoryHandler := &categoryHandleApi{
 		client:          client,
@@ -710,7 +710,7 @@ func (h *categoryHandleApi) FindMonthTotalPriceByMerchant(c echo.Context) error 
 // @Accept json
 // @Produce json
 // @Param year query int true "Year in YYYY format (e.g., 2023)"
-// @Param category_id query int true "Category ID"
+// @Param merchant_id query int true "Merchant ID"
 // @Success 200 {object} response.ApiResponseCategoryYearPrice "Yearly category pricing data"
 // @Failure 400 {object} response.ErrorResponse "Invalid year parameter"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
@@ -1593,9 +1593,10 @@ func (h *categoryHandleApi) parseCategoryForm(c echo.Context, requireImage bool)
 		return formData, nil
 	}
 
-	imagePath, err := h.upload_image.ProcessImageUpload(c, file)
+	imagePath, err := h.upload_image.ProcessImageUpload(c, "uploads/category", file, false)
 	if err != nil {
-		return formData, err
+		h.logger.Info("image upload error", zap.Error(err))
+		return formData, category_errors.ErrApiCategoryImageRequired(c)
 	}
 
 	formData.ImageCategory = imagePath

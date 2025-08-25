@@ -52,7 +52,7 @@ func NewOrderItemQueryService(
 			Help:    "Histogram of request durations for the OrderItemQueryService",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
 
 	prometheus.MustRegister(requestCounter, requestDuration)
@@ -247,5 +247,5 @@ func (s *orderItemQueryService) startTracingAndLogging(ctx context.Context, meth
 
 func (s *orderItemQueryService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

@@ -1,0 +1,94 @@
+{"level":"debug","ts":"2025-08-14T03:17:24.388Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T03:17:24.397Z","caller":"apps/server.go:166","msg":"Server running on port 50053"}
+{"level":"debug","ts":"2025-08-14T05:59:34.164Z","caller":"service/userQueryService.go:209","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T05:59:34.192Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"user:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T05:59:34.192Z","caller":"service/userQueryService.go:223","msg":"Successfully fetched all user records","totalRecords":7,"page":1,"pageSize":10}
+{"level":"info","ts":"2025-08-14T05:59:34.193Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.UserService/FindAll","request_id":"req_1755151174164762255_txmmwR3f","duration":"28.261098ms"}
+{"level":"debug","ts":"2025-08-14T11:16:13.208Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:16:13.232Z","caller":"apps/server.go:160","msg":"Server running on port 50053"}
+{"level":"debug","ts":"2025-08-14T11:40:40.278Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:40:40.290Z","caller":"apps/server.go:160","msg":"Server running on port 50053"}
+{"level":"debug","ts":"2025-08-14T15:57:28.853Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T15:57:28.867Z","caller":"apps/server.go:160","msg":"Server running on port 50053"}
+{"level":"debug","ts":"2025-08-14T16:08:12.657Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T16:08:12.675Z","caller":"apps/server.go:160","msg":"Server running on port 50053"}
+{"level":"debug","ts":"2025-08-14T22:19:19.469Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T22:19:19.477Z","caller":"apps/server.go:160","msg":"Server running on port 50053"}
+{"level":"debug","ts":"2025-08-15T00:57:15.881Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-15T00:57:15.894Z","caller":"apps/server.go:160","msg":"Server running on port 50053"}
+{"level":"debug","ts":"2025-08-18T06:35:18.358Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-18T06:35:18.384Z","caller":"apps/server.go:160","msg":"Server running on port 50053"}
+{"level":"debug","ts":"2025-08-24T06:59:48.756Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T06:59:48.778Z","caller":"apps/server.go:160","msg":"Server running on port 50053"}
+{"level":"debug","ts":"2025-08-24T16:25:32.113Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T16:25:32.131Z","caller":"apps/server.go:161","msg":"Server running on port 50053"}
+{"level":"debug","ts":"2025-08-24T17:47:51.883Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T17:47:51.894Z","caller":"apps/server.go:161","msg":"Server running on port 50053"}
+{"level":"debug","ts":"2025-08-25T08:07:38.511Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T08:07:38.532Z","caller":"apps/server.go:161","msg":"Server running on port 50053"}
+{"level":"debug","ts":"2025-08-25T11:40:56.716Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T11:40:56.723Z","caller":"apps/server.go:161","msg":"Server running on port 50053"}
+{"level":"info","ts":"2025-08-25T12:42:24.812Z","caller":"handler/user.go:228","msg":"Creating new user","email":"cashier@example.com","first_name":"Cashiers","last_name":"Example"}
+{"level":"debug","ts":"2025-08-25T12:42:24.813Z","caller":"service/userCommandService.go:307","msg":"Start: CreateUser"}
+{"level":"error","ts":"2025-08-25T12:42:24.839Z","caller":"errorhandler/errorhandler_helpers.go:47","msg":"Repository error in CreateUser","email":"cashier@example.com","error":"user not found","error":"user not found","trace.id":"FAILED_FIND_USER_BY_EMAIL_20250825_c81239d3"}
+{"level":"error","ts":"2025-08-25T12:42:24.840Z","caller":"handler/user.go:252","msg":"Failed to create user","email":"cashier@example.com","error":{"status":"error","message":"User email already exists","code":400}}
+{"level":"info","ts":"2025-08-25T12:42:24.840Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.UserService/Create","request_id":"req_1756125744812960790_Cv9jwvPi","duration":"27.712376ms","error":"rpc error: code = Code(400) desc = {\"status\":\"error\",\"message\":\"User email already exists\",\"code\":400}"}
+{"level":"info","ts":"2025-08-25T12:42:51.266Z","caller":"handler/user.go:228","msg":"Creating new user","email":"cashiersss@example.com","first_name":"Cashiers","last_name":"Example"}
+{"level":"debug","ts":"2025-08-25T12:42:51.266Z","caller":"service/userCommandService.go:307","msg":"Start: CreateUser"}
+{"level":"error","ts":"2025-08-25T12:42:51.267Z","caller":"errorhandler/errorhandler_helpers.go:47","msg":"Repository error in CreateUser","email":"cashiersss@example.com","error":"user not found","error":"user not found","trace.id":"FAILED_FIND_USER_BY_EMAIL_20250825_61f28040"}
+{"level":"error","ts":"2025-08-25T12:42:51.267Z","caller":"handler/user.go:252","msg":"Failed to create user","email":"cashiersss@example.com","error":{"status":"error","message":"User email already exists","code":400}}
+{"level":"info","ts":"2025-08-25T12:42:51.267Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.UserService/Create","request_id":"req_1756125771266310302_DjwOHvIo","duration":"1.448978ms","error":"rpc error: code = Code(400) desc = {\"status\":\"error\",\"message\":\"User email already exists\",\"code\":400}"}
+{"level":"debug","ts":"2025-08-25T12:49:07.673Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T12:49:07.676Z","caller":"apps/server.go:161","msg":"Server running on port 50053"}
+{"level":"info","ts":"2025-08-25T12:49:12.374Z","caller":"handler/user.go:228","msg":"Creating new user","email":"cashiersss@example.com","first_name":"Cashiers","last_name":"Example"}
+{"level":"debug","ts":"2025-08-25T12:49:12.375Z","caller":"service/userCommandService.go:307","msg":"Start: CreateUser"}
+{"level":"error","ts":"2025-08-25T12:49:12.384Z","caller":"errorhandler/errorhandler_helpers.go:47","msg":"Repository error in CreateUser","email":"cashiersss@example.com","error":"user not found","error":"user not found","trace.id":"FAILED_FIND_USER_BY_EMAIL_20250825_896a1f5d"}
+{"level":"error","ts":"2025-08-25T12:49:12.384Z","caller":"handler/user.go:252","msg":"Failed to create user","email":"cashiersss@example.com","error":{"status":"error","message":"User email already exists","code":400}}
+{"level":"info","ts":"2025-08-25T12:49:12.384Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.UserService/Create","request_id":"req_1756126152374680115_rxmwhfRI","duration":"9.847248ms","error":"rpc error: code = Code(400) desc = {\"status\":\"error\",\"message\":\"User email already exists\",\"code\":400}"}
+{"level":"info","ts":"2025-08-25T12:49:27.467Z","caller":"handler/user.go:228","msg":"Creating new user","email":"cashiersssdd@example.com","first_name":"Cashiers","last_name":"Example"}
+{"level":"debug","ts":"2025-08-25T12:49:27.468Z","caller":"service/userCommandService.go:307","msg":"Start: CreateUser"}
+{"level":"error","ts":"2025-08-25T12:49:27.469Z","caller":"errorhandler/errorhandler_helpers.go:47","msg":"Repository error in CreateUser","email":"cashiersssdd@example.com","error":"user not found","error":"user not found","trace.id":"FAILED_FIND_USER_BY_EMAIL_20250825_78d353e0"}
+{"level":"error","ts":"2025-08-25T12:49:27.469Z","caller":"handler/user.go:252","msg":"Failed to create user","email":"cashiersssdd@example.com","error":{"status":"error","message":"User email already exists","code":400}}
+{"level":"info","ts":"2025-08-25T12:49:27.469Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.UserService/Create","request_id":"req_1756126167467776593_ihSidDsz","duration":"1.615071ms","error":"rpc error: code = Code(400) desc = {\"status\":\"error\",\"message\":\"User email already exists\",\"code\":400}"}
+{"level":"debug","ts":"2025-08-25T13:13:23.555Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:13:23.558Z","caller":"apps/server.go:161","msg":"Server running on port 50053"}
+{"level":"info","ts":"2025-08-25T13:13:33.037Z","caller":"handler/user.go:228","msg":"Creating new user","email":"cashierss@example.com","first_name":"Cashiers","last_name":"Example"}
+{"level":"debug","ts":"2025-08-25T13:13:33.038Z","caller":"service/userCommandService.go:303","msg":"Start: CreateUser"}
+{"level":"debug","ts":"2025-08-25T13:13:33.208Z","caller":"service/userCommandService.go:317","msg":"Successfully created user","user.id":23,"success":true}
+{"level":"info","ts":"2025-08-25T13:13:33.208Z","caller":"handler/user.go:259","msg":"User created successfully","user_id":23,"email":"cashierss@example.com","full_name":"Cashiers Example"}
+{"level":"info","ts":"2025-08-25T13:13:33.208Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.UserService/Create","request_id":"req_1756127613037612757_JY626gw8","duration":"170.967321ms"}
+{"level":"info","ts":"2025-08-25T13:14:04.509Z","caller":"handler/user.go:277","msg":"Updating user","user_id":23}
+{"level":"debug","ts":"2025-08-25T13:14:04.510Z","caller":"service/userCommandService.go:303","msg":"Start: UpdateUser"}
+{"level":"error","ts":"2025-08-25T13:14:04.652Z","caller":"errorhandler/errorhandler_helpers.go:47","msg":"Repository error in UpdateUser","error":"role not found","trace.id":"FAILED_FIND_ROLE_20250825_4c909273"}
+{"level":"error","ts":"2025-08-25T13:14:04.652Z","caller":"handler/user.go:299","msg":"Failed to update user","user_id":23,"email":"cashierss@example.com","error":{"status":"error","message":"Role not found","code":404}}
+{"level":"info","ts":"2025-08-25T13:14:04.652Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.UserService/Update","request_id":"req_1756127644509917932_zijoH7Xv","duration":"142.844619ms","error":"rpc error: code = Code(404) desc = {\"status\":\"error\",\"message\":\"Role not found\",\"code\":404}"}
+{"level":"debug","ts":"2025-08-25T13:18:18.693Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:18:18.695Z","caller":"apps/server.go:161","msg":"Server running on port 50053"}
+{"level":"info","ts":"2025-08-25T13:18:46.281Z","caller":"handler/user.go:277","msg":"Updating user","user_id":23}
+{"level":"debug","ts":"2025-08-25T13:18:46.281Z","caller":"service/userCommandService.go:303","msg":"Start: UpdateUser"}
+{"level":"debug","ts":"2025-08-25T13:18:46.438Z","caller":"service/userCommandService.go:317","msg":"Successfully updated user","user.id":23,"success":true}
+{"level":"info","ts":"2025-08-25T13:18:46.439Z","caller":"handler/user.go:307","msg":"User updated successfully","user_id":23,"full_name":"Cashiers Example","email":"cashierss@example.com"}
+{"level":"info","ts":"2025-08-25T13:18:46.439Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.UserService/Update","request_id":"req_1756127926281407068_CzEUEWEP","duration":"157.811769ms"}
+{"level":"debug","ts":"2025-08-25T13:48:14.314Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:48:14.324Z","caller":"apps/server.go:161","msg":"Server running on port 50053"}
+{"level":"debug","ts":"2025-08-25T13:54:47.148Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:54:47.182Z","caller":"apps/server.go:161","msg":"Server running on port 50053"}
+{"level":"debug","ts":"2025-08-25T15:00:37.739Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T15:00:37.774Z","caller":"apps/server.go:161","msg":"Server running on port 50053"}
+{"level":"info","ts":"2025-08-25T16:02:02.285Z","caller":"handler/user.go:47","msg":"Fetching all users","page":1,"page_size":10,"search":""}
+{"level":"debug","ts":"2025-08-25T16:02:02.285Z","caller":"service/userQueryService.go:209","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-25T16:02:02.309Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"user:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-25T16:02:02.309Z","caller":"service/userQueryService.go:223","msg":"Successfully fetched all user records","totalRecords":6,"page":1,"pageSize":10}
+{"level":"info","ts":"2025-08-25T16:02:02.309Z","caller":"handler/user.go:79","msg":"Successfully fetched all users","page":1,"total_records":6,"total_pages":1,"fetched_users_count":6}
+{"level":"info","ts":"2025-08-25T16:02:02.309Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.UserService/FindAll","request_id":"req_1756137722285333690_29JArBDz","duration":"24.608165ms"}
+{"level":"info","ts":"2025-08-25T16:06:46.123Z","caller":"handler/user.go:47","msg":"Fetching all users","page":1,"page_size":10,"search":""}
+{"level":"debug","ts":"2025-08-25T16:06:46.124Z","caller":"service/userQueryService.go:209","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-25T16:06:46.127Z","caller":"service/userQueryService.go:223","msg":"Successfully fetched user records from cache","totalRecords":6,"page":1,"pageSize":10}
+{"level":"info","ts":"2025-08-25T16:06:46.127Z","caller":"handler/user.go:79","msg":"Successfully fetched all users","page":1,"total_records":6,"total_pages":1,"fetched_users_count":6}
+{"level":"info","ts":"2025-08-25T16:06:46.127Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.UserService/FindAll","request_id":"req_1756138006123759492_5sm5FdVj","duration":"4.014513ms"}
+{"level":"info","ts":"2025-08-25T16:11:41.985Z","caller":"handler/user.go:47","msg":"Fetching all users","page":1,"page_size":10,"search":""}
+{"level":"debug","ts":"2025-08-25T16:11:41.985Z","caller":"service/userQueryService.go:209","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-25T16:11:41.989Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"user:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-25T16:11:41.990Z","caller":"service/userQueryService.go:223","msg":"Successfully fetched all user records","totalRecords":6,"page":1,"pageSize":10}
+{"level":"info","ts":"2025-08-25T16:11:41.990Z","caller":"handler/user.go:79","msg":"Successfully fetched all users","page":1,"total_records":6,"total_pages":1,"fetched_users_count":6}
+{"level":"info","ts":"2025-08-25T16:11:41.990Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.UserService/FindAll","request_id":"req_1756138301985072263_3jfNJ90l","duration":"5.219905ms"}

@@ -66,7 +66,7 @@ func NewRegisterService(
 			Help:    "Histogram of request durations for the RegisterService",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
 
 	prometheus.MustRegister(requestCounter, requestDuration)
@@ -112,7 +112,7 @@ func (s *registerService) Register(ctx context.Context, request *requests.Regist
 	}
 	request.Password = passwordHash
 
-	const defaultRoleName = "Admin Access 1"
+	const defaultRoleName = "Admin"
 
 	role, err := s.role.FindByName(ctx, defaultRoleName)
 
@@ -127,7 +127,7 @@ func (s *registerService) Register(ctx context.Context, request *requests.Regist
 	}
 
 	request.VerifiedCode = random
-	request.IsVerified = false
+	request.IsVerified = true
 
 	newUser, err := s.user.CreateUser(ctx, request)
 	if err != nil {
@@ -218,5 +218,5 @@ func (s *registerService) startTracingAndLogging(ctx context.Context, method str
 
 func (s *registerService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

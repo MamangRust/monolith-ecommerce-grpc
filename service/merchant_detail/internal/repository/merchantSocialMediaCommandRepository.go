@@ -4,48 +4,52 @@ import (
 	"context"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	merchantsociallink_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant_social_link_errors"
+	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type merchantSocialLinkCommandRepository struct {
-	db *db.Queries
+	db      *db.Queries
+	mapping recordmapper.MerchantSociaLinkMapping
 }
 
-func NewMerchantSocialLinkCommandRepository(db *db.Queries) *merchantSocialLinkCommandRepository {
+func NewMerchantSocialLinkCommandRepository(db *db.Queries, mapping recordmapper.MerchantSociaLinkMapping) *merchantSocialLinkCommandRepository {
 	return &merchantSocialLinkCommandRepository{
-		db: db,
+		db:      db,
+		mapping: mapping,
 	}
 }
 
-func (r *merchantSocialLinkCommandRepository) CreateSocialLink(ctx context.Context, req *requests.CreateMerchantSocialRequest) (bool, error) {
+func (r *merchantSocialLinkCommandRepository) CreateSocialLink(ctx context.Context, req *requests.CreateMerchantSocialRequest) (*record.MerchantSocialLinkRecord, error) {
 	params := db.CreateMerchantSocialMediaLinkParams{
 		MerchantDetailID: int32(*req.MerchantDetailID),
 		Platform:         req.Platform,
 		Url:              req.Url,
 	}
 
-	_, err := r.db.CreateMerchantSocialMediaLink(ctx, params)
+	res, err := r.db.CreateMerchantSocialMediaLink(ctx, params)
 	if err != nil {
-		return false, merchantsociallink_errors.ErrCreateMerchantSocialLink
+		return nil, merchantsociallink_errors.ErrCreateMerchantSocialLink
 	}
 
-	return true, nil
+	return r.mapping.ToMerchantSocialLinkRecord(res), nil
 }
 
-func (r *merchantSocialLinkCommandRepository) UpdateSocialLink(ctx context.Context, req *requests.UpdateMerchantSocialRequest) (bool, error) {
+func (r *merchantSocialLinkCommandRepository) UpdateSocialLink(ctx context.Context, req *requests.UpdateMerchantSocialRequest) (*record.MerchantSocialLinkRecord, error) {
 	params := db.UpdateMerchantSocialMediaLinkParams{
 		MerchantSocialID: int32(req.ID),
 		Platform:         req.Platform,
 		Url:              req.Url,
 	}
 
-	_, err := r.db.UpdateMerchantSocialMediaLink(ctx, params)
+	res, err := r.db.UpdateMerchantSocialMediaLink(ctx, params)
 	if err != nil {
-		return false, merchantsociallink_errors.ErrUpdateMerchantSocialLink
+		return nil, merchantsociallink_errors.ErrUpdateMerchantSocialLink
 	}
 
-	return true, nil
+	return r.mapping.ToMerchantSocialLinkRecord(res), nil
 }
 
 func (r *merchantSocialLinkCommandRepository) TrashSocialLink(ctx context.Context, socialID int) (bool, error) {

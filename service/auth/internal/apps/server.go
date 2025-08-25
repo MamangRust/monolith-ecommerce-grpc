@@ -59,7 +59,7 @@ type Server struct {
 func NewServer(ctx context.Context) (*Server, func(context.Context) error, error) {
 	flag.Parse()
 
-	logger, err := logger.NewLogger("auth")
+	logger, err := logger.NewLogger("auth-service")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize logger: %w", err)
 	}
@@ -85,14 +85,10 @@ func NewServer(ctx context.Context) (*Server, func(context.Context) error, error
 	kafka := kafka.NewKafka(logger, []string{viper.GetString("KAFKA_BROKERS")})
 
 	shutdownTracerProvider, err := otel_pkg.InitTracerProvider("Auth-service", ctx)
+
 	if err != nil {
 		logger.Fatal("Failed to initialize tracer provider", zap.Error(err))
 	}
-	defer func() {
-		if err := shutdownTracerProvider(ctx); err != nil {
-			logger.Fatal("Failed to shutdown tracer provider", zap.Error(err))
-		}
-	}()
 
 	myredis := redis.NewClient(&redis.Options{
 		Addr:         fmt.Sprintf("%s:%s", viper.GetString("REDIS_HOST"), viper.GetString("REDIS_PORT")),
@@ -127,7 +123,8 @@ func NewServer(ctx context.Context) (*Server, func(context.Context) error, error
 	})
 
 	handlers := handler.NewHandler(handler.Deps{
-		Service: *services,
+		Service: services,
+		Logger:  logger,
 	})
 
 	return &Server{

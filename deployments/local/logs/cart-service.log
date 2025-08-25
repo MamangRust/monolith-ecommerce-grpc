@@ -1,0 +1,136 @@
+{"level":"debug","ts":"2025-08-14T03:17:24.125Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T03:17:24.135Z","caller":"apps/server.go:158","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-14T03:17:24.135Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50061"}
+{"level":"info","ts":"2025-08-14T03:17:24.135Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8090"}
+{"level":"info","ts":"2025-08-14T05:54:37.725Z","caller":"service/cardQueryService.go:119","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T05:54:37.752Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"cart:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T05:54:37.752Z","caller":"service/cardQueryService.go:133","msg":"Successfully fetched all Carts","totalRecords":0,"page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-14T05:54:37.752Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/FindAll","request_id":"req_1755150877725746189_OKn1lvfO","duration":"27.197139ms"}
+{"level":"debug","ts":"2025-08-14T11:16:13.224Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:16:13.243Z","caller":"apps/server.go:153","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-14T11:16:13.245Z","caller":"apps/server.go:168","msg":"gRPC server listening on :50061"}
+{"level":"info","ts":"2025-08-14T11:16:13.245Z","caller":"apps/server.go:160","msg":"Metrics server listening on :8090"}
+{"level":"debug","ts":"2025-08-14T11:40:40.485Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:40:40.491Z","caller":"apps/server.go:153","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-14T11:40:40.492Z","caller":"apps/server.go:168","msg":"gRPC server listening on :50061"}
+{"level":"info","ts":"2025-08-14T11:40:40.492Z","caller":"apps/server.go:160","msg":"Metrics server listening on :8090"}
+{"level":"info","ts":"2025-08-14T13:24:44.953Z","caller":"service/cardCommandService.go:171","msg":"Start: CreateCart"}
+{"level":"debug","ts":"2025-08-14T13:24:44.986Z","caller":"service/cardCommandService.go:185","msg":"Successfully created cart","cart.id":1}
+{"level":"info","ts":"2025-08-14T13:24:44.986Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/Create","request_id":"req_1755177884951897501_WEgCbm7d","duration":"34.763296ms"}
+{"level":"info","ts":"2025-08-14T13:24:45.493Z","caller":"service/cardCommandService.go:171","msg":"Start: CreateCart"}
+{"level":"debug","ts":"2025-08-14T13:24:45.496Z","caller":"service/cardCommandService.go:185","msg":"Successfully created cart","cart.id":2}
+{"level":"info","ts":"2025-08-14T13:24:45.496Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/Create","request_id":"req_1755177885493595181_jWp7jjcL","duration":"3.063698ms"}
+{"level":"info","ts":"2025-08-14T13:24:46.002Z","caller":"service/cardCommandService.go:171","msg":"Start: CreateCart"}
+{"level":"debug","ts":"2025-08-14T13:24:46.006Z","caller":"service/cardCommandService.go:185","msg":"Successfully created cart","cart.id":3}
+{"level":"info","ts":"2025-08-14T13:24:46.006Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/Create","request_id":"req_1755177886002563105_f7MBFOIQ","duration":"4.219586ms"}
+{"level":"info","ts":"2025-08-14T13:24:47.513Z","caller":"service/cardQueryService.go:119","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T13:24:47.525Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"cart:all:page:1:pageSize:5:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:24:47.525Z","caller":"service/cardQueryService.go:133","msg":"Successfully fetched all Carts","totalRecords":0,"page":1,"pageSize":5,"search":""}
+{"level":"info","ts":"2025-08-14T13:24:47.525Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/FindAll","request_id":"req_1755177887512984468_wPrfU4Bx","duration":"12.979499ms"}
+{"level":"info","ts":"2025-08-14T13:24:48.534Z","caller":"service/cardQueryService.go:119","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T13:24:48.536Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"cart:all:page:1:pageSize:10:search:1","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:24:48.536Z","caller":"service/cardQueryService.go:133","msg":"Successfully fetched all Carts","totalRecords":0,"page":1,"pageSize":10,"search":"1"}
+{"level":"info","ts":"2025-08-14T13:24:48.536Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/FindAll","request_id":"req_1755177888534062904_jJk3p8vL","duration":"2.367818ms"}
+{"level":"info","ts":"2025-08-14T14:04:27.963Z","caller":"service/cardCommandService.go:171","msg":"Start: CreateCart"}
+{"level":"debug","ts":"2025-08-14T14:04:27.988Z","caller":"service/cardCommandService.go:185","msg":"Successfully created cart","cart.id":4}
+{"level":"info","ts":"2025-08-14T14:04:27.988Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/Create","request_id":"req_1755180267963872067_jkcssccV","duration":"24.742316ms"}
+{"level":"info","ts":"2025-08-14T14:04:28.495Z","caller":"service/cardCommandService.go:171","msg":"Start: CreateCart"}
+{"level":"debug","ts":"2025-08-14T14:04:28.498Z","caller":"service/cardCommandService.go:185","msg":"Successfully created cart","cart.id":5}
+{"level":"info","ts":"2025-08-14T14:04:28.498Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/Create","request_id":"req_1755180268495248288_tnWGRW33","duration":"3.091009ms"}
+{"level":"info","ts":"2025-08-14T14:04:29.003Z","caller":"service/cardCommandService.go:171","msg":"Start: CreateCart"}
+{"level":"debug","ts":"2025-08-14T14:04:29.006Z","caller":"service/cardCommandService.go:185","msg":"Successfully created cart","cart.id":6}
+{"level":"info","ts":"2025-08-14T14:04:29.006Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/Create","request_id":"req_1755180269003420787_IgUrjkNA","duration":"3.134827ms"}
+{"level":"info","ts":"2025-08-14T14:04:30.511Z","caller":"service/cardQueryService.go:119","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T14:04:30.520Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"cart:all:page:1:pageSize:5:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:04:30.520Z","caller":"service/cardQueryService.go:133","msg":"Successfully fetched all Carts","totalRecords":3,"page":1,"pageSize":5,"search":""}
+{"level":"info","ts":"2025-08-14T14:04:30.520Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/FindAll","request_id":"req_1755180270511798075_DDy7rb7S","duration":"8.738661ms"}
+{"level":"info","ts":"2025-08-14T14:04:31.526Z","caller":"service/cardQueryService.go:119","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T14:04:31.528Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"cart:all:page:1:pageSize:10:search:1","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:04:31.528Z","caller":"service/cardQueryService.go:133","msg":"Successfully fetched all Carts","totalRecords":0,"page":1,"pageSize":10,"search":"1"}
+{"level":"info","ts":"2025-08-14T14:04:31.528Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/FindAll","request_id":"req_1755180271526100827_pfC6cAFQ","duration":"2.266053ms"}
+{"level":"info","ts":"2025-08-14T14:41:11.256Z","caller":"service/cardCommandService.go:171","msg":"Start: CreateCart"}
+{"level":"debug","ts":"2025-08-14T14:41:11.282Z","caller":"service/cardCommandService.go:185","msg":"Successfully created cart","cart.id":7}
+{"level":"info","ts":"2025-08-14T14:41:11.282Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/Create","request_id":"req_1755182471256469238_AHVZ8PAE","duration":"25.648508ms"}
+{"level":"info","ts":"2025-08-14T14:41:11.788Z","caller":"service/cardCommandService.go:171","msg":"Start: CreateCart"}
+{"level":"debug","ts":"2025-08-14T14:41:11.793Z","caller":"service/cardCommandService.go:185","msg":"Successfully created cart","cart.id":8}
+{"level":"info","ts":"2025-08-14T14:41:11.793Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/Create","request_id":"req_1755182471788038361_t6hkIStl","duration":"5.22371ms"}
+{"level":"info","ts":"2025-08-14T14:41:12.298Z","caller":"service/cardCommandService.go:171","msg":"Start: CreateCart"}
+{"level":"debug","ts":"2025-08-14T14:41:12.303Z","caller":"service/cardCommandService.go:185","msg":"Successfully created cart","cart.id":9}
+{"level":"info","ts":"2025-08-14T14:41:12.303Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/Create","request_id":"req_1755182472298199816_hL0hj5eC","duration":"5.048669ms"}
+{"level":"info","ts":"2025-08-14T14:41:13.808Z","caller":"service/cardQueryService.go:119","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T14:41:13.815Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"cart:all:page:1:pageSize:5:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:41:13.815Z","caller":"service/cardQueryService.go:133","msg":"Successfully fetched all Carts","totalRecords":6,"page":1,"pageSize":5,"search":""}
+{"level":"info","ts":"2025-08-14T14:41:13.815Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/FindAll","request_id":"req_1755182473808070635_eATFElae","duration":"7.860323ms"}
+{"level":"info","ts":"2025-08-14T14:41:14.821Z","caller":"service/cardQueryService.go:119","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T14:41:14.823Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"cart:all:page:1:pageSize:10:search:1","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T14:41:14.823Z","caller":"service/cardQueryService.go:133","msg":"Successfully fetched all Carts","totalRecords":0,"page":1,"pageSize":10,"search":"1"}
+{"level":"info","ts":"2025-08-14T14:41:14.823Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/FindAll","request_id":"req_1755182474821714084_1HOgTmfb","duration":"2.092158ms"}
+{"level":"info","ts":"2025-08-14T14:41:15.829Z","caller":"service/cardCommandService.go:171","msg":"Start: DeletePermanent"}
+{"level":"debug","ts":"2025-08-14T14:41:15.832Z","caller":"service/cardCommandService.go:185","msg":"Successfully permanently deleted cart","cart.id":7,"success":true}
+{"level":"info","ts":"2025-08-14T14:41:15.832Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/Delete","request_id":"req_1755182475828978678_qFeAEFoc","duration":"3.906309ms"}
+{"level":"info","ts":"2025-08-14T14:41:16.840Z","caller":"service/cardCommandService.go:171","msg":"Start: DeleteAllPermanently"}
+{"level":"debug","ts":"2025-08-14T14:41:16.844Z","caller":"service/cardCommandService.go:185","msg":"Successfully permanently deleted all cart","cart.id":[7,8,9],"success":true}
+{"level":"info","ts":"2025-08-14T14:41:16.844Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/DeleteAll","request_id":"req_1755182476840346963_KIdvo6ti","duration":"4.446671ms"}
+{"level":"debug","ts":"2025-08-14T15:57:27.924Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T15:57:27.954Z","caller":"apps/server.go:153","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-14T15:57:27.954Z","caller":"apps/server.go:168","msg":"gRPC server listening on :50061"}
+{"level":"info","ts":"2025-08-14T15:57:27.979Z","caller":"apps/server.go:160","msg":"Metrics server listening on :8090"}
+{"level":"debug","ts":"2025-08-14T16:08:11.957Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T16:08:11.985Z","caller":"apps/server.go:153","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-14T16:08:11.985Z","caller":"apps/server.go:168","msg":"gRPC server listening on :50061"}
+{"level":"info","ts":"2025-08-14T16:08:11.985Z","caller":"apps/server.go:160","msg":"Metrics server listening on :8090"}
+{"level":"debug","ts":"2025-08-14T22:19:19.483Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T22:19:19.492Z","caller":"apps/server.go:153","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-14T22:19:19.492Z","caller":"apps/server.go:168","msg":"gRPC server listening on :50061"}
+{"level":"info","ts":"2025-08-14T22:19:19.492Z","caller":"apps/server.go:160","msg":"Metrics server listening on :8090"}
+{"level":"debug","ts":"2025-08-15T00:57:14.326Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-15T00:57:14.335Z","caller":"apps/server.go:153","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-15T00:57:14.336Z","caller":"apps/server.go:168","msg":"gRPC server listening on :50061"}
+{"level":"info","ts":"2025-08-15T00:57:14.336Z","caller":"apps/server.go:160","msg":"Metrics server listening on :8090"}
+{"level":"debug","ts":"2025-08-18T06:35:19.095Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-18T06:35:19.115Z","caller":"apps/server.go:153","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-18T06:35:19.116Z","caller":"apps/server.go:160","msg":"Metrics server listening on :8090"}
+{"level":"info","ts":"2025-08-18T06:35:19.116Z","caller":"apps/server.go:168","msg":"gRPC server listening on :50061"}
+{"level":"debug","ts":"2025-08-24T06:59:49.048Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T06:59:49.057Z","caller":"apps/server.go:153","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-24T06:59:49.057Z","caller":"apps/server.go:168","msg":"gRPC server listening on :50061"}
+{"level":"info","ts":"2025-08-24T06:59:49.057Z","caller":"apps/server.go:160","msg":"Metrics server listening on :8090"}
+{"level":"debug","ts":"2025-08-24T16:25:32.128Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T16:25:32.155Z","caller":"apps/server.go:154","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-24T16:25:32.158Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8090"}
+{"level":"info","ts":"2025-08-24T16:25:32.160Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50061"}
+{"level":"debug","ts":"2025-08-24T17:47:52.239Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T17:47:52.245Z","caller":"apps/server.go:154","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-24T17:47:52.248Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50061"}
+{"level":"info","ts":"2025-08-24T17:47:52.248Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8090"}
+{"level":"debug","ts":"2025-08-25T08:07:37.988Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T08:07:38.017Z","caller":"apps/server.go:154","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-25T08:07:38.018Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50061"}
+{"level":"info","ts":"2025-08-25T08:07:38.018Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8090"}
+{"level":"debug","ts":"2025-08-25T11:40:56.881Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T11:40:56.886Z","caller":"apps/server.go:154","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-25T11:40:56.886Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50061"}
+{"level":"info","ts":"2025-08-25T11:40:56.886Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8090"}
+{"level":"debug","ts":"2025-08-25T13:48:14.641Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:48:14.648Z","caller":"apps/server.go:154","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-25T13:48:14.649Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8090"}
+{"level":"info","ts":"2025-08-25T13:48:14.649Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50061"}
+{"level":"debug","ts":"2025-08-25T13:54:48.439Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:54:48.479Z","caller":"apps/server.go:154","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-25T13:54:48.480Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8090"}
+{"level":"info","ts":"2025-08-25T13:54:48.481Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50061"}
+{"level":"debug","ts":"2025-08-25T15:00:37.952Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T15:00:37.970Z","caller":"apps/server.go:154","msg":"Server running on port 50060"}
+{"level":"info","ts":"2025-08-25T15:00:37.971Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50061"}
+{"level":"info","ts":"2025-08-25T15:00:37.971Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8090"}
+{"level":"info","ts":"2025-08-25T15:02:16.355Z","caller":"handler/cart.go:98","msg":"Adding item to cart","user_id":11,"product_id":1,"quantity":1}
+{"level":"info","ts":"2025-08-25T15:02:16.356Z","caller":"service/cardCommandService.go:171","msg":"Start: CreateCart"}
+{"level":"debug","ts":"2025-08-25T15:02:16.372Z","caller":"service/cardCommandService.go:185","msg":"Successfully created cart","cart.id":1}
+{"level":"info","ts":"2025-08-25T15:02:16.372Z","caller":"handler/cart.go:123","msg":"Item successfully added to cart","user_id":11,"cart_item_id":1,"product_id":1,"quantity":1}
+{"level":"info","ts":"2025-08-25T15:02:16.372Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/Create","request_id":"req_1756134136355888704_C14sX9bl","duration":"16.761324ms"}
+{"level":"info","ts":"2025-08-25T16:07:36.264Z","caller":"handler/cart.go:47","msg":"Fetching cart items","user_id":11,"page":1,"page_size":10,"search":""}
+{"level":"info","ts":"2025-08-25T16:07:36.264Z","caller":"service/cardQueryService.go:119","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-25T16:07:36.288Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"cart:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-25T16:07:36.288Z","caller":"service/cardQueryService.go:133","msg":"Successfully fetched all Carts","totalRecords":1,"page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-25T16:07:36.288Z","caller":"handler/cart.go:81","msg":"Successfully fetched cart items","user_id":11,"total_records":1,"total_pages":1}
+{"level":"info","ts":"2025-08-25T16:07:36.288Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.CartService/FindAll","request_id":"req_1756138056264040158_oquDWfFq","duration":"24.651931ms"}

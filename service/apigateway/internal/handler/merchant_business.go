@@ -55,7 +55,7 @@ func NewHandlerMerchantBusiness(
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	merchantBusinessHandler := &merchantBusinessHandleApi{
 		client:          client,

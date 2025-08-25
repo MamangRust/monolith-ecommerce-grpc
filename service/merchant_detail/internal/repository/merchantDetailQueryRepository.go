@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"fmt"
+	"log"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
@@ -105,8 +107,11 @@ func (r *merchantDetailQueryRepository) FindById(ctx context.Context, user_id in
 	res, err := r.db.GetMerchantDetail(ctx, int32(user_id))
 
 	if err != nil {
-		return nil, merchantdetail_errors.ErrFindByIdMerchantDetail
+		log.Fatal("hello", err)
+		return nil, err
 	}
+
+	fmt.Println("Hello", res)
 
 	return r.mapping.ToMerchantDetailRelationRecord(res), nil
 }

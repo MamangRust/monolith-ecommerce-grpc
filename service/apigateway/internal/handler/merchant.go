@@ -53,7 +53,7 @@ func NewHandlerMerchant(
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	merchantHandler := &merchantHandleApi{
 		client:          client,
@@ -326,6 +326,12 @@ func (h *merchantHandleApi) FindByTrashed(c echo.Context) error {
 func (h *merchantHandleApi) Create(c echo.Context) error {
 	const method = "Create"
 
+	userID, ok := c.Get("user_id").(int)
+	if !ok || userID <= 0 {
+		h.logger.Debug("Invalid or missing user ID from JWT")
+		return merchant_errors.ErrApiInvalidId(c)
+	}
+
 	ctx := c.Request().Context()
 
 	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
@@ -353,7 +359,7 @@ func (h *merchantHandleApi) Create(c echo.Context) error {
 	}
 
 	req := &pb.CreateMerchantRequest{
-		UserId:       int32(body.UserID),
+		UserId:       int32(userID),
 		Name:         body.Name,
 		Description:  body.Description,
 		Address:      body.Address,
@@ -395,6 +401,12 @@ func (h *merchantHandleApi) Create(c echo.Context) error {
 func (h *merchantHandleApi) Update(c echo.Context) error {
 	const method = "Update"
 
+	userID, ok := c.Get("user_id").(int)
+	if !ok || userID <= 0 {
+		h.logger.Debug("Invalid or missing user ID from JWT")
+		return merchant_errors.ErrApiInvalidId(c)
+	}
+
 	ctx := c.Request().Context()
 
 	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
@@ -435,7 +447,7 @@ func (h *merchantHandleApi) Update(c echo.Context) error {
 
 	req := &pb.UpdateMerchantRequest{
 		MerchantId:   int32(idInt),
-		UserId:       int32(body.UserID),
+		UserId:       int32(userID),
 		Name:         body.Name,
 		Description:  body.Description,
 		Address:      body.Address,

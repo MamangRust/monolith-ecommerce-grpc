@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -60,7 +59,7 @@ func NewHandlerMerchantDetail(
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	merchantDetailHandler := &merchantDetailHandleApi{
 		client:          client,
@@ -355,15 +354,6 @@ func (h *merchantDetailHandleApi) Create(c echo.Context) error {
 		return merchantdetail_errors.ErrApiInvalidBody(c)
 	}
 
-	var pbSocialLinks []*pb.CreateMerchantSocialRequest
-	for _, link := range formData.SocialLinks {
-		pbSocialLinks = append(pbSocialLinks, &pb.CreateMerchantSocialRequest{
-			MerchantDetailId: int32(*link.MerchantDetailID),
-			Platform:         link.Platform,
-			Url:              link.Url,
-		})
-	}
-
 	req := &pb.CreateMerchantDetailRequest{
 		MerchantId:       int32(formData.MerchantID),
 		DisplayName:      formData.DisplayName,
@@ -371,7 +361,6 @@ func (h *merchantDetailHandleApi) Create(c echo.Context) error {
 		LogoUrl:          formData.LogoUrl,
 		ShortDescription: formData.ShortDescription,
 		WebsiteUrl:       formData.WebsiteUrl,
-		SocialLinks:      pbSocialLinks,
 	}
 
 	res, err := h.client.Create(ctx, req)
@@ -438,16 +427,6 @@ func (h *merchantDetailHandleApi) Update(c echo.Context) error {
 		return merchantdetail_errors.ErrApiInvalidBody(c)
 	}
 
-	var pbSocialLinks []*pb.UpdateMerchantSocialRequest
-	for _, link := range formData.SocialLinks {
-		pbSocialLinks = append(pbSocialLinks, &pb.UpdateMerchantSocialRequest{
-			Id:               int32(link.ID),
-			MerchantDetailId: int32(*link.MerchantDetailID),
-			Platform:         link.Platform,
-			Url:              link.Url,
-		})
-	}
-
 	req := &pb.UpdateMerchantDetailRequest{
 		MerchantDetailId: int32(idInt),
 		DisplayName:      formData.DisplayName,
@@ -455,7 +434,6 @@ func (h *merchantDetailHandleApi) Update(c echo.Context) error {
 		LogoUrl:          formData.LogoUrl,
 		ShortDescription: formData.ShortDescription,
 		WebsiteUrl:       formData.WebsiteUrl,
-		SocialLinks:      pbSocialLinks,
 	}
 
 	res, err := h.client.Update(ctx, req)
@@ -742,7 +720,7 @@ func (h *merchantDetailHandleApi) parseMerchantDetailCreate(c echo.Context) (req
 		return formData, merchantdetail_errors.ErrApiCoverImageRequired(c)
 	}
 
-	coverPath, err := h.upload_image.ProcessImageUpload(c, coverFile)
+	coverPath, err := h.upload_image.ProcessImageUpload(c, "uploads/merchant_detail/cover", coverFile, false)
 	if err != nil {
 		return formData, err
 	}
@@ -753,22 +731,11 @@ func (h *merchantDetailHandleApi) parseMerchantDetailCreate(c echo.Context) (req
 		return formData, merchantdetail_errors.ErrApiLogoRequired(c)
 	}
 
-	logoPath, err := h.upload_image.ProcessImageUpload(c, logoFile)
+	logoPath, err := h.upload_image.ProcessImageUpload(c, "uploads/merchant_detail/logo", logoFile, false)
 	if err != nil {
+		formData.LogoUrl = logoPath
 		return formData, err
 	}
-	formData.LogoUrl = logoPath
-
-	socialLinksJson := c.FormValue("social_links")
-	if socialLinksJson == "" {
-		return formData, merchantdetail_errors.ErrApiSocialLinksRequired(c)
-	}
-
-	var parsedSocialLinks []requests.CreateMerchantSocialFormData
-	if err := json.Unmarshal([]byte(socialLinksJson), &parsedSocialLinks); err != nil {
-		return formData, merchantdetail_errors.ErrApiInvalidSocialLinks(c)
-	}
-	formData.SocialLinks = parsedSocialLinks
 
 	return formData, nil
 }
@@ -783,7 +750,7 @@ func (h *merchantDetailHandleApi) parseMerchantDetailUpdate(c echo.Context) (req
 
 	coverFile, err := c.FormFile("cover_image_url")
 	if err == nil {
-		coverPath, err := h.upload_image.ProcessImageUpload(c, coverFile)
+		coverPath, err := h.upload_image.ProcessImageUpload(c, "uploads/merchant_detail/cover", coverFile, false)
 		if err != nil {
 			return formData, err
 		}
@@ -792,23 +759,12 @@ func (h *merchantDetailHandleApi) parseMerchantDetailUpdate(c echo.Context) (req
 
 	logoFile, err := c.FormFile("logo_url")
 	if err == nil {
-		logoPath, err := h.upload_image.ProcessImageUpload(c, logoFile)
+		logoPath, err := h.upload_image.ProcessImageUpload(c, "uploads/merchant_detail/logo", logoFile, false)
 		if err != nil {
 			return formData, err
 		}
 		formData.LogoUrl = logoPath
 	}
-
-	socialLinksRaw := c.FormValue("social_links")
-	if socialLinksRaw != "" {
-		var links []requests.UpdateMerchantSocialFormData
-		err = json.Unmarshal([]byte(socialLinksRaw), &links)
-		if err != nil {
-			return formData, merchantdetail_errors.ErrApiInvalidSocialLinks(c)
-		}
-		formData.SocialLinks = links
-	}
-
 	return formData, nil
 }
 

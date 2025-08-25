@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/MamangRust/monolith-ecommerce-pkg/database"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
@@ -15,9 +14,9 @@ import (
 )
 
 func main() {
-	logger, err := logger.NewLogger()
+	logger, err := logger.NewLogger("seeder")
 	if err != nil {
-		fmt.Errorf("failed to initialize logger: %w", err)
+		logger.Fatal("Failed to initialize logger", zap.Error(err))
 	}
 
 	if err := dotenv.Viper(); err != nil {

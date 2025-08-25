@@ -1,0 +1,20 @@
+{"level":"debug","ts":"2025-08-25T15:00:36.562Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T15:00:36.593Z","caller":"apps/server.go:161","msg":"Server running on port 50067"}
+{"level":"info","ts":"2025-08-25T15:00:36.595Z","caller":"apps/server.go:168","msg":"Metrics server listening on :8097"}
+{"level":"info","ts":"2025-08-25T15:00:36.595Z","caller":"apps/server.go:176","msg":"gRPC server listening on :50067"}
+{"level":"info","ts":"2025-08-25T15:03:55.883Z","caller":"handler/merchant.go:233","msg":"Creating merchant detail","merchant_id":9,"display_name":"Best Cafe"}
+{"level":"debug","ts":"2025-08-25T15:03:55.884Z","caller":"service/merchantDetailCommandService.go:290","msg":"Start: CreateMerchant"}
+{"level":"debug","ts":"2025-08-25T15:03:55.891Z","caller":"service/merchantDetailCommandService.go:300","msg":"Merchant detail created","merchantID":9}
+{"level":"info","ts":"2025-08-25T15:03:55.891Z","caller":"handler/merchant.go:266","msg":"Merchant detail created successfully","detail_id":9,"merchant_id":9,"display_name":"Best Cafe","social_links_count":0}
+{"level":"info","ts":"2025-08-25T15:03:55.891Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantDetailService/Create","request_id":"req_1756134235883852806_j5I7F7u9","duration":"7.969238ms"}
+{"level":"info","ts":"2025-08-25T15:05:03.744Z","caller":"handler/social.go:36","msg":"Creating merchant social link","merchant_detail_id":9,"platform":"instagram","url":"https://instagram.com/merchant"}
+{"level":"debug","ts":"2025-08-25T15:05:03.745Z","caller":"service/merchantSocialLink.go:124","msg":"Start: CreateMerchant"}
+{"level":"debug","ts":"2025-08-25T15:05:03.752Z","caller":"service/merchantSocialLink.go:134","msg":"Merchant social link created","merchantID":26}
+{"level":"info","ts":"2025-08-25T15:05:03.752Z","caller":"handler/social.go:69","msg":"Merchant social link created successfully","social_id":26,"merchant_detail_id":9,"platform":"instagram","url":"https://instagram.com/merchant"}
+{"level":"info","ts":"2025-08-25T15:05:03.752Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantSocialService/Create","request_id":"req_1756134303744733356_B4OHQfVI","duration":"7.913385ms"}
+{"level":"info","ts":"2025-08-25T16:08:54.189Z","caller":"handler/merchant.go:54","msg":"Fetching all merchant details","page":1,"page_size":10,"search":""}
+{"level":"debug","ts":"2025-08-25T16:08:54.189Z","caller":"service/merchantDetailQueryService.go:220","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-25T16:08:54.216Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant_detail:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-25T16:08:54.216Z","caller":"service/merchantDetailQueryService.go:234","msg":"Successfully fetched merchants","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-25T16:08:54.216Z","caller":"handler/merchant.go:86","msg":"Successfully fetched all merchant details","page":1,"total_records":9,"total_pages":1}
+{"level":"info","ts":"2025-08-25T16:08:54.216Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantDetailService/FindAll","request_id":"req_1756138134188988268_0hiUhZUr","duration":"27.671101ms"}

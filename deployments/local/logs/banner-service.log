@@ -1,0 +1,144 @@
+{"level":"debug","ts":"2025-08-14T03:17:24.313Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T03:17:24.320Z","caller":"apps/server.go:164","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-14T03:17:24.320Z","caller":"apps/server.go:179","msg":"gRPC server listening on :50064"}
+{"level":"info","ts":"2025-08-14T03:17:24.320Z","caller":"apps/server.go:171","msg":"Metrics server listening on :8094"}
+{"level":"debug","ts":"2025-08-14T05:54:29.284Z","caller":"service/bannerQueryService.go:210","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T05:54:29.313Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"banner:all:page:1:pageSize:10:search:ramadhan","expiration":"5m0s"}
+{"level":"info","ts":"2025-08-14T05:54:29.314Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/FindAll","request_id":"req_1755150869284042030_cIblNqfS","duration":"30.013558ms"}
+{"level":"debug","ts":"2025-08-14T11:16:13.979Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:16:13.989Z","caller":"apps/server.go:158","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-14T11:16:13.990Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50064"}
+{"level":"info","ts":"2025-08-14T11:16:13.990Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8094"}
+{"level":"debug","ts":"2025-08-14T11:40:40.295Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:40:40.307Z","caller":"apps/server.go:158","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-14T11:40:40.307Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8094"}
+{"level":"info","ts":"2025-08-14T11:40:40.307Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50064"}
+{"level":"debug","ts":"2025-08-14T13:16:06.322Z","caller":"service/bannerCommandService.go:240","msg":"Start: CreateBanner"}
+{"level":"debug","ts":"2025-08-14T13:16:06.350Z","caller":"service/bannerCommandService.go:254","msg":"Successfully created Banner","banner.id":11}
+{"level":"info","ts":"2025-08-14T13:16:06.350Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/Create","request_id":"req_1755177366321003289_66chi3O1","duration":"29.895689ms"}
+{"level":"debug","ts":"2025-08-14T13:16:07.357Z","caller":"service/bannerQueryService.go:210","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T13:16:07.370Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"banner:all:page:1:pageSize:5:search:Test","expiration":"5m0s"}
+{"level":"info","ts":"2025-08-14T13:16:07.370Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/FindAll","request_id":"req_1755177367357523373_ewRblRGN","duration":"13.195411ms"}
+{"level":"debug","ts":"2025-08-14T13:16:08.377Z","caller":"service/bannerQueryService.go:210","msg":"Start: FindByCardNumber"}
+{"level":"debug","ts":"2025-08-14T13:16:08.378Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"banner:id:11","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:16:08.378Z","caller":"service/bannerQueryService.go:224","msg":"Successfully fetched Banner","banner.id":11}
+{"level":"info","ts":"2025-08-14T13:16:08.378Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/FindById","request_id":"req_1755177368377025743_6N4neECl","duration":"1.810652ms"}
+{"level":"debug","ts":"2025-08-14T13:16:09.385Z","caller":"service/bannerQueryService.go:210","msg":"Start: FindByActive"}
+{"level":"debug","ts":"2025-08-14T13:16:09.387Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"banner:active:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:16:09.387Z","caller":"service/bannerQueryService.go:224","msg":"Successfully fetched active Banners","totalRecords":10,"page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-14T13:16:09.387Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/FindByActive","request_id":"req_1755177369384993233_Jg8EuC5r","duration":"2.278263ms"}
+{"level":"debug","ts":"2025-08-14T13:16:10.393Z","caller":"service/bannerQueryService.go:210","msg":"Start: FindByTrashed"}
+{"level":"debug","ts":"2025-08-14T13:16:10.394Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"banner:trashed:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:16:10.394Z","caller":"service/bannerQueryService.go:224","msg":"Successfully fetched trashed Banner records","totalRecords":0,"page":1,"pageSize":10}
+{"level":"info","ts":"2025-08-14T13:16:10.394Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/FindByTrashed","request_id":"req_1755177370393012108_WYio7LLI","duration":"1.607019ms"}
+{"level":"debug","ts":"2025-08-14T13:16:12.404Z","caller":"service/bannerCommandService.go:240","msg":"Start: TrashedBanner"}
+{"level":"debug","ts":"2025-08-14T13:16:12.407Z","caller":"service/bannerCommandService.go:254","msg":"Successfully trashed Banner","banner.id":11}
+{"level":"info","ts":"2025-08-14T13:16:12.407Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/TrashedBanner","request_id":"req_1755177372404167838_XKmFIWSG","duration":"3.155171ms"}
+{"level":"debug","ts":"2025-08-14T13:16:13.413Z","caller":"service/bannerQueryService.go:210","msg":"Start: FindByTrashed"}
+{"level":"debug","ts":"2025-08-14T13:16:13.413Z","caller":"service/bannerQueryService.go:224","msg":"Successfully fetched trashed Banner records from cache","totalRecords":0,"page":1,"pageSize":10}
+{"level":"info","ts":"2025-08-14T13:16:13.413Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/FindByTrashed","request_id":"req_1755177373412986041_PnKcZvxA","duration":"484.69µs"}
+{"level":"debug","ts":"2025-08-14T13:16:14.419Z","caller":"service/bannerCommandService.go:240","msg":"Start: RestoreBanner"}
+{"level":"debug","ts":"2025-08-14T13:16:14.421Z","caller":"service/bannerCommandService.go:254","msg":"Successfully restored Banner","banner.id":11}
+{"level":"info","ts":"2025-08-14T13:16:14.422Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/RestoreBanner","request_id":"req_1755177374419219368_DidSGAdY","duration":"3.009524ms"}
+{"level":"debug","ts":"2025-08-14T13:16:15.427Z","caller":"service/bannerQueryService.go:210","msg":"Start: FindByActive"}
+{"level":"debug","ts":"2025-08-14T13:16:15.427Z","caller":"service/bannerQueryService.go:224","msg":"Successfully fetched active Banners from cache","totalRecords":0,"page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-14T13:16:15.427Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/FindByActive","request_id":"req_1755177375427403905_5dRMaiVu","duration":"429.029µs"}
+{"level":"debug","ts":"2025-08-14T13:16:16.432Z","caller":"service/bannerCommandService.go:240","msg":"Start: DeleteBannerPermanent"}
+{"level":"debug","ts":"2025-08-14T13:16:16.433Z","caller":"service/bannerCommandService.go:254","msg":"Successfully deleted Banner","banner.id":11,"success":true}
+{"level":"info","ts":"2025-08-14T13:16:16.433Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/DeleteBannerPermanent","request_id":"req_1755177376432829189_s667qFmF","duration":"879.608µs"}
+{"level":"debug","ts":"2025-08-14T13:17:30.807Z","caller":"service/bannerCommandService.go:240","msg":"Start: CreateBanner"}
+{"level":"debug","ts":"2025-08-14T13:17:30.811Z","caller":"service/bannerCommandService.go:254","msg":"Successfully created Banner","banner.id":12}
+{"level":"info","ts":"2025-08-14T13:17:30.811Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/Create","request_id":"req_1755177450807160719_lqBEQLYS","duration":"4.122001ms"}
+{"level":"debug","ts":"2025-08-14T13:17:31.817Z","caller":"service/bannerQueryService.go:210","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T13:17:31.818Z","caller":"service/bannerQueryService.go:224","msg":"Successfully fetched Banner records from cache","totalRecords":1,"page":1,"pageSize":5,"search":"Test"}
+{"level":"info","ts":"2025-08-14T13:17:31.818Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/FindAll","request_id":"req_1755177451817633674_1ZTS9vWQ","duration":"624.387µs"}
+{"level":"debug","ts":"2025-08-14T13:17:32.827Z","caller":"service/bannerQueryService.go:210","msg":"Start: FindByCardNumber"}
+{"level":"debug","ts":"2025-08-14T13:17:32.833Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"banner:id:12","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:17:32.833Z","caller":"service/bannerQueryService.go:224","msg":"Successfully fetched Banner","banner.id":12}
+{"level":"info","ts":"2025-08-14T13:17:32.833Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/FindById","request_id":"req_1755177452827581085_LWDjjVXF","duration":"6.011212ms"}
+{"level":"debug","ts":"2025-08-14T13:17:33.850Z","caller":"service/bannerQueryService.go:210","msg":"Start: FindByActive"}
+{"level":"debug","ts":"2025-08-14T13:17:33.850Z","caller":"service/bannerQueryService.go:224","msg":"Successfully fetched active Banners from cache","totalRecords":0,"page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-14T13:17:33.850Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/FindByActive","request_id":"req_1755177453850057587_mWzVJFUP","duration":"589.355µs"}
+{"level":"debug","ts":"2025-08-14T13:17:34.856Z","caller":"service/bannerQueryService.go:210","msg":"Start: FindByTrashed"}
+{"level":"debug","ts":"2025-08-14T13:17:34.856Z","caller":"service/bannerQueryService.go:224","msg":"Successfully fetched trashed Banner records from cache","totalRecords":0,"page":1,"pageSize":10}
+{"level":"info","ts":"2025-08-14T13:17:34.856Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/FindByTrashed","request_id":"req_1755177454856419379_F6TqaYoC","duration":"539.949µs"}
+{"level":"debug","ts":"2025-08-14T13:17:35.862Z","caller":"service/bannerCommandService.go:240","msg":"Start: UpdateBanner"}
+{"level":"debug","ts":"2025-08-14T13:17:35.864Z","caller":"service/bannerCommandService.go:254","msg":"Successfully updated Banner","banner.id":12}
+{"level":"info","ts":"2025-08-14T13:17:35.865Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/Update","request_id":"req_1755177455862722896_WZsCWUsu","duration":"2.328553ms"}
+{"level":"debug","ts":"2025-08-14T13:17:36.869Z","caller":"service/bannerCommandService.go:240","msg":"Start: TrashedBanner"}
+{"level":"debug","ts":"2025-08-14T13:17:36.871Z","caller":"service/bannerCommandService.go:254","msg":"Successfully trashed Banner","banner.id":12}
+{"level":"info","ts":"2025-08-14T13:17:36.871Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/TrashedBanner","request_id":"req_1755177456869975566_rtR5x2dA","duration":"1.797375ms"}
+{"level":"debug","ts":"2025-08-14T13:17:37.877Z","caller":"service/bannerQueryService.go:210","msg":"Start: FindByTrashed"}
+{"level":"debug","ts":"2025-08-14T13:17:37.877Z","caller":"service/bannerQueryService.go:224","msg":"Successfully fetched trashed Banner records from cache","totalRecords":0,"page":1,"pageSize":10}
+{"level":"info","ts":"2025-08-14T13:17:37.877Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/FindByTrashed","request_id":"req_1755177457877388233_LHGsi8Q1","duration":"459.241µs"}
+{"level":"debug","ts":"2025-08-14T13:17:38.882Z","caller":"service/bannerCommandService.go:240","msg":"Start: RestoreBanner"}
+{"level":"debug","ts":"2025-08-14T13:17:38.884Z","caller":"service/bannerCommandService.go:254","msg":"Successfully restored Banner","banner.id":12}
+{"level":"info","ts":"2025-08-14T13:17:38.884Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/RestoreBanner","request_id":"req_1755177458882597610_10jPUobA","duration":"1.903807ms"}
+{"level":"debug","ts":"2025-08-14T13:17:39.889Z","caller":"service/bannerQueryService.go:210","msg":"Start: FindByActive"}
+{"level":"debug","ts":"2025-08-14T13:17:39.889Z","caller":"service/bannerQueryService.go:224","msg":"Successfully fetched active Banners from cache","totalRecords":0,"page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-14T13:17:39.889Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/FindByActive","request_id":"req_1755177459889263857_ylNopRYC","duration":"377.367µs"}
+{"level":"debug","ts":"2025-08-14T13:17:40.894Z","caller":"service/bannerCommandService.go:240","msg":"Start: DeleteBannerPermanent"}
+{"level":"debug","ts":"2025-08-14T13:17:40.895Z","caller":"service/bannerCommandService.go:254","msg":"Successfully deleted Banner","banner.id":12,"success":true}
+{"level":"info","ts":"2025-08-14T13:17:40.895Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/DeleteBannerPermanent","request_id":"req_1755177460894322593_P78Smei2","duration":"883.937µs"}
+{"level":"debug","ts":"2025-08-14T15:57:28.623Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T15:57:28.634Z","caller":"apps/server.go:158","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-14T15:57:28.635Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50064"}
+{"level":"info","ts":"2025-08-14T15:57:28.635Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8094"}
+{"level":"debug","ts":"2025-08-14T16:08:10.914Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T16:08:10.972Z","caller":"apps/server.go:158","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-14T16:08:10.972Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50064"}
+{"level":"info","ts":"2025-08-14T16:08:10.972Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8094"}
+{"level":"debug","ts":"2025-08-14T22:19:19.013Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T22:19:19.032Z","caller":"apps/server.go:158","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-14T22:19:19.033Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50064"}
+{"level":"info","ts":"2025-08-14T22:19:19.033Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8094"}
+{"level":"debug","ts":"2025-08-15T00:57:15.212Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-15T00:57:15.238Z","caller":"apps/server.go:158","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-15T00:57:15.238Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50064"}
+{"level":"info","ts":"2025-08-15T00:57:15.238Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8094"}
+{"level":"debug","ts":"2025-08-18T06:35:18.964Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-18T06:35:18.995Z","caller":"apps/server.go:158","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-18T06:35:18.997Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50064"}
+{"level":"info","ts":"2025-08-18T06:35:18.997Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8094"}
+{"level":"debug","ts":"2025-08-24T06:59:48.982Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T06:59:49.004Z","caller":"apps/server.go:158","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-24T06:59:49.004Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50064"}
+{"level":"info","ts":"2025-08-24T06:59:49.004Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8094"}
+{"level":"debug","ts":"2025-08-24T16:25:31.734Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T16:25:31.755Z","caller":"apps/server.go:159","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-24T16:25:31.755Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50064"}
+{"level":"info","ts":"2025-08-24T16:25:31.755Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8094"}
+{"level":"debug","ts":"2025-08-24T17:47:52.890Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T17:47:52.897Z","caller":"apps/server.go:159","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-24T17:47:52.898Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50064"}
+{"level":"info","ts":"2025-08-24T17:47:52.898Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8094"}
+{"level":"debug","ts":"2025-08-25T08:07:37.689Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T08:07:37.733Z","caller":"apps/server.go:159","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-25T08:07:37.733Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50064"}
+{"level":"info","ts":"2025-08-25T08:07:37.733Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8094"}
+{"level":"debug","ts":"2025-08-25T11:40:56.589Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T11:40:56.610Z","caller":"apps/server.go:159","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-25T11:40:56.611Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8094"}
+{"level":"info","ts":"2025-08-25T11:40:56.610Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50064"}
+{"level":"debug","ts":"2025-08-25T13:48:13.854Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:48:13.879Z","caller":"apps/server.go:159","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-25T13:48:13.880Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8094"}
+{"level":"info","ts":"2025-08-25T13:48:13.880Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50064"}
+{"level":"debug","ts":"2025-08-25T13:54:47.648Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:54:47.676Z","caller":"apps/server.go:159","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-25T13:54:47.677Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50064"}
+{"level":"info","ts":"2025-08-25T13:54:47.677Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8094"}
+{"level":"debug","ts":"2025-08-25T15:00:38.440Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T15:00:38.456Z","caller":"apps/server.go:159","msg":"Server running on port 50064"}
+{"level":"info","ts":"2025-08-25T15:00:38.458Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50064"}
+{"level":"info","ts":"2025-08-25T15:00:38.458Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8094"}
+{"level":"info","ts":"2025-08-25T15:01:59.474Z","caller":"handler/banner.go:220","msg":"Creating new banner","name":"Banner Ramadhan","start_date":"2025-04-24","end_date":"2025-05-05"}
+{"level":"debug","ts":"2025-08-25T15:01:59.479Z","caller":"service/bannerCommandService.go:240","msg":"Start: CreateBanner"}
+{"level":"debug","ts":"2025-08-25T15:01:59.489Z","caller":"service/bannerCommandService.go:254","msg":"Successfully created Banner","banner.id":9}
+{"level":"info","ts":"2025-08-25T15:01:59.490Z","caller":"handler/banner.go:252","msg":"Banner created successfully","banner_id":9,"name":"Banner Ramadhan"}
+{"level":"info","ts":"2025-08-25T15:01:59.490Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/Create","request_id":"req_1756134119474709378_60WddpLB","duration":"15.38789ms"}
+{"level":"info","ts":"2025-08-25T16:07:24.713Z","caller":"handler/banner.go:48","msg":"Fetching all banners","page":1,"page_size":10,"search":"ramadhan"}
+{"level":"debug","ts":"2025-08-25T16:07:24.713Z","caller":"service/bannerQueryService.go:210","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-25T16:07:24.731Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"banner:all:page:1:pageSize:10:search:ramadhan","expiration":"5m0s"}
+{"level":"info","ts":"2025-08-25T16:07:24.731Z","caller":"handler/banner.go:80","msg":"Successfully fetched all banners","page":1,"page_size":10,"total_records":1,"total_pages":1}
+{"level":"info","ts":"2025-08-25T16:07:24.732Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.BannerService/FindAll","request_id":"req_1756138044713688672_Whc6hIUc","duration":"18.331879ms"}

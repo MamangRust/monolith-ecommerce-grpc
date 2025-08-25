@@ -59,7 +59,7 @@ func NewHandlerReviewDetail(
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	reviewDetailHandler := &reviewDetailHandleApi{
 		client:          client,
@@ -711,7 +711,7 @@ func (h *reviewDetailHandleApi) parseReviewDetailForm(c echo.Context) (requests.
 		return formData, reviewdetail_errors.ErrApiReviewDetailFileRequired(c)
 	}
 
-	uploadPath, err := h.upload_image.ProcessImageUpload(c, file)
+	uploadPath, err := h.upload_image.ProcessImageUpload(c, "uploads/review_detail", file, false)
 	if err != nil {
 		return formData, err
 	}

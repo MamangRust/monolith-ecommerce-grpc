@@ -236,5 +236,5 @@ func (s *categoryStatsByMerchantService) startTracingAndLogging(ctx context.Cont
 
 func (s *categoryStatsByMerchantService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

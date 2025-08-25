@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
@@ -35,7 +36,7 @@ func (r *productQueryRepository) FindAllProducts(ctx context.Context, req *reque
 	res, err := r.db.GetProducts(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, product_errors.ErrFindAllProducts
+		return nil, nil, err
 	}
 
 	var totalCount int
@@ -45,6 +46,9 @@ func (r *productQueryRepository) FindAllProducts(ctx context.Context, req *reque
 	} else {
 		totalCount = 0
 	}
+
+	fmt.Println("Hello response", res)
+	fmt.Println("Hello error", err)
 
 	return r.mapping.ToProductsRecordPagination(res), &totalCount, nil
 }

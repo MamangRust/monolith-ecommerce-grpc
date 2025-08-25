@@ -31,8 +31,8 @@ type MerchantDetailCommandRepository interface {
 }
 
 type MerchantSocialLinkCommandRepository interface {
-	CreateSocialLink(ctx context.Context, req *requests.CreateMerchantSocialRequest) (bool, error)
-	UpdateSocialLink(ctx context.Context, req *requests.UpdateMerchantSocialRequest) (bool, error)
+	CreateSocialLink(ctx context.Context, req *requests.CreateMerchantSocialRequest) (*record.MerchantSocialLinkRecord, error)
+	UpdateSocialLink(ctx context.Context, req *requests.UpdateMerchantSocialRequest) (*record.MerchantSocialLinkRecord, error)
 	TrashSocialLink(ctx context.Context, socialID int) (bool, error)
 	RestoreSocialLink(ctx context.Context, socialID int) (bool, error)
 	DeletePermanentSocialLink(ctx context.Context, socialID int) (bool, error)

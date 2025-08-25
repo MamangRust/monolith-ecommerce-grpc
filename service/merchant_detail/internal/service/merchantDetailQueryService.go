@@ -51,7 +51,7 @@ func NewMerchantDetailQueryService(ctx context.Context,
 			Help:    "Histogram of request durations for the MerchantDetailQueryService",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
 
 	prometheus.MustRegister(requestCounter, requestDuration)
@@ -186,10 +186,11 @@ func (s *merchantDetailQueryService) FindById(ctx context.Context, merchantID in
 	merchant, err := s.merchantDetailQueryRepository.FindById(ctx, merchantID)
 
 	if err != nil {
+		s.logger.Info("Error pada find byid", zap.Error(err))
 		return errorhandler.HandleRepositorySingleError[*response.MerchantDetailResponse](s.logger, err, method, "FAILED_FIND_MERCHANT_BY_ID", span, &status, merchantdetail_errors.ErrFailedFindMerchantDetailById, zap.Error(err))
 	}
 
-	so := s.mapping.ToMerchantDetailResponse(merchant)
+	so := s.mapping.ToMerchantDetailRelationResponse(merchant)
 
 	s.mencache.SetCachedMerchantDetail(ctx, so)
 
@@ -248,5 +249,5 @@ func (s *merchantDetailQueryService) normalizePagination(page, pageSize int) (in
 
 func (s *merchantDetailQueryService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

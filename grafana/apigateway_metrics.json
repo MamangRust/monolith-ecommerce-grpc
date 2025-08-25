@@ -1,0 +1,424 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 2,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "dew2xoss2b85cc"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "dew2xoss2b85cc"
+          },
+          "editorMode": "code",
+          "expr": "sum by (service) (\n  label_replace(\n    rate(auth_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"AuthService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(banner_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"BannerService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(category_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"CategoryService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(merchant_award_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"MerchantAwardService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(merchant_business_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"MerchantBusinessService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(merchant_detail_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"MerchantDetailService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(merchant_document_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"MerchantDocumentService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(merchant_policy_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"MerchantPolicyService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(merchant_social_link_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"MerchantSocialLinkService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(merchant_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"MerchantService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(order_item_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"OrderItemService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(order_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"OrderService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(product_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"ProductService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(review_detail_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"ReviewDetailService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(review_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"ReviewService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(role_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"RoleService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(shipping_address_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"ShippingAddressService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(slider_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"SliderService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(transaction_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"TransactionService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(user_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"UserService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(cart_handler_request_duration_seconds_sum[1m]),\n    \"service\", \"CartService\", \"\", \"\"\n  )\n)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Rata Rata Total Latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "dew2xoss2b85cc"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "dew2xoss2b85cc"
+          },
+          "editorMode": "code",
+          "expr": "sum by (service) (\n  label_replace(\n    rate(auth_handler_request_duration_seconds_count[1m]),\n    \"service\", \"AuthService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(banner_handler_request_duration_seconds_count[1m]),\n    \"service\", \"BannerService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(category_handler_request_duration_seconds_count[1m]),\n    \"service\", \"CategoryService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(merchant_award_handler_request_duration_seconds_count[1m]),\n    \"service\", \"MerchantAwardService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(merchant_business_handler_request_duration_seconds_count[1m]),\n    \"service\", \"MerchantBusinessService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(merchant_detail_handler_request_duration_seconds_count[1m]),\n    \"service\", \"MerchantDetailService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(merchant_document_handler_request_duration_seconds_count[1m]),\n    \"service\", \"MerchantDocumentService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(merchant_policy_handler_request_duration_seconds_count[1m]),\n    \"service\", \"MerchantPolicyService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(merchant_social_link_handler_request_duration_seconds_count[1m]),\n    \"service\", \"MerchantSocialLinkService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(merchant_handler_request_duration_seconds_count[1m]),\n    \"service\", \"MerchantService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(order_item_handler_request_duration_seconds_count[1m]),\n    \"service\", \"OrderItemService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(order_handler_request_duration_seconds_count[1m]),\n    \"service\", \"OrderService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(product_handler_request_duration_seconds_count[1m]),\n    \"service\", \"ProductService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(review_detail_handler_request_duration_seconds_count[1m]),\n    \"service\", \"ReviewDetailService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(review_handler_request_duration_seconds_count[1m]),\n    \"service\", \"ReviewService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(role_handler_request_duration_seconds_count[1m]),\n    \"service\", \"RoleService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(shipping_address_handler_request_duration_seconds_count[1m]),\n    \"service\", \"ShippingAddressService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(slider_handler_request_duration_seconds_count[1m]),\n    \"service\", \"SliderService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(transaction_handler_request_duration_seconds_count[1m]),\n    \"service\", \"TransactionService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(user_handler_request_duration_seconds_count[1m]),\n    \"service\", \"UserService\", \"\", \"\"\n  )\n) or\nsum by (service) (\n  label_replace(\n    rate(cart_handler_request_duration_seconds_count[1m]),\n    \"service\", \"CartService\", \"\", \"\"\n  )\n)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Request Rate (RTS) PerService",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "dew2xoss2b85cc"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "dew2xoss2b85cc"
+          },
+          "editorMode": "code",
+          "expr": "sum(\n  rate(auth_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(banner_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(category_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(merchant_award_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(merchant_business_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(merchant_detail_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(merchant_document_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(merchant_policy_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(merchant_social_link_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(merchant_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(order_item_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(order_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(product_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(review_detail_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(review_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(role_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(shipping_address_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(slider_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(transaction_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(user_handler_request_duration_seconds_sum[1m]) or vector(0)\n) +\nsum(\n  rate(cart_handler_request_duration_seconds_sum[1m]) or vector(0)\n)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "API Request Duration – All Handlers",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "dew2xoss2b85cc"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "dew2xoss2b85cc"
+          },
+          "editorMode": "code",
+          "expr": "sum(\n  rate(auth_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(banner_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(category_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(merchant_award_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(merchant_business_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(merchant_detail_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(merchant_document_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(merchant_policy_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(merchant_social_link_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(merchant_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(order_item_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(order_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(product_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(review_detail_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(review_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(role_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(shipping_address_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(slider_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(transaction_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(user_handler_request_duration_seconds_count[1m]) or vector(0)\n) +\nsum(\n  rate(cart_handler_request_duration_seconds_count[1m]) or vector(0)\n)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Request Rate (QPS)",
+      "type": "timeseries"
+    }
+  ],
+  "preload": false,
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "ApiGateway - Metrics",
+  "uid": "bf918423-b856-48a1-949e-154ba72d062e",
+  "version": 5
+}

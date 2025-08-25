@@ -60,7 +60,7 @@ func NewMerchantCommandService(kafka *kafka.Kafka,
 			Help:    "Histogram of request durations for the MerchantCommandService",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
 
 	prometheus.MustRegister(requestCounter, requestDuration)
@@ -377,5 +377,5 @@ func (s *merchantCommandService) startTracingAndLogging(ctx context.Context, met
 
 func (s *merchantCommandService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

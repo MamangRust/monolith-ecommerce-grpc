@@ -53,7 +53,7 @@ func NewHandlerOrder(
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	orderHandler := &orderHandleApi{
 		client:          client,

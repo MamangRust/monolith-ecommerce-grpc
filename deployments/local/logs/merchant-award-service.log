@@ -1,0 +1,135 @@
+{"level":"debug","ts":"2025-08-14T03:17:24.620Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T03:17:24.630Z","caller":"apps/server.go:164","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-14T03:17:24.630Z","caller":"apps/server.go:171","msg":"Metrics server listening on :8095"}
+{"level":"info","ts":"2025-08-14T03:17:24.631Z","caller":"apps/server.go:179","msg":"gRPC server listening on :50065"}
+{"level":"debug","ts":"2025-08-14T05:55:10.609Z","caller":"service/merchantAwardQueryService.go:212","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T05:55:10.634Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant_award:all:page:1:pageSize:10:search:example","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T05:55:10.634Z","caller":"service/merchantAwardQueryService.go:226","msg":"Successfully fetched merchants","page":1,"pageSize":10,"search":"example"}
+{"level":"info","ts":"2025-08-14T05:55:10.634Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/FindAll","request_id":"req_1755150910609478370_NmnDt6F0","duration":"25.111657ms"}
+{"level":"debug","ts":"2025-08-14T05:55:21.959Z","caller":"service/merchantAwardQueryService.go:212","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T05:55:21.963Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant_award:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T05:55:21.963Z","caller":"service/merchantAwardQueryService.go:226","msg":"Successfully fetched merchants","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-14T05:55:21.963Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/FindAll","request_id":"req_1755150921959862415_mTfTF93H","duration":"3.602213ms"}
+{"level":"debug","ts":"2025-08-14T11:16:13.366Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:16:13.395Z","caller":"apps/server.go:158","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-14T11:16:13.397Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50065"}
+{"level":"info","ts":"2025-08-14T11:16:13.398Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8095"}
+{"level":"debug","ts":"2025-08-14T11:40:40.059Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:40:40.074Z","caller":"apps/server.go:158","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-14T11:40:40.074Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50065"}
+{"level":"info","ts":"2025-08-14T11:40:40.074Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8095"}
+{"level":"debug","ts":"2025-08-14T15:57:29.461Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T15:57:29.476Z","caller":"apps/server.go:158","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-14T15:57:29.476Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50065"}
+{"level":"info","ts":"2025-08-14T15:57:29.477Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8095"}
+{"level":"debug","ts":"2025-08-14T16:08:12.821Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T16:08:12.827Z","caller":"apps/server.go:158","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-14T16:08:12.827Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50065"}
+{"level":"info","ts":"2025-08-14T16:08:12.827Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8095"}
+{"level":"debug","ts":"2025-08-14T17:21:56.769Z","caller":"service/merchantAwardQueryService.go:212","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T17:21:56.822Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant_award:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T17:21:56.822Z","caller":"service/merchantAwardQueryService.go:226","msg":"Successfully fetched merchants","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-14T17:21:56.823Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/FindAll","request_id":"req_1755192116768139785_U2pF9rtQ","duration":"55.254826ms"}
+{"level":"debug","ts":"2025-08-14T17:22:06.188Z","caller":"service/merchantAwardQueryService.go:212","msg":"Start: FindById"}
+{"level":"debug","ts":"2025-08-14T17:22:06.189Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant_award:id:1","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T17:22:06.190Z","caller":"service/merchantAwardQueryService.go:226","msg":"Successfully fetched merchant","merchantAward.id":1}
+{"level":"info","ts":"2025-08-14T17:22:06.190Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/FindById","request_id":"req_1755192126188005838_PFGJ6BVS","duration":"2.165284ms"}
+{"level":"debug","ts":"2025-08-14T17:22:17.497Z","caller":"service/merchantAwardQueryService.go:212","msg":"Start: FindByActive"}
+{"level":"debug","ts":"2025-08-14T17:22:17.504Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant_award:active:page:1:pageSize:10:search:active","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T17:22:17.504Z","caller":"service/merchantAwardQueryService.go:226","msg":"Successfully fetched active merchants","page":1,"pageSize":10,"search":"active"}
+{"level":"info","ts":"2025-08-14T17:22:17.504Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/FindByActive","request_id":"req_1755192137497363777_daUMfXFJ","duration":"7.397507ms"}
+{"level":"debug","ts":"2025-08-14T17:22:26.087Z","caller":"service/merchantAwardQueryService.go:212","msg":"Start: FindByTrashed"}
+{"level":"debug","ts":"2025-08-14T17:22:26.091Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant_award:trashed:page:1:pageSize:10:search:trashed","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T17:22:26.091Z","caller":"service/merchantAwardQueryService.go:226","msg":"Successfully fetched trashed merchants","page":1,"pageSize":10,"search":"trashed"}
+{"level":"info","ts":"2025-08-14T17:22:26.091Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/FindByTrashed","request_id":"req_1755192146087952259_BplhBrsr","duration":"3.931456ms"}
+{"level":"debug","ts":"2025-08-14T17:22:44.519Z","caller":"service/merchantAwardCommandService.go:238","msg":"Start: CreateMerchant"}
+{"level":"debug","ts":"2025-08-14T17:22:44.523Z","caller":"service/merchantAwardCommandService.go:252","msg":"Merchant Award created","merchantAward.id":9}
+{"level":"info","ts":"2025-08-14T17:22:44.523Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/Create","request_id":"req_1755192164519278772_c2ywQyjy","duration":"4.370331ms"}
+{"level":"debug","ts":"2025-08-14T17:23:10.483Z","caller":"service/merchantAwardCommandService.go:238","msg":"Start: UpdateMerchant"}
+{"level":"debug","ts":"2025-08-14T17:23:10.487Z","caller":"service/merchantAwardCommandService.go:252","msg":"Merchant Award updated","merchantAward.id":8}
+{"level":"info","ts":"2025-08-14T17:23:10.488Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/Update","request_id":"req_1755192190483063112_E7Ls2ZO4","duration":"4.956729ms"}
+{"level":"info","ts":"2025-08-14T17:23:23.386Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/TrashedMerchantAward","request_id":"req_1755192203386859216_bemKjVfZ","duration":"4.447µs","error":"rpc error: code = Unimplemented desc = method TrashedMerchantAward not implemented"}
+{"level":"debug","ts":"2025-08-14T22:19:19.353Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T22:19:19.371Z","caller":"apps/server.go:158","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-14T22:19:19.372Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8095"}
+{"level":"info","ts":"2025-08-14T22:19:19.372Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50065"}
+{"level":"debug","ts":"2025-08-14T22:32:01.783Z","caller":"service/merchantAwardCommandService.go:238","msg":"Start: TrashedMerchant"}
+{"level":"debug","ts":"2025-08-14T22:32:01.800Z","caller":"service/merchantAwardCommandService.go:252","msg":"Merchant Award trashed","merchantAward.id":8}
+{"level":"info","ts":"2025-08-14T22:32:01.800Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/TrashedMerchantAward","request_id":"req_1755210721782982860_mSEO4lob","duration":"17.567226ms"}
+{"level":"debug","ts":"2025-08-14T22:32:14.904Z","caller":"service/merchantAwardCommandService.go:238","msg":"Start: RestoreMerchant"}
+{"level":"debug","ts":"2025-08-14T22:32:14.908Z","caller":"service/merchantAwardCommandService.go:252","msg":"Merchant Award restored","merchantAward.id":8}
+{"level":"info","ts":"2025-08-14T22:32:14.908Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/RestoreMerchantAward","request_id":"req_1755210734904063495_t4uoUJ1J","duration":"4.483624ms"}
+{"level":"debug","ts":"2025-08-14T22:33:05.654Z","caller":"service/merchantAwardCommandService.go:238","msg":"Start: TrashedMerchant"}
+{"level":"debug","ts":"2025-08-14T22:33:05.659Z","caller":"service/merchantAwardCommandService.go:252","msg":"Merchant Award trashed","merchantAward.id":8}
+{"level":"info","ts":"2025-08-14T22:33:05.659Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/TrashedMerchantAward","request_id":"req_1755210785654889131_saylY8op","duration":"4.324306ms"}
+{"level":"debug","ts":"2025-08-14T22:33:10.980Z","caller":"service/merchantAwardQueryService.go:212","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T22:33:10.998Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant_award:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T22:33:10.998Z","caller":"service/merchantAwardQueryService.go:226","msg":"Successfully fetched merchants","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-14T22:33:10.999Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/FindAll","request_id":"req_1755210790980145680_oTJ6qVv2","duration":"18.909221ms"}
+{"level":"debug","ts":"2025-08-14T22:33:29.473Z","caller":"service/merchantAwardCommandService.go:238","msg":"Start: TrashedMerchant"}
+{"level":"debug","ts":"2025-08-14T22:33:29.478Z","caller":"service/merchantAwardCommandService.go:252","msg":"Merchant Award trashed","merchantAward.id":9}
+{"level":"info","ts":"2025-08-14T22:33:29.479Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/TrashedMerchantAward","request_id":"req_1755210809473139621_fNjiedJd","duration":"6.105366ms"}
+{"level":"debug","ts":"2025-08-14T22:33:38.858Z","caller":"service/merchantAwardCommandService.go:238","msg":"Start: DeleteMerchantPermanent"}
+{"level":"debug","ts":"2025-08-14T22:33:38.859Z","caller":"service/merchantAwardCommandService.go:252","msg":"Successfully deleted merchant permanently","merchantAward.id":9,"success":true}
+{"level":"info","ts":"2025-08-14T22:33:38.859Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/DeleteMerchantAwardPermanent","request_id":"req_1755210818858387552_hyFCCoIZ","duration":"1.423875ms"}
+{"level":"debug","ts":"2025-08-15T00:57:16.216Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-15T00:57:16.225Z","caller":"apps/server.go:158","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-15T00:57:16.225Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50065"}
+{"level":"info","ts":"2025-08-15T00:57:16.225Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8095"}
+{"level":"debug","ts":"2025-08-18T06:35:18.492Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-18T06:35:18.522Z","caller":"apps/server.go:158","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-18T06:35:18.523Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8095"}
+{"level":"info","ts":"2025-08-18T06:35:18.524Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50065"}
+{"level":"debug","ts":"2025-08-24T06:59:48.360Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T06:59:48.384Z","caller":"apps/server.go:158","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-24T06:59:48.385Z","caller":"apps/server.go:173","msg":"gRPC server listening on :50065"}
+{"level":"info","ts":"2025-08-24T06:59:48.385Z","caller":"apps/server.go:165","msg":"Metrics server listening on :8095"}
+{"level":"debug","ts":"2025-08-24T16:25:32.657Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T16:25:32.726Z","caller":"apps/server.go:159","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-24T16:25:32.727Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8095"}
+{"level":"info","ts":"2025-08-24T16:25:32.727Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50065"}
+{"level":"debug","ts":"2025-08-24T17:47:52.681Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T17:47:52.691Z","caller":"apps/server.go:159","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-24T17:47:52.691Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8095"}
+{"level":"info","ts":"2025-08-24T17:47:52.692Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50065"}
+{"level":"debug","ts":"2025-08-25T08:07:37.277Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T08:07:37.308Z","caller":"apps/server.go:159","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-25T08:07:37.312Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50065"}
+{"level":"info","ts":"2025-08-25T08:07:37.312Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8095"}
+{"level":"debug","ts":"2025-08-25T11:40:56.625Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T11:40:56.631Z","caller":"apps/server.go:159","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-25T11:40:56.632Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8095"}
+{"level":"info","ts":"2025-08-25T11:40:56.632Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50065"}
+{"level":"info","ts":"2025-08-25T13:20:08.246Z","caller":"handler/merchant.go:234","msg":"Creating merchant award","merchant_id":9,"title":"ISO 9001 Certified","issue_date":"2023-01-15"}
+{"level":"debug","ts":"2025-08-25T13:20:08.247Z","caller":"service/merchantAwardCommandService.go:238","msg":"Start: CreateMerchant"}
+{"level":"debug","ts":"2025-08-25T13:20:08.270Z","caller":"service/merchantAwardCommandService.go:252","msg":"Merchant Award created","merchantAward.id":10}
+{"level":"info","ts":"2025-08-25T13:20:08.270Z","caller":"handler/merchant.go:269","msg":"Merchant award created successfully","award_id":10,"merchant_id":9,"title":"ISO 9001 Certified"}
+{"level":"info","ts":"2025-08-25T13:20:08.270Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/Create","request_id":"req_1756128008246761845_dffdCTHF","duration":"23.976184ms"}
+{"level":"debug","ts":"2025-08-25T13:48:14.123Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:48:14.129Z","caller":"apps/server.go:159","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-25T13:48:14.129Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8095"}
+{"level":"info","ts":"2025-08-25T13:48:14.129Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50065"}
+{"level":"debug","ts":"2025-08-25T13:54:48.594Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:54:48.616Z","caller":"apps/server.go:159","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-25T13:54:48.617Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50065"}
+{"level":"info","ts":"2025-08-25T13:54:48.618Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8095"}
+{"level":"debug","ts":"2025-08-25T15:00:38.389Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T15:00:38.402Z","caller":"apps/server.go:159","msg":"Server running on port 50065"}
+{"level":"info","ts":"2025-08-25T15:00:38.403Z","caller":"apps/server.go:174","msg":"gRPC server listening on :50065"}
+{"level":"info","ts":"2025-08-25T15:00:38.403Z","caller":"apps/server.go:166","msg":"Metrics server listening on :8095"}
+{"level":"info","ts":"2025-08-25T15:03:15.892Z","caller":"handler/merchant.go:234","msg":"Creating merchant award","merchant_id":9,"title":"ISO 9001 Certified","issue_date":"2023-01-15"}
+{"level":"debug","ts":"2025-08-25T15:03:15.892Z","caller":"service/merchantAwardCommandService.go:238","msg":"Start: CreateMerchant"}
+{"level":"debug","ts":"2025-08-25T15:03:15.901Z","caller":"service/merchantAwardCommandService.go:252","msg":"Merchant Award created","merchantAward.id":9}
+{"level":"info","ts":"2025-08-25T15:03:15.901Z","caller":"handler/merchant.go:269","msg":"Merchant award created successfully","award_id":9,"merchant_id":9,"title":"ISO 9001 Certified"}
+{"level":"info","ts":"2025-08-25T15:03:15.901Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/Create","request_id":"req_1756134195892320529_rjdAVLov","duration":"9.371191ms"}
+{"level":"info","ts":"2025-08-25T16:08:22.537Z","caller":"handler/merchant.go:54","msg":"Fetching all merchant awards","page":1,"page_size":10,"search":""}
+{"level":"debug","ts":"2025-08-25T16:08:22.538Z","caller":"service/merchantAwardQueryService.go:212","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-25T16:08:22.561Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant_award:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-25T16:08:22.561Z","caller":"service/merchantAwardQueryService.go:226","msg":"Successfully fetched merchants","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-25T16:08:22.561Z","caller":"handler/merchant.go:86","msg":"Successfully fetched all merchant awards","page":1,"total_records":9,"total_pages":1}
+{"level":"info","ts":"2025-08-25T16:08:22.561Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/FindAll","request_id":"req_1756138102537842989_xi6lM25w","duration":"23.54837ms"}
+{"level":"info","ts":"2025-08-25T16:09:06.931Z","caller":"handler/merchant.go:54","msg":"Fetching all merchant awards","page":1,"page_size":10,"search":""}
+{"level":"debug","ts":"2025-08-25T16:09:06.932Z","caller":"service/merchantAwardQueryService.go:212","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-25T16:09:06.933Z","caller":"service/merchantAwardQueryService.go:226","msg":"Successfully fetched merchants from cache","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-25T16:09:06.934Z","caller":"handler/merchant.go:86","msg":"Successfully fetched all merchant awards","page":1,"total_records":9,"total_pages":1}
+{"level":"info","ts":"2025-08-25T16:09:06.934Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantAwardService/FindAll","request_id":"req_1756138146931426905_bNcRMRhp","duration":"2.986537ms"}

@@ -1,0 +1,96 @@
+{"level":"debug","ts":"2025-08-14T03:17:24.749Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T03:17:24.752Z","caller":"apps/server.go:161","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-14T03:17:24.753Z","caller":"apps/server.go:176","msg":"gRPC server listening on :50057"}
+{"level":"info","ts":"2025-08-14T03:17:24.753Z","caller":"apps/server.go:168","msg":"Metrics server listening on :8086"}
+{"level":"debug","ts":"2025-08-14T11:16:13.493Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:16:13.511Z","caller":"apps/server.go:155","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-14T11:16:13.512Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50057"}
+{"level":"info","ts":"2025-08-14T11:16:13.512Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8086"}
+{"level":"debug","ts":"2025-08-14T11:40:40.177Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:40:40.184Z","caller":"apps/server.go:155","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-14T11:40:40.188Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50057"}
+{"level":"info","ts":"2025-08-14T11:40:40.188Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8086"}
+{"level":"debug","ts":"2025-08-14T11:51:27.138Z","caller":"service/orderItemQueryService.go:228","msg":"Start: FindAllOrderItems"}
+{"level":"debug","ts":"2025-08-14T11:51:27.156Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"order_item:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T11:51:27.157Z","caller":"service/orderItemQueryService.go:242","msg":"Successfully fetched order-items","page":1,"pageSize":10,"search":"","totalRecords":8}
+{"level":"info","ts":"2025-08-14T11:51:27.157Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.OrderItemService/FindAll","request_id":"req_1755172287138973160_h2rxdIPc","duration":"18.802354ms"}
+{"level":"debug","ts":"2025-08-14T15:57:28.893Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T15:57:28.920Z","caller":"apps/server.go:155","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-14T15:57:28.921Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8086"}
+{"level":"info","ts":"2025-08-14T15:57:28.921Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50057"}
+{"level":"debug","ts":"2025-08-14T16:08:11.984Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T16:08:12.006Z","caller":"apps/server.go:155","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-14T16:08:12.008Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50057"}
+{"level":"info","ts":"2025-08-14T16:08:12.008Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8086"}
+{"level":"debug","ts":"2025-08-14T22:19:18.910Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T22:19:18.920Z","caller":"apps/server.go:155","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-14T22:19:18.921Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50057"}
+{"level":"info","ts":"2025-08-14T22:19:18.921Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8086"}
+{"level":"debug","ts":"2025-08-15T00:57:14.651Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-15T00:57:14.667Z","caller":"apps/server.go:155","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-15T00:57:14.669Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50057"}
+{"level":"info","ts":"2025-08-15T00:57:14.670Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8086"}
+{"level":"debug","ts":"2025-08-18T06:35:19.151Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-18T06:35:19.170Z","caller":"apps/server.go:155","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-18T06:35:19.172Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8086"}
+{"level":"info","ts":"2025-08-18T06:35:19.172Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50057"}
+{"level":"debug","ts":"2025-08-24T06:59:48.402Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T06:59:48.419Z","caller":"apps/server.go:155","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-24T06:59:48.420Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50057"}
+{"level":"info","ts":"2025-08-24T06:59:48.420Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8086"}
+{"level":"debug","ts":"2025-08-24T07:07:01.452Z","caller":"service/orderItemQueryService.go:228","msg":"Start: FindAllOrderItems"}
+{"level":"debug","ts":"2025-08-24T07:07:01.462Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"order_item:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-24T07:07:01.462Z","caller":"service/orderItemQueryService.go:242","msg":"Successfully fetched order-items","page":1,"pageSize":10,"search":"","totalRecords":9}
+{"level":"info","ts":"2025-08-24T07:07:01.462Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.OrderItemService/FindAll","request_id":"req_1756019221452073274_DLF01NGA","duration":"10.313711ms"}
+{"level":"debug","ts":"2025-08-24T07:07:09.997Z","caller":"service/orderItemQueryService.go:228","msg":"Start: FindOrderItemByOrder"}
+{"level":"debug","ts":"2025-08-24T07:07:10.002Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"order_item:id:1","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-24T07:07:10.002Z","caller":"service/orderItemQueryService.go:242","msg":"Successfully fetched order items","order.id":1}
+{"level":"info","ts":"2025-08-24T07:07:10.002Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.OrderItemService/FindOrderItemByOrder","request_id":"req_1756019229997419073_Xs0j11Qq","duration":"5.432943ms"}
+{"level":"debug","ts":"2025-08-24T07:07:18.202Z","caller":"service/orderItemQueryService.go:228","msg":"Start: FindByActive"}
+{"level":"debug","ts":"2025-08-24T07:07:18.205Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"order_item:active:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-24T07:07:18.205Z","caller":"service/orderItemQueryService.go:242","msg":"Successfully fetched order-items","page":1,"pageSize":10,"search":"","totalRecords":9}
+{"level":"info","ts":"2025-08-24T07:07:18.205Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.OrderItemService/FindByActive","request_id":"req_1756019238202017372_ek7uODYz","duration":"3.829729ms"}
+{"level":"debug","ts":"2025-08-24T07:07:28.988Z","caller":"service/orderItemQueryService.go:228","msg":"Start: FindByTrashed"}
+{"level":"debug","ts":"2025-08-24T07:07:28.992Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"order_item:trashed:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-24T07:07:28.992Z","caller":"service/orderItemQueryService.go:242","msg":"Successfully fetched order-items","page":1,"pageSize":10,"search":"","totalRecords":0}
+{"level":"info","ts":"2025-08-24T07:07:28.992Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.OrderItemService/FindByTrashed","request_id":"req_1756019248988196667_c2pHBmxI","duration":"4.461383ms"}
+{"level":"debug","ts":"2025-08-24T16:25:32.253Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T16:25:32.273Z","caller":"apps/server.go:156","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-24T16:25:32.274Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50057"}
+{"level":"info","ts":"2025-08-24T16:25:32.275Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8086"}
+{"level":"debug","ts":"2025-08-24T17:47:52.552Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T17:47:52.573Z","caller":"apps/server.go:156","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-24T17:47:52.574Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50057"}
+{"level":"info","ts":"2025-08-24T17:47:52.573Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8086"}
+{"level":"debug","ts":"2025-08-25T08:07:38.127Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T08:07:38.146Z","caller":"apps/server.go:156","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-25T08:07:38.147Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8086"}
+{"level":"info","ts":"2025-08-25T08:07:38.150Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50057"}
+{"level":"debug","ts":"2025-08-25T11:40:56.757Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T11:40:56.765Z","caller":"apps/server.go:156","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-25T11:40:56.765Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8086"}
+{"level":"info","ts":"2025-08-25T11:40:56.765Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50057"}
+{"level":"debug","ts":"2025-08-25T13:48:13.461Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:48:13.471Z","caller":"apps/server.go:156","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-25T13:48:13.471Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50057"}
+{"level":"info","ts":"2025-08-25T13:48:13.471Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8086"}
+{"level":"debug","ts":"2025-08-25T13:54:47.202Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:54:47.216Z","caller":"apps/server.go:156","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-25T13:54:47.218Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8086"}
+{"level":"info","ts":"2025-08-25T13:54:47.218Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50057"}
+{"level":"debug","ts":"2025-08-25T15:00:38.455Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T15:00:38.465Z","caller":"apps/server.go:156","msg":"Server running on port 50056"}
+{"level":"info","ts":"2025-08-25T15:00:38.466Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50057"}
+{"level":"info","ts":"2025-08-25T15:00:38.466Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8086"}
+{"level":"info","ts":"2025-08-25T15:05:59.195Z","caller":"handler/orderItem.go:48","msg":"Fetching all order items","page":1,"page_size":10,"search":""}
+{"level":"debug","ts":"2025-08-25T15:05:59.195Z","caller":"service/orderItemQueryService.go:228","msg":"Start: FindAllOrderItems"}
+{"level":"debug","ts":"2025-08-25T15:05:59.206Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"order_item:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-25T15:05:59.207Z","caller":"service/orderItemQueryService.go:242","msg":"Successfully fetched order-items","page":1,"pageSize":10,"search":"","totalRecords":9}
+{"level":"info","ts":"2025-08-25T15:05:59.207Z","caller":"handler/orderItem.go:80","msg":"Successfully fetched all order items","page":1,"total_records":9,"total_pages":1,"fetched_items_count":9}
+{"level":"info","ts":"2025-08-25T15:05:59.207Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.OrderItemService/FindAll","request_id":"req_1756134359195166813_EnFB1jYV","duration":"12.155844ms"}
+{"level":"info","ts":"2025-08-25T16:09:49.864Z","caller":"handler/orderItem.go:48","msg":"Fetching all order items","page":1,"page_size":10,"search":""}
+{"level":"debug","ts":"2025-08-25T16:09:49.864Z","caller":"service/orderItemQueryService.go:228","msg":"Start: FindAllOrderItems"}
+{"level":"debug","ts":"2025-08-25T16:09:49.886Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"order_item:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-25T16:09:49.886Z","caller":"service/orderItemQueryService.go:242","msg":"Successfully fetched order-items","page":1,"pageSize":10,"search":"","totalRecords":9}
+{"level":"info","ts":"2025-08-25T16:09:49.886Z","caller":"handler/orderItem.go:80","msg":"Successfully fetched all order items","page":1,"total_records":9,"total_pages":1,"fetched_items_count":9}
+{"level":"info","ts":"2025-08-25T16:09:49.886Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.OrderItemService/FindAll","request_id":"req_1756138189864222450_dc7UxW46","duration":"22.607434ms"}

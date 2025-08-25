@@ -22,7 +22,7 @@ services:
     container_name: migrate-ecommerce
     volumes:
       - ./docker.env:/app/docker.env
-      - ./pkg/database/migrations:/app/pkg/database/migrations
+      - ./logs:/var/log/app
     env_file: ./docker.env
     environment:
       APP_ENV: docker
@@ -40,6 +40,7 @@ services:
     volumes:
       - ./docker.env:/app/docker.env
       - ./logs:/var/log/app
+      - ./uploads:/app/uploads
     ports:
       - "5000:5000"
     networks:
@@ -457,7 +458,7 @@ services:
 
   merchant_business:
     image: merchant_business-ecommerce-service:1.0
-    container_name: merchant_business
+    container_name: merchant_business-ecommerce
     env_file: ./docker.env
     volumes:
       - ./docker.env:/app/docker.env
@@ -669,7 +670,6 @@ services:
       - app_ecommerce_network
 
 
-
   node-exporter:
     image: quay.io/prometheus/node-exporter
     container_name: node-exporter_ecommerce
@@ -740,7 +740,6 @@ services:
     command: -config.file=/etc/promtail/config.yaml
     networks:
       - app_ecommerce_network
-
 
 
 volumes:

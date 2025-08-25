@@ -47,7 +47,7 @@ func NewShippingAddressCommandService(
 			Help:    "Histogram of request durations for the ShippingAddressCommandService",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
 
 	prometheus.MustRegister(requestCounter, requestDuration)
@@ -208,5 +208,5 @@ func (s *shippingAddressCommandService) startTracingAndLogging(ctx context.Conte
 
 func (s *shippingAddressCommandService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

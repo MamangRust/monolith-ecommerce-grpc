@@ -3,7 +3,7 @@ module github.com/MamangRust/monolith-ecommerce-grpc-seeder
 go 1.23.4
 
 require (
-	github.com/MamangRust/monolith-ecommerce-pkg v1.0.4
+	github.com/MamangRust/monolith-ecommerce-pkg v1.0.15
 	github.com/spf13/viper v1.20.1
 	go.uber.org/zap v1.27.0
 )

@@ -13,6 +13,7 @@ import (
 type Service struct {
 	MerchantDetailQuery   MerchantDetailQueryService
 	MerchantDetailCommand MerchantDetailCommandService
+	MerchantSocialLink    MerchantSocialLinkService
 }
 
 type Deps struct {
@@ -25,8 +26,10 @@ type Deps struct {
 
 func NewService(deps *Deps) *Service {
 	mapper := response_service.NewMerchantDetailResponseMapper()
+	mapper_link := response_service.NewMerchantSocialLinkResponseMapper()
 	return &Service{
 		MerchantDetailQuery:   NewMerchantDetailQueryService(deps.Ctx, deps.ErrorHandler.MerchantDetailQueryError, deps.Mencache.MerchantDetailQueryCache, deps.Repositories.MerchantDetailQuery, mapper, deps.Logger),
 		MerchantDetailCommand: NewMerchantDetailCommandService(deps.Ctx, deps.ErrorHandler.MerchantDetailCommandError, deps.ErrorHandler.FileError, deps.Mencache.MerchantDetailCommandCache, deps.Repositories.MerchantDetailQuery, deps.Repositories.MerchantDetailCommand, deps.Repositories.MerchantSocialLinkCommand, mapper, deps.Logger),
+		MerchantSocialLink:    NewMerchantSocialLinkService(deps.Ctx, deps.ErrorHandler.MerchantSocialLinkCommandError, deps.Repositories.MerchantSocialLinkCommand, mapper_link, deps.Logger),
 	}
 }

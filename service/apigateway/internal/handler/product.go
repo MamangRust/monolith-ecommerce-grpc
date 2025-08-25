@@ -57,7 +57,7 @@ func NewHandlerProduct(
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	productHandler := &productHandleApi{
 		client:          client,
@@ -909,7 +909,7 @@ func (h *productHandleApi) parseProductForm(c echo.Context, requireImage bool) (
 		return formData, nil
 	}
 
-	imagePath, err := h.upload_image.ProcessImageUpload(c, file)
+	imagePath, err := h.upload_image.ProcessImageUpload(c, "uploads/product", file, false)
 	if err != nil {
 		return formData, err
 	}

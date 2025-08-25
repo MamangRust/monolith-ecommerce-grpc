@@ -211,7 +211,7 @@ func RunClient() (*Client, func(), error) {
 	}
 
 	mapping := response_api.NewResponseApiMapper()
-	image_upload := upload_image.NewImageUpload()
+	image_upload := upload_image.NewImageUpload(log)
 
 	myredis := redis.NewClient(&redis.Options{
 		Addr:         fmt.Sprintf("%s:%s", viper.GetString("REDIS_HOST"), viper.GetString("REDIS_PORT")),

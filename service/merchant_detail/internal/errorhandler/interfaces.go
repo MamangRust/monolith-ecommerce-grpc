@@ -35,6 +35,11 @@ type MerchantDetailCommandError interface {
 	HandleDeleteAllMerchantDetailError(err error, method, tracePrefix string, span trace.Span, status *string, fields ...zap.Field) (bool, *response.ErrorResponse)
 }
 
+type MerchantSocialLinkCommandError interface {
+	HandleCreateMerchantSocialLinkError(err error, method, tracePrefix string, span trace.Span, status *string, fields ...zap.Field) (*response.MerchantSocialLinkResponse, *response.ErrorResponse)
+	HandleUpdateMerchantSocialLinkError(err error, method, tracePrefix string, span trace.Span, status *string, fields ...zap.Field) (*response.MerchantSocialLinkResponse, *response.ErrorResponse)
+}
+
 type FileError interface {
 	HandleErrorFileCover(
 		logger logger.LoggerInterface,

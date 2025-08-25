@@ -20,6 +20,10 @@ WORKDIR /app
 
 RUN mkdir -p /var/log/app && chown -R 1000:1000 /var/log/app
 
+RUN mkdir -p /app/uploads && \
+    chown -R 1000:1000 /app/uploads && \
+    chmod -R 755 /app/uploads
+
 COPY --from=builder /app/apigateway .
 
 RUN chown 1000:1000 ./apigateway

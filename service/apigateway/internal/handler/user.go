@@ -48,7 +48,7 @@ func NewHandlerUser(router *echo.Echo, client pb.UserServiceClient, logger logge
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	userHandler := &userHandleApi{
 		client:          client,

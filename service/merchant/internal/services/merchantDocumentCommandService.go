@@ -53,13 +53,13 @@ func NewMerchantDocumentCommandService(
 	requestCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "merchant_document_command_request_count",
 		Help: "Number of merchant document command requests MerchantDocumentCommandService",
-	}, []string{"status"})
+	}, []string{"method", "status"})
 
 	requestDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "merchant_document_command_request_duration_seconds",
 		Help:    "The duration of requests MerchantDocumentCommandService",
 		Buckets: prometheus.DefBuckets,
-	}, []string{"status"})
+	}, []string{"method", "status"})
 
 	prometheus.MustRegister(requestCounter, requestDuration)
 
@@ -382,5 +382,5 @@ func (s *merchantDocumentCommandService) startTracingAndLogging(ctx context.Cont
 
 func (s *merchantDocumentCommandService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

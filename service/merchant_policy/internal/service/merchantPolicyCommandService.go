@@ -49,7 +49,7 @@ func NewMerchantPolicyCommandService(
 			Help:    "Histogram of request duration for the MerchantPolicyCommandService",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
 
 	prometheus.MustRegister(requestCounter, requestDuration)
@@ -257,5 +257,5 @@ func (s *merchantPolicyCommandService) startTracingAndLogging(ctx context.Contex
 
 func (s *merchantPolicyCommandService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

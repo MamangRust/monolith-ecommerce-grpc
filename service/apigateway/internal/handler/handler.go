@@ -57,6 +57,7 @@ func NewHandler(deps *Deps) {
 	clientOrderItem := pb.NewOrderItemServiceClient(deps.ServiceConnections.OrderItem)
 	clientOrder := pb.NewOrderServiceClient(deps.ServiceConnections.Order)
 	clientProduct := pb.NewProductServiceClient(deps.ServiceConnections.Product)
+	clientMerchantDocument := pb.NewMerchantDocumentServiceClient(deps.ServiceConnections.Merchant)
 	clientTransaction := pb.NewTransactionServiceClient(deps.ServiceConnections.Transaction)
 	clientCart := pb.NewCartServiceClient(deps.ServiceConnections.Cart)
 	clientReview := pb.NewReviewServiceClient(deps.ServiceConnections.Review)
@@ -68,6 +69,7 @@ func NewHandler(deps *Deps) {
 	clientMerchantDetail := pb.NewMerchantDetailServiceClient(deps.ServiceConnections.MerchantDetail)
 	clientMerchantPolicy := pb.NewMerchantPoliciesServiceClient(deps.ServiceConnections.MerchantPolicy)
 	clientReviewDetail := pb.NewReviewDetailServiceClient(deps.ServiceConnections.ReviewDetail)
+	clientMerchantSocial := pb.NewMerchantSocialServiceClient(deps.ServiceConnections.MerchantDetail)
 
 	NewHandlerAuth(deps.E, clientAuth, deps.Logger, deps.Mapping.AuthResponseMapper)
 	NewHandlerRole(deps.Caceh, deps.E, clientRole, deps.Logger, deps.Mapping.RoleResponseMapper, deps.Kafka)
@@ -88,6 +90,8 @@ func NewHandler(deps *Deps) {
 	NewHandlerMerchantDetail(deps.E, clientMerchantDetail, deps.Logger, deps.Mapping.MerchantDetailResponseMapper, deps.Mapping.MerchantResponseMapper, deps.Image)
 	NewHandlerMerchantPolicies(deps.E, clientMerchantPolicy, deps.Logger, deps.Mapping.MerchantPolicyResponseMapper, deps.Mapping.MerchantResponseMapper)
 	NewHandlerReviewDetail(deps.E, clientReviewDetail, deps.Logger, deps.Mapping.ReviewDetailResponseMapper, deps.Mapping.ReviewMapper, deps.Image)
+	NewHandlerMerchantSocialLink(deps.E, clientMerchantSocial, deps.Logger, deps.Mapping.MerchantSocialLinkProtoMapper)
+	NewHandlerMerchantDocument(deps.E, clientMerchantDocument, deps.Logger, deps.Mapping.MerchantDocumentProMapper, deps.Image)
 }
 
 func parseQueryInt(c echo.Context, key string, defaultValue int) int {

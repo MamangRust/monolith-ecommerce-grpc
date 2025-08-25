@@ -53,7 +53,7 @@ func NewHandlerReview(
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	reviewHandler := &reviewHandleApi{
 		client:          client,
@@ -395,22 +395,38 @@ func (h *reviewHandleApi) FindByTrashed(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to create review"
 // @Router /api/review/create [post]
 func (h *reviewHandleApi) Create(c echo.Context) error {
+	const method = "Create"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
+	userID, ok := c.Get("user_id").(int)
+
+	if !ok || userID <= 0 {
+		h.logger.Debug("Invalid or missing user ID from JWT")
+
+		return review_errors.ErrApiReviewInvalidId(c)
+	}
+
 	var req requests.CreateReviewRequest
 
 	if err := c.Bind(&req); err != nil {
-		h.logger.Debug("Invalid request format", zap.Error(err))
+		logError("Invalid request format", err, zap.Error(err))
 		return review_errors.ErrApiBindCreateReview(c)
 	}
 
 	if err := req.Validate(); err != nil {
-		h.logger.Debug("Validation failed", zap.Error(err))
+		logError("Validation failed", err, zap.Error(err))
 		return review_errors.ErrApiValidateCreateReview(c)
 	}
 
-	ctx := c.Request().Context()
-
 	grpcReq := &pb.CreateReviewRequest{
-		UserId:    int32(req.UserID),
+		UserId:    int32(userID),
 		ProductId: int32(req.ProductID),
 		Comment:   req.Comment,
 		Rating:    int32(req.Rating),
@@ -419,13 +435,15 @@ func (h *reviewHandleApi) Create(c echo.Context) error {
 	res, err := h.client.Create(ctx, grpcReq)
 
 	if err != nil {
-		h.logger.Error("review creation failed",
+		logError("review creation failed", err,
 			zap.Error(err),
 			zap.Any("request", req),
 		)
 
 		return review_errors.ErrApiFailedCreateReview(c)
 	}
+
+	logSuccess("successfully create review", zap.Int("user_id", userID))
 
 	return c.JSON(http.StatusOK, res)
 }
@@ -444,22 +462,32 @@ func (h *reviewHandleApi) Create(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to update review"
 // @Router /api/review/update/{id} [post]
 func (h *reviewHandleApi) Update(c echo.Context) error {
+	const method = "Update"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(ctx, method)
+
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id := c.Param("id")
 
 	idInt, err := strconv.Atoi(id)
 
 	if err != nil {
-		h.logger.Debug("Invalid id parameter", zap.Error(err))
+		logError("Invalid id parameter", err, zap.Error(err))
 		return review_errors.ErrApiReviewInvalidId(c)
 	}
 
 	var req requests.UpdateReviewRequest
 
 	if err := c.Bind(&req); err != nil {
+		logError("invalid body", err, zap.Error(err))
+
 		return review_errors.ErrApiBindUpdateReview(c)
 	}
-
-	ctx := c.Request().Context()
 
 	grpcReq := &pb.UpdateReviewRequest{
 		ReviewId: int32(idInt),
@@ -471,13 +499,15 @@ func (h *reviewHandleApi) Update(c echo.Context) error {
 	res, err := h.client.Update(ctx, grpcReq)
 
 	if err != nil {
-		h.logger.Error("review update failed",
+		logError("review update failed", err,
 			zap.Error(err),
 			zap.Any("request", req),
 		)
 
 		return review_errors.ErrApiFailedUpdateReview(c)
 	}
+
+	logSuccess("successfully update review")
 
 	return c.JSON(http.StatusOK, res)
 }
@@ -495,14 +525,24 @@ func (h *reviewHandleApi) Update(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to retrieve trashed review"
 // @Router /api/review/trashed/{id} [get]
 func (h *reviewHandleApi) TrashedReview(c echo.Context) error {
+	const method = "Trashed"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+	)
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		h.logger.Debug("Invalid review ID format", zap.Error(err))
+		logError("Invalid review ID format", err, zap.Error(err))
 		return review_errors.ErrApiReviewInvalidId(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.FindByIdReviewRequest{
 		Id: int32(id),
@@ -511,11 +551,13 @@ func (h *reviewHandleApi) TrashedReview(c echo.Context) error {
 	res, err := h.client.TrashedReview(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to archive review", zap.Error(err))
+		logError("Failed to archive review", err, zap.Error(err))
 		return review_errors.ErrApiFailedTrashedReview(c)
 	}
 
 	so := h.mapping.ToApiResponseReviewDeleteAt(res)
+
+	logSuccess("successfully trash review")
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -533,14 +575,24 @@ func (h *reviewHandleApi) TrashedReview(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to restore review"
 // @Router /api/review/restore/{id} [post]
 func (h *reviewHandleApi) RestoreReview(c echo.Context) error {
+	const method = "Restore"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+	)
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		h.logger.Debug("Invalid review ID format", zap.Error(err))
+		logError("Invalid review ID format", err, zap.Error(err))
 		return review_errors.ErrApiReviewInvalidId(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.FindByIdReviewRequest{
 		Id: int32(id),
@@ -549,11 +601,13 @@ func (h *reviewHandleApi) RestoreReview(c echo.Context) error {
 	res, err := h.client.RestoreReview(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to restore review", zap.Error(err))
+		logError("Failed to restore review", err, zap.Error(err))
 		return review_errors.ErrApiFailedRestoreReview(c)
 	}
 
 	so := h.mapping.ToApiResponseReviewDeleteAt(res)
+
+	logSuccess("successfully restore review")
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -571,14 +625,24 @@ func (h *reviewHandleApi) RestoreReview(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to delete review:"
 // @Router /api/review/delete/{id} [delete]
 func (h *reviewHandleApi) DeleteReviewPermanent(c echo.Context) error {
+	const method = "DeleteReview"
+
+	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+	)
+	status := "success"
+
+	defer func() { end(status) }()
+
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		h.logger.Debug("Invalid review ID format", zap.Error(err))
+		logError("Invalid review ID format", err, zap.Error(err))
 		return review_errors.ErrApiReviewInvalidId(c)
 	}
-
-	ctx := c.Request().Context()
 
 	req := &pb.FindByIdReviewRequest{
 		Id: int32(id),
@@ -587,11 +651,13 @@ func (h *reviewHandleApi) DeleteReviewPermanent(c echo.Context) error {
 	res, err := h.client.DeleteReviewPermanent(ctx, req)
 
 	if err != nil {
-		h.logger.Error("Failed to permanently delete review", zap.Error(err))
+		logError("Failed to permanently delete review", err, zap.Error(err))
 		return review_errors.ErrApiFailedDeleteReviewPermanent(c)
 	}
 
 	so := h.mapping.ToApiResponseReviewDelete(res)
+
+	logSuccess("successfull delete review permanent")
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -609,18 +675,28 @@ func (h *reviewHandleApi) DeleteReviewPermanent(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to restore review"
 // @Router /api/review/restore/all [post]
 func (h *reviewHandleApi) RestoreAllReview(c echo.Context) error {
+	const method = "RestoreAll"
+
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+	)
+	status := "success"
+
+	defer func() { end(status) }()
 
 	res, err := h.client.RestoreAllReview(ctx, &emptypb.Empty{})
 
 	if err != nil {
-		h.logger.Error("Bulk review restoration failed", zap.Error(err))
+		logError("Bulk review restoration failed", err, zap.Error(err))
 		return review_errors.ErrApiFailedRestoreAllReviews(c)
 	}
 
 	so := h.mapping.ToApiResponseReviewAll(res)
 
-	h.logger.Debug("Successfully restored all review")
+	logSuccess("Successfully restored all review")
 
 	return c.JSON(http.StatusOK, so)
 }
@@ -638,18 +714,28 @@ func (h *reviewHandleApi) RestoreAllReview(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to delete review:"
 // @Router /api/review/delete/all [post]
 func (h *reviewHandleApi) DeleteAllReviewPermanent(c echo.Context) error {
+	const method = "DeleteAll"
+
 	ctx := c.Request().Context()
+
+	end, logSuccess, logError := h.startTracingAndLogging(
+		ctx,
+		method,
+	)
+	status := "success"
+
+	defer func() { end(status) }()
 
 	res, err := h.client.DeleteAllReviewPermanent(ctx, &emptypb.Empty{})
 
 	if err != nil {
-		h.logger.Error("Bulk review deletion failed", zap.Error(err))
+		logError("Bulk review deletion failed", err, zap.Error(err))
 		return review_errors.ErrApiFailedDeleteAllReviewsPermanent(c)
 	}
 
 	so := h.mapping.ToApiResponseReviewAll(res)
 
-	h.logger.Debug("Successfully deleted all review permanently")
+	logSuccess("Successfully deleted all review permanently")
 
 	return c.JSON(http.StatusOK, so)
 }

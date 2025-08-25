@@ -60,7 +60,7 @@ func NewMerchantDetailCommandService(ctx context.Context,
 			Help:    "Histogram of request durations for the MerchantDetailCommandService",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
 
 	prometheus.MustRegister(requestCounter, requestDuration)
@@ -92,14 +92,6 @@ func (s *merchantDetailCommandService) CreateMerchant(ctx context.Context, req *
 		return s.errorhandler.HandleCreateMerchantDetailError(err, methd, "FAILED_CREATE_MERCHANT", span, &status, zap.Error(err))
 	}
 
-	for _, social := range req.SocialLink {
-		social.MerchantDetailID = &merchant.ID
-		_, err := s.merchantSocialLinkRepository.CreateSocialLink(ctx, social)
-		if err != nil {
-			return errorhandler.HandleRepositorySingleError[*response.MerchantDetailResponse](s.logger, err, methd, "FAILED_CREATE_SOCIAL_LINK", span, &status, merchantsociallink_errors.ErrFailedCreateMerchantSocialLink, zap.Error(err))
-		}
-	}
-
 	so := s.mapping.ToMerchantDetailResponse(merchant)
 
 	logSuccess("Merchant detail created", zap.Int("merchantID", merchant.ID))
@@ -117,14 +109,6 @@ func (s *merchantDetailCommandService) UpdateMerchant(ctx context.Context, req *
 	merchant, err := s.merchantDetailCommandRepository.UpdateMerchantDetail(ctx, req)
 	if err != nil {
 		return s.errorhandler.HandleUpdateMerchantDetailError(err, methd, "FAILED_UPDATE_MERCHANT", span, &status, zap.Error(err))
-	}
-
-	for _, social := range req.SocialLink {
-		social.MerchantDetailID = &merchant.ID
-		_, err := s.merchantSocialLinkRepository.UpdateSocialLink(ctx, social)
-		if err != nil {
-			return errorhandler.HandleRepositorySingleError[*response.MerchantDetailResponse](s.logger, err, methd, "FAILED_UPDATE_SOCIAL_LINK", span, &status, merchantsociallink_errors.ErrFailedUpdateMerchantSocialLink, zap.Error(err))
-		}
 	}
 
 	so := s.mapping.ToMerchantDetailResponse(merchant)
@@ -321,5 +305,5 @@ func (s *merchantDetailCommandService) startTracingAndLogging(ctx context.Contex
 
 func (s *merchantDetailCommandService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

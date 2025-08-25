@@ -1,0 +1,347 @@
+{"level":"debug","ts":"2025-08-14T03:17:24.639Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T03:17:24.657Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T03:17:24.668Z","caller":"apps/server.go:177","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-14T03:17:24.669Z","caller":"apps/server.go:195","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-14T03:17:24.669Z","caller":"apps/server.go:185","msg":"Metrics server listening on :8081"}
+{"level":"info","ts":"2025-08-14T03:17:36.796Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-14T03:17:36.956Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-14T03:17:36.959Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":12}
+{"level":"debug","ts":"2025-08-14T03:17:36.960Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-14T03:17:36.974Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":12}
+{"level":"debug","ts":"2025-08-14T03:17:36.975Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:johnsdoee@example.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-14T03:17:36.977Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"johnsdoee@example.com"}
+{"level":"info","ts":"2025-08-14T03:17:36.977Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1755141456796396861_uPKwaP3F","duration":"180.832616ms"}
+{"level":"debug","ts":"2025-08-14T11:16:13.712Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:16:13.722Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T11:16:13.750Z","caller":"apps/server.go:173","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-14T11:16:13.751Z","caller":"apps/server.go:191","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-14T11:16:13.751Z","caller":"apps/server.go:181","msg":"Metrics server listening on :8081"}
+{"level":"info","ts":"2025-08-14T11:37:12.104Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-14T11:37:12.255Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-14T11:37:12.256Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":12}
+{"level":"debug","ts":"2025-08-14T11:37:12.256Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-14T11:37:12.272Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":12}
+{"level":"debug","ts":"2025-08-14T11:37:12.273Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:johnsdoee@example.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-14T11:37:12.273Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"johnsdoee@example.com"}
+{"level":"info","ts":"2025-08-14T11:37:12.273Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1755171432104046595_99YRHV5v","duration":"169.80342ms"}
+{"level":"debug","ts":"2025-08-14T11:40:40.924Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:40:40.930Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T11:40:40.933Z","caller":"apps/server.go:173","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-14T11:40:40.933Z","caller":"apps/server.go:191","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-14T11:40:40.933Z","caller":"apps/server.go:181","msg":"Metrics server listening on :8081"}
+{"level":"debug","ts":"2025-08-14T13:04:16.930Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T13:04:16.933Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T13:04:16.935Z","caller":"apps/server.go:173","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-14T13:04:16.936Z","caller":"apps/server.go:191","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-14T13:04:16.936Z","caller":"apps/server.go:181","msg":"Metrics server listening on :8081"}
+{"level":"info","ts":"2025-08-14T13:07:29.409Z","caller":"service/registerService.go:199","msg":"Start: Register"}
+{"level":"info","ts":"2025-08-14T13:07:29.595Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-auth-register","partition":0,"offset":2}
+{"level":"debug","ts":"2025-08-14T13:07:29.607Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"register:verify_code:user1@testuser.com","expiration":"15m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:29.608Z","caller":"service/registerService.go:213","msg":"User registered successfully","email":"user1@testuser.com","first_name":"Alice","last_name":"Smith"}
+{"level":"info","ts":"2025-08-14T13:07:29.608Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/RegisterUser","request_id":"req_1755176849409357273_2GCvkcRE","duration":"198.816537ms"}
+{"level":"info","ts":"2025-08-14T13:07:29.616Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-14T13:07:29.756Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-14T13:07:29.756Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":13}
+{"level":"debug","ts":"2025-08-14T13:07:29.756Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-14T13:07:29.762Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":13}
+{"level":"debug","ts":"2025-08-14T13:07:29.763Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:user1@testuser.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:29.763Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"user1@testuser.com"}
+{"level":"info","ts":"2025-08-14T13:07:29.763Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1755176849616187014_xMNOlMi1","duration":"147.364844ms"}
+{"level":"debug","ts":"2025-08-14T13:07:29.768Z","caller":"service/identityService.go:249","msg":"Start: GetMe"}
+{"level":"debug","ts":"2025-08-14T13:07:29.769Z","caller":"service/identityService.go:190","msg":"Fetching user details","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMyIsImF1ZCI6WyJhY2Nlc3MiXSwiZXhwIjoxNzU1MjIwMDQ5fQ._e6OLd5iwgQwHLNRA8v_tOW7IzrpwYjRsKapKo6AA0g"}
+{"level":"debug","ts":"2025-08-14T13:07:29.770Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"identity:user_info:%!s(int=13)","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:29.770Z","caller":"service/identityService.go:263","msg":"User details fetched successfully","user.id":13}
+{"level":"info","ts":"2025-08-14T13:07:29.770Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/GetMe","request_id":"req_1755176849768922390_SqBoBOAc","duration":"1.468849ms"}
+{"level":"info","ts":"2025-08-14T13:07:30.275Z","caller":"service/registerService.go:199","msg":"Start: Register"}
+{"level":"info","ts":"2025-08-14T13:07:30.419Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-auth-register","partition":0,"offset":3}
+{"level":"debug","ts":"2025-08-14T13:07:30.421Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"register:verify_code:user2@testuser.com","expiration":"15m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:30.421Z","caller":"service/registerService.go:213","msg":"User registered successfully","email":"user2@testuser.com","first_name":"Bob","last_name":"Johnson"}
+{"level":"info","ts":"2025-08-14T13:07:30.421Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/RegisterUser","request_id":"req_1755176850275544472_25ColJHf","duration":"146.103895ms"}
+{"level":"info","ts":"2025-08-14T13:07:30.426Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-14T13:07:30.564Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-14T13:07:30.564Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":14}
+{"level":"debug","ts":"2025-08-14T13:07:30.564Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-14T13:07:30.569Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":14}
+{"level":"debug","ts":"2025-08-14T13:07:30.569Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:user2@testuser.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:30.569Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"user2@testuser.com"}
+{"level":"info","ts":"2025-08-14T13:07:30.569Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1755176850426089494_ngKIKHYN","duration":"143.600542ms"}
+{"level":"debug","ts":"2025-08-14T13:07:30.574Z","caller":"service/identityService.go:249","msg":"Start: GetMe"}
+{"level":"debug","ts":"2025-08-14T13:07:30.574Z","caller":"service/identityService.go:190","msg":"Fetching user details","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNCIsImF1ZCI6WyJhY2Nlc3MiXSwiZXhwIjoxNzU1MjIwMDUwfQ.qg4C46EHD4NRh9G4kQDSudqUxmDBXI6djaZ8oPtWjaY"}
+{"level":"debug","ts":"2025-08-14T13:07:30.576Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"identity:user_info:%!s(int=14)","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:30.576Z","caller":"service/identityService.go:263","msg":"User details fetched successfully","user.id":14}
+{"level":"info","ts":"2025-08-14T13:07:30.576Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/GetMe","request_id":"req_1755176850574169678_KdycmX0K","duration":"1.967806ms"}
+{"level":"info","ts":"2025-08-14T13:07:31.081Z","caller":"service/registerService.go:199","msg":"Start: Register"}
+{"level":"info","ts":"2025-08-14T13:07:31.225Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-auth-register","partition":0,"offset":4}
+{"level":"debug","ts":"2025-08-14T13:07:31.228Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"register:verify_code:user3@testuser.com","expiration":"15m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:31.228Z","caller":"service/registerService.go:213","msg":"User registered successfully","email":"user3@testuser.com","first_name":"Charlie","last_name":"Williams"}
+{"level":"info","ts":"2025-08-14T13:07:31.228Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/RegisterUser","request_id":"req_1755176851081314443_p3Lnj9t6","duration":"146.945157ms"}
+{"level":"info","ts":"2025-08-14T13:07:31.233Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-14T13:07:31.370Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-14T13:07:31.370Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":15}
+{"level":"debug","ts":"2025-08-14T13:07:31.371Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-14T13:07:31.374Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":15}
+{"level":"debug","ts":"2025-08-14T13:07:31.375Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:user3@testuser.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:31.375Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"user3@testuser.com"}
+{"level":"info","ts":"2025-08-14T13:07:31.375Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1755176851233408425_sNpc0JE2","duration":"141.991598ms"}
+{"level":"debug","ts":"2025-08-14T13:07:31.379Z","caller":"service/identityService.go:249","msg":"Start: GetMe"}
+{"level":"debug","ts":"2025-08-14T13:07:31.379Z","caller":"service/identityService.go:190","msg":"Fetching user details","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNSIsImF1ZCI6WyJhY2Nlc3MiXSwiZXhwIjoxNzU1MjIwMDUxfQ.t_63nEHClR5AvvcvlTg4w6hn8d7n10cSLdesP24W2qE"}
+{"level":"debug","ts":"2025-08-14T13:07:31.380Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"identity:user_info:%!s(int=15)","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:31.380Z","caller":"service/identityService.go:263","msg":"User details fetched successfully","user.id":15}
+{"level":"info","ts":"2025-08-14T13:07:31.380Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/GetMe","request_id":"req_1755176851379531457_mOSGwdci","duration":"1.289334ms"}
+{"level":"info","ts":"2025-08-14T13:07:31.885Z","caller":"service/registerService.go:199","msg":"Start: Register"}
+{"level":"info","ts":"2025-08-14T13:07:32.027Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-auth-register","partition":0,"offset":5}
+{"level":"debug","ts":"2025-08-14T13:07:32.029Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"register:verify_code:user4@testuser.com","expiration":"15m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:32.029Z","caller":"service/registerService.go:213","msg":"User registered successfully","email":"user4@testuser.com","first_name":"Diana","last_name":"Brown"}
+{"level":"info","ts":"2025-08-14T13:07:32.029Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/RegisterUser","request_id":"req_1755176851885546148_IPDOsY41","duration":"143.967655ms"}
+{"level":"info","ts":"2025-08-14T13:07:32.034Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-14T13:07:32.172Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-14T13:07:32.172Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":16}
+{"level":"debug","ts":"2025-08-14T13:07:32.173Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-14T13:07:32.176Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":16}
+{"level":"debug","ts":"2025-08-14T13:07:32.177Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:user4@testuser.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:32.177Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"user4@testuser.com"}
+{"level":"info","ts":"2025-08-14T13:07:32.177Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1755176852034857401_uVdL2gML","duration":"142.540702ms"}
+{"level":"debug","ts":"2025-08-14T13:07:32.181Z","caller":"service/identityService.go:249","msg":"Start: GetMe"}
+{"level":"debug","ts":"2025-08-14T13:07:32.181Z","caller":"service/identityService.go:190","msg":"Fetching user details","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNiIsImF1ZCI6WyJhY2Nlc3MiXSwiZXhwIjoxNzU1MjIwMDUyfQ.soyJ5QSeyKT198pvy-KH-0eas_39CH7EeDomZvKwdV0"}
+{"level":"debug","ts":"2025-08-14T13:07:32.182Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"identity:user_info:%!s(int=16)","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:32.182Z","caller":"service/identityService.go:263","msg":"User details fetched successfully","user.id":16}
+{"level":"info","ts":"2025-08-14T13:07:32.182Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/GetMe","request_id":"req_1755176852181505313_QNwlkLV3","duration":"1.309958ms"}
+{"level":"info","ts":"2025-08-14T13:07:32.687Z","caller":"service/registerService.go:199","msg":"Start: Register"}
+{"level":"info","ts":"2025-08-14T13:07:32.827Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-auth-register","partition":0,"offset":6}
+{"level":"debug","ts":"2025-08-14T13:07:32.830Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"register:verify_code:user5@testuser.com","expiration":"15m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:32.830Z","caller":"service/registerService.go:213","msg":"User registered successfully","email":"user5@testuser.com","first_name":"Eve","last_name":"Jones"}
+{"level":"info","ts":"2025-08-14T13:07:32.830Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/RegisterUser","request_id":"req_1755176852687277514_5JVBqPiL","duration":"142.959395ms"}
+{"level":"info","ts":"2025-08-14T13:07:32.835Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-14T13:07:32.974Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-14T13:07:32.974Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":17}
+{"level":"debug","ts":"2025-08-14T13:07:32.974Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-14T13:07:32.977Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":17}
+{"level":"debug","ts":"2025-08-14T13:07:32.977Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:user5@testuser.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:32.977Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"user5@testuser.com"}
+{"level":"info","ts":"2025-08-14T13:07:32.978Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1755176852835762030_pqHixFwh","duration":"142.246379ms"}
+{"level":"debug","ts":"2025-08-14T13:07:32.983Z","caller":"service/identityService.go:249","msg":"Start: GetMe"}
+{"level":"debug","ts":"2025-08-14T13:07:32.983Z","caller":"service/identityService.go:190","msg":"Fetching user details","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNyIsImF1ZCI6WyJhY2Nlc3MiXSwiZXhwIjoxNzU1MjIwMDUyfQ.92CnWI4Y9gaqYCjoJAWwE7k_SYasd11FonzFP6LNmFY"}
+{"level":"debug","ts":"2025-08-14T13:07:32.984Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"identity:user_info:%!s(int=17)","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:32.985Z","caller":"service/identityService.go:263","msg":"User details fetched successfully","user.id":17}
+{"level":"info","ts":"2025-08-14T13:07:32.985Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/GetMe","request_id":"req_1755176852983308420_AZoRB5Nz","duration":"1.858304ms"}
+{"level":"info","ts":"2025-08-14T13:07:33.490Z","caller":"service/registerService.go:199","msg":"Start: Register"}
+{"level":"info","ts":"2025-08-14T13:07:33.633Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-auth-register","partition":0,"offset":7}
+{"level":"debug","ts":"2025-08-14T13:07:33.635Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"register:verify_code:user6@testuser.com","expiration":"15m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:33.635Z","caller":"service/registerService.go:213","msg":"User registered successfully","email":"user6@testuser.com","first_name":"Frank","last_name":"Garcia"}
+{"level":"info","ts":"2025-08-14T13:07:33.635Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/RegisterUser","request_id":"req_1755176853490833471_b4HMSlwK","duration":"144.959188ms"}
+{"level":"info","ts":"2025-08-14T13:07:33.641Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-14T13:07:33.782Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-14T13:07:33.782Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":18}
+{"level":"debug","ts":"2025-08-14T13:07:33.782Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-14T13:07:33.785Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":18}
+{"level":"debug","ts":"2025-08-14T13:07:33.786Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:user6@testuser.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:33.786Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"user6@testuser.com"}
+{"level":"info","ts":"2025-08-14T13:07:33.786Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1755176853641460590_gT3lrgBo","duration":"145.021969ms"}
+{"level":"debug","ts":"2025-08-14T13:07:33.792Z","caller":"service/identityService.go:249","msg":"Start: GetMe"}
+{"level":"debug","ts":"2025-08-14T13:07:33.792Z","caller":"service/identityService.go:190","msg":"Fetching user details","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxOCIsImF1ZCI6WyJhY2Nlc3MiXSwiZXhwIjoxNzU1MjIwMDUzfQ.4KZeboMyG2yIfdPtVC9oIveBJNc98CMjo66hMaqyaL0"}
+{"level":"debug","ts":"2025-08-14T13:07:33.793Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"identity:user_info:%!s(int=18)","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:33.793Z","caller":"service/identityService.go:263","msg":"User details fetched successfully","user.id":18}
+{"level":"info","ts":"2025-08-14T13:07:33.793Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/GetMe","request_id":"req_1755176853792005262_XfvC7qlx","duration":"1.941489ms"}
+{"level":"info","ts":"2025-08-14T13:07:34.299Z","caller":"service/registerService.go:199","msg":"Start: Register"}
+{"level":"info","ts":"2025-08-14T13:07:34.440Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-auth-register","partition":0,"offset":8}
+{"level":"debug","ts":"2025-08-14T13:07:34.442Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"register:verify_code:user7@testuser.com","expiration":"15m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:34.442Z","caller":"service/registerService.go:213","msg":"User registered successfully","email":"user7@testuser.com","first_name":"Grace","last_name":"Miller"}
+{"level":"info","ts":"2025-08-14T13:07:34.442Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/RegisterUser","request_id":"req_1755176854299645720_yYpusSEf","duration":"142.906844ms"}
+{"level":"info","ts":"2025-08-14T13:07:34.447Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-14T13:07:34.585Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-14T13:07:34.585Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":19}
+{"level":"debug","ts":"2025-08-14T13:07:34.585Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-14T13:07:34.589Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":19}
+{"level":"debug","ts":"2025-08-14T13:07:34.590Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:user7@testuser.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:34.590Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"user7@testuser.com"}
+{"level":"info","ts":"2025-08-14T13:07:34.590Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1755176854447231119_R7XWYzQt","duration":"143.12373ms"}
+{"level":"debug","ts":"2025-08-14T13:07:34.594Z","caller":"service/identityService.go:249","msg":"Start: GetMe"}
+{"level":"debug","ts":"2025-08-14T13:07:34.594Z","caller":"service/identityService.go:190","msg":"Fetching user details","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxOSIsImF1ZCI6WyJhY2Nlc3MiXSwiZXhwIjoxNzU1MjIwMDU0fQ.nFA-GTZGm1hHuEW97qt_DAO_QRhARYHS-eSFs2t7cTw"}
+{"level":"debug","ts":"2025-08-14T13:07:34.595Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"identity:user_info:%!s(int=19)","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:34.595Z","caller":"service/identityService.go:263","msg":"User details fetched successfully","user.id":19}
+{"level":"info","ts":"2025-08-14T13:07:34.595Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/GetMe","request_id":"req_1755176854594530850_eoolWrSa","duration":"1.276798ms"}
+{"level":"info","ts":"2025-08-14T13:07:35.100Z","caller":"service/registerService.go:199","msg":"Start: Register"}
+{"level":"info","ts":"2025-08-14T13:07:35.242Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-auth-register","partition":0,"offset":9}
+{"level":"debug","ts":"2025-08-14T13:07:35.244Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"register:verify_code:user8@testuser.com","expiration":"15m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:35.244Z","caller":"service/registerService.go:213","msg":"User registered successfully","email":"user8@testuser.com","first_name":"Henry","last_name":"Davis"}
+{"level":"info","ts":"2025-08-14T13:07:35.244Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/RegisterUser","request_id":"req_1755176855100874569_Zv2s9Dtt","duration":"143.880178ms"}
+{"level":"info","ts":"2025-08-14T13:07:35.249Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-14T13:07:35.386Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-14T13:07:35.386Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":20}
+{"level":"debug","ts":"2025-08-14T13:07:35.386Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-14T13:07:35.390Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":20}
+{"level":"debug","ts":"2025-08-14T13:07:35.391Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:user8@testuser.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:35.391Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"user8@testuser.com"}
+{"level":"info","ts":"2025-08-14T13:07:35.391Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1755176855249774401_i5ccZ7bi","duration":"141.316564ms"}
+{"level":"debug","ts":"2025-08-14T13:07:35.395Z","caller":"service/identityService.go:249","msg":"Start: GetMe"}
+{"level":"debug","ts":"2025-08-14T13:07:35.395Z","caller":"service/identityService.go:190","msg":"Fetching user details","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyMCIsImF1ZCI6WyJhY2Nlc3MiXSwiZXhwIjoxNzU1MjIwMDU1fQ.-vO6a55M6juegym5MLQGBp4XAdkbJnPVYcv9TFRxiPE"}
+{"level":"debug","ts":"2025-08-14T13:07:35.396Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"identity:user_info:%!s(int=20)","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:35.396Z","caller":"service/identityService.go:263","msg":"User details fetched successfully","user.id":20}
+{"level":"info","ts":"2025-08-14T13:07:35.396Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/GetMe","request_id":"req_1755176855395178981_Hf5fLz0b","duration":"1.3197ms"}
+{"level":"info","ts":"2025-08-14T13:07:35.901Z","caller":"service/registerService.go:199","msg":"Start: Register"}
+{"level":"info","ts":"2025-08-14T13:07:36.044Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-auth-register","partition":0,"offset":10}
+{"level":"debug","ts":"2025-08-14T13:07:36.046Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"register:verify_code:user9@testuser.com","expiration":"15m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:36.046Z","caller":"service/registerService.go:213","msg":"User registered successfully","email":"user9@testuser.com","first_name":"Ivy","last_name":"Rodriguez"}
+{"level":"info","ts":"2025-08-14T13:07:36.046Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/RegisterUser","request_id":"req_1755176855901531828_2rM0Eo9C","duration":"144.989575ms"}
+{"level":"info","ts":"2025-08-14T13:07:36.050Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-14T13:07:36.188Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-14T13:07:36.189Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":21}
+{"level":"debug","ts":"2025-08-14T13:07:36.189Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-14T13:07:36.192Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":21}
+{"level":"debug","ts":"2025-08-14T13:07:36.193Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:user9@testuser.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:36.193Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"user9@testuser.com"}
+{"level":"info","ts":"2025-08-14T13:07:36.193Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1755176856050788010_gqVtpgR4","duration":"142.597127ms"}
+{"level":"debug","ts":"2025-08-14T13:07:36.197Z","caller":"service/identityService.go:249","msg":"Start: GetMe"}
+{"level":"debug","ts":"2025-08-14T13:07:36.197Z","caller":"service/identityService.go:190","msg":"Fetching user details","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyMSIsImF1ZCI6WyJhY2Nlc3MiXSwiZXhwIjoxNzU1MjIwMDU2fQ.JgmY5eFgyoTMTzdmmSJObFqI9gafv88deaE2uZYFWoA"}
+{"level":"debug","ts":"2025-08-14T13:07:36.198Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"identity:user_info:%!s(int=21)","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:36.198Z","caller":"service/identityService.go:263","msg":"User details fetched successfully","user.id":21}
+{"level":"info","ts":"2025-08-14T13:07:36.198Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/GetMe","request_id":"req_1755176856197567423_NrmgnJWC","duration":"1.271758ms"}
+{"level":"info","ts":"2025-08-14T13:07:36.703Z","caller":"service/registerService.go:199","msg":"Start: Register"}
+{"level":"info","ts":"2025-08-14T13:07:36.843Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-auth-register","partition":0,"offset":11}
+{"level":"debug","ts":"2025-08-14T13:07:36.845Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"register:verify_code:user10@testuser.com","expiration":"15m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:36.845Z","caller":"service/registerService.go:213","msg":"User registered successfully","email":"user10@testuser.com","first_name":"Jack","last_name":"Martinez"}
+{"level":"info","ts":"2025-08-14T13:07:36.845Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/RegisterUser","request_id":"req_1755176856703428721_JskKqqQl","duration":"142.555671ms"}
+{"level":"info","ts":"2025-08-14T13:07:36.850Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-14T13:07:36.988Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-14T13:07:36.988Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":22}
+{"level":"debug","ts":"2025-08-14T13:07:36.988Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-14T13:07:36.990Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":22}
+{"level":"debug","ts":"2025-08-14T13:07:36.990Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:user10@testuser.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:36.990Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"user10@testuser.com"}
+{"level":"info","ts":"2025-08-14T13:07:36.990Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1755176856850495640_G9LXPyE2","duration":"140.253229ms"}
+{"level":"debug","ts":"2025-08-14T13:07:36.994Z","caller":"service/identityService.go:249","msg":"Start: GetMe"}
+{"level":"debug","ts":"2025-08-14T13:07:36.995Z","caller":"service/identityService.go:190","msg":"Fetching user details","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyMiIsImF1ZCI6WyJhY2Nlc3MiXSwiZXhwIjoxNzU1MjIwMDU2fQ.PNa0PDrtq6gP2DlLz6J3kZZhE9LNJiBEkBaIGpqKk18"}
+{"level":"debug","ts":"2025-08-14T13:07:36.996Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"identity:user_info:%!s(int=22)","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T13:07:36.996Z","caller":"service/identityService.go:263","msg":"User details fetched successfully","user.id":22}
+{"level":"info","ts":"2025-08-14T13:07:36.996Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/GetMe","request_id":"req_1755176856994910887_QdAQHklS","duration":"1.544341ms"}
+{"level":"debug","ts":"2025-08-14T15:57:29.073Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T15:57:29.090Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T15:57:29.112Z","caller":"apps/server.go:173","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-14T15:57:29.112Z","caller":"apps/server.go:181","msg":"Metrics server listening on :8081"}
+{"level":"info","ts":"2025-08-14T15:57:29.112Z","caller":"apps/server.go:191","msg":"gRPC server listening on :50051"}
+{"level":"debug","ts":"2025-08-14T16:08:12.444Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T16:08:12.472Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T16:08:12.523Z","caller":"apps/server.go:173","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-14T16:08:12.523Z","caller":"apps/server.go:191","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-14T16:08:12.523Z","caller":"apps/server.go:181","msg":"Metrics server listening on :8081"}
+{"level":"debug","ts":"2025-08-14T22:19:19.009Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T22:19:19.027Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T22:19:19.042Z","caller":"apps/server.go:173","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-14T22:19:19.042Z","caller":"apps/server.go:191","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-14T22:19:19.042Z","caller":"apps/server.go:181","msg":"Metrics server listening on :8081"}
+{"level":"info","ts":"2025-08-14T23:53:33.545Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-14T23:53:33.720Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-14T23:53:33.721Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":12}
+{"level":"debug","ts":"2025-08-14T23:53:33.721Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-14T23:53:33.741Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":12}
+{"level":"debug","ts":"2025-08-14T23:53:33.742Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:johnsdoee@example.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-14T23:53:33.742Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"johnsdoee@example.com"}
+{"level":"info","ts":"2025-08-14T23:53:33.742Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1755215613545699995_3vpreDhk","duration":"197.059306ms"}
+{"level":"debug","ts":"2025-08-15T00:57:15.094Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-15T00:57:15.135Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-15T00:57:15.167Z","caller":"apps/server.go:173","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-15T00:57:15.168Z","caller":"apps/server.go:181","msg":"Metrics server listening on :8081"}
+{"level":"info","ts":"2025-08-15T00:57:15.168Z","caller":"apps/server.go:191","msg":"gRPC server listening on :50051"}
+{"level":"debug","ts":"2025-08-18T06:35:18.285Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-18T06:35:18.312Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-18T06:35:18.335Z","caller":"apps/server.go:173","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-18T06:35:18.335Z","caller":"apps/server.go:181","msg":"Metrics server listening on :8081"}
+{"level":"info","ts":"2025-08-18T06:35:18.336Z","caller":"apps/server.go:191","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-18T06:36:34.042Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-18T06:36:34.207Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-18T06:36:34.208Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":12}
+{"level":"debug","ts":"2025-08-18T06:36:34.208Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-18T06:36:34.228Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":12}
+{"level":"debug","ts":"2025-08-18T06:36:34.229Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:johnsdoee@example.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-18T06:36:34.229Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"johnsdoee@example.com"}
+{"level":"info","ts":"2025-08-18T06:36:34.229Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1755498994042366140_jbEYIWau","duration":"187.369688ms"}
+{"level":"debug","ts":"2025-08-24T06:59:48.264Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T06:59:48.307Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-24T06:59:48.328Z","caller":"apps/server.go:173","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-24T06:59:48.330Z","caller":"apps/server.go:191","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-24T06:59:48.330Z","caller":"apps/server.go:181","msg":"Metrics server listening on :8081"}
+{"level":"info","ts":"2025-08-24T07:01:25.235Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-24T07:01:25.527Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-24T07:01:25.528Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":12}
+{"level":"debug","ts":"2025-08-24T07:01:25.529Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-24T07:01:25.554Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":12}
+{"level":"debug","ts":"2025-08-24T07:01:25.555Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:johnsdoee@example.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-24T07:01:25.555Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"johnsdoee@example.com"}
+{"level":"info","ts":"2025-08-24T07:01:25.556Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1756018885235394122_R7G8Cxbu","duration":"320.783124ms"}
+{"level":"debug","ts":"2025-08-24T16:25:31.930Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T16:25:31.950Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-24T16:25:31.987Z","caller":"apps/server.go:174","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-24T16:25:31.987Z","caller":"apps/server.go:192","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-24T16:25:31.987Z","caller":"apps/server.go:182","msg":"Metrics server listening on :8081"}
+{"level":"info","ts":"2025-08-24T16:26:00.613Z","caller":"handler/auth.go:80","msg":"Login attempt","email":"johnsdoee@example.com"}
+{"level":"info","ts":"2025-08-24T16:26:00.613Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-24T16:26:00.771Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-24T16:26:00.773Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":12}
+{"level":"debug","ts":"2025-08-24T16:26:00.773Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-24T16:26:00.784Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":12}
+{"level":"debug","ts":"2025-08-24T16:26:00.785Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:johnsdoee@example.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-24T16:26:00.786Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"johnsdoee@example.com"}
+{"level":"info","ts":"2025-08-24T16:26:00.786Z","caller":"handler/auth.go:93","msg":"Login successful","email":"johnsdoee@example.com"}
+{"level":"info","ts":"2025-08-24T16:26:00.786Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1756052760613272409_5lMTTkDS","duration":"173.006851ms"}
+{"level":"debug","ts":"2025-08-24T17:47:52.278Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T17:47:52.291Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-24T17:47:52.307Z","caller":"apps/server.go:174","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-24T17:47:52.308Z","caller":"apps/server.go:192","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-24T17:47:52.308Z","caller":"apps/server.go:182","msg":"Metrics server listening on :8081"}
+{"level":"debug","ts":"2025-08-25T08:07:37.172Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T08:07:37.231Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T08:07:37.261Z","caller":"apps/server.go:174","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-25T08:07:37.262Z","caller":"apps/server.go:192","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-25T08:07:37.262Z","caller":"apps/server.go:182","msg":"Metrics server listening on :8081"}
+{"level":"debug","ts":"2025-08-25T11:40:56.889Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T11:40:56.896Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T11:40:56.902Z","caller":"apps/server.go:174","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-25T11:40:56.903Z","caller":"apps/server.go:192","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-25T11:40:56.903Z","caller":"apps/server.go:182","msg":"Metrics server listening on :8081"}
+{"level":"info","ts":"2025-08-25T11:41:20.916Z","caller":"handler/auth.go:80","msg":"Login attempt","email":"johnsdoee@example.com"}
+{"level":"info","ts":"2025-08-25T11:41:20.917Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-25T11:41:21.078Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-25T11:41:21.078Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":12}
+{"level":"debug","ts":"2025-08-25T11:41:21.078Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-25T11:41:21.096Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":12}
+{"level":"debug","ts":"2025-08-25T11:41:21.097Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:johnsdoee@example.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-25T11:41:21.097Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"johnsdoee@example.com"}
+{"level":"info","ts":"2025-08-25T11:41:21.098Z","caller":"handler/auth.go:93","msg":"Login successful","email":"johnsdoee@example.com"}
+{"level":"info","ts":"2025-08-25T11:41:21.098Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1756122080916684271_29KaCOim","duration":"181.66913ms"}
+{"level":"debug","ts":"2025-08-25T13:48:14.620Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:48:14.633Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T13:48:14.642Z","caller":"apps/server.go:174","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-25T13:48:14.643Z","caller":"apps/server.go:192","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-25T13:48:14.643Z","caller":"apps/server.go:182","msg":"Metrics server listening on :8081"}
+{"level":"debug","ts":"2025-08-25T13:54:47.842Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:54:47.916Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T13:54:47.941Z","caller":"apps/server.go:174","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-25T13:54:47.945Z","caller":"apps/server.go:192","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-25T13:54:47.945Z","caller":"apps/server.go:182","msg":"Metrics server listening on :8081"}
+{"level":"debug","ts":"2025-08-25T15:00:37.830Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T15:00:37.847Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T15:00:37.890Z","caller":"apps/server.go:174","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-25T15:00:37.891Z","caller":"apps/server.go:182","msg":"Metrics server listening on :8081"}
+{"level":"info","ts":"2025-08-25T15:00:37.891Z","caller":"apps/server.go:192","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-25T15:00:44.581Z","caller":"handler/auth.go:124","msg":"User registration request","email":"johnsdoee@example.com"}
+{"level":"info","ts":"2025-08-25T15:00:44.581Z","caller":"service/registerService.go:199","msg":"Start: Register"}
+{"level":"info","ts":"2025-08-25T15:00:44.773Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-auth-register","partition":0,"offset":12}
+{"level":"debug","ts":"2025-08-25T15:00:44.780Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"register:verify_code:johnsdoee@example.com","expiration":"15m0s"}
+{"level":"debug","ts":"2025-08-25T15:00:44.780Z","caller":"service/registerService.go:213","msg":"User registered successfully","email":"johnsdoee@example.com","first_name":"John","last_name":"Does"}
+{"level":"info","ts":"2025-08-25T15:00:44.780Z","caller":"handler/auth.go:140","msg":"Registration successful","email":"johnsdoee@example.com","user_id":11}
+{"level":"info","ts":"2025-08-25T15:00:44.780Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/RegisterUser","request_id":"req_1756134044581355381_mIAmdjYb","duration":"199.420657ms"}
+{"level":"info","ts":"2025-08-25T15:01:34.015Z","caller":"handler/auth.go:80","msg":"Login attempt","email":"johnsdoee@example.com"}
+{"level":"info","ts":"2025-08-25T15:01:34.016Z","caller":"service/loginService.go:150","msg":"Start: Login"}
+{"level":"debug","ts":"2025-08-25T15:01:34.162Z","caller":"service/tokenService.go:152","msg":"Start: createAccessToken"}
+{"level":"debug","ts":"2025-08-25T15:01:34.164Z","caller":"service/tokenService.go:168","msg":"Created access token","userID":11}
+{"level":"debug","ts":"2025-08-25T15:01:34.164Z","caller":"service/tokenService.go:152","msg":"Start: createRefreshToken"}
+{"level":"debug","ts":"2025-08-25T15:01:34.174Z","caller":"service/tokenService.go:168","msg":"Created refresh token","userID":11}
+{"level":"debug","ts":"2025-08-25T15:01:34.176Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"auth:login:johnsdoee@example.com","expiration":"1m0s"}
+{"level":"debug","ts":"2025-08-25T15:01:34.177Z","caller":"service/loginService.go:164","msg":"Successfully logged in","email":"johnsdoee@example.com"}
+{"level":"info","ts":"2025-08-25T15:01:34.177Z","caller":"handler/auth.go:93","msg":"Login successful","email":"johnsdoee@example.com"}
+{"level":"info","ts":"2025-08-25T15:01:34.177Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.AuthService/LoginUser","request_id":"req_1756134094015652916_890eUcri","duration":"161.988288ms"}
+{"level":"debug","ts":"2025-08-25T15:54:55.341Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T15:54:55.343Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T15:54:55.347Z","caller":"apps/server.go:174","msg":"Server running on port 50051"}
+{"level":"info","ts":"2025-08-25T15:54:55.347Z","caller":"apps/server.go:192","msg":"gRPC server listening on :50051"}
+{"level":"info","ts":"2025-08-25T15:54:55.347Z","caller":"apps/server.go:182","msg":"Metrics server listening on :8081"}

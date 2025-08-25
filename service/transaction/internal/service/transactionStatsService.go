@@ -51,7 +51,7 @@ func NewTransactionStatsService(
 			Help:    "Histogram of request durations for the TransactionStatsService",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
 
 	prometheus.MustRegister(requestCounter, requestDuration)
@@ -338,5 +338,5 @@ func (s *transactionStatsService) startTraceWithLogging(ctx context.Context, met
 
 func (s *transactionStatsService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

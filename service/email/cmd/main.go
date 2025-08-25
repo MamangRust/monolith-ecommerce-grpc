@@ -13,13 +13,14 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-pkg/dotenv"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	otel_pkg "github.com/MamangRust/monolith-ecommerce-pkg/otel"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
 func main() {
-	logger, err := logger.NewLogger("email")
+	logger, err := logger.NewLogger("email-service")
 	if err != nil {
 		log.Fatalf("Error creating logger: %v", err)
 	}
@@ -44,6 +45,18 @@ func main() {
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
 		log.Fatal(http.ListenAndServe(metricsAddr, nil))
+	}()
+
+	shutdownTracerProvider, err := otel_pkg.InitTracerProvider("email-service", ctx)
+
+	if err != nil {
+		logger.Fatal("Failed to initialize tracer provider", zap.Error(err))
+	}
+
+	defer func() {
+		if err := shutdownTracerProvider(ctx); err != nil {
+			logger.Fatal("Failed to shutdown tracer provider", zap.Error(err))
+		}
 	}()
 
 	m := mailer.NewMailer(

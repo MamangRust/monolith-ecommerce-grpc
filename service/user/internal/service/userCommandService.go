@@ -60,7 +60,7 @@ func NewUserCommandService(
 			Help:    "Histogram of request durations for the UserCommandService",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
 
 	prometheus.MustRegister(requestCounter, requestDuration)
@@ -90,11 +90,7 @@ func (s *userCommandService) CreateUser(ctx context.Context, request *requests.C
 	}()
 
 	existingUser, err := s.userQueryRepository.FindByEmail(ctx, request.Email)
-
-	if err != nil {
-		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_USER_BY_EMAIL", span, &status, user_errors.ErrUserEmailAlready, zap.String("email", request.Email), zap.Error(err))
-
-	} else if existingUser != nil {
+	if err == nil && existingUser != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_USER_BY_EMAIL", span, &status, user_errors.ErrUserEmailAlready, zap.String("email", request.Email), zap.Int("user.id", existingUser.ID), zap.Error(err))
 	}
 
@@ -105,7 +101,7 @@ func (s *userCommandService) CreateUser(ctx context.Context, request *requests.C
 
 	request.Password = hash
 
-	const defaultRoleName = "Admin Access 1"
+	const defaultRoleName = "Admin"
 
 	role, err := s.roleRepository.FindByName(ctx, defaultRoleName)
 
@@ -158,7 +154,7 @@ func (s *userCommandService) UpdateUser(ctx context.Context, request *requests.U
 		existingUser.Password = hash
 	}
 
-	const defaultRoleName = "Admin Access 1"
+	const defaultRoleName = "Admin"
 
 	role, err := s.roleRepository.FindByName(ctx, defaultRoleName)
 
@@ -326,5 +322,5 @@ func (s *userCommandService) startTracingAndLogging(ctx context.Context, method 
 
 func (s *userCommandService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

@@ -52,7 +52,7 @@ func NewHandlerShippingAddress(
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	shippingHandler := &shippingAddressHandleApi{
 		client:          client,

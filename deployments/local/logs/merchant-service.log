@@ -1,0 +1,150 @@
+{"level":"debug","ts":"2025-08-14T03:17:24.418Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T03:17:24.428Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T03:17:24.437Z","caller":"apps/server.go:170","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-14T03:17:24.437Z","caller":"apps/server.go:185","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-14T03:17:24.437Z","caller":"apps/server.go:177","msg":"Metrics server listening on :8085"}
+{"level":"info","ts":"2025-08-14T04:33:50.234Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantService/FindAll","request_id":"req_1755146030234664838_w2cxIByb","duration":"5.534µs","error":"rpc error: code = Unimplemented desc = method FindAll not implemented"}
+{"level":"debug","ts":"2025-08-14T05:53:35.302Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T05:53:35.306Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T05:53:35.316Z","caller":"apps/server.go:170","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-14T05:53:35.316Z","caller":"apps/server.go:185","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-14T05:53:35.316Z","caller":"apps/server.go:177","msg":"Metrics server listening on :8085"}
+{"level":"debug","ts":"2025-08-14T05:54:16.183Z","caller":"services/merchantQueryService.go:214","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T05:54:16.192Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T05:54:16.193Z","caller":"services/merchantQueryService.go:228","msg":"Successfully fetched merchants from database","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-14T05:54:16.193Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantService/FindAll","request_id":"req_1755150856183439230_9nwVbLVi","duration":"9.823273ms"}
+{"level":"debug","ts":"2025-08-14T05:54:57.856Z","caller":"services/merchantQueryService.go:214","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T05:54:57.857Z","caller":"services/merchantQueryService.go:228","msg":"Successfully fetched merchants from cache","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-14T05:54:57.857Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantService/FindAll","request_id":"req_1755150897856505187_zeE1HohI","duration":"1.337584ms"}
+{"level":"debug","ts":"2025-08-14T11:16:13.738Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:16:13.761Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T11:16:13.785Z","caller":"apps/server.go:164","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-14T11:16:13.785Z","caller":"apps/server.go:179","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-14T11:16:13.785Z","caller":"apps/server.go:171","msg":"Metrics server listening on :8085"}
+{"level":"debug","ts":"2025-08-14T11:40:40.821Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:40:40.836Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T11:40:40.843Z","caller":"apps/server.go:164","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-14T11:40:40.844Z","caller":"apps/server.go:179","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-14T11:40:40.845Z","caller":"apps/server.go:171","msg":"Metrics server listening on :8085"}
+{"level":"debug","ts":"2025-08-14T15:57:28.917Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T15:57:28.948Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T15:57:28.964Z","caller":"apps/server.go:164","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-14T15:57:28.964Z","caller":"apps/server.go:179","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-14T15:57:28.965Z","caller":"apps/server.go:171","msg":"Metrics server listening on :8085"}
+{"level":"debug","ts":"2025-08-14T16:08:12.719Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T16:08:12.745Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T16:08:12.754Z","caller":"apps/server.go:164","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-14T16:08:12.755Z","caller":"apps/server.go:179","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-14T16:08:12.755Z","caller":"apps/server.go:171","msg":"Metrics server listening on :8085"}
+{"level":"debug","ts":"2025-08-14T17:18:12.841Z","caller":"services/merchantQueryService.go:214","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T17:18:12.883Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T17:18:12.883Z","caller":"services/merchantQueryService.go:228","msg":"Successfully fetched merchants from database","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-14T17:18:12.884Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantService/FindAll","request_id":"req_1755191892840390847_v7Xttxx4","duration":"43.979578ms"}
+{"level":"debug","ts":"2025-08-14T17:18:26.133Z","caller":"services/merchantQueryService.go:214","msg":"Start: FindById"}
+{"level":"debug","ts":"2025-08-14T17:18:26.135Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant:id:1","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T17:18:26.135Z","caller":"services/merchantQueryService.go:228","msg":"Successfully fetched merchant from database","merchant.id":1}
+{"level":"info","ts":"2025-08-14T17:18:26.135Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantService/FindById","request_id":"req_1755191906133155036_l4mANOG9","duration":"2.39741ms"}
+{"level":"debug","ts":"2025-08-14T17:18:33.299Z","caller":"services/merchantQueryService.go:214","msg":"Start: FindByActive"}
+{"level":"debug","ts":"2025-08-14T17:18:33.301Z","caller":"services/merchantQueryService.go:228","msg":"Successfully fetched active merchants from database","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-14T17:18:33.301Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantService/FindByActive","request_id":"req_1755191913299550812_EdMDqjWj","duration":"1.599952ms"}
+{"level":"debug","ts":"2025-08-14T17:18:41.010Z","caller":"services/merchantQueryService.go:214","msg":"Start: FindByTrashed"}
+{"level":"debug","ts":"2025-08-14T17:18:41.012Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant:trashed:page:1:pageSize:10:search:store","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T17:18:41.012Z","caller":"services/merchantQueryService.go:228","msg":"Successfully fetched trashed merchants from database","page":1,"pageSize":10,"search":"store"}
+{"level":"info","ts":"2025-08-14T17:18:41.012Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantService/FindByTrashed","request_id":"req_1755191921010468887_5DYQZ7dv","duration":"2.163725ms"}
+{"level":"debug","ts":"2025-08-14T17:18:52.653Z","caller":"services/merchantCommandService.go:358","msg":"Start: CreateMerchant"}
+{"level":"info","ts":"2025-08-14T17:18:52.968Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-merchant-created","partition":0,"offset":0}
+{"level":"debug","ts":"2025-08-14T17:18:52.968Z","caller":"services/merchantCommandService.go:372","msg":"Successfully created merchant","merchant.id":9}
+{"level":"info","ts":"2025-08-14T17:18:52.968Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantService/Create","request_id":"req_1755191932652543898_lA8VBljs","duration":"316.41768ms"}
+{"level":"debug","ts":"2025-08-14T17:19:11.733Z","caller":"services/merchantCommandService.go:358","msg":"Start: CreateMerchant"}
+{"level":"info","ts":"2025-08-14T17:19:11.740Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-merchant-created","partition":0,"offset":1}
+{"level":"debug","ts":"2025-08-14T17:19:11.740Z","caller":"services/merchantCommandService.go:372","msg":"Successfully created merchant","merchant.id":10}
+{"level":"info","ts":"2025-08-14T17:19:11.740Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantService/Create","request_id":"req_1755191951733152055_2LIt4foQ","duration":"7.836761ms"}
+{"level":"debug","ts":"2025-08-14T17:21:09.919Z","caller":"services/merchantCommandService.go:358","msg":"Start: UpdateMerchant"}
+{"level":"debug","ts":"2025-08-14T17:21:09.923Z","caller":"services/merchantCommandService.go:372","msg":"Successfully updated merchant","merchant.id":9}
+{"level":"info","ts":"2025-08-14T17:21:09.923Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantService/Update","request_id":"req_1755192069919322142_dMsqH7qZ","duration":"3.919885ms"}
+{"level":"debug","ts":"2025-08-14T17:21:24.877Z","caller":"services/merchantCommandService.go:358","msg":"Start: TrashedMerchant"}
+{"level":"debug","ts":"2025-08-14T17:21:24.881Z","caller":"services/merchantCommandService.go:372","msg":"Successfully trashed merchant","merchant.id":4}
+{"level":"info","ts":"2025-08-14T17:21:24.881Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantService/TrashedMerchant","request_id":"req_1755192084877970512_CdViwCua","duration":"3.894819ms"}
+{"level":"debug","ts":"2025-08-14T17:21:38.376Z","caller":"services/merchantCommandService.go:358","msg":"Start: RestoreMerchant"}
+{"level":"debug","ts":"2025-08-14T17:21:38.379Z","caller":"services/merchantCommandService.go:372","msg":"Successfully restored merchant","merchant.id":4}
+{"level":"info","ts":"2025-08-14T17:21:38.379Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantService/RestoreMerchant","request_id":"req_1755192098375991077_8TFiKMQd","duration":"3.706432ms"}
+{"level":"debug","ts":"2025-08-14T22:19:19.155Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T22:19:19.178Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-14T22:19:19.197Z","caller":"apps/server.go:164","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-14T22:19:19.197Z","caller":"apps/server.go:179","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-14T22:19:19.197Z","caller":"apps/server.go:171","msg":"Metrics server listening on :8085"}
+{"level":"debug","ts":"2025-08-15T00:11:42.015Z","caller":"services/merchantQueryService.go:214","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-15T00:11:42.046Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-15T00:11:42.046Z","caller":"services/merchantQueryService.go:228","msg":"Successfully fetched merchants from database","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-15T00:11:42.046Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantService/FindAll","request_id":"req_1755216702015454609_GajFXWas","duration":"31.45239ms"}
+{"level":"debug","ts":"2025-08-15T00:57:15.754Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-15T00:57:15.764Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-15T00:57:15.771Z","caller":"apps/server.go:164","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-15T00:57:15.771Z","caller":"apps/server.go:179","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-15T00:57:15.771Z","caller":"apps/server.go:171","msg":"Metrics server listening on :8085"}
+{"level":"debug","ts":"2025-08-18T06:35:18.306Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-18T06:35:18.340Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-18T06:35:18.378Z","caller":"apps/server.go:164","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-18T06:35:18.378Z","caller":"apps/server.go:171","msg":"Metrics server listening on :8085"}
+{"level":"info","ts":"2025-08-18T06:35:18.379Z","caller":"apps/server.go:179","msg":"gRPC server listening on :50055"}
+{"level":"debug","ts":"2025-08-24T06:59:48.974Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T06:59:48.992Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-24T06:59:49.010Z","caller":"apps/server.go:164","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-24T06:59:49.011Z","caller":"apps/server.go:179","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-24T06:59:49.011Z","caller":"apps/server.go:171","msg":"Metrics server listening on :8085"}
+{"level":"debug","ts":"2025-08-24T16:25:32.427Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T16:25:32.440Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-24T16:25:32.465Z","caller":"apps/server.go:165","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-24T16:25:32.465Z","caller":"apps/server.go:180","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-24T16:25:32.466Z","caller":"apps/server.go:172","msg":"Metrics server listening on :8085"}
+{"level":"debug","ts":"2025-08-24T17:47:52.399Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T17:47:52.412Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-24T17:47:52.422Z","caller":"apps/server.go:165","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-24T17:47:52.423Z","caller":"apps/server.go:180","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-24T17:47:52.424Z","caller":"apps/server.go:172","msg":"Metrics server listening on :8085"}
+{"level":"debug","ts":"2025-08-25T08:07:37.445Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T08:07:37.492Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T08:07:37.526Z","caller":"apps/server.go:165","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-25T08:07:37.526Z","caller":"apps/server.go:180","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-25T08:07:37.526Z","caller":"apps/server.go:172","msg":"Metrics server listening on :8085"}
+{"level":"debug","ts":"2025-08-25T11:40:56.188Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T11:40:56.280Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T11:40:56.286Z","caller":"apps/server.go:165","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-25T11:40:56.286Z","caller":"apps/server.go:180","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-25T11:40:56.286Z","caller":"apps/server.go:172","msg":"Metrics server listening on :8085"}
+{"level":"info","ts":"2025-08-25T12:25:27.659Z","caller":"handler/merchantDocument.go:227","msg":"Creating merchant document","merchant_id":1,"document_type":"legal"}
+{"level":"error","ts":"2025-08-25T12:25:27.660Z","caller":"handler/merchantDocument.go:239","msg":"Validation failed on merchant document creation","merchant_id":1,"document_type":"legal","error":"Key: 'CreateMerchantDocumentRequest.DocumentUrl' Error:Field validation for 'DocumentUrl' failed on the 'required' tag"}
+{"level":"info","ts":"2025-08-25T12:25:27.660Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantDocumentService/Create","request_id":"req_1756124727659215130_iPA4SkFL","duration":"930.492µs","error":"rpc error: code = InvalidArgument desc = {\"status\":\"merchant_document\",\"message\":\"Invalid input for create merchant document\",\"code\":3}"}
+{"level":"debug","ts":"2025-08-25T13:48:13.472Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:48:13.488Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T13:48:13.497Z","caller":"apps/server.go:165","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-25T13:48:13.498Z","caller":"apps/server.go:180","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-25T13:48:13.498Z","caller":"apps/server.go:172","msg":"Metrics server listening on :8085"}
+{"level":"debug","ts":"2025-08-25T13:54:48.781Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:54:48.796Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T13:54:48.807Z","caller":"apps/server.go:165","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-25T13:54:48.808Z","caller":"apps/server.go:180","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-25T13:54:48.809Z","caller":"apps/server.go:172","msg":"Metrics server listening on :8085"}
+{"level":"debug","ts":"2025-08-25T15:00:38.310Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T15:00:38.323Z","caller":"kafka/kafka.go:28","msg":"Kafka producer connected successfully"}
+{"level":"info","ts":"2025-08-25T15:00:38.342Z","caller":"apps/server.go:165","msg":"Server running on port 50055"}
+{"level":"info","ts":"2025-08-25T15:00:38.343Z","caller":"apps/server.go:180","msg":"gRPC server listening on :50055"}
+{"level":"info","ts":"2025-08-25T15:00:38.343Z","caller":"apps/server.go:172","msg":"Metrics server listening on :8085"}
+{"level":"info","ts":"2025-08-25T15:03:04.735Z","caller":"handler/merchant.go:223","msg":"Creating new merchant","name":"Toko Sukses","contact_email":"tokosukses@example.com"}
+{"level":"debug","ts":"2025-08-25T15:03:04.735Z","caller":"services/merchantCommandService.go:358","msg":"Start: CreateMerchant"}
+{"level":"info","ts":"2025-08-25T15:03:04.750Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-merchant-created","partition":0,"offset":2}
+{"level":"debug","ts":"2025-08-25T15:03:04.750Z","caller":"services/merchantCommandService.go:372","msg":"Successfully created merchant","merchant.id":9}
+{"level":"info","ts":"2025-08-25T15:03:04.750Z","caller":"handler/merchant.go:257","msg":"Merchant created successfully","merchant_id":9,"name":"Toko Sukses","user_id":11}
+{"level":"info","ts":"2025-08-25T15:03:04.750Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantService/Create","request_id":"req_1756134184735321237_T15fuHOf","duration":"15.625909ms"}
+{"level":"info","ts":"2025-08-25T15:04:24.349Z","caller":"handler/merchantDocument.go:227","msg":"Creating merchant document","merchant_id":1,"document_type":"legal"}
+{"level":"debug","ts":"2025-08-25T15:04:24.349Z","caller":"services/merchantDocumentCommandService.go:363","msg":"Start: CreateMerchantDocument"}
+{"level":"info","ts":"2025-08-25T15:04:24.358Z","caller":"kafka/kafka.go:49","msg":"Message is stored in topic","topic":"email-service-topic-merchant-created","partition":0,"offset":3}
+{"level":"debug","ts":"2025-08-25T15:04:24.358Z","caller":"services/merchantDocumentCommandService.go:377","msg":"Successfully created merchant document","merchantDocument.id":1}
+{"level":"info","ts":"2025-08-25T15:04:24.358Z","caller":"handler/merchantDocument.go:257","msg":"Merchant document created successfully","document_id":1,"merchant_id":1,"document_type":"legal"}
+{"level":"info","ts":"2025-08-25T15:04:24.358Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantDocumentService/Create","request_id":"req_1756134264349314740_PqwfHNkk","duration":"9.150781ms"}
+{"level":"info","ts":"2025-08-25T16:08:09.558Z","caller":"handler/merchant.go:47","msg":"Fetching all merchants","page":1,"page_size":10,"search":""}
+{"level":"debug","ts":"2025-08-25T16:08:09.559Z","caller":"services/merchantQueryService.go:214","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-25T16:08:09.580Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-25T16:08:09.580Z","caller":"services/merchantQueryService.go:228","msg":"Successfully fetched merchants from database","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-25T16:08:09.580Z","caller":"handler/merchant.go:79","msg":"Successfully fetched all merchants","page":1,"total_records":9,"total_pages":1}
+{"level":"info","ts":"2025-08-25T16:08:09.580Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantService/FindAll","request_id":"req_1756138089558925483_6lQ38diN","duration":"22.052049ms"}

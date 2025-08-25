@@ -49,7 +49,7 @@ func NewReviewQueryService(
 			Help:    "Histogram of request durations for the ReviewQueryService",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
 
 	prometheus.MustRegister(requestCounter, requestDuration)
@@ -279,5 +279,5 @@ func (s *reviewQueryService) normalizePagination(page, pageSize int) (int, int) 
 
 func (s *reviewQueryService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

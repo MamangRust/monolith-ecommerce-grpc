@@ -30,6 +30,8 @@ The **E-commerce Platform** is a robust, scalable, and secure integrated system 
 - 🖥️ **Node Exporter** — Exposes system-level (host) metrics such as CPU, memory, disk, and network stats for Prometheus.
 
 
+
+
 ## Architecture Ecommerce Platform
 
 
@@ -42,7 +44,37 @@ The **E-commerce Platform** is a robust, scalable, and secure integrated system 
 <img src="./images/architecture_ecommerce_kubernetes.png" alt="kubernetes-architecture">
 
 
-----
+### Screenshoot
 
-> [!WARNING]
-> Important Notice: This Ecommerce Platform is currently under active development and is not production-ready. Some core features may be incomplete or subject to change. This project is intended for personal use and learning purposes only.
+### Sql
+<img src="./images/ecommerce.png" alt="ecommerce "/>
+
+
+### Loki
+<img src="./images/loki.png" alt="loki" />
+
+
+### Jaeger
+<img src="./images/jaeger.png" alt="jaeger" />
+
+
+### Prometheus 
+
+#### Alert
+
+<img src="./images/prometheus-alert.png" alt="prometheus" />
+
+
+<img src="./images/prometheus.png" />
+
+
+
+### Grafana Prometheus
+
+<img src="./images/grafana-promethues.png" alt="grafana-prometheus" />
+
+
+
+### Node Exporter
+
+<img src="./images/node-exporter.png" alt="node-exporter" />

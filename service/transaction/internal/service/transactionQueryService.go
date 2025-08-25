@@ -52,7 +52,7 @@ func NewTransactionQueryService(
 			Help:    "Histogram of request durations for the TransactionQueryService",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
 
 	prometheus.MustRegister(requestCounter, requestDuration)
@@ -311,5 +311,5 @@ func (s *transactionQueryService) normalizePagination(page, pageSize int) (int, 
 
 func (s *transactionQueryService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

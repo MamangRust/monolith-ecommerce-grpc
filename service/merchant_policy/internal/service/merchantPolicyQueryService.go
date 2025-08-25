@@ -47,9 +47,9 @@ func NewMerchantPolicyQueryService(
 		prometheus.HistogramOpts{
 			Name:    "merchant_policy_query_service_request_duration_seconds",
 			Help:    "Histogram of request duration for the MerchantPolicyQueryService",
-			Buckets: []float64{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0},
+			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
 
 	prometheus.MustRegister(requestCounter, requestDuration)
@@ -242,5 +242,5 @@ func (s *merchantPolicyQueryService) normalizePagination(page, pageSize int) (in
 
 func (s *merchantPolicyQueryService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

@@ -57,7 +57,7 @@ func NewHandlerSlider(
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	sliderHandler := &sliderHandleApi{
 		client:          client,
@@ -652,7 +652,7 @@ func (h *sliderHandleApi) parseSliderForm(c echo.Context, requireImage bool) (re
 		return formData, nil
 	}
 
-	imagePath, err := h.upload_image.ProcessImageUpload(c, file)
+	imagePath, err := h.upload_image.ProcessImageUpload(c, "uploads/slider", file, false)
 	if err != nil {
 		return formData, err
 	}

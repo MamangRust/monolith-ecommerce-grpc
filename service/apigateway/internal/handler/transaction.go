@@ -55,7 +55,7 @@ func NewHandlerTransaction(
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	transactionHandle := &transactionHandleApi{
 		client:          client,
@@ -1499,20 +1499,17 @@ func (h *transactionHandleApi) Create(c echo.Context) error {
 
 	defer func() { end(status) }()
 
-	userID := c.Get("userID").(string)
+	userID, ok := c.Get("user_id").(int)
 
-	userIDInt, err := strconv.Atoi(userID)
-	if err != nil {
-		status = "error"
-
-		logError("Failed to create transaction", err, zap.Error(err))
+	if !ok || userID <= 0 {
+		h.logger.Info("Invalid or missing user ID from JWT")
 
 		return transaction_errors.ErrApiTransactionInvalidUserId(c)
 	}
 
 	var req requests.CreateTransactionRequest
 
-	req.UserID = userIDInt
+	req.UserID = userID
 
 	if err := c.Bind(&req); err != nil {
 		status = "error"
@@ -1535,6 +1532,7 @@ func (h *transactionHandleApi) Create(c echo.Context) error {
 		MerchantId:    int32(req.MerchantID),
 		PaymentMethod: req.PaymentMethod,
 		Amount:        int32(req.Amount),
+		UserId:        int32(req.UserID),
 	}
 
 	res, err := h.client.Create(ctx, grpcReq)

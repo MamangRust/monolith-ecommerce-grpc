@@ -5,3 +5,7 @@ import "github.com/MamangRust/monolith-ecommerce-shared/pb"
 type MerchantDetailHandleGrpc interface {
 	pb.MerchantDetailServiceServer
 }
+
+type MerchantSocialLinkHandleGrpc interface {
+	pb.MerchantSocialServiceServer
+}

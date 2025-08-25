@@ -54,7 +54,7 @@ func NewHandlerRole(cache mencache.RoleCache, router *echo.Echo, role pb.RoleSer
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	roleHandler := &roleHandleApi{
 		role:            role,
@@ -72,7 +72,7 @@ func NewHandlerRole(cache mencache.RoleCache, router *echo.Echo, role pb.RoleSer
 	routerRole := router.Group("/api/role")
 
 	roleMiddlewareChain := roleMiddleware.Middleware()
-	requireAdmin := middlewares.RequireRoles("Admin_Admin_14")
+	requireAdmin := middlewares.RequireRoles("Admin")
 
 	routerRole.GET("", roleMiddlewareChain(requireAdmin(roleHandler.FindAll)))
 
@@ -84,15 +84,12 @@ func NewHandlerRole(cache mencache.RoleCache, router *echo.Echo, role pb.RoleSer
 
 	routerRole.GET("/user/:user_id", roleMiddlewareChain(requireAdmin(roleHandler.FindByUserId)))
 
-	routerRole.POST("/",
-		roleMiddlewareChain(requireAdmin(roleHandler.Create)),
-	)
+	routerRole.POST("/create", roleMiddlewareChain(requireAdmin(roleHandler.Create)))
 
-	routerRole.POST("/:id", roleMiddlewareChain(requireAdmin(roleHandler.Update)))
+	routerRole.POST("/update/:id", roleMiddlewareChain(requireAdmin(roleHandler.Update)))
 
-	routerRole.DELETE("/:id", roleMiddlewareChain(requireAdmin(roleHandler.DeletePermanent)))
-	routerRole.PUT("/restore/:id", roleMiddlewareChain(requireAdmin(roleHandler.Restore)))
-	routerRole.DELETE("/permanent/:id", roleMiddlewareChain(requireAdmin(roleHandler.DeletePermanent)))
+	routerRole.POST("/restore/:id", roleMiddlewareChain(requireAdmin(roleHandler.Restore)))
+	routerRole.POST("/permanent/:id", roleMiddlewareChain(requireAdmin(roleHandler.DeletePermanent)))
 
 	routerRole.POST("/restore/all", roleMiddlewareChain(requireAdmin(roleHandler.RestoreAll)))
 	routerRole.POST("/permanent/all", roleMiddlewareChain(requireAdmin(roleHandler.DeleteAllPermanent)))

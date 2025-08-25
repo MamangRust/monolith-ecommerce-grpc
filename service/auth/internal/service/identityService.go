@@ -51,8 +51,10 @@ func NewIdentityService(errohandler errorhandler.IdentityErrorHandler, errorToke
 			Help:    "Duration of auth requests",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
+
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &identityService{
 		errorhandler:    errohandler,
@@ -178,6 +180,7 @@ func (s *identityService) RefreshToken(ctx context.Context, token string) (*resp
 		RefreshToken: refreshToken,
 	}, nil
 }
+
 func (s *identityService) GetMe(ctx context.Context, token string) (*response.UserResponse, *response.ErrorResponse) {
 	const method = "GetMe"
 	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("token", token))
@@ -267,5 +270,5 @@ func (s *identityService) startTracingAndLogging(ctx context.Context, method str
 
 func (s *identityService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

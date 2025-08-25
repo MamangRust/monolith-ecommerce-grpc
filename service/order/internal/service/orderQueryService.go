@@ -52,7 +52,7 @@ func NewOrderQueryService(
 			Help:    "Histogram of request durations for the OrderQueryService",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
 
 	prometheus.MustRegister(requestCounter, requestDuration)
@@ -248,5 +248,5 @@ func (s *orderQueryService) normalizePagination(page, pageSize int) (int, int) {
 
 func (s *orderQueryService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

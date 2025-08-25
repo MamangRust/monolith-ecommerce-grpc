@@ -1,0 +1,110 @@
+{"level":"debug","ts":"2025-08-14T03:17:23.633Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T03:17:23.638Z","caller":"apps/server.go:160","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-14T03:17:23.639Z","caller":"apps/server.go:175","msg":"gRPC server listening on :50062"}
+{"level":"info","ts":"2025-08-14T03:17:23.640Z","caller":"apps/server.go:167","msg":"Metrics server listening on :8092"}
+{"level":"debug","ts":"2025-08-14T05:58:45.900Z","caller":"service/sliderQueryService.go:192","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T05:58:45.930Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"slider:all:page:1:pageSize:10:search:promo","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T05:58:45.930Z","caller":"service/sliderQueryService.go:206","msg":"Successfully fetched all sliders","page":1,"pageSize":10,"search":"promo"}
+{"level":"info","ts":"2025-08-14T05:58:45.930Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.SliderService/FindAll","request_id":"req_1755151125900005862_13Hqwllv","duration":"30.932617ms"}
+{"level":"debug","ts":"2025-08-14T11:16:13.525Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:16:13.546Z","caller":"apps/server.go:154","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-14T11:16:13.549Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8092"}
+{"level":"info","ts":"2025-08-14T11:16:13.549Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50062"}
+{"level":"debug","ts":"2025-08-14T11:40:40.409Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:40:40.423Z","caller":"apps/server.go:154","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-14T11:40:40.428Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50062"}
+{"level":"info","ts":"2025-08-14T11:40:40.428Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8092"}
+{"level":"debug","ts":"2025-08-14T15:57:28.760Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T15:57:28.774Z","caller":"apps/server.go:154","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-14T15:57:28.775Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8092"}
+{"level":"info","ts":"2025-08-14T15:57:28.775Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50062"}
+{"level":"debug","ts":"2025-08-14T16:08:12.399Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T16:08:12.414Z","caller":"apps/server.go:154","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-14T16:08:12.414Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8092"}
+{"level":"info","ts":"2025-08-14T16:08:12.416Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50062"}
+{"level":"debug","ts":"2025-08-14T22:19:18.795Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T22:19:18.809Z","caller":"apps/server.go:154","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-14T22:19:18.809Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50062"}
+{"level":"info","ts":"2025-08-14T22:19:18.809Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8092"}
+{"level":"debug","ts":"2025-08-15T00:57:15.937Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-15T00:57:15.947Z","caller":"apps/server.go:154","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-15T00:57:15.952Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50062"}
+{"level":"info","ts":"2025-08-15T00:57:15.953Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8092"}
+{"level":"debug","ts":"2025-08-18T06:35:18.985Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-18T06:35:19.028Z","caller":"apps/server.go:154","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-18T06:35:19.030Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50062"}
+{"level":"info","ts":"2025-08-18T06:35:19.030Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8092"}
+{"level":"debug","ts":"2025-08-24T06:59:48.312Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T06:59:48.337Z","caller":"apps/server.go:154","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-24T06:59:48.338Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50062"}
+{"level":"info","ts":"2025-08-24T06:59:48.338Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8092"}
+{"level":"debug","ts":"2025-08-24T16:25:32.857Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T16:25:32.875Z","caller":"apps/server.go:155","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-24T16:25:32.876Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50062"}
+{"level":"info","ts":"2025-08-24T16:25:32.876Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8092"}
+{"level":"debug","ts":"2025-08-24T17:47:52.761Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T17:47:52.777Z","caller":"apps/server.go:155","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-24T17:47:52.777Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8092"}
+{"level":"info","ts":"2025-08-24T17:47:52.777Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50062"}
+{"level":"info","ts":"2025-08-24T18:26:38.746Z","caller":"handler/slider.go:201","msg":"Creating new slider","name":"Summer Sale"}
+{"level":"debug","ts":"2025-08-24T18:26:38.747Z","caller":"service/sliderCommandService.go:256","msg":"Start: CreateSlider"}
+{"level":"debug","ts":"2025-08-24T18:26:38.747Z","caller":"service/sliderCommandService.go:73","msg":"Creating new slider"}
+{"level":"debug","ts":"2025-08-24T18:26:38.765Z","caller":"service/sliderCommandService.go:270","msg":"Successfully created new slider","slider.id":11,"success":true}
+{"level":"info","ts":"2025-08-24T18:26:38.765Z","caller":"handler/slider.go:227","msg":"Slider created successfully","slider_id":11,"name":"Summer Sale"}
+{"level":"info","ts":"2025-08-24T18:26:38.766Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.SliderService/Create","request_id":"req_1756059998746384322_P7wFd98c","duration":"19.506157ms"}
+{"level":"info","ts":"2025-08-24T18:27:29.386Z","caller":"handler/slider.go:201","msg":"Creating new slider","name":"Summer Sale"}
+{"level":"debug","ts":"2025-08-24T18:27:29.387Z","caller":"service/sliderCommandService.go:256","msg":"Start: CreateSlider"}
+{"level":"debug","ts":"2025-08-24T18:27:29.387Z","caller":"service/sliderCommandService.go:73","msg":"Creating new slider"}
+{"level":"debug","ts":"2025-08-24T18:27:29.389Z","caller":"service/sliderCommandService.go:270","msg":"Successfully created new slider","slider.id":12,"success":true}
+{"level":"info","ts":"2025-08-24T18:27:29.389Z","caller":"handler/slider.go:227","msg":"Slider created successfully","slider_id":12,"name":"Summer Sale"}
+{"level":"info","ts":"2025-08-24T18:27:29.389Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.SliderService/Create","request_id":"req_1756060049386886849_hFFuUGZC","duration":"2.873079ms"}
+{"level":"debug","ts":"2025-08-25T08:07:36.937Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T08:07:37.003Z","caller":"apps/server.go:155","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-25T08:07:37.008Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50062"}
+{"level":"info","ts":"2025-08-25T08:07:37.009Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8092"}
+{"level":"debug","ts":"2025-08-25T11:40:57.046Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T11:40:57.068Z","caller":"apps/server.go:155","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-25T11:40:57.068Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8092"}
+{"level":"info","ts":"2025-08-25T11:40:57.069Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50062"}
+{"level":"info","ts":"2025-08-25T13:19:11.716Z","caller":"handler/slider.go:201","msg":"Creating new slider","name":"Summer Sale"}
+{"level":"debug","ts":"2025-08-25T13:19:11.717Z","caller":"service/sliderCommandService.go:256","msg":"Start: CreateSlider"}
+{"level":"debug","ts":"2025-08-25T13:19:11.717Z","caller":"service/sliderCommandService.go:73","msg":"Creating new slider"}
+{"level":"debug","ts":"2025-08-25T13:19:11.738Z","caller":"service/sliderCommandService.go:270","msg":"Successfully created new slider","slider.id":13,"success":true}
+{"level":"info","ts":"2025-08-25T13:19:11.739Z","caller":"handler/slider.go:227","msg":"Slider created successfully","slider_id":13,"name":"Summer Sale"}
+{"level":"info","ts":"2025-08-25T13:19:11.739Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.SliderService/Create","request_id":"req_1756127951716698663_u5NXCoka","duration":"22.527403ms"}
+{"level":"info","ts":"2025-08-25T13:19:23.633Z","caller":"handler/slider.go:201","msg":"Creating new slider","name":"Summer Sale"}
+{"level":"debug","ts":"2025-08-25T13:19:23.634Z","caller":"service/sliderCommandService.go:256","msg":"Start: CreateSlider"}
+{"level":"debug","ts":"2025-08-25T13:19:23.634Z","caller":"service/sliderCommandService.go:73","msg":"Creating new slider"}
+{"level":"debug","ts":"2025-08-25T13:19:23.637Z","caller":"service/sliderCommandService.go:270","msg":"Successfully created new slider","slider.id":14,"success":true}
+{"level":"info","ts":"2025-08-25T13:19:23.637Z","caller":"handler/slider.go:227","msg":"Slider created successfully","slider_id":14,"name":"Summer Sale"}
+{"level":"info","ts":"2025-08-25T13:19:23.637Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.SliderService/Create","request_id":"req_1756127963633837077_zlcMuOhf","duration":"3.730557ms"}
+{"level":"debug","ts":"2025-08-25T13:48:14.729Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:48:14.733Z","caller":"apps/server.go:155","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-25T13:48:14.734Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50062"}
+{"level":"info","ts":"2025-08-25T13:48:14.734Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8092"}
+{"level":"debug","ts":"2025-08-25T13:54:47.982Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:54:48.023Z","caller":"apps/server.go:155","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-25T13:54:48.023Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50062"}
+{"level":"info","ts":"2025-08-25T13:54:48.023Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8092"}
+{"level":"debug","ts":"2025-08-25T15:00:38.288Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T15:00:38.301Z","caller":"apps/server.go:155","msg":"Server running on port 50062"}
+{"level":"info","ts":"2025-08-25T15:00:38.303Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50062"}
+{"level":"info","ts":"2025-08-25T15:00:38.303Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8092"}
+{"level":"info","ts":"2025-08-25T15:11:46.012Z","caller":"handler/slider.go:201","msg":"Creating new slider","name":"Summer Sale"}
+{"level":"debug","ts":"2025-08-25T15:11:46.012Z","caller":"service/sliderCommandService.go:256","msg":"Start: CreateSlider"}
+{"level":"debug","ts":"2025-08-25T15:11:46.012Z","caller":"service/sliderCommandService.go:73","msg":"Creating new slider"}
+{"level":"debug","ts":"2025-08-25T15:11:46.017Z","caller":"service/sliderCommandService.go:270","msg":"Successfully created new slider","slider.id":11,"success":true}
+{"level":"info","ts":"2025-08-25T15:11:46.018Z","caller":"handler/slider.go:227","msg":"Slider created successfully","slider_id":11,"name":"Summer Sale"}
+{"level":"info","ts":"2025-08-25T15:11:46.018Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.SliderService/Create","request_id":"req_1756134706012378560_j7Tfy7k5","duration":"5.915657ms"}
+{"level":"info","ts":"2025-08-25T15:55:50.627Z","caller":"handler/slider.go:47","msg":"Fetching all sliders","page":1,"page_size":10,"search":"promo"}
+{"level":"debug","ts":"2025-08-25T15:55:50.627Z","caller":"service/sliderQueryService.go:192","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-25T15:55:50.660Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"slider:all:page:1:pageSize:10:search:promo","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-25T15:55:50.660Z","caller":"service/sliderQueryService.go:206","msg":"Successfully fetched all sliders","page":1,"pageSize":10,"search":"promo"}
+{"level":"info","ts":"2025-08-25T15:55:50.661Z","caller":"handler/slider.go:79","msg":"Successfully fetched all sliders","page":1,"total_records":2,"total_pages":1,"fetched_sliders_count":2}
+{"level":"info","ts":"2025-08-25T15:55:50.661Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.SliderService/FindAll","request_id":"req_1756137350627359858_qKs8CK6l","duration":"33.732243ms"}
+{"level":"info","ts":"2025-08-25T16:11:23.228Z","caller":"handler/slider.go:47","msg":"Fetching all sliders","page":1,"page_size":10,"search":"promo"}
+{"level":"debug","ts":"2025-08-25T16:11:23.228Z","caller":"service/sliderQueryService.go:192","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-25T16:11:23.230Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"slider:all:page:1:pageSize:10:search:promo","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-25T16:11:23.230Z","caller":"service/sliderQueryService.go:206","msg":"Successfully fetched all sliders","page":1,"pageSize":10,"search":"promo"}
+{"level":"info","ts":"2025-08-25T16:11:23.230Z","caller":"handler/slider.go:79","msg":"Successfully fetched all sliders","page":1,"total_records":2,"total_pages":1,"fetched_sliders_count":2}
+{"level":"info","ts":"2025-08-25T16:11:23.230Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.SliderService/FindAll","request_id":"req_1756138283228552424_rreOU79b","duration":"2.098337ms"}

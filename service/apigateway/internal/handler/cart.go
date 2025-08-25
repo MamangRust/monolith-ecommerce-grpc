@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
@@ -52,7 +51,7 @@ func NewHandlerCart(
 		[]string{"method", "status"},
 	)
 
-	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestCounter, requestDuration)
 
 	cartHandler := &cartHandleApi{
 		client:          client,
@@ -75,10 +74,9 @@ func NewHandlerCart(
 // @Security Bearer
 // @Summary Find all carts
 // @Tags Cart
-// @Description Retrieve a list of all carts
+// @Description Retrieve a list of all carts for the logged-in user
 // @Accept json
 // @Produce json
-// @Param user_id query int true "User ID"
 // @Param page query int false "Page number" default(1)
 // @Param page_size query int false "Number of items per page" default(10)
 // @Param search query string false "Search query"
@@ -87,12 +85,11 @@ func NewHandlerCart(
 // @Router /api/cart [get]
 func (h *cartHandleApi) FindAll(c echo.Context) error {
 	const method = "FindAllCart"
-
 	ctx := c.Request().Context()
 
-	userID, err := strconv.Atoi(c.QueryParam("user_id"))
-	if err != nil || userID <= 0 {
-		h.logger.Debug("Invalid user ID format", zap.Error(err), zap.String("user_id", c.QueryParam("user_id")))
+	userID, ok := c.Get("user_id").(int)
+	if !ok || userID <= 0 {
+		h.logger.Debug("Invalid or missing user ID from JWT")
 		return cart_errors.ErrApiFailedInvalidUserId(c)
 	}
 
@@ -146,6 +143,12 @@ func (h *cartHandleApi) FindAll(c echo.Context) error {
 func (h *cartHandleApi) Create(c echo.Context) error {
 	const method = "Create"
 
+	userID, ok := c.Get("user_id").(int)
+	if !ok || userID <= 0 {
+		h.logger.Debug("Invalid or missing user ID from JWT")
+		return cart_errors.ErrApiFailedInvalidUserId(c)
+	}
+
 	ctx := c.Request().Context()
 
 	end, logSuccess, logError := h.startTracingAndLogging(
@@ -177,7 +180,7 @@ func (h *cartHandleApi) Create(c echo.Context) error {
 	req := &pb.CreateCartRequest{
 		Quantity:  int32(body.Quantity),
 		ProductId: int32(body.ProductID),
-		UserId:    int32(body.UserID),
+		UserId:    int32(userID),
 	}
 
 	res, err := h.client.Create(ctx, req)
@@ -208,7 +211,13 @@ func (h *cartHandleApi) Create(c echo.Context) error {
 // @Failure 500 {object} response.ErrorResponse "Failed to delete cart"
 // @Router /api/cart/delete [delete]
 func (h *cartHandleApi) Delete(c echo.Context) error {
-	const method = "Create"
+	const method = "Delete"
+
+	userID, ok := c.Get("user_id").(int)
+	if !ok || userID <= 0 {
+		h.logger.Debug("Invalid or missing user ID from JWT")
+		return cart_errors.ErrApiFailedInvalidUserId(c)
+	}
 
 	ctx := c.Request().Context()
 
@@ -240,7 +249,7 @@ func (h *cartHandleApi) Delete(c echo.Context) error {
 
 	reqPb := &pb.DeleteCartRequest{
 		CartId: int32(req.CartID),
-		UserId: int32(req.UserID),
+		UserId: int32(userID),
 	}
 
 	res, err := h.client.Delete(ctx, reqPb)
@@ -272,6 +281,12 @@ func (h *cartHandleApi) Delete(c echo.Context) error {
 // @Router /api/cart/delete-all [post]
 func (h *cartHandleApi) DeleteAll(c echo.Context) error {
 	const method = "DeleteAll"
+
+	userID, ok := c.Get("user_id").(int)
+	if !ok || userID <= 0 {
+		h.logger.Debug("Invalid or missing user ID from JWT")
+		return cart_errors.ErrApiFailedInvalidUserId(c)
+	}
 
 	ctx := c.Request().Context()
 
@@ -306,7 +321,7 @@ func (h *cartHandleApi) DeleteAll(c echo.Context) error {
 	}
 
 	reqPb := &pb.DeleteAllCartRequest{
-		UserId:  int32(req.UserID),
+		UserId:  int32(userID),
 		CartIds: cartIdsPb,
 	}
 

@@ -1,0 +1,111 @@
+{"level":"debug","ts":"2025-08-14T03:17:24.488Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T03:17:24.493Z","caller":"apps/server.go:160","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-14T03:17:24.493Z","caller":"apps/server.go:176","msg":"gRPC server listening on :50068"}
+{"level":"info","ts":"2025-08-14T03:17:24.493Z","caller":"apps/server.go:168","msg":"Metrics server listening on :8098"}
+{"level":"debug","ts":"2025-08-14T05:56:24.258Z","caller":"service/merchantPolicyQueryService.go:213","msg":"Start: FindAllMerchantPolicy"}
+{"level":"debug","ts":"2025-08-14T05:56:24.286Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant_policy:all:page:1:pageSize:10:search:return","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T05:56:24.286Z","caller":"service/merchantPolicyQueryService.go:227","msg":"Successfully fetched merchants","page":1,"pageSize":10,"search":"return"}
+{"level":"info","ts":"2025-08-14T05:56:24.286Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantPoliciesService/FindAll","request_id":"req_1755150984258025472_FLs8W8wF","duration":"28.901456ms"}
+{"level":"debug","ts":"2025-08-14T05:56:29.608Z","caller":"service/merchantPolicyQueryService.go:213","msg":"Start: FindAllMerchantPolicy"}
+{"level":"debug","ts":"2025-08-14T05:56:29.614Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant_policy:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T05:56:29.614Z","caller":"service/merchantPolicyQueryService.go:227","msg":"Successfully fetched merchants","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-14T05:56:29.614Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantPoliciesService/FindAll","request_id":"req_1755150989608587176_FpZ7OnH5","duration":"5.652939ms"}
+{"level":"debug","ts":"2025-08-14T11:16:13.410Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:16:13.429Z","caller":"apps/server.go:154","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-14T11:16:13.429Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50068"}
+{"level":"info","ts":"2025-08-14T11:16:13.430Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8098"}
+{"level":"debug","ts":"2025-08-14T11:40:40.857Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:40:40.863Z","caller":"apps/server.go:154","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-14T11:40:40.864Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50068"}
+{"level":"info","ts":"2025-08-14T11:40:40.864Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8098"}
+{"level":"debug","ts":"2025-08-14T15:57:29.528Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T15:57:29.538Z","caller":"apps/server.go:154","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-14T15:57:29.538Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50068"}
+{"level":"info","ts":"2025-08-14T15:57:29.538Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8098"}
+{"level":"debug","ts":"2025-08-14T16:08:12.703Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T16:08:12.744Z","caller":"apps/server.go:154","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-14T16:08:12.746Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8098"}
+{"level":"info","ts":"2025-08-14T16:08:12.746Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50068"}
+{"level":"debug","ts":"2025-08-14T22:19:19.430Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T22:19:19.435Z","caller":"apps/server.go:154","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-14T22:19:19.435Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50068"}
+{"level":"info","ts":"2025-08-14T22:19:19.435Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8098"}
+{"level":"debug","ts":"2025-08-15T00:10:47.796Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-15T00:10:47.799Z","caller":"apps/server.go:154","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-15T00:10:47.799Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50068"}
+{"level":"info","ts":"2025-08-15T00:10:47.799Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8098"}
+{"level":"debug","ts":"2025-08-15T00:57:14.006Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-15T00:57:14.038Z","caller":"apps/server.go:154","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-15T00:57:14.039Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50068"}
+{"level":"info","ts":"2025-08-15T00:57:14.043Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8098"}
+{"level":"debug","ts":"2025-08-18T06:35:18.559Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-18T06:35:18.582Z","caller":"apps/server.go:154","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-18T06:35:18.583Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50068"}
+{"level":"info","ts":"2025-08-18T06:35:18.587Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8098"}
+{"level":"debug","ts":"2025-08-18T06:36:57.587Z","caller":"service/merchantPolicyQueryService.go:213","msg":"Start: FindAllMerchantPolicy"}
+{"level":"debug","ts":"2025-08-18T06:36:57.611Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant_policy:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-18T06:36:57.612Z","caller":"service/merchantPolicyQueryService.go:227","msg":"Successfully fetched merchants","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-18T06:36:57.612Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantPoliciesService/FindAll","request_id":"req_1755499017587246969_qhbKNmjl","duration":"25.450884ms"}
+{"level":"debug","ts":"2025-08-18T06:37:02.141Z","caller":"service/merchantPolicyQueryService.go:213","msg":"Start: FindMerchantPolicyById"}
+{"level":"error","ts":"2025-08-18T06:37:02.143Z","caller":"errorhandler/errorhandler_helpers.go:50","msg":"Repository error in FindMerchantPolicyById","error":"failed to find merchant policy by ID","error":"failed to find merchant policy by ID","trace.id":"FAILED_FIND_MERCHANT_POLICY_BY_ID_20250818_49b31a9f"}
+{"level":"info","ts":"2025-08-18T06:37:02.143Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantPoliciesService/FindById","request_id":"req_1755499022141520966_H8wghaNS","duration":"2.432794ms","error":"rpc error: code = Code(500) desc = {\"status\":\"error\",\"message\":\"Failed to find merchant policy by ID\",\"code\":500}"}
+{"level":"debug","ts":"2025-08-18T06:37:07.973Z","caller":"service/merchantPolicyQueryService.go:213","msg":"Start: FindByActiveMerchantPolicy"}
+{"level":"debug","ts":"2025-08-18T06:37:07.976Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant_policy:active:page:1:pageSize:5:search:shipping","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-18T06:37:07.976Z","caller":"service/merchantPolicyQueryService.go:227","msg":"Successfully fetched active merchants","page":1,"pageSize":5,"search":"shipping"}
+{"level":"info","ts":"2025-08-18T06:37:07.976Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantPoliciesService/FindByActive","request_id":"req_1755499027973853935_ZwibdIJU","duration":"2.472922ms"}
+{"level":"debug","ts":"2025-08-18T06:37:13.190Z","caller":"service/merchantPolicyQueryService.go:213","msg":"Start: FindByTrashedMerchantPolicy"}
+{"level":"debug","ts":"2025-08-18T06:37:13.192Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant_policy:trashed:page:1:pageSize:5:search:old","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-18T06:37:13.192Z","caller":"service/merchantPolicyQueryService.go:227","msg":"Successfully fetched trashed merchants","page":1,"pageSize":5,"search":"old"}
+{"level":"info","ts":"2025-08-18T06:37:13.192Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantPoliciesService/FindByTrashed","request_id":"req_1755499033190116571_tgaQv67u","duration":"2.561939ms"}
+{"level":"debug","ts":"2025-08-18T06:37:22.264Z","caller":"service/merchantPolicyCommandService.go:238","msg":"Start: CreateMerchant"}
+{"level":"error","ts":"2025-08-18T06:37:22.269Z","caller":"errorhandler/errorhandler_helpers.go:50","msg":"Repository error in CreateMerchant","error":"failed to create merchant policy","error":"failed to create merchant policy","trace.id":"FAILED_CREATE_MERCHANT_POLICY_20250818_856bbe5a"}
+{"level":"info","ts":"2025-08-18T06:37:22.269Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantPoliciesService/Create","request_id":"req_1755499042264489843_FsnpSRe3","duration":"5.29381ms","error":"rpc error: code = Code(500) desc = {\"status\":\"error\",\"message\":\"Failed to create merchant policy\",\"code\":500}"}
+{"level":"debug","ts":"2025-08-18T06:37:31.550Z","caller":"service/merchantPolicyCommandService.go:238","msg":"Start: CreateMerchant"}
+{"level":"debug","ts":"2025-08-18T06:37:31.555Z","caller":"service/merchantPolicyCommandService.go:252","msg":"Created merchant","merchant.id":9}
+{"level":"info","ts":"2025-08-18T06:37:31.556Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantPoliciesService/Create","request_id":"req_1755499051550504256_u88wtNoz","duration":"5.513494ms"}
+{"level":"debug","ts":"2025-08-18T06:37:53.351Z","caller":"service/merchantPolicyCommandService.go:238","msg":"Start: UpdateMerchant"}
+{"level":"debug","ts":"2025-08-18T06:37:53.356Z","caller":"service/merchantPolicyCommandService.go:252","msg":"Updated merchant","merchantPolicy.id":10}
+{"level":"info","ts":"2025-08-18T06:37:53.356Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantPoliciesService/Update","request_id":"req_1755499073350885516_X99H8May","duration":"5.900613ms"}
+{"level":"debug","ts":"2025-08-24T06:59:48.902Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T06:59:48.922Z","caller":"apps/server.go:154","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-24T06:59:48.922Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50068"}
+{"level":"info","ts":"2025-08-24T06:59:48.923Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8098"}
+{"level":"debug","ts":"2025-08-24T16:25:31.766Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T16:25:31.783Z","caller":"apps/server.go:155","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-24T16:25:31.784Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50068"}
+{"level":"info","ts":"2025-08-24T16:25:31.784Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8098"}
+{"level":"debug","ts":"2025-08-24T17:47:52.438Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T17:47:52.455Z","caller":"apps/server.go:155","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-24T17:47:52.455Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50068"}
+{"level":"info","ts":"2025-08-24T17:47:52.455Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8098"}
+{"level":"debug","ts":"2025-08-25T08:07:38.382Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T08:07:38.398Z","caller":"apps/server.go:155","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-25T08:07:38.400Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50068"}
+{"level":"info","ts":"2025-08-25T08:07:38.401Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8098"}
+{"level":"debug","ts":"2025-08-25T11:40:57.004Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T11:40:57.020Z","caller":"apps/server.go:155","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-25T11:40:57.020Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8098"}
+{"level":"info","ts":"2025-08-25T11:40:57.021Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50068"}
+{"level":"debug","ts":"2025-08-25T13:48:13.758Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:48:13.773Z","caller":"apps/server.go:155","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-25T13:48:13.773Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50068"}
+{"level":"info","ts":"2025-08-25T13:48:13.773Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8098"}
+{"level":"debug","ts":"2025-08-25T13:54:48.055Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:54:48.064Z","caller":"apps/server.go:155","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-25T13:54:48.067Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8098"}
+{"level":"info","ts":"2025-08-25T13:54:48.069Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50068"}
+{"level":"debug","ts":"2025-08-25T15:00:37.155Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T15:00:37.193Z","caller":"apps/server.go:155","msg":"Server running on port 50068"}
+{"level":"info","ts":"2025-08-25T15:00:37.194Z","caller":"apps/server.go:163","msg":"Metrics server listening on :8098"}
+{"level":"info","ts":"2025-08-25T15:00:37.195Z","caller":"apps/server.go:171","msg":"gRPC server listening on :50068"}
+{"level":"info","ts":"2025-08-25T15:04:14.002Z","caller":"handler/merchant.go:229","msg":"Creating merchant policy","merchant_id":9,"policy_type":"Return Policy","title":"30-Day Return Policy"}
+{"level":"debug","ts":"2025-08-25T15:04:14.003Z","caller":"service/merchantPolicyCommandService.go:238","msg":"Start: CreateMerchant"}
+{"level":"debug","ts":"2025-08-25T15:04:14.011Z","caller":"service/merchantPolicyCommandService.go:252","msg":"Created merchant","merchant.id":9}
+{"level":"info","ts":"2025-08-25T15:04:14.011Z","caller":"handler/merchant.go:263","msg":"Merchant policy created successfully","policy_id":9,"merchant_id":9,"policy_type":"Return Policy","title":"30-Day Return Policy"}
+{"level":"info","ts":"2025-08-25T15:04:14.011Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantPoliciesService/Create","request_id":"req_1756134254002854427_kQ125lhy","duration":"8.406289ms"}
+{"level":"info","ts":"2025-08-25T16:09:24.197Z","caller":"handler/merchant.go:49","msg":"Fetching all merchant policies","page":1,"page_size":10,"search":""}
+{"level":"debug","ts":"2025-08-25T16:09:24.198Z","caller":"service/merchantPolicyQueryService.go:213","msg":"Start: FindAllMerchantPolicy"}
+{"level":"debug","ts":"2025-08-25T16:09:24.224Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"merchant_policy:all:page:1:pageSize:10:search:","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-25T16:09:24.224Z","caller":"service/merchantPolicyQueryService.go:227","msg":"Successfully fetched merchants","page":1,"pageSize":10,"search":""}
+{"level":"info","ts":"2025-08-25T16:09:24.224Z","caller":"handler/merchant.go:81","msg":"Successfully fetched all merchant policies","page":1,"total_records":9,"total_pages":1}
+{"level":"info","ts":"2025-08-25T16:09:24.225Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.MerchantPoliciesService/FindAll","request_id":"req_1756138164197973620_PO7ahSMI","duration":"27.059794ms"}

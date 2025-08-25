@@ -5,11 +5,13 @@ import (
 	"math"
 
 	"github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/internal/service"
+	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	shippingaddress_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/shipping_address_errors"
 	protomapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/proto"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -17,13 +19,15 @@ type shippingAddressHandleGrpc struct {
 	pb.UnimplementedShippingServiceServer
 	shippingAddressQueryService   service.ShippingAddressQueryService
 	shippingAddressCommandService service.ShippingAddressCommandService
+	logger                        logger.LoggerInterface
 	mapping                       protomapper.ShippingAddresProtoMapper
 }
 
-func NewShippingAddressHandleGrpc(service *service.Service) *shippingAddressHandleGrpc {
+func NewShippingAddressHandleGrpc(service *service.Service, logger logger.LoggerInterface) pb.ShippingServiceServer {
 	return &shippingAddressHandleGrpc{
 		shippingAddressQueryService:   service.ShippingAddressQuery,
 		shippingAddressCommandService: service.ShippingAddressCommand,
+		logger:                        logger,
 		mapping:                       protomapper.NewShippingAddressProtoMapper(),
 	}
 }
@@ -40,15 +44,26 @@ func (s *shippingAddressHandleGrpc) FindAll(ctx context.Context, request *pb.Fin
 		pageSize = 10
 	}
 
+	s.logger.Info("Fetching all shipping addresses",
+		zap.Int("page", page),
+		zap.Int("page_size", pageSize),
+		zap.String("search", search),
+	)
+
 	reqService := requests.FindAllShippingAddress{
 		Page:     page,
 		PageSize: pageSize,
 		Search:   search,
 	}
 
-	Shipping, totalRecords, err := s.shippingAddressQueryService.FindAll(ctx, &reqService)
-
+	addresses, totalRecords, err := s.shippingAddressQueryService.FindAll(ctx, &reqService)
 	if err != nil {
+		s.logger.Error("Failed to fetch all shipping addresses",
+			zap.Int("page", page),
+			zap.Int("page_size", pageSize),
+			zap.String("search", search),
+			zap.Any("error", err),
+		)
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
@@ -61,7 +76,14 @@ func (s *shippingAddressHandleGrpc) FindAll(ctx context.Context, request *pb.Fin
 		TotalRecords: int32(*totalRecords),
 	}
 
-	so := s.mapping.ToProtoResponsePaginationShippingAddress(paginationMeta, "success", "Successfully fetched categories", Shipping)
+	s.logger.Info("Successfully fetched all shipping addresses",
+		zap.Int("page", page),
+		zap.Int32("total_records", int32(*totalRecords)),
+		zap.Int32("total_pages", int32(totalPages)),
+		zap.Int("fetched_addresses_count", len(addresses)),
+	)
+
+	so := s.mapping.ToProtoResponsePaginationShippingAddress(paginationMeta, "success", "Successfully fetched shipping addresses", addresses)
 	return so, nil
 }
 
@@ -69,19 +91,28 @@ func (s *shippingAddressHandleGrpc) FindById(ctx context.Context, request *pb.Fi
 	id := int(request.GetId())
 
 	if id == 0 {
+		s.logger.Error("Invalid shipping address ID provided", zap.Int("address_id", id))
 		return nil, shippingaddress_errors.ErrGrpcInvalidID
 	}
 
-	shipping, err := s.shippingAddressQueryService.FindById(ctx, id)
+	s.logger.Info("Fetching shipping address by ID", zap.Int("address_id", id))
 
+	address, err := s.shippingAddressQueryService.FindById(ctx, id)
 	if err != nil {
+		s.logger.Error("Failed to fetch shipping address by ID",
+			zap.Int("address_id", id),
+			zap.Any("error", err),
+		)
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
-	so := s.mapping.ToProtoResponseShippingAddress("success", "Successfully fetched shipping address", shipping)
+	s.logger.Info("Successfully fetched shipping address by ID",
+		zap.Int("address_id", id),
+		zap.String("city", address.Kota),
+	)
 
+	so := s.mapping.ToProtoResponseShippingAddress("success", "Successfully fetched shipping address", address)
 	return so, nil
-
 }
 
 func (s *shippingAddressHandleGrpc) FindByActive(ctx context.Context, request *pb.FindAllShippingRequest) (*pb.ApiResponsePaginationShippingDeleteAt, error) {
@@ -96,15 +127,26 @@ func (s *shippingAddressHandleGrpc) FindByActive(ctx context.Context, request *p
 		pageSize = 10
 	}
 
+	s.logger.Info("Fetching active shipping addresses",
+		zap.Int("page", page),
+		zap.Int("page_size", pageSize),
+		zap.String("search", search),
+	)
+
 	reqService := requests.FindAllShippingAddress{
 		Page:     page,
 		PageSize: pageSize,
 		Search:   search,
 	}
 
-	users, totalRecords, err := s.shippingAddressQueryService.FindByActive(ctx, &reqService)
-
+	addresses, totalRecords, err := s.shippingAddressQueryService.FindByActive(ctx, &reqService)
 	if err != nil {
+		s.logger.Error("Failed to fetch active shipping addresses",
+			zap.Int("page", page),
+			zap.Int("page_size", pageSize),
+			zap.String("search", search),
+			zap.Any("error", err),
+		)
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
@@ -117,8 +159,14 @@ func (s *shippingAddressHandleGrpc) FindByActive(ctx context.Context, request *p
 		TotalRecords: int32(*totalRecords),
 	}
 
-	so := s.mapping.ToProtoResponsePaginationShippingAddressDeleteAt(paginationMeta, "success", "Successfully fetched active categories", users)
+	s.logger.Info("Successfully fetched active shipping addresses",
+		zap.Int("page", page),
+		zap.Int32("total_records", int32(*totalRecords)),
+		zap.Int32("total_pages", int32(totalPages)),
+		zap.Int("fetched_addresses_count", len(addresses)),
+	)
 
+	so := s.mapping.ToProtoResponsePaginationShippingAddressDeleteAt(paginationMeta, "success", "Successfully fetched active shipping addresses", addresses)
 	return so, nil
 }
 
@@ -134,15 +182,26 @@ func (s *shippingAddressHandleGrpc) FindByTrashed(ctx context.Context, request *
 		pageSize = 10
 	}
 
+	s.logger.Info("Fetching trashed shipping addresses",
+		zap.Int("page", page),
+		zap.Int("page_size", pageSize),
+		zap.String("search", search),
+	)
+
 	reqService := requests.FindAllShippingAddress{
 		Page:     page,
 		PageSize: pageSize,
 		Search:   search,
 	}
 
-	users, totalRecords, err := s.shippingAddressQueryService.FindByTrashed(ctx, &reqService)
-
+	addresses, totalRecords, err := s.shippingAddressQueryService.FindByTrashed(ctx, &reqService)
 	if err != nil {
+		s.logger.Error("Failed to fetch trashed shipping addresses",
+			zap.Int("page", page),
+			zap.Int("page_size", pageSize),
+			zap.String("search", search),
+			zap.Any("error", err),
+		)
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
@@ -152,11 +211,17 @@ func (s *shippingAddressHandleGrpc) FindByTrashed(ctx context.Context, request *
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
-		TotalRecords: int32(0),
+		TotalRecords: int32(*totalRecords),
 	}
 
-	so := s.mapping.ToProtoResponsePaginationShippingAddressDeleteAt(paginationMeta, "success", "Successfully fetched trashed categories", users)
+	s.logger.Info("Successfully fetched trashed shipping addresses",
+		zap.Int("page", page),
+		zap.Int32("total_records", int32(*totalRecords)),
+		zap.Int32("total_pages", int32(totalPages)),
+		zap.Int("fetched_addresses_count", len(addresses)),
+	)
 
+	so := s.mapping.ToProtoResponsePaginationShippingAddressDeleteAt(paginationMeta, "success", "Successfully fetched trashed shipping addresses", addresses)
 	return so, nil
 }
 
@@ -164,17 +229,27 @@ func (s *shippingAddressHandleGrpc) TrashedShipping(ctx context.Context, request
 	id := int(request.GetId())
 
 	if id == 0 {
+		s.logger.Error("Invalid shipping address ID for trashing", zap.Int("address_id", id))
 		return nil, shippingaddress_errors.ErrGrpcInvalidID
 	}
 
-	Shipping, err := s.shippingAddressCommandService.TrashShippingAddress(ctx, id)
+	s.logger.Info("Moving shipping address to trash", zap.Int("address_id", id))
 
+	address, err := s.shippingAddressCommandService.TrashShippingAddress(ctx, id)
 	if err != nil {
+		s.logger.Error("Failed to trash shipping address",
+			zap.Int("address_id", id),
+			zap.Any("error", err),
+		)
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
-	so := s.mapping.ToProtoResponseShippingAddressDeleteAt("success", "Successfully trashed Shipping", Shipping)
+	s.logger.Info("Shipping address moved to trash successfully",
+		zap.Int("address_id", id),
+		zap.String("city", address.Kota),
+	)
 
+	so := s.mapping.ToProtoResponseShippingAddressDeleteAt("success", "Successfully trashed shipping address", address)
 	return so, nil
 }
 
@@ -182,17 +257,26 @@ func (s *shippingAddressHandleGrpc) RestoreShipping(ctx context.Context, request
 	id := int(request.GetId())
 
 	if id == 0 {
+		s.logger.Error("Invalid shipping address ID for restore", zap.Int("address_id", id))
 		return nil, shippingaddress_errors.ErrGrpcInvalidID
 	}
 
-	Shipping, err := s.shippingAddressCommandService.RestoreShippingAddress(ctx, id)
+	s.logger.Info("Restoring shipping address from trash", zap.Int("address_id", id))
 
+	address, err := s.shippingAddressCommandService.RestoreShippingAddress(ctx, id)
 	if err != nil {
+		s.logger.Error("Failed to restore shipping address",
+			zap.Int("address_id", id),
+			zap.Any("error", err),
+		)
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
-	so := s.mapping.ToProtoResponseShippingAddressDeleteAt("success", "Successfully restored Shipping", Shipping)
+	s.logger.Info("Shipping address restored successfully",
+		zap.Int("address_id", id),
+	)
 
+	so := s.mapping.ToProtoResponseShippingAddressDeleteAt("success", "Successfully restored shipping address", address)
 	return so, nil
 }
 
@@ -200,40 +284,53 @@ func (s *shippingAddressHandleGrpc) DeleteShippingPermanent(ctx context.Context,
 	id := int(request.GetId())
 
 	if id == 0 {
+		s.logger.Error("Invalid shipping address ID for permanent deletion", zap.Int("address_id", id))
 		return nil, shippingaddress_errors.ErrGrpcInvalidID
 	}
 
-	_, err := s.shippingAddressCommandService.DeleteShippingAddressPermanently(ctx, id)
+	s.logger.Info("Permanently deleting shipping address", zap.Int("address_id", id))
 
+	_, err := s.shippingAddressCommandService.DeleteShippingAddressPermanently(ctx, id)
 	if err != nil {
+		s.logger.Error("Failed to permanently delete shipping address",
+			zap.Int("address_id", id),
+			zap.Any("error", err),
+		)
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
-	so := s.mapping.ToProtoResponseShippingAddressDelete("success", "Successfully deleted Shipping permanently")
+	s.logger.Info("Shipping address permanently deleted", zap.Int("address_id", id))
 
+	so := s.mapping.ToProtoResponseShippingAddressDelete("success", "Successfully deleted shipping address permanently")
 	return so, nil
 }
 
 func (s *shippingAddressHandleGrpc) RestoreAllShipping(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseShippingAll, error) {
-	_, err := s.shippingAddressCommandService.RestoreAllShippingAddress(ctx)
+	s.logger.Info("Restoring all trashed shipping addresses")
 
+	_, err := s.shippingAddressCommandService.RestoreAllShippingAddress(ctx)
 	if err != nil {
+		s.logger.Error("Failed to restore all shipping addresses", zap.Any("error", err))
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
-	so := s.mapping.ToProtoResponseShippingAddressAll("success", "Successfully restore all Shipping")
+	s.logger.Info("All shipping addresses restored successfully")
 
+	so := s.mapping.ToProtoResponseShippingAddressAll("success", "Successfully restored all shipping addresses")
 	return so, nil
 }
 
 func (s *shippingAddressHandleGrpc) DeleteShippingAddressPermanently(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseShippingAll, error) {
-	_, err := s.shippingAddressCommandService.DeleteAllPermanentShippingAddress(ctx)
+	s.logger.Info("Permanently deleting all trashed shipping addresses")
 
+	_, err := s.shippingAddressCommandService.DeleteAllPermanentShippingAddress(ctx)
 	if err != nil {
+		s.logger.Error("Failed to permanently delete all shipping addresses", zap.Any("error", err))
 		return nil, response.ToGrpcErrorFromErrorResponse(err)
 	}
 
-	so := s.mapping.ToProtoResponseShippingAddressAll("success", "Successfully delete Shipping permanen")
+	s.logger.Info("All shipping addresses permanently deleted")
 
+	so := s.mapping.ToProtoResponseShippingAddressAll("success", "Successfully deleted all shipping addresses permanently")
 	return so, nil
 }

@@ -52,7 +52,7 @@ func NewMerchantBusinessQueryService(
 			Help:    "Histogram of request durations for the MerchantBusinessQueryService",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method"},
+		[]string{"method", "status"},
 	)
 
 	prometheus.MustRegister(requestCounter, requestDuration)
@@ -183,11 +183,16 @@ func (s *merchantBusinessQueryService) FindById(ctx context.Context, merchantID 
 
 	merchant, err := s.merchantBusinessQueryRepository.FindById(ctx, merchantID)
 
+	s.logger.Error("error repository", zap.Error(err))
+
 	if err != nil {
 		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_MERCHANT_BY_ID", span, &status, merchantbusiness_errors.ErrFailedFindMerchantBusinessById, zap.Error(err))
 	}
 
 	so := s.mapping.ToMerchantBusinessResponse(merchant)
+
+	s.logger.Error("errror parsing", zap.Any("so", so))
+
 	s.mencache.SetCachedMerchantBusiness(ctx, so)
 
 	logSuccess("Successfully fetched merchant", zap.Int("merchantBusiness.id", merchantID))
@@ -245,5 +250,5 @@ func (s *merchantBusinessQueryService) normalizePagination(page, pageSize int) (
 
 func (s *merchantBusinessQueryService) recordMetrics(method string, status string, start time.Time) {
 	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method).Observe(time.Since(start).Seconds())
+	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

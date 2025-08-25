@@ -21,7 +21,6 @@ common:
     kvstore:
       store: inmemory
 
-
 ingester:
   lifecycler:
     address: 127.0.0.1
@@ -36,7 +35,6 @@ ingester:
   wal:
     enabled: true
     dir: /loki/wal
-
 
 limits_config:
   enforce_metric_name: false
@@ -73,7 +71,6 @@ ruler:
 compactor:
   working_directory: /loki/compactor
   shared_store: filesystem
-
 
 table_manager:
   retention_deletes_enabled: false

@@ -15,11 +15,12 @@ type Repositories struct {
 func NewRepositories(DB *db.Queries) *Repositories {
 	mapper := recordmapper.NewMerchantRecordMapper()
 	mapperDetail := recordmapper.NewMerchantDetailRecordMapper()
+	mapperSocialLink := recordmapper.NewMerchantSocialLinkRecordMapper()
 
 	return &Repositories{
 		MerchantQuery:             NewMerchantQueryRepository(DB, mapper),
 		MerchantDetailQuery:       NewMerchantDetailQueryRepository(DB, mapperDetail),
 		MerchantDetailCommand:     NewMerchantDetailCommandRepository(DB, mapperDetail),
-		MerchantSocialLinkCommand: NewMerchantSocialLinkCommandRepository(DB),
+		MerchantSocialLinkCommand: NewMerchantSocialLinkCommandRepository(DB, mapperSocialLink),
 	}
 }

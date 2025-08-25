@@ -1,0 +1,106 @@
+{"level":"debug","ts":"2025-08-14T03:17:24.057Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T03:17:24.065Z","caller":"apps/server.go:160","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-14T03:17:24.065Z","caller":"apps/server.go:167","msg":"Metrics server listening on :8099"}
+{"level":"info","ts":"2025-08-14T03:17:24.065Z","caller":"apps/server.go:175","msg":"gRPC server listening on :50069"}
+{"level":"debug","ts":"2025-08-14T05:57:45.843Z","caller":"service/reviewDetailQueryService.go:220","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-14T05:57:45.868Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"review:all:page:1:pageSize:10:search:video","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-14T05:57:45.868Z","caller":"service/reviewDetailQueryService.go:234","msg":"Successfully fetched all Review Details","page":1,"pageSize":10,"search":"video","totalRecords":0}
+{"level":"info","ts":"2025-08-14T05:57:45.868Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.ReviewDetailService/FindAll","request_id":"req_1755151065843595842_XHVPslGa","duration":"25.216746ms"}
+{"level":"debug","ts":"2025-08-14T11:16:14.016Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:16:14.028Z","caller":"apps/server.go:154","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-14T11:16:14.029Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50069"}
+{"level":"info","ts":"2025-08-14T11:16:14.029Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8099"}
+{"level":"debug","ts":"2025-08-14T11:40:40.611Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T11:40:40.615Z","caller":"apps/server.go:154","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-14T11:40:40.615Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50069"}
+{"level":"info","ts":"2025-08-14T11:40:40.615Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8099"}
+{"level":"debug","ts":"2025-08-14T15:57:29.187Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T15:57:29.217Z","caller":"apps/server.go:154","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-14T15:57:29.221Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8099"}
+{"level":"info","ts":"2025-08-14T15:57:29.224Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50069"}
+{"level":"debug","ts":"2025-08-14T16:08:11.781Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T16:08:11.790Z","caller":"apps/server.go:154","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-14T16:08:11.790Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8099"}
+{"level":"info","ts":"2025-08-14T16:08:11.790Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50069"}
+{"level":"debug","ts":"2025-08-14T22:19:19.112Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-14T22:19:19.123Z","caller":"apps/server.go:154","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-14T22:19:19.124Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50069"}
+{"level":"info","ts":"2025-08-14T22:19:19.124Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8099"}
+{"level":"debug","ts":"2025-08-15T00:57:14.392Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-15T00:57:14.434Z","caller":"apps/server.go:154","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-15T00:57:14.434Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8099"}
+{"level":"info","ts":"2025-08-15T00:57:14.434Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50069"}
+{"level":"debug","ts":"2025-08-18T06:35:19.133Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-18T06:35:19.159Z","caller":"apps/server.go:154","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-18T06:35:19.161Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50069"}
+{"level":"info","ts":"2025-08-18T06:35:19.161Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8099"}
+{"level":"debug","ts":"2025-08-24T06:59:48.901Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T06:59:48.922Z","caller":"apps/server.go:154","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-24T06:59:48.923Z","caller":"apps/server.go:169","msg":"gRPC server listening on :50069"}
+{"level":"info","ts":"2025-08-24T06:59:48.924Z","caller":"apps/server.go:161","msg":"Metrics server listening on :8099"}
+{"level":"debug","ts":"2025-08-24T16:25:32.201Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T16:25:32.219Z","caller":"apps/server.go:155","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-24T16:25:32.220Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50069"}
+{"level":"info","ts":"2025-08-24T16:25:32.220Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8099"}
+{"level":"info","ts":"2025-08-24T16:42:09.917Z","caller":"handler/review_detail.go:49","msg":"Fetching all review details","page":1,"page_size":10,"search":"video"}
+{"level":"debug","ts":"2025-08-24T16:42:09.919Z","caller":"service/reviewDetailQueryService.go:220","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-24T16:42:09.935Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"review:all:page:1:pageSize:10:search:video","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-24T16:42:09.936Z","caller":"service/reviewDetailQueryService.go:234","msg":"Successfully fetched all Review Details","page":1,"pageSize":10,"search":"video","totalRecords":0}
+{"level":"info","ts":"2025-08-24T16:42:09.936Z","caller":"handler/review_detail.go:81","msg":"Successfully fetched all review details","page":1,"total_records":0,"total_pages":0,"fetched_details_count":0}
+{"level":"info","ts":"2025-08-24T16:42:09.937Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.ReviewDetailService/FindAll","request_id":"req_1756053729917686978_DXnf3Eae","duration":"19.401731ms"}
+{"level":"info","ts":"2025-08-24T16:42:27.670Z","caller":"handler/review_detail.go:231","msg":"Creating review detail","review_id":0,"type":""}
+{"level":"error","ts":"2025-08-24T16:42:27.670Z","caller":"handler/review_detail.go:244","msg":"Validation failed on review detail creation","review_id":0,"type":"","error":"Key: 'CreateReviewDetailRequest.ReviewID' Error:Field validation for 'ReviewID' failed on the 'required' tag\nKey: 'CreateReviewDetailRequest.Type' Error:Field validation for 'Type' failed on the 'required' tag\nKey: 'CreateReviewDetailRequest.Url' Error:Field validation for 'Url' failed on the 'required' tag\nKey: 'CreateReviewDetailRequest.Caption' Error:Field validation for 'Caption' failed on the 'required' tag"}
+{"level":"info","ts":"2025-08-24T16:42:27.670Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.ReviewDetailService/Create","request_id":"req_1756053747669995602_EAKzRysZ","duration":"331.166µs","error":"rpc error: code = InvalidArgument desc = {\"status\":\"error\",\"message\":\"Validation failed: invalid create review detail request\",\"code\":3}"}
+{"level":"info","ts":"2025-08-24T16:42:54.788Z","caller":"handler/review_detail.go:231","msg":"Creating review detail","review_id":9,"type":"image"}
+{"level":"error","ts":"2025-08-24T16:42:54.788Z","caller":"handler/review_detail.go:244","msg":"Validation failed on review detail creation","review_id":9,"type":"image","error":"Key: 'CreateReviewDetailRequest.Url' Error:Field validation for 'Url' failed on the 'required' tag"}
+{"level":"info","ts":"2025-08-24T16:42:54.788Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.ReviewDetailService/Create","request_id":"req_1756053774788379520_4f7GgWrK","duration":"276.24µs","error":"rpc error: code = InvalidArgument desc = {\"status\":\"error\",\"message\":\"Validation failed: invalid create review detail request\",\"code\":3}"}
+{"level":"info","ts":"2025-08-24T16:43:49.333Z","caller":"handler/review_detail.go:231","msg":"Creating review detail","review_id":9,"type":"image"}
+{"level":"error","ts":"2025-08-24T16:43:49.334Z","caller":"handler/review_detail.go:244","msg":"Validation failed on review detail creation","review_id":9,"type":"image","error":"Key: 'CreateReviewDetailRequest.Url' Error:Field validation for 'Url' failed on the 'url' tag"}
+{"level":"info","ts":"2025-08-24T16:43:49.334Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.ReviewDetailService/Create","request_id":"req_1756053829333747692_aeNLMbCN","duration":"432.705µs","error":"rpc error: code = InvalidArgument desc = {\"status\":\"error\",\"message\":\"Validation failed: invalid create review detail request\",\"code\":3}"}
+{"level":"debug","ts":"2025-08-24T16:53:19.046Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T16:53:19.050Z","caller":"apps/server.go:155","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-24T16:53:19.050Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50069"}
+{"level":"info","ts":"2025-08-24T16:53:19.050Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8099"}
+{"level":"info","ts":"2025-08-24T16:53:26.169Z","caller":"handler/review_detail.go:231","msg":"Creating review detail","review_id":9,"type":"image","url":"uploads/review_detail/1756054406166627578.png"}
+{"level":"error","ts":"2025-08-24T16:53:26.170Z","caller":"handler/review_detail.go:245","msg":"Validation failed on review detail creation","review_id":9,"type":"image","error":"Key: 'CreateReviewDetailRequest.Url' Error:Field validation for 'Url' failed on the 'url' tag"}
+{"level":"info","ts":"2025-08-24T16:53:26.170Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.ReviewDetailService/Create","request_id":"req_1756054406169803368_B9TUtOW0","duration":"285.981µs","error":"rpc error: code = InvalidArgument desc = {\"status\":\"error\",\"message\":\"Validation failed: invalid create review detail request\",\"code\":3}"}
+{"level":"debug","ts":"2025-08-24T17:47:52.881Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-24T17:47:52.884Z","caller":"apps/server.go:155","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-24T17:47:52.885Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8099"}
+{"level":"info","ts":"2025-08-24T17:47:52.885Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50069"}
+{"level":"debug","ts":"2025-08-25T08:07:36.974Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T08:07:36.998Z","caller":"apps/server.go:155","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-25T08:07:36.998Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50069"}
+{"level":"info","ts":"2025-08-25T08:07:36.998Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8099"}
+{"level":"debug","ts":"2025-08-25T11:40:57.208Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T11:40:57.215Z","caller":"apps/server.go:155","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-25T11:40:57.215Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8099"}
+{"level":"info","ts":"2025-08-25T11:40:57.215Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50069"}
+{"level":"debug","ts":"2025-08-25T13:48:14.073Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:48:14.081Z","caller":"apps/server.go:155","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-25T13:48:14.081Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50069"}
+{"level":"info","ts":"2025-08-25T13:48:14.081Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8099"}
+{"level":"debug","ts":"2025-08-25T13:54:48.863Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T13:54:48.870Z","caller":"apps/server.go:155","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-25T13:54:48.871Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50069"}
+{"level":"info","ts":"2025-08-25T13:54:48.871Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8099"}
+{"level":"debug","ts":"2025-08-25T15:00:37.557Z","caller":"database/database.go:71","msg":"Database connection established successfully with connection pool settings","DB_DRIVER":"postgres","MaxOpenConns":50,"MaxIdleConns":10,"ConnMaxLifetime":"30m0s"}
+{"level":"info","ts":"2025-08-25T15:00:37.581Z","caller":"apps/server.go:155","msg":"Server running on port 50069"}
+{"level":"info","ts":"2025-08-25T15:00:37.582Z","caller":"apps/server.go:170","msg":"gRPC server listening on :50069"}
+{"level":"info","ts":"2025-08-25T15:00:37.582Z","caller":"apps/server.go:162","msg":"Metrics server listening on :8099"}
+{"level":"info","ts":"2025-08-25T15:06:36.494Z","caller":"handler/review_detail.go:231","msg":"Creating review detail","review_id":9,"type":"image","url":"uploads/review_detail/1756134396482457252.png"}
+{"level":"debug","ts":"2025-08-25T15:06:36.495Z","caller":"service/reviewDetailCommandService.go:262","msg":"Start: CreateReviewDetail"}
+{"level":"error","ts":"2025-08-25T15:06:36.500Z","caller":"errorhandler/errorhandler_helpers.go:49","msg":"Repository error in CreateReviewDetail","error":"failed to create review detail","error":"failed to create review detail","trace.id":"FAILED_CREATE_REVIEW_DETAIL_20250825_24347ac7"}
+{"level":"error","ts":"2025-08-25T15:06:36.501Z","caller":"handler/review_detail.go:255","msg":"Failed to create review detail","review_id":9,"type":"image","error":{"status":"error","message":"Failed to create Review Detail","code":500}}
+{"level":"info","ts":"2025-08-25T15:06:36.501Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.ReviewDetailService/Create","request_id":"req_1756134396494316084_xFFBIJJ0","duration":"7.118208ms","error":"rpc error: code = Code(500) desc = {\"status\":\"error\",\"message\":\"Failed to create Review Detail\",\"code\":500}"}
+{"level":"info","ts":"2025-08-25T15:10:54.522Z","caller":"handler/review_detail.go:231","msg":"Creating review detail","review_id":9,"type":"photo","url":"uploads/review_detail/1756134654520414489.png"}
+{"level":"debug","ts":"2025-08-25T15:10:54.522Z","caller":"service/reviewDetailCommandService.go:262","msg":"Start: CreateReviewDetail"}
+{"level":"debug","ts":"2025-08-25T15:10:54.527Z","caller":"service/reviewDetailCommandService.go:276","msg":"Successfully created Review Detail","reviewDetail.id":10,"review.id":9}
+{"level":"info","ts":"2025-08-25T15:10:54.527Z","caller":"handler/review_detail.go:263","msg":"Review detail created successfully","detail_id":10,"review_id":9,"type":"photo"}
+{"level":"info","ts":"2025-08-25T15:10:54.527Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.ReviewDetailService/Create","request_id":"req_1756134654522533144_Rrxx0hL9","duration":"4.704482ms"}
+{"level":"info","ts":"2025-08-25T16:10:43.275Z","caller":"handler/review_detail.go:49","msg":"Fetching all review details","page":1,"page_size":10,"search":"video"}
+{"level":"debug","ts":"2025-08-25T16:10:43.275Z","caller":"service/reviewDetailQueryService.go:220","msg":"Start: FindAll"}
+{"level":"debug","ts":"2025-08-25T16:10:43.298Z","caller":"redis/cache_helpers.go:51","msg":"Successfully cached data","cacheKey":"review:all:page:1:pageSize:10:search:video","expiration":"5m0s"}
+{"level":"debug","ts":"2025-08-25T16:10:43.298Z","caller":"service/reviewDetailQueryService.go:234","msg":"Successfully fetched all Review Details","page":1,"pageSize":10,"search":"video","totalRecords":0}
+{"level":"info","ts":"2025-08-25T16:10:43.298Z","caller":"handler/review_detail.go:81","msg":"Successfully fetched all review details","page":1,"total_records":0,"total_pages":0,"fetched_details_count":0}
+{"level":"info","ts":"2025-08-25T16:10:43.298Z","caller":"middleware/context.go:25","msg":"gRPC Request","method":"/pb.ReviewDetailService/FindAll","request_id":"req_1756138243275168857_gihLVOt9","duration":"23.206431ms"}
