@@ -9,7 +9,7 @@ RUN go mod tidy && go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o migrate ./main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o migrate ./cmd/main.go
 
 FROM alpine:latest
 
