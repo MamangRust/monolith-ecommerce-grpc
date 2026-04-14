@@ -2,266 +2,255 @@ package service
 
 import (
 	"context"
-	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-role/internal/redis"
+	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/repository"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
+	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/role_errors"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
 type roleQueryService struct {
-	errorhandler    errorhandler.RoleQueryErrorHandler
-	mencache        mencache.RoleQueryCache
-	trace           trace.Tracer
-	roleQuery       repository.RoleQueryRepository
-	logger          logger.LoggerInterface
-	mapping         response_service.RoleResponseMapper
-	requestCounter  *prometheus.CounterVec
-	requestDuration *prometheus.HistogramVec
+	observability  observability.TraceLoggerObservability
+	cache          cache.RoleQueryCache
+	roleRepository repository.RoleQueryRepository
+	logger         logger.LoggerInterface
 }
 
-func NewRoleQueryService(
-	errorhandler errorhandler.RoleQueryErrorHandler,
-	mencache mencache.RoleQueryCache,
-	roleQuery repository.RoleQueryRepository, logger logger.LoggerInterface, mapping response_service.RoleResponseMapper) *roleQueryService {
-	requestCounter := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "role_query_service_request_total",
-			Help: "Total number of requests to the RoleQueryService",
-		},
-		[]string{"method", "status"},
-	)
+type RoleQueryServiceDeps struct {
+	Observability  observability.TraceLoggerObservability
+	Cache          cache.RoleQueryCache
+	RoleRepository repository.RoleQueryRepository
+	Logger         logger.LoggerInterface
+}
 
-	requestDuration := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "role_query_service_request_duration_seconds",
-			Help:    "Histogram of request durations for the RoleQueryService",
-			Buckets: prometheus.DefBuckets,
-		},
-		[]string{"method", "status"},
-	)
-
-	prometheus.MustRegister(requestCounter, requestDuration)
-
+func NewRoleQueryService(deps *RoleQueryServiceDeps) RoleQueryService {
 	return &roleQueryService{
-		errorhandler:    errorhandler,
-		mencache:        mencache,
-		trace:           otel.Tracer("role-query-service"),
-		roleQuery:       roleQuery,
-		logger:          logger,
-		mapping:         mapping,
-		requestCounter:  requestCounter,
-		requestDuration: requestDuration,
+		observability:  deps.Observability,
+		cache:          deps.Cache,
+		roleRepository: deps.RoleRepository,
+		logger:         deps.Logger,
 	}
 }
 
-func (s *roleQueryService) FindAll(ctx context.Context, req *requests.FindAllRole) ([]*response.RoleResponse, *int, *response.ErrorResponse) {
-	const method = "FindAll"
+func (s *roleQueryService) FindAll(ctx context.Context, req *requests.FindAllRole) ([]*db.GetRolesRow, *int, error) {
+	const method = "FindAllRoles"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("page", page),
+		attribute.Int("pageSize", pageSize),
+		attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedRoles(ctx, req); found {
-		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
-
+	if data, total, found := s.cache.GetCachedRoles(ctx, req); found {
+		logSuccess("Successfully retrieved all role records from cache", zap.Int("totalRecords", *total), zap.Int("page", page), zap.Int("pageSize", pageSize))
 		return data, total, nil
 	}
 
-	res, totalRecords, err := s.roleQuery.FindAllRoles(ctx, req)
-
+	res, err := s.roleRepository.FindAllRoles(ctx, req)
 	if err != nil {
-		return s.errorhandler.HandleRepositoryPaginationError(
-			err, "FindAll", "FAILED_FIND_ALL_ROLE", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandlerErrorPagination[[]*db.GetRolesRow](
+			s.logger,
+			role_errors.ErrFindAllRoles,
+			method,
+			span,
+			zap.Int("page", req.Page),
+			zap.Int("page_size", req.PageSize),
+			zap.String("search", req.Search),
+		)
 	}
 
-	so := s.mapping.ToRolesResponse(res)
+	var totalCount int
+	if len(res) > 0 {
+		totalCount = int(res[0].TotalCount)
+	} else {
+		totalCount = 0
+	}
 
-	s.mencache.SetCachedRoles(ctx, req, so, totalRecords)
+	s.cache.SetCachedRoles(ctx, req, res, &totalCount)
 
-	logSuccess("Successfully fetched roles", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
+	logSuccess("Successfully fetched all roles",
+		zap.Int("totalRecords", totalCount),
+		zap.Int("page", page),
+		zap.Int("pageSize", pageSize))
 
-	return so, totalRecords, nil
+	return res, &totalCount, nil
 }
 
-func (s *roleQueryService) FindById(ctx context.Context, id int) (*response.RoleResponse, *response.ErrorResponse) {
+func (s *roleQueryService) FindById(ctx context.Context, id int) (*db.Role, error) {
 	const method = "FindById"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("role.id", id))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("role.id", id))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedRoleById(ctx, id); found {
+	if data, found := s.cache.GetCachedRoleById(ctx, id); found {
 		logSuccess("Data found in cache", zap.Int("role.id", id))
-
 		return data, nil
 	}
 
-	res, err := s.roleQuery.FindById(ctx, id)
-
+	res, err := s.roleRepository.FindById(ctx, id)
 	if err != nil {
-		return s.errorhandler.HandleRepositorySingleError(
-			err, method, "FAILED_FIND_ROLE_BY_ID", span, &status, role_errors.ErrRoleNotFoundRes, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.Role](
+			s.logger,
+			role_errors.ErrRoleNotFound,
+			method,
+			span,
+			zap.Int("role.id", id),
+		)
 	}
 
-	so := s.mapping.ToRoleResponse(res)
+	s.cache.SetCachedRoleById(ctx, id, res)
 
-	s.mencache.SetCachedRoleById(ctx, so)
+	logSuccess("Successfully fetched role", zap.Int("role.id", id))
 
-	logSuccess("Successfully fetched role", zap.Int("role.id", id), zap.Bool("success", true))
-
-	return so, nil
+	return res, nil
 }
 
-func (s *roleQueryService) FindByUserId(ctx context.Context, id int) ([]*response.RoleResponse, *response.ErrorResponse) {
+func (s *roleQueryService) FindByUserId(ctx context.Context, id int) ([]*db.Role, error) {
 	const method = "FindByUserId"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("user.id", id))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("user.id", id))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetCachedRoleByUserId(ctx, id); found {
+	if data, found := s.cache.GetCachedRoleByUserId(ctx, id); found {
 		logSuccess("Data found in cache", zap.Int("user.id", id))
-
 		return data, nil
 	}
 
-	res, err := s.roleQuery.FindByUserId(ctx, id)
-
+	res, err := s.roleRepository.FindByUserId(ctx, id)
 	if err != nil {
-		return s.errorhandler.HandleRepositoryListError(err, method, "FAILED_FIND_ROLE_BY_USER_ID", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[[]*db.Role](
+			s.logger,
+			role_errors.ErrRoleNotFound,
+			method,
+			span,
+			zap.Int("user.id", id),
+		)
 	}
 
-	so := s.mapping.ToRolesResponse(res)
+	s.cache.SetCachedRoleByUserId(ctx, id, res)
 
-	s.mencache.SetCachedRoleByUserId(ctx, id, so)
+	logSuccess("Successfully fetched role by user ID", zap.Int("user.id", id))
 
-	logSuccess("Successfully fetched role by user ID", zap.Int("user.id", id), zap.Bool("success", true))
-
-	return so, nil
+	return res, nil
 }
 
-func (s *roleQueryService) FindByActiveRole(ctx context.Context, req *requests.FindAllRole) ([]*response.RoleResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *roleQueryService) FindByActiveRole(ctx context.Context, req *requests.FindAllRole) ([]*db.GetActiveRolesRow, *int, error) {
 	const method = "FindByActiveRole"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("page", page),
+		attribute.Int("pageSize", pageSize),
+		attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedRoleActive(ctx, req); found {
+	if data, total, found := s.cache.GetCachedRoleActive(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
-
 		return data, total, nil
 	}
 
-	res, totalRecords, err := s.roleQuery.FindByActiveRole(ctx, req)
-
+	res, err := s.roleRepository.FindByActiveRole(ctx, req)
 	if err != nil {
-		return s.errorhandler.HandleRepositoryPaginationDeletedError(err, method, "FAILED_FIND_BY_ACTIVE_ROLE", span, &status, role_errors.ErrRoleNotFoundRes, zap.Error(err))
+		status = "error"
+		return errorhandler.HandlerErrorPagination[[]*db.GetActiveRolesRow](
+			s.logger,
+			role_errors.ErrFindActiveRoles,
+			method,
+			span,
+			zap.Int("page", req.Page),
+			zap.Int("page_size", req.PageSize),
+			zap.String("search", req.Search),
+		)
 	}
 
-	so := s.mapping.ToRolesResponseDeleteAt(res)
+	var totalCount int
+	if len(res) > 0 {
+		totalCount = int(res[0].TotalCount)
+	} else {
+		totalCount = 0
+	}
 
-	s.mencache.SetCachedRoleActive(ctx, req, so, totalRecords)
+	s.cache.SetCachedRoleActive(ctx, req, res, &totalCount)
 
 	logSuccess("Successfully fetched active role", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
-	return so, totalRecords, nil
+	return res, &totalCount, nil
 }
 
-func (s *roleQueryService) FindByTrashedRole(ctx context.Context, req *requests.FindAllRole) ([]*response.RoleResponseDeleteAt, *int, *response.ErrorResponse) {
+func (s *roleQueryService) FindByTrashedRole(ctx context.Context, req *requests.FindAllRole) ([]*db.GetTrashedRolesRow, *int, error) {
 	const method = "FindByTrashedRole"
 
 	page, pageSize := s.normalizePagination(req.Page, req.PageSize)
 	search := req.Search
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("page", page), attribute.Int("pageSize", pageSize), attribute.String("search", search))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("page", page),
+		attribute.Int("pageSize", pageSize),
+		attribute.String("search", search))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, total, found := s.mencache.GetCachedRoleTrashed(ctx, req); found {
+	if data, total, found := s.cache.GetCachedRoleTrashed(ctx, req); found {
 		logSuccess("Data found in cache", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
-
 		return data, total, nil
 	}
 
-	res, totalRecords, err := s.roleQuery.FindByTrashedRole(ctx, req)
-
+	res, err := s.roleRepository.FindByTrashedRole(ctx, req)
 	if err != nil {
-		return s.errorhandler.HandleRepositoryPaginationDeletedError(err, "FindByTrashedRole", "FAILED_FIND_BY_TRASHED_ROLE", span, &status, role_errors.ErrRoleNotFoundRes)
+		status = "error"
+		return errorhandler.HandlerErrorPagination[[]*db.GetTrashedRolesRow](
+			s.logger,
+			role_errors.ErrFindTrashedRoles,
+			method,
+			span,
+			zap.Int("page", req.Page),
+			zap.Int("page_size", req.PageSize),
+			zap.String("search", req.Search),
+		)
 	}
-	so := s.mapping.ToRolesResponseDeleteAt(res)
 
-	s.mencache.SetCachedRoleTrashed(ctx, req, so, totalRecords)
+	var totalCount int
+	if len(res) > 0 {
+		totalCount = int(res[0].TotalCount)
+	} else {
+		totalCount = 0
+	}
+
+	s.cache.SetCachedRoleTrashed(ctx, req, res, &totalCount)
 
 	logSuccess("Successfully fetched trashed role", zap.Int("page", page), zap.Int("pageSize", pageSize), zap.String("search", search))
 
-	return so, totalRecords, nil
-}
-
-func (s *roleQueryService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
-	context.Context,
-	trace.Span,
-	func(string),
-	string,
-	func(string, ...zap.Field),
-) {
-	start := time.Now()
-	status := "success"
-
-	_, span := s.trace.Start(ctx, method)
-
-	if len(attrs) > 0 {
-		span.SetAttributes(attrs...)
-	}
-
-	span.AddEvent("Start: " + method)
-
-	s.logger.Debug("Start: " + method)
-
-	end := func(status string) {
-		s.recordMetrics(method, status, start)
-		code := codes.Ok
-		if status != "success" {
-			code = codes.Error
-		}
-		span.SetStatus(code, status)
-		span.End()
-	}
-
-	logSuccess := func(msg string, fields ...zap.Field) {
-		span.AddEvent(msg)
-		s.logger.Debug(msg, fields...)
-	}
-
-	return ctx, span, end, status, logSuccess
+	return res, &totalCount, nil
 }
 
 func (s *roleQueryService) normalizePagination(page, pageSize int) (int, int) {
@@ -272,9 +261,4 @@ func (s *roleQueryService) normalizePagination(page, pageSize int) (int, int) {
 		pageSize = 10
 	}
 	return page, pageSize
-}
-
-func (s *roleQueryService) recordMetrics(method string, status string, start time.Time) {
-	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

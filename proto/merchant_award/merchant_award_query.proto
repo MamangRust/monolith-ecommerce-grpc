@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package pb;
+
+import "merchant_award/merchant_award_common.proto";
+import "merchant/merchant_query.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+service MerchantAwardQueryService {
+    rpc FindAll(FindAllMerchantRequest) returns (ApiResponsePaginationMerchantAward);
+    rpc FindById(FindByIdMerchantAwardRequest) returns (ApiResponseMerchantAward);
+
+    rpc FindByActive(FindAllMerchantRequest) returns (ApiResponsePaginationMerchantAwardDeleteAt);
+    rpc FindByTrashed(FindAllMerchantRequest) returns (ApiResponsePaginationMerchantAwardDeleteAt);
+}

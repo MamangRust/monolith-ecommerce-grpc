@@ -1,12 +1,11 @@
 package service
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-user/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-user/internal/redis"
+	"github.com/MamangRust/monolith-ecommerce-grpc-user/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-user/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 )
 
 type Service struct {
@@ -15,18 +14,29 @@ type Service struct {
 }
 
 type Deps struct {
-	ErrorHandler *errorhandler.ErrorHandler
-	Mencache     *mencache.Mencache
-	Repositories *repository.Repositories
-	Hash         hash.HashPassword
-	Logger       logger.LoggerInterface
+	Cache         cache.UserMencache
+	Repositories  *repository.Repositories
+	Hash          hash.HashPassword
+	Logger        logger.LoggerInterface
+	Observability observability.TraceLoggerObservability
 }
 
 func NewService(deps *Deps) *Service {
-	userMapper := response_service.NewUserResponseMapper()
-
 	return &Service{
-		UserQuery:   NewUserQueryService(deps.ErrorHandler.UserQueryError, deps.Mencache.UserQueryCache, deps.Repositories.UserQuery, deps.Logger, userMapper),
-		UserCommand: NewUserCommandService(deps.ErrorHandler.UserCommandError, deps.Mencache.UserCommandCache, deps.Repositories.UserQuery, deps.Repositories.UserCommand, deps.Repositories.Role, deps.Logger, userMapper, deps.Hash),
+		UserQuery: NewUserQueryService(&UserQueryServiceDeps{
+			Observability:  deps.Observability,
+			Cache:          deps.Cache,
+			UserRepository: deps.Repositories.UserQuery,
+			Logger:         deps.Logger,
+		}),
+		UserCommand: NewUserCommandService(&UserCommandServiceDeps{
+			Observability:         deps.Observability,
+			Cache:                 deps.Cache,
+			UserCommandRepository: deps.Repositories.UserCommand,
+			UserQueryRepository:   deps.Repositories.UserQuery,
+			RoleRepository:        deps.Repositories.Role,
+			Logger:                deps.Logger,
+			Hash:                  deps.Hash,
+		}),
 	}
 }

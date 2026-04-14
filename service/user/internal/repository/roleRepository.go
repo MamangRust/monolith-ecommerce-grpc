@@ -7,24 +7,20 @@ import (
 	"fmt"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/role_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type roleRepository struct {
-	db      *db.Queries
-	mapping recordmapper.RoleRecordMapping
+	db *db.Queries
 }
 
-func NewRoleRepository(db *db.Queries, mapping recordmapper.RoleRecordMapping) *roleRepository {
+func NewRoleRepository(db *db.Queries) *roleRepository {
 	return &roleRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *roleRepository) FindById(ctx context.Context, id int) (*record.RoleRecord, error) {
+func (r *roleRepository) FindById(ctx context.Context, id int) (*db.Role, error) {
 	res, err := r.db.GetRole(ctx, int32(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -32,10 +28,10 @@ func (r *roleRepository) FindById(ctx context.Context, id int) (*record.RoleReco
 		}
 		return nil, fmt.Errorf("failed to find role by ID %d: %w", id, err)
 	}
-	return r.mapping.ToRoleRecord(res), nil
+	return res, nil
 }
 
-func (r *roleRepository) FindByName(ctx context.Context, name string) (*record.RoleRecord, error) {
+func (r *roleRepository) FindByName(ctx context.Context, name string) (*db.Role, error) {
 	res, err := r.db.GetRoleByName(ctx, name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -44,5 +40,5 @@ func (r *roleRepository) FindByName(ctx context.Context, name string) (*record.R
 
 		return nil, role_errors.ErrRoleNotFound
 	}
-	return r.mapping.ToRoleRecord(res), nil
+	return res, nil
 }

@@ -4,25 +4,22 @@ import (
 	"context"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/user_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
+
 type userCommandRepository struct {
-	db      *db.Queries
-	mapping recordmapper.UserRecordMapping
+	db *db.Queries
 }
 
-func NewUserCommandRepository(db *db.Queries, mapping recordmapper.UserRecordMapping) *userCommandRepository {
+func NewUserCommandRepository(db *db.Queries) *userCommandRepository {
 	return &userCommandRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *userCommandRepository) CreateUser(ctx context.Context, request *requests.CreateUserRequest) (*record.UserRecord, error) {
+func (r *userCommandRepository) CreateUser(ctx context.Context, request *requests.CreateUserRequest) (*db.CreateUserRow, error) {
 	req := db.CreateUserParams{
 		Firstname: request.FirstName,
 		Lastname:  request.LastName,
@@ -33,13 +30,14 @@ func (r *userCommandRepository) CreateUser(ctx context.Context, request *request
 	user, err := r.db.CreateUser(ctx, req)
 
 	if err != nil {
-		return nil, user_errors.ErrCreateUser
+		return nil, user_errors.ErrCreateUser.WithInternal(err)
 	}
 
-	return r.mapping.ToUserRecord(user), nil
+
+	return user, nil
 }
 
-func (r *userCommandRepository) UpdateUser(ctx context.Context, request *requests.UpdateUserRequest) (*record.UserRecord, error) {
+func (r *userCommandRepository) UpdateUser(ctx context.Context, request *requests.UpdateUserRequest) (*db.User, error) {
 	req := db.UpdateUserParams{
 		UserID:    int32(*request.UserID),
 		Firstname: request.FirstName,
@@ -51,38 +49,42 @@ func (r *userCommandRepository) UpdateUser(ctx context.Context, request *request
 	res, err := r.db.UpdateUser(ctx, req)
 
 	if err != nil {
-		return nil, user_errors.ErrUpdateUser
+		return nil, user_errors.ErrUpdateUser.WithInternal(err)
 	}
 
-	return r.mapping.ToUserRecord(res), nil
+
+	return res, nil
 }
 
-func (r *userCommandRepository) TrashedUser(ctx context.Context, user_id int) (*record.UserRecord, error) {
+func (r *userCommandRepository) TrashedUser(ctx context.Context, user_id int) (*db.TrashUserRow, error) {
 	res, err := r.db.TrashUser(ctx, int32(user_id))
 
 	if err != nil {
-		return nil, user_errors.ErrTrashedUser
+		return nil, user_errors.ErrTrashedUser.WithInternal(err)
 	}
 
-	return r.mapping.ToUserRecord(res), nil
+
+	return res, nil
 }
 
-func (r *userCommandRepository) RestoreUser(ctx context.Context, user_id int) (*record.UserRecord, error) {
+func (r *userCommandRepository) RestoreUser(ctx context.Context, user_id int) (*db.RestoreUserRow, error) {
 	res, err := r.db.RestoreUser(ctx, int32(user_id))
 
 	if err != nil {
-		return nil, user_errors.ErrRestoreUser
+		return nil, user_errors.ErrRestoreUser.WithInternal(err)
 	}
 
-	return r.mapping.ToUserRecord(res), nil
+
+	return res, nil
 }
 
 func (r *userCommandRepository) DeleteUserPermanent(ctx context.Context, user_id int) (bool, error) {
 	err := r.db.DeleteUserPermanently(ctx, int32(user_id))
 
 	if err != nil {
-		return false, user_errors.ErrDeleteUserPermanent
+		return false, user_errors.ErrDeleteUserPermanent.WithInternal(err)
 	}
+
 
 	return true, nil
 }
@@ -91,8 +93,9 @@ func (r *userCommandRepository) RestoreAllUser(ctx context.Context) (bool, error
 	err := r.db.RestoreAllUsers(ctx)
 
 	if err != nil {
-		return false, user_errors.ErrRestoreAllUsers
+		return false, user_errors.ErrRestoreAllUsers.WithInternal(err)
 	}
+
 
 	return true, nil
 }
@@ -101,7 +104,8 @@ func (r *userCommandRepository) DeleteAllUserPermanent(ctx context.Context) (boo
 	err := r.db.DeleteAllPermanentUsers(ctx)
 
 	if err != nil {
-		return false, user_errors.ErrDeleteAllUsers
+		return false, user_errors.ErrDeleteAllUsers.WithInternal(err)
 	}
 	return true, nil
 }
+

@@ -1,28 +1,37 @@
 package service
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-order-item/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-order-item/internal/redis"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-order-item/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-order-item/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 )
 
 type Service struct {
-	OrderItemQuery OrderItemQueryService
+	OrderItemQuery   OrderItemQueryService
+	OrderItemCommand OrderItemCommandService
 }
 
 type Deps struct {
-	ErrorHandler *errorhandler.ErrorHandler
-	Mencache     *mencache.Mencache
-	Repositories *repository.Repositories
-	Logger       logger.LoggerInterface
+	Repository    *repository.Repositories
+	Cache         *mencache.Mencache
+	Logger        logger.LoggerInterface
+	Observability observability.TraceLoggerObservability
 }
 
 func NewService(deps *Deps) *Service {
-	mapper := response_service.NewOrderItemResponseMapper()
-
 	return &Service{
-		OrderItemQuery: NewOrderItemQueryService(deps.ErrorHandler.OrderItemQueryError, deps.Mencache.OrderItemQueryCache, deps.Repositories.OrderItemQuery, deps.Logger, mapper),
+		OrderItemQuery: NewOrderItemQueryService(&OrderItemQueryServiceDeps{
+			Observability:       deps.Observability,
+			Cache:               deps.Cache.OrderItemQueryCache,
+			OrderItemRepository: deps.Repository.OrderItemQuery,
+			Logger:              deps.Logger,
+		}),
+		OrderItemCommand: NewOrderItemCommandService(&OrderItemCommandServiceDeps{
+			Observability:       deps.Observability,
+			Cache:               deps.Cache.OrderItemCommandCache,
+			OrderItemRepository: deps.Repository.OrderItemCommand,
+			Logger:              deps.Logger,
+		}),
 	}
 }

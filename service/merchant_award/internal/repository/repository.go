@@ -2,8 +2,6 @@ package repository
 
 import (
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
-	"golang.org/x/net/context"
 )
 
 type Repositories struct {
@@ -12,18 +10,10 @@ type Repositories struct {
 	MerchantQuery        MerchantQueryRepository
 }
 
-type Deps struct {
-	DB  *db.Queries
-	Ctx context.Context
-}
-
-func NewRepositories(DB *db.Queries) *Repositories {
-	merchantMapper := recordmapper.NewMerchantRecordMapper()
-	merchantAwardMapper := recordmapper.NewMerchantAwardRecordMapper()
-
+func NewRepositories(db *db.Queries) *Repositories {
 	return &Repositories{
-		MerchantAwardQuery:   NewMerchantAwardQueryRepository(DB, merchantAwardMapper),
-		MerchantAwardCommand: NewMerchantAwardCommandRepository(DB, merchantAwardMapper),
-		MerchantQuery:        NewMerchantQueryRepository(DB, merchantMapper),
+		MerchantAwardQuery:   NewMerchantAwardQueryRepository(db),
+		MerchantAwardCommand: NewMerchantAwardCommandRepository(db),
+		MerchantQuery:        NewMerchantQueryRepository(db),
 	}
 }

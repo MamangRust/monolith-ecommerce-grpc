@@ -3,298 +3,294 @@ package service
 import (
 	"context"
 	"os"
-	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-category/internal/redis"
+	"github.com/MamangRust/monolith-ecommerce-grpc-category/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-category/internal/repository"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/utils"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
+	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/category_errors"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
 type categoryCommandService struct {
-	mencache                  mencache.CategoryCommandCache
-	errorHandler              errorhandler.CategoryCommandError
-	trace                     trace.Tracer
+	observability             observability.TraceLoggerObservability
+	cache                     cache.CategoryCommandCache
 	categoryQueryRepository   repository.CategoryQueryRepository
 	categoryCommandRepository repository.CategoryCommandRepository
 	logger                    logger.LoggerInterface
-	mapping                   response_service.CategoryResponseMapper
-	requestCounter            *prometheus.CounterVec
-	requestDuration           *prometheus.HistogramVec
+}
+
+type CategoryCommandServiceDeps struct {
+	Observability             observability.TraceLoggerObservability
+	Cache                     cache.CategoryCommandCache
+	CategoryQueryRepository   repository.CategoryQueryRepository
+	CategoryCommandRepository repository.CategoryCommandRepository
+	Logger                    logger.LoggerInterface
 }
 
 func NewCategoryCommandService(
-	mencache mencache.CategoryCommandCache,
-	errorHandler errorhandler.CategoryCommandError,
-	categoryCommandRepository repository.CategoryCommandRepository,
-	categoryQueryRepository repository.CategoryQueryRepository,
-	logger logger.LoggerInterface, mapping response_service.CategoryResponseMapper) *categoryCommandService {
-	requestCounter := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "category_command_service_request_total",
-			Help: "Total number of requests to the CategoryCommandService",
-		},
-		[]string{"method", "status"},
-	)
-
-	requestDuration := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "category_command_service_request_duration_seconds",
-			Help:    "Duration of requests to the CategoryCommandService",
-			Buckets: prometheus.DefBuckets,
-		},
-		[]string{"method", "status"},
-	)
-
-	prometheus.MustRegister(requestCounter, requestDuration)
+	deps *CategoryCommandServiceDeps) *categoryCommandService {
 
 	return &categoryCommandService{
-		errorHandler:              errorHandler,
-		mencache:                  mencache,
-		trace:                     otel.Tracer("category-command-service"),
-		categoryCommandRepository: categoryCommandRepository,
-		categoryQueryRepository:   categoryQueryRepository,
-		logger:                    logger,
-		mapping:                   mapping,
-		requestCounter:            requestCounter,
-		requestDuration:           requestDuration,
+		cache:                     deps.Cache,
+		categoryCommandRepository: deps.CategoryCommandRepository,
+		categoryQueryRepository:   deps.CategoryQueryRepository,
+		logger:                    deps.Logger,
+		observability:             deps.Observability,
 	}
 }
 
-func (s *categoryCommandService) CreateCategory(ctx context.Context, req *requests.CreateCategoryRequest) (*response.CategoryResponse, *response.ErrorResponse) {
+func (s *categoryCommandService) CreateCategory(ctx context.Context, req *requests.CreateCategoryRequest) (*db.CreateCategoryRow, error) {
 	const method = "CreateCategory"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("name", req.Name))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	slug := utils.GenerateSlug(req.Name)
-
-	req.SlugCategory = &slug
-
-	cashier, err := s.categoryCommandRepository.CreateCategory(ctx, req)
-
-	if err != nil {
-		return s.errorHandler.HandleCreateCategoryError(err, method, "FAILED_CREATE_CATEGORY", span, &status, zap.Error(err))
+	if req.SlugCategory == nil || *req.SlugCategory == "" {
+		generatedSlug := utils.GenerateSlug(req.Name)
+		req.SlugCategory = &generatedSlug
 	}
 
-	so := s.mapping.ToCategoryResponse(cashier)
+	category, err := s.categoryCommandRepository.CreateCategory(ctx, req)
+	if err != nil {
+		status = "error"
+		return errorhandler.HandleError[*db.CreateCategoryRow](
+			s.logger,
+			err,
 
-	logSuccess("Successfully created category", zap.Int("category.id", cashier.ID))
+			method,
+			span,
 
-	return so, nil
+			zap.Any("request", req),
+		)
+	}
+
+	s.cache.DeleteCachedCategoryCache(ctx, int(category.CategoryID))
+
+	logSuccess("Successfully created category", zap.Int("categoryID", int(category.CategoryID)))
+	return category, nil
 }
 
-func (s *categoryCommandService) UpdateCategory(ctx context.Context, req *requests.UpdateCategoryRequest) (*response.CategoryResponse, *response.ErrorResponse) {
+func (s *categoryCommandService) UpdateCategory(ctx context.Context, req *requests.UpdateCategoryRequest) (*db.UpdateCategoryRow, error) {
 	const method = "UpdateCategory"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("name", req.Name))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("categoryID", *req.CategoryID))
 
 	defer func() {
 		end(status)
 	}()
 
-	slug := utils.GenerateSlug(req.Name)
-
-	req.SlugCategory = &slug
+	if req.SlugCategory == nil || *req.SlugCategory == "" {
+		generatedSlug := utils.GenerateSlug(req.Name)
+		req.SlugCategory = &generatedSlug
+	}
 
 	category, err := s.categoryCommandRepository.UpdateCategory(ctx, req)
-
 	if err != nil {
-		return s.errorHandler.HandleUpdateCategoryError(err, method, "FAILED_UPDATE_CATEGORY", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.UpdateCategoryRow](
+			s.logger,
+			err,
+
+			method,
+			span,
+
+			zap.Int("category_id", *req.CategoryID),
+		)
 	}
 
-	so := s.mapping.ToCategoryResponse(category)
+	s.cache.DeleteCachedCategoryCache(ctx, *req.CategoryID)
 
-	s.mencache.DeleteCachedCategoryCache(ctx, *req.CategoryID)
-
-	logSuccess("Successfully updated category", zap.Int("category.id", category.ID))
-
-	return so, nil
+	logSuccess("Successfully updated category", zap.Int("categoryID", *req.CategoryID))
+	return category, nil
 }
 
-func (s *categoryCommandService) TrashedCategory(ctx context.Context, category_id int) (*response.CategoryResponseDeleteAt, *response.ErrorResponse) {
+func (s *categoryCommandService) TrashedCategory(ctx context.Context, categoryID int) (*db.Category, error) {
 	const method = "TrashedCategory"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("category.id", category_id))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("categoryID", categoryID))
 
 	defer func() {
 		end(status)
 	}()
 
-	category, err := s.categoryCommandRepository.TrashedCategory(ctx, category_id)
-
+	category, err := s.categoryCommandRepository.TrashedCategory(ctx, categoryID)
 	if err != nil {
-		return s.errorHandler.HandleTrashedCategoryError(err, method, "FAILED_TRASH_CATEGORY", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.Category](
+			s.logger,
+			err,
+
+			method,
+			span,
+
+			zap.Int("category_id", categoryID),
+		)
 	}
-	so := s.mapping.ToCategoryResponseDeleteAt(category)
 
-	s.mencache.DeleteCachedCategoryCache(ctx, category_id)
+	s.cache.DeleteCachedCategoryCache(ctx, categoryID)
 
-	logSuccess("Successfully trashed category", zap.Int("category.id", category_id))
-
-	return so, nil
+	logSuccess("Successfully trashed category", zap.Int("categoryID", categoryID))
+	return category, nil
 }
 
-func (s *categoryCommandService) RestoreCategory(ctx context.Context, categoryID int) (*response.CategoryResponseDeleteAt, *response.ErrorResponse) {
+func (s *categoryCommandService) RestoreCategory(ctx context.Context, categoryID int) (*db.Category, error) {
 	const method = "RestoreCategory"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("category.id", categoryID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("categoryID", categoryID))
 
 	defer func() {
 		end(status)
 	}()
 
 	category, err := s.categoryCommandRepository.RestoreCategory(ctx, categoryID)
-
 	if err != nil {
-		return s.errorHandler.HandleRestoreError(err, method, "FAILED_RESTORE_CATEGORY", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.Category](
+			s.logger,
+			err,
+
+			method,
+			span,
+
+			zap.Int("category_id", categoryID),
+		)
 	}
 
-	so := s.mapping.ToCategoryResponseDeleteAt(category)
+	s.cache.DeleteCachedCategoryCache(ctx, categoryID)
 
-	s.mencache.DeleteCachedCategoryCache(ctx, categoryID)
-
-	logSuccess("Successfully restored category", zap.Int("category.id", categoryID))
-
-	return so, nil
+	logSuccess("Successfully restored category", zap.Int("categoryID", categoryID))
+	return category, nil
 }
 
-func (s *categoryCommandService) DeleteCategoryPermanent(ctx context.Context, categoryID int) (bool, *response.ErrorResponse) {
+func (s *categoryCommandService) DeleteCategoryPermanent(ctx context.Context, categoryID int) (bool, error) {
 	const method = "DeleteCategoryPermanent"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("category.id", categoryID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("categoryID", categoryID))
 
 	defer func() {
 		end(status)
 	}()
 
-	res, err := s.categoryQueryRepository.FindByIdTrashed(ctx, categoryID)
-
+	category, err := s.categoryQueryRepository.FindByIdTrashed(ctx, categoryID)
 	if err != nil {
-		return s.errorHandler.HandleDeleteAllPermanentlyError(err, method, "FAILED_DELETE_CATEGORY_PERMANENT", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			err,
+
+			method,
+			span,
+
+			zap.Int("category_id", categoryID),
+		)
 	}
 
-	if res.ImageCategory != "" {
-		err := os.Remove(res.ImageCategory)
+	if category.ImageCategory != nil && *category.ImageCategory != "" {
+		err = os.Remove(*category.ImageCategory)
 		if err != nil {
 			if os.IsNotExist(err) {
-				s.logger.Debug("Image file does not exist, skipping deletion",
-					zap.String("image_path", res.ImageCategory))
-
-				span.SetAttributes(attribute.String("image_path", res.ImageCategory))
+				s.logger.Debug(
+					"Category image file not found, continuing with category deletion",
+					zap.String("image_path", *category.ImageCategory),
+				)
 			} else {
-				return errorhandler.HandleFiledError(s.logger, err, method, "FAILED_DELETE_CATEGORY_PERMANENT", res.ImageCategory, span, &status, category_errors.ErrFailedRemoveImageCategory, zap.Error(err))
+				status = "error"
+				return errorhandler.HandleError[bool](
+					s.logger,
+					category_errors.ErrFailedRemoveImageCategory,
+					method,
+					span,
+
+					zap.String("image_path", *category.ImageCategory),
+				)
 			}
 		} else {
-			s.logger.Debug("Successfully deleted category image",
-				zap.String("image_path", res.ImageCategory))
+			s.logger.Debug(
+				"Successfully deleted category image",
+				zap.String("image_path", *category.ImageCategory),
+			)
 		}
 	}
 
 	success, err := s.categoryCommandRepository.DeleteCategoryPermanently(ctx, categoryID)
-
 	if err != nil {
-		return s.errorHandler.HandleDeleteError(err, method, "FAILED_DELETE_CATEGORY_PERMANENT", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			err,
+
+			method,
+			span,
+
+			zap.Int("category_id", categoryID),
+		)
 	}
 
-	logSuccess("Successfully deleted category permanently", zap.Bool("success", success))
+	s.cache.DeleteCachedCategoryCache(ctx, categoryID)
 
+	logSuccess("Successfully deleted category permanently", zap.Int("categoryID", categoryID))
 	return success, nil
 }
 
-func (s *categoryCommandService) RestoreAllCategories(ctx context.Context) (bool, *response.ErrorResponse) {
+func (s *categoryCommandService) RestoreAllCategories(ctx context.Context) (bool, error) {
 	const method = "RestoreAllCategories"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
 	success, err := s.categoryCommandRepository.RestoreAllCategories(ctx)
-
 	if err != nil {
-		return s.errorHandler.HandleRestoreAllError(err, method, "FAILED_RESTORE_ALL_TRASHED_CATEGORIES", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			err,
+
+			method,
+			span,
+		)
 	}
 
-	logSuccess("Successfully restored all trashed categories", zap.Bool("success", success))
-
+	logSuccess("Successfully restored all trashed categories")
 	return success, nil
 }
 
-func (s *categoryCommandService) DeleteAllCategoriesPermanent(ctx context.Context) (bool, *response.ErrorResponse) {
+func (s *categoryCommandService) DeleteAllCategoriesPermanent(ctx context.Context) (bool, error) {
 	const method = "DeleteAllCategoriesPermanent"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
 	success, err := s.categoryCommandRepository.DeleteAllPermanentCategories(ctx)
-
 	if err != nil {
-		return s.errorHandler.HandleDeleteAllPermanentlyError(err, "DeleteAllCategoriesPermanent", "FAILED_DELETE_ALL_CATEGORIES_PERMANENT", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			err,
+
+			method,
+			span,
+		)
 	}
 
-	logSuccess("Successfully deleted all categories permanently", zap.Bool("success", success))
-
+	logSuccess("Successfully deleted all trashed categories permanently")
 	return success, nil
-}
-
-func (s *categoryCommandService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
-	context.Context,
-	trace.Span,
-	func(string),
-	string,
-	func(string, ...zap.Field),
-) {
-	start := time.Now()
-	status := "success"
-
-	ctx, span := s.trace.Start(ctx, method)
-
-	if len(attrs) > 0 {
-		span.SetAttributes(attrs...)
-	}
-
-	span.AddEvent("Start: " + method)
-
-	s.logger.Info("Start: " + method)
-
-	end := func(status string) {
-		s.recordMetrics(method, status, start)
-		code := codes.Ok
-		if status != "success" {
-			code = codes.Error
-		}
-		span.SetStatus(code, status)
-		span.End()
-	}
-
-	logSuccess := func(msg string, fields ...zap.Field) {
-		span.AddEvent(msg)
-		s.logger.Debug(msg, fields...)
-	}
-
-	return ctx, span, end, status, logSuccess
-}
-
-func (s *categoryCommandService) recordMetrics(method string, status string, start time.Time) {
-	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

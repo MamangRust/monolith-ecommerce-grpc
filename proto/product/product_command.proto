@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/empty.proto";
+import "product/product_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message CreateProductRequest {
+    int32 merchant_id = 1;
+    int32 category_id = 2;
+    string name = 3;
+    string description = 4;
+    int32 price = 5;
+    int32 count_in_stock = 6;
+    string brand = 7;
+    int32 weight = 8;
+    int32 rating = 9;
+    string slug_product = 10;
+    string image_product = 11;
+    string barcode = 12;
+}
+
+message UpdateProductRequest {
+    int32 product_id = 1;
+    int32 merchant_id = 2;
+    int32 category_id = 3;
+    string name = 4;
+    string description = 5;
+    int32 price = 6;
+    int32 count_in_stock = 7;
+    string brand = 8;
+    int32 weight = 9;
+    int32 rating = 10;
+    string slug_product = 11;
+    string image_product = 12;
+    string barcode = 13;
+}
+
+service ProductCommandService {
+    rpc Create(CreateProductRequest) returns (ApiResponseProduct);
+    rpc Update(UpdateProductRequest) returns (ApiResponseProduct);
+    rpc TrashedProduct(FindByIdProductRequest) returns (ApiResponseProductDeleteAt);
+    rpc RestoreProduct(FindByIdProductRequest) returns (ApiResponseProductDeleteAt);
+    rpc DeleteProductPermanent(FindByIdProductRequest) returns (ApiResponseProductDelete);
+
+    rpc RestoreAllProduct(google.protobuf.Empty) returns (ApiResponseProductAll);
+    rpc DeleteAllProductPermanent(google.protobuf.Empty) returns (ApiResponseProductAll);
+}

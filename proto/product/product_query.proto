@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package pb;
+
+import "product/product_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindAllProductRequest {
+    int32 page = 1;
+    int32 page_size = 2;
+    string search = 3;
+}
+
+message FindAllProductMerchantRequest {
+    int32 merchant_id = 1;
+    int32 category_id = 2;
+    int32 page = 3;
+    int32 page_size = 4;
+    string search = 5;
+    int32 min_price = 6;
+    int32 max_price = 7;
+}
+
+message FindAllProductCategoryRequest {
+    string category_name = 1;
+    int32 page = 2;
+    int32 page_size = 3;
+    string search = 4;
+    int32 min_price = 5;
+    int32 max_price = 6;
+}
+
+service ProductQueryService {
+    rpc FindAll(FindAllProductRequest) returns (ApiResponsePaginationProduct);
+    rpc FindByMerchant(FindAllProductMerchantRequest) returns (ApiResponsePaginationProduct);
+    rpc FindByCategory(FindAllProductCategoryRequest) returns (ApiResponsePaginationProduct);
+
+    rpc FindById(FindByIdProductRequest) returns (ApiResponseProduct);
+
+    rpc FindByActive(FindAllProductRequest) returns (ApiResponsePaginationProductDeleteAt);
+    rpc FindByTrashed(FindAllProductRequest) returns (ApiResponsePaginationProductDeleteAt);
+}

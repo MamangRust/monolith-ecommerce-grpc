@@ -4,25 +4,21 @@ import (
 	"context"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	shippingaddress_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/shipping_address_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type shippingAddressQueryRepository struct {
-	db      *db.Queries
-	mapping recordmapper.ShippingAddressMapping
+	db *db.Queries
 }
 
-func NewShippingAddressQueryRepository(db *db.Queries, mapping recordmapper.ShippingAddressMapping) *shippingAddressQueryRepository {
+func NewShippingAddressQueryRepository(db *db.Queries) *shippingAddressQueryRepository {
 	return &shippingAddressQueryRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *shippingAddressQueryRepository) FindAllShippingAddress(ctx context.Context, req *requests.FindAllShippingAddress) ([]*record.ShippingAddressRecord, *int, error) {
+func (r *shippingAddressQueryRepository) FindAllShippingAddress(ctx context.Context, req *requests.FindAllShippingAddress) ([]*db.GetShippingAddressRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetShippingAddressParams{
@@ -34,21 +30,13 @@ func (r *shippingAddressQueryRepository) FindAllShippingAddress(ctx context.Cont
 	res, err := r.db.GetShippingAddress(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, shippingaddress_errors.ErrFindAllShippingAddress
+		return nil, shippingaddress_errors.ErrFindAllShippingAddress
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToShippingAddresssRecordPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *shippingAddressQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllShippingAddress) ([]*record.ShippingAddressRecord, *int, error) {
+func (r *shippingAddressQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllShippingAddress) ([]*db.GetShippingAddressActiveRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetShippingAddressActiveParams{
@@ -60,21 +48,13 @@ func (r *shippingAddressQueryRepository) FindByActive(ctx context.Context, req *
 	res, err := r.db.GetShippingAddressActive(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, shippingaddress_errors.ErrFindActiveShippingAddress
+		return nil, shippingaddress_errors.ErrFindActiveShippingAddress
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToShippingAddresssRecordActivePagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *shippingAddressQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllShippingAddress) ([]*record.ShippingAddressRecord, *int, error) {
+func (r *shippingAddressQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllShippingAddress) ([]*db.GetShippingAddressTrashedRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetShippingAddressTrashedParams{
@@ -86,36 +66,28 @@ func (r *shippingAddressQueryRepository) FindByTrashed(ctx context.Context, req 
 	res, err := r.db.GetShippingAddressTrashed(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, shippingaddress_errors.ErrFindTrashedShippingAddress
+		return nil, shippingaddress_errors.ErrFindTrashedShippingAddress
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToShippingAddresssRecordTrashedPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *shippingAddressQueryRepository) FindById(ctx context.Context, shipping_id int) (*record.ShippingAddressRecord, error) {
+func (r *shippingAddressQueryRepository) FindById(ctx context.Context, shipping_id int) (*db.GetShippingByIDRow, error) {
 	res, err := r.db.GetShippingByID(ctx, int32(shipping_id))
 
 	if err != nil {
 		return nil, shippingaddress_errors.ErrFindShippingAddressByID
 	}
 
-	return r.mapping.ToShippingAddressRecord(res), nil
+	return res, nil
 }
 
-func (r *shippingAddressQueryRepository) FindByOrder(ctx context.Context, order_id int) (*record.ShippingAddressRecord, error) {
+func (r *shippingAddressQueryRepository) FindByOrder(ctx context.Context, order_id int) (*db.GetShippingAddressByOrderIDRow, error) {
 	res, err := r.db.GetShippingAddressByOrderID(ctx, int32(order_id))
 
 	if err != nil {
 		return nil, shippingaddress_errors.ErrFindShippingAddressByOrder
 	}
 
-	return r.mapping.ToShippingAddressRecord(res), nil
+	return res, nil
 }

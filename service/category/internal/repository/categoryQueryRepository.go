@@ -2,27 +2,25 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/category_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type categoryQueryRepository struct {
-	db      *db.Queries
-	mapping recordmapper.CategoryRecordMapper
+	db *db.Queries
 }
 
-func NewCategoryQueryRepository(db *db.Queries, mapping recordmapper.CategoryRecordMapper) *categoryQueryRepository {
+func NewCategoryQueryRepository(db *db.Queries) *categoryQueryRepository {
 	return &categoryQueryRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *categoryQueryRepository) FindAllCategory(ctx context.Context, req *requests.FindAllCategory) ([]*record.CategoriesRecord, *int, error) {
+func (r *categoryQueryRepository) FindAllCategory(ctx context.Context, req *requests.FindAllCategory) ([]*db.GetCategoriesRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetCategoriesParams{
@@ -34,20 +32,14 @@ func (r *categoryQueryRepository) FindAllCategory(ctx context.Context, req *requ
 	res, err := r.db.GetCategories(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, category_errors.ErrFindAllCategory
+		return nil, category_errors.ErrFindAllCategory.WithInternal(err)
 	}
 
-	var totalCount int
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
 
-	return r.mapping.ToCategoriesRecordPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *categoryQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllCategory) ([]*record.CategoriesRecord, *int, error) {
+func (r *categoryQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllCategory) ([]*db.GetCategoriesActiveRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetCategoriesActiveParams{
@@ -59,20 +51,14 @@ func (r *categoryQueryRepository) FindByActive(ctx context.Context, req *request
 	res, err := r.db.GetCategoriesActive(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, category_errors.ErrFindByActiveCategory
+		return nil, category_errors.ErrFindByActiveCategory.WithInternal(err)
 	}
 
-	var totalCount int
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
 
-	return r.mapping.ToCategoriesRecordActivePagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *categoryQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllCategory) ([]*record.CategoriesRecord, *int, error) {
+func (r *categoryQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllCategory) ([]*db.GetCategoriesTrashedRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetCategoriesTrashedParams{
@@ -84,35 +70,37 @@ func (r *categoryQueryRepository) FindByTrashed(ctx context.Context, req *reques
 	res, err := r.db.GetCategoriesTrashed(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, category_errors.ErrFindByTrashedCategory
+		return nil, category_errors.ErrFindByTrashedCategory.WithInternal(err)
 	}
 
-	var totalCount int
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
 
-	return r.mapping.ToCategoriesRecordTrashedPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *categoryQueryRepository) FindById(ctx context.Context, category_id int) (*record.CategoriesRecord, error) {
+func (r *categoryQueryRepository) FindById(ctx context.Context, category_id int) (*db.GetCategoryByIDRow, error) {
 	res, err := r.db.GetCategoryByID(ctx, int32(category_id))
 
 	if err != nil {
-		return nil, category_errors.ErrFindCategoryById
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, category_errors.ErrCategoryNotFound.WithInternal(err)
+		}
+		return nil, category_errors.ErrFindCategoryById.WithInternal(err)
 	}
 
-	return r.mapping.ToCategoryRecord(res), nil
+
+	return res, nil
 }
 
-func (r *categoryQueryRepository) FindByIdTrashed(ctx context.Context, category_id int) (*record.CategoriesRecord, error) {
+func (r *categoryQueryRepository) FindByIdTrashed(ctx context.Context, category_id int) (*db.Category, error) {
 	res, err := r.db.GetCategoryByIDTrashed(ctx, int32(category_id))
 
 	if err != nil {
-		return nil, category_errors.ErrFindCategoryByIdTrashed
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, category_errors.ErrCategoryNotFound.WithInternal(err)
+		}
+		return nil, category_errors.ErrFindCategoryByIdTrashed.WithInternal(err)
 	}
 
-	return r.mapping.ToCategoryRecord(res), nil
+
+	return res, nil
 }

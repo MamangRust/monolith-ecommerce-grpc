@@ -5,25 +5,21 @@ import (
 	"time"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/transaction_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
-type transactonStatsRepository struct {
-	db      *db.Queries
-	mapping recordmapper.TransactionRecordMapping
+type transactionStatsRepository struct {
+	db *db.Queries
 }
 
-func NewTransactionStatsRepository(db *db.Queries, mapping recordmapper.TransactionRecordMapping) *transactonStatsRepository {
-	return &transactonStatsRepository{
-		db:      db,
-		mapping: mapping,
+func NewTransactionStatsRepository(db *db.Queries) *transactionStatsRepository {
+	return &transactionStatsRepository{
+		db: db,
 	}
 }
 
-func (r *transactonStatsRepository) GetMonthlyAmountSuccess(ctx context.Context, req *requests.MonthAmountTransaction) ([]*record.TransactionMonthlyAmountSuccessRecord, error) {
+func (r *transactionStatsRepository) GetMonthlyAmountSuccess(ctx context.Context, req *requests.MonthAmountTransaction) ([]*db.GetMonthlyAmountTransactionSuccessRow, error) {
 	currentDate := time.Date(req.Year, time.Month(req.Month), 1, 0, 0, 0, 0, time.UTC)
 	prevDate := currentDate.AddDate(0, -1, 0)
 
@@ -38,23 +34,21 @@ func (r *transactonStatsRepository) GetMonthlyAmountSuccess(ctx context.Context,
 	})
 
 	if err != nil {
-		return nil, transaction_errors.ErrGetMonthlyAmountSuccess
+		return nil, transaction_errors.ErrGetMonthlyAmountSuccess.WithInternal(err)
 	}
 
-	return r.mapping.ToTransactionMonthlyAmountSuccess(res), nil
+	return res, nil
 }
 
-func (r *transactonStatsRepository) GetYearlyAmountSuccess(ctx context.Context, year int) ([]*record.TransactionYearlyAmountSuccessRecord, error) {
+func (r *transactionStatsRepository) GetYearlyAmountSuccess(ctx context.Context, year int) ([]*db.GetYearlyAmountTransactionSuccessRow, error) {
 	res, err := r.db.GetYearlyAmountTransactionSuccess(ctx, int32(year))
-
 	if err != nil {
-		return nil, transaction_errors.ErrGetYearlyAmountSuccess
+		return nil, transaction_errors.ErrGetYearlyAmountSuccess.WithInternal(err)
 	}
-
-	return r.mapping.ToTransactionYearlyAmountSuccess(res), nil
+	return res, nil
 }
 
-func (r *transactonStatsRepository) GetMonthlyAmountFailed(ctx context.Context, req *requests.MonthAmountTransaction) ([]*record.TransactionMonthlyAmountFailedRecord, error) {
+func (r *transactionStatsRepository) GetMonthlyAmountFailed(ctx context.Context, req *requests.MonthAmountTransaction) ([]*db.GetMonthlyAmountTransactionFailedRow, error) {
 	currentDate := time.Date(req.Year, time.Month(req.Month), 1, 0, 0, 0, 0, time.UTC)
 	prevDate := currentDate.AddDate(0, -1, 0)
 
@@ -69,23 +63,21 @@ func (r *transactonStatsRepository) GetMonthlyAmountFailed(ctx context.Context, 
 	})
 
 	if err != nil {
-		return nil, transaction_errors.ErrGetMonthlyAmountFailed
+		return nil, transaction_errors.ErrGetMonthlyAmountFailed.WithInternal(err)
 	}
 
-	return r.mapping.ToTransactionMonthlyAmountFailed(res), nil
+	return res, nil
 }
 
-func (r *transactonStatsRepository) GetYearlyAmountFailed(ctx context.Context, year int) ([]*record.TransactionYearlyAmountFailedRecord, error) {
+func (r *transactionStatsRepository) GetYearlyAmountFailed(ctx context.Context, year int) ([]*db.GetYearlyAmountTransactionFailedRow, error) {
 	res, err := r.db.GetYearlyAmountTransactionFailed(ctx, int32(year))
-
 	if err != nil {
-		return nil, transaction_errors.ErrGetYearlyAmountFailed
+		return nil, transaction_errors.ErrGetYearlyAmountFailed.WithInternal(err)
 	}
-
-	return r.mapping.ToTransactionYearlyAmountFailed(res), nil
+	return res, nil
 }
 
-func (r *transactonStatsRepository) GetMonthlyTransactionMethodSuccess(ctx context.Context, req *requests.MonthMethodTransaction) ([]*record.TransactionMonthlyMethodRecord, error) {
+func (r *transactionStatsRepository) GetMonthlyTransactionMethodSuccess(ctx context.Context, req *requests.MonthMethodTransaction) ([]*db.GetMonthlyTransactionMethodsSuccessRow, error) {
 	currentDate := time.Date(req.Year, time.Month(req.Month), 1, 0, 0, 0, 0, time.UTC)
 	prevDate := currentDate.AddDate(0, -1, 0)
 
@@ -100,25 +92,23 @@ func (r *transactonStatsRepository) GetMonthlyTransactionMethodSuccess(ctx conte
 	})
 
 	if err != nil {
-		return nil, transaction_errors.ErrGetMonthlyTransactionMethod
+		return nil, transaction_errors.ErrGetMonthlyTransactionMethod.WithInternal(err)
 	}
 
-	return r.mapping.ToTransactionMonthlyMethodSuccess(res), nil
+	return res, nil
 }
 
-func (r *transactonStatsRepository) GetYearlyTransactionMethodSuccess(ctx context.Context, year int) ([]*record.TransactionYearlyMethodRecord, error) {
+func (r *transactionStatsRepository) GetYearlyTransactionMethodSuccess(ctx context.Context, year int) ([]*db.GetYearlyTransactionMethodsSuccessRow, error) {
 	yearStart := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	res, err := r.db.GetYearlyTransactionMethodsSuccess(ctx, yearStart)
-
 	if err != nil {
-		return nil, transaction_errors.ErrGetYearlyTransactionMethod
+		return nil, transaction_errors.ErrGetYearlyTransactionMethod.WithInternal(err)
 	}
-
-	return r.mapping.ToTransactionYearlyMethodSuccess(res), nil
+	return res, nil
 }
 
-func (r *transactonStatsRepository) GetMonthlyTransactionMethodFailed(ctx context.Context, req *requests.MonthMethodTransaction) ([]*record.TransactionMonthlyMethodRecord, error) {
+func (r *transactionStatsRepository) GetMonthlyTransactionMethodFailed(ctx context.Context, req *requests.MonthMethodTransaction) ([]*db.GetMonthlyTransactionMethodsFailedRow, error) {
 	currentDate := time.Date(req.Year, time.Month(req.Month), 1, 0, 0, 0, 0, time.UTC)
 	prevDate := currentDate.AddDate(0, -1, 0)
 
@@ -133,20 +123,19 @@ func (r *transactonStatsRepository) GetMonthlyTransactionMethodFailed(ctx contex
 	})
 
 	if err != nil {
-		return nil, transaction_errors.ErrGetMonthlyTransactionMethod
+		return nil, transaction_errors.ErrGetMonthlyTransactionMethod.WithInternal(err)
 	}
 
-	return r.mapping.ToTransactionMonthlyMethodFailed(res), nil
+	return res, nil
 }
 
-func (r *transactonStatsRepository) GetYearlyTransactionMethodFailed(ctx context.Context, year int) ([]*record.TransactionYearlyMethodRecord, error) {
+func (r *transactionStatsRepository) GetYearlyTransactionMethodFailed(ctx context.Context, year int) ([]*db.GetYearlyTransactionMethodsFailedRow, error) {
 	yearStart := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	res, err := r.db.GetYearlyTransactionMethodsFailed(ctx, yearStart)
-
 	if err != nil {
-		return nil, transaction_errors.ErrGetYearlyTransactionMethod
+		return nil, transaction_errors.ErrGetYearlyTransactionMethod.WithInternal(err)
 	}
-
-	return r.mapping.ToTransactionYearlyMethodFailed(res), nil
+	return res, nil
 }
+

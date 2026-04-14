@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package pb;
+
+import "review/review_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindAllReviewProductRequest {
+    int32 product_id = 1;
+    int32 page = 2;
+    int32 page_size = 3;
+    string search = 4;
+}
+
+message FindAllReviewMerchantRequest {
+    int32 merchant_id = 1;
+    int32 page = 2;
+    int32 page_size = 3;
+    string search = 4;
+}
+
+message FindAllReviewRequest {
+    int32 page = 1;
+    int32 page_size = 2;
+    string search = 3;
+}
+
+service ReviewQueryService {
+    rpc FindAll(FindAllReviewRequest) returns (ApiResponsePaginationReview);
+    rpc FindByProduct(FindAllReviewProductRequest) returns(ApiResponsePaginationReviewDetail);
+    rpc FindByMerchant(FindAllReviewMerchantRequest) returns(ApiResponsePaginationReviewDetail);
+
+    rpc FindByTrashed(FindAllReviewRequest) returns (ApiResponsePaginationReviewDeleteAt);
+    rpc FindByActive(FindAllReviewRequest) returns (ApiResponsePaginationReviewDeleteAt);
+}

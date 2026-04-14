@@ -11,11 +11,13 @@ type Deps struct {
 }
 
 type Handler struct {
-	Banner BannerHandleGrpc
+	BannerQuery   BannerQueryHandler
+	BannerCommand BannerCommandHandler
 }
 
 func NewHandler(deps *Deps) *Handler {
 	return &Handler{
-		Banner: NewBannerHandleGrpc(deps.Service, deps.Logger),
+		BannerQuery:   NewBannerQueryHandler(deps.Service.BannerQuery, deps.Logger),
+		BannerCommand: NewBannerCommandHandler(deps.Service.BannerCommand, deps.Logger),
 	}
 }

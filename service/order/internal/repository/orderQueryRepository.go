@@ -2,27 +2,25 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/order_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type orderQueryRepository struct {
-	db      *db.Queries
-	mapping recordmapper.OrderRecordMapping
+	db *db.Queries
 }
 
-func NewOrderQueryRepository(db *db.Queries, mapping recordmapper.OrderRecordMapping) *orderQueryRepository {
+func NewOrderQueryRepository(db *db.Queries) OrderQueryRepository {
 	return &orderQueryRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *orderQueryRepository) FindAllOrders(ctx context.Context, req *requests.FindAllOrder) ([]*record.OrderRecord, *int, error) {
+func (r *orderQueryRepository) FindAllOrders(ctx context.Context, req *requests.FindAllOrder) ([]*db.GetOrdersRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetOrdersParams{
@@ -34,21 +32,13 @@ func (r *orderQueryRepository) FindAllOrders(ctx context.Context, req *requests.
 	res, err := r.db.GetOrders(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, order_errors.ErrFindAllOrders
+		return nil, order_errors.ErrFindAllOrders.WithInternal(err)
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToOrdersRecordPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *orderQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllOrder) ([]*record.OrderRecord, *int, error) {
+func (r *orderQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllOrder) ([]*db.GetOrdersActiveRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetOrdersActiveParams{
@@ -60,21 +50,13 @@ func (r *orderQueryRepository) FindByActive(ctx context.Context, req *requests.F
 	res, err := r.db.GetOrdersActive(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, order_errors.ErrFindByActive
+		return nil, order_errors.ErrFindByActive.WithInternal(err)
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToOrdersRecordActivePagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *orderQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllOrder) ([]*record.OrderRecord, *int, error) {
+func (r *orderQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllOrder) ([]*db.GetOrdersTrashedRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetOrdersTrashedParams{
@@ -86,21 +68,13 @@ func (r *orderQueryRepository) FindByTrashed(ctx context.Context, req *requests.
 	res, err := r.db.GetOrdersTrashed(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, order_errors.ErrFindByTrashed
+		return nil, order_errors.ErrFindByTrashed.WithInternal(err)
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToOrdersRecordTrashedPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *orderQueryRepository) FindByMerchant(ctx context.Context, req *requests.FindAllOrderByMerchant) ([]*record.OrderRecord, *int, error) {
+func (r *orderQueryRepository) FindByMerchant(ctx context.Context, req *requests.FindAllOrderByMerchant) ([]*db.GetOrdersByMerchantRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetOrdersByMerchantParams{
@@ -113,26 +87,22 @@ func (r *orderQueryRepository) FindByMerchant(ctx context.Context, req *requests
 	res, err := r.db.GetOrdersByMerchant(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, order_errors.ErrFindByMerchant
+		return nil, order_errors.ErrFindByMerchant.WithInternal(err)
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToOrdersRecordByMerchantPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *orderQueryRepository) FindById(ctx context.Context, user_id int) (*record.OrderRecord, error) {
-	res, err := r.db.GetOrderByID(ctx, int32(user_id))
+func (r *orderQueryRepository) FindById(ctx context.Context, id int) (*db.GetOrderByIDRow, error) {
+	res, err := r.db.GetOrderByID(ctx, int32(id))
 
 	if err != nil {
-		return nil, order_errors.ErrFindById
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, order_errors.ErrOrderNotFound.WithInternal(err)
+		}
+		return nil, order_errors.ErrFindById.WithInternal(err)
 	}
 
-	return r.mapping.ToOrderRecord(res), nil
+	return res, nil
 }
+

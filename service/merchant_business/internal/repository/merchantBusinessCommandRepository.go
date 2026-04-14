@@ -2,91 +2,91 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	merchantbusiness_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant_business"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type merchantBusinessCommandRepository struct {
-	db      *db.Queries
-	mapping recordmapper.MerchantBusinessMapping
+	db *db.Queries
 }
 
 func NewMerchantBusinessCommandRepository(
 	db *db.Queries,
-	mapping recordmapper.MerchantBusinessMapping,
 ) *merchantBusinessCommandRepository {
 	return &merchantBusinessCommandRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *merchantBusinessCommandRepository) CreateMerchantBusiness(ctx context.Context, request *requests.CreateMerchantBusinessInformationRequest) (*record.MerchantBusinessRecord, error) {
+func (r *merchantBusinessCommandRepository) CreateMerchantBusiness(
+	ctx context.Context,
+	request *requests.CreateMerchantBusinessInformationRequest,
+) (*db.CreateMerchantBusinessInformationRow, error) {
+
 	req := db.CreateMerchantBusinessInformationParams{
-		MerchantID:        int32(request.MerchantID),
-		BusinessType:      sql.NullString{String: request.BusinessType, Valid: request.BusinessType != ""},
-		TaxID:             sql.NullString{String: request.TaxID, Valid: request.TaxID != ""},
-		EstablishedYear:   sql.NullInt32{Int32: int32(request.EstablishedYear), Valid: request.EstablishedYear != 0},
-		NumberOfEmployees: sql.NullInt32{Int32: int32(request.NumberOfEmployees), Valid: request.NumberOfEmployees != 0},
-		WebsiteUrl:        sql.NullString{String: request.WebsiteUrl, Valid: request.WebsiteUrl != ""},
+		MerchantID: int32(request.MerchantID),
+
+		BusinessType: stringPtr(request.BusinessType),
+		TaxID:        stringPtr(request.TaxID),
+		WebsiteUrl:   stringPtr(request.WebsiteUrl),
+
+		EstablishedYear:   int32Ptr(request.EstablishedYear),
+		NumberOfEmployees: int32Ptr(request.NumberOfEmployees),
 	}
 
 	merchant, err := r.db.CreateMerchantBusinessInformation(ctx, req)
 	if err != nil {
-		return nil, merchantbusiness_errors.ErrCreateMerchantBusiness
+		return nil, merchantbusiness_errors.ErrCreateMerchantBusiness.WithInternal(err)
 	}
 
-	return r.mapping.ToMerchantBusinessRecord(merchant), nil
+	return merchant, nil
 }
 
-func (r *merchantBusinessCommandRepository) UpdateMerchantBusiness(ctx context.Context, request *requests.UpdateMerchantBusinessInformationRequest) (*record.MerchantBusinessRecord, error) {
+func (r *merchantBusinessCommandRepository) UpdateMerchantBusiness(ctx context.Context, request *requests.UpdateMerchantBusinessInformationRequest) (*db.UpdateMerchantBusinessInformationRow, error) {
 	req := db.UpdateMerchantBusinessInformationParams{
 		MerchantBusinessInfoID: int32(*request.MerchantBusinessInfoID),
-		BusinessType:           sql.NullString{String: request.BusinessType, Valid: request.BusinessType != ""},
-		TaxID:                  sql.NullString{String: request.TaxID, Valid: request.TaxID != ""},
-		EstablishedYear:        sql.NullInt32{Int32: int32(request.EstablishedYear), Valid: request.EstablishedYear != 0},
-		NumberOfEmployees:      sql.NullInt32{Int32: int32(request.NumberOfEmployees), Valid: request.NumberOfEmployees != 0},
-		WebsiteUrl:             sql.NullString{String: request.WebsiteUrl, Valid: request.WebsiteUrl != ""},
+		BusinessType:           stringPtr(request.BusinessType),
+		TaxID:                  stringPtr(request.TaxID),
+		WebsiteUrl:             stringPtr(request.WebsiteUrl),
+		EstablishedYear:        int32Ptr(request.EstablishedYear),
+		NumberOfEmployees:      int32Ptr(request.NumberOfEmployees),
 	}
 
 	merchant, err := r.db.UpdateMerchantBusinessInformation(ctx, req)
 	if err != nil {
-		return nil, merchantbusiness_errors.ErrUpdateMerchantBusiness
+		return nil, merchantbusiness_errors.ErrUpdateMerchantBusiness.WithInternal(err)
 	}
 
-	return r.mapping.ToMerchantBusinessRecord(merchant), nil
+	return merchant, nil
 }
 
-func (r *merchantBusinessCommandRepository) TrashedMerchantBusiness(ctx context.Context, merchant_id int) (*record.MerchantBusinessRecord, error) {
+func (r *merchantBusinessCommandRepository) TrashedMerchantBusiness(ctx context.Context, merchant_id int) (*db.MerchantBusinessInformation, error) {
 	res, err := r.db.TrashMerchantBusinessInformation(ctx, int32(merchant_id))
 
 	if err != nil {
-		return nil, merchantbusiness_errors.ErrTrashMerchantBusiness
+		return nil, merchantbusiness_errors.ErrTrashMerchantBusiness.WithInternal(err)
 	}
 
-	return r.mapping.ToMerchantBusinessRecord(res), nil
+	return res, nil
 }
 
-func (r *merchantBusinessCommandRepository) RestoreMerchantBusiness(ctx context.Context, merchant_id int) (*record.MerchantBusinessRecord, error) {
+func (r *merchantBusinessCommandRepository) RestoreMerchantBusiness(ctx context.Context, merchant_id int) (*db.MerchantBusinessInformation, error) {
 	res, err := r.db.RestoreMerchantBusinessInformation(ctx, int32(merchant_id))
 
 	if err != nil {
-		return nil, merchantbusiness_errors.ErrRestoreMerchantBusiness
+		return nil, merchantbusiness_errors.ErrRestoreMerchantBusiness.WithInternal(err)
 	}
 
-	return r.mapping.ToMerchantBusinessRecord(res), nil
+	return res, nil
 }
 
 func (r *merchantBusinessCommandRepository) DeleteMerchantBusinessPermanent(ctx context.Context, Merchant_id int) (bool, error) {
 	err := r.db.DeleteMerchantBusinessInformationPermanently(ctx, int32(Merchant_id))
 
 	if err != nil {
-		return false, merchantbusiness_errors.ErrDeletePermanentMerchantBusiness
+		return false, merchantbusiness_errors.ErrDeletePermanentMerchantBusiness.WithInternal(err)
 	}
 
 	return true, nil
@@ -96,7 +96,7 @@ func (r *merchantBusinessCommandRepository) RestoreAllMerchantBusiness(ctx conte
 	err := r.db.RestoreAllMerchants(ctx)
 
 	if err != nil {
-		return false, merchantbusiness_errors.ErrRestoreAllMerchantBusinesses
+		return false, merchantbusiness_errors.ErrRestoreAllMerchantBusinesses.WithInternal(err)
 	}
 	return true, nil
 }
@@ -105,7 +105,22 @@ func (r *merchantBusinessCommandRepository) DeleteAllMerchantBusinessPermanent(c
 	err := r.db.DeleteAllPermanentMerchants(ctx)
 
 	if err != nil {
-		return false, merchantbusiness_errors.ErrDeleteAllPermanentMerchantBusinesses
+		return false, merchantbusiness_errors.ErrDeleteAllPermanentMerchantBusinesses.WithInternal(err)
 	}
 	return true, nil
+}
+
+func int32Ptr(v int) *int32 {
+	if v == 0 {
+		return nil
+	}
+	val := int32(v)
+	return &val
+}
+
+func stringPtr(v string) *string {
+	if v == "" {
+		return nil
+	}
+	return &v
 }

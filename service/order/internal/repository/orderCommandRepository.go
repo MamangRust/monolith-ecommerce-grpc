@@ -4,41 +4,37 @@ import (
 	"context"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/order_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type orderCommandRepository struct {
-	db      *db.Queries
-	mapping recordmapper.OrderRecordMapping
+	db *db.Queries
 }
 
-func NewOrderCommandRepository(db *db.Queries, mapping recordmapper.OrderRecordMapping) *orderCommandRepository {
+func NewOrderCommandRepository(db *db.Queries) OrderCommandRepository {
 	return &orderCommandRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *orderCommandRepository) CreateOrder(ctx context.Context, request *requests.CreateOrderRecordRequest) (*record.OrderRecord, error) {
+func (r *orderCommandRepository) CreateOrder(ctx context.Context, request *requests.CreateOrderRecordRequest) (*db.CreateOrderRow, error) {
 	req := db.CreateOrderParams{
 		MerchantID: int32(request.MerchantID),
 		UserID:     int32(request.UserID),
 		TotalPrice: int32(request.TotalPrice),
 	}
 
-	user, err := r.db.CreateOrder(ctx, req)
+	res, err := r.db.CreateOrder(ctx, req)
 
 	if err != nil {
-		return nil, order_errors.ErrCreateOrder
+		return nil, order_errors.ErrCreateOrder.WithInternal(err)
 	}
 
-	return r.mapping.ToOrderRecord(user), nil
+	return res, nil
 }
 
-func (r *orderCommandRepository) UpdateOrder(ctx context.Context, request *requests.UpdateOrderRecordRequest) (*record.OrderRecord, error) {
+func (r *orderCommandRepository) UpdateOrder(ctx context.Context, request *requests.UpdateOrderRecordRequest) (*db.UpdateOrderRow, error) {
 	req := db.UpdateOrderParams{
 		OrderID:    int32(request.OrderID),
 		TotalPrice: int32(request.TotalPrice),
@@ -47,37 +43,37 @@ func (r *orderCommandRepository) UpdateOrder(ctx context.Context, request *reque
 	res, err := r.db.UpdateOrder(ctx, req)
 
 	if err != nil {
-		return nil, order_errors.ErrUpdateOrder
+		return nil, order_errors.ErrUpdateOrder.WithInternal(err)
 	}
 
-	return r.mapping.ToOrderRecord(res), nil
+	return res, nil
 }
 
-func (r *orderCommandRepository) TrashedOrder(ctx context.Context, user_id int) (*record.OrderRecord, error) {
-	res, err := r.db.TrashedOrder(ctx, int32(user_id))
+func (r *orderCommandRepository) TrashedOrder(ctx context.Context, order_id int) (*db.Order, error) {
+	res, err := r.db.TrashedOrder(ctx, int32(order_id))
 
 	if err != nil {
-		return nil, order_errors.ErrTrashedOrder
+		return nil, order_errors.ErrTrashedOrder.WithInternal(err)
 	}
 
-	return r.mapping.ToOrderRecord(res), nil
+	return res, nil
 }
 
-func (r *orderCommandRepository) RestoreOrder(ctx context.Context, user_id int) (*record.OrderRecord, error) {
-	res, err := r.db.RestoreOrder(ctx, int32(user_id))
+func (r *orderCommandRepository) RestoreOrder(ctx context.Context, order_id int) (*db.Order, error) {
+	res, err := r.db.RestoreOrder(ctx, int32(order_id))
 
 	if err != nil {
-		return nil, order_errors.ErrRestoreOrder
+		return nil, order_errors.ErrRestoreOrder.WithInternal(err)
 	}
 
-	return r.mapping.ToOrderRecord(res), nil
+	return res, nil
 }
 
-func (r *orderCommandRepository) DeleteOrderPermanent(ctx context.Context, user_id int) (bool, error) {
-	err := r.db.DeleteOrderPermanently(ctx, int32(user_id))
+func (r *orderCommandRepository) DeleteOrderPermanent(ctx context.Context, order_id int) (bool, error) {
+	err := r.db.DeleteOrderPermanently(ctx, int32(order_id))
 
 	if err != nil {
-		return false, order_errors.ErrDeleteOrderPermanent
+		return false, order_errors.ErrDeleteOrderPermanent.WithInternal(err)
 	}
 
 	return true, nil
@@ -87,7 +83,7 @@ func (r *orderCommandRepository) RestoreAllOrder(ctx context.Context) (bool, err
 	err := r.db.RestoreAllOrders(ctx)
 
 	if err != nil {
-		return false, order_errors.ErrRestoreAllOrder
+		return false, order_errors.ErrRestoreAllOrder.WithInternal(err)
 	}
 	return true, nil
 }
@@ -96,7 +92,8 @@ func (r *orderCommandRepository) DeleteAllOrderPermanent(ctx context.Context) (b
 	err := r.db.DeleteAllPermanentOrders(ctx)
 
 	if err != nil {
-		return false, order_errors.ErrDeleteAllOrderPermanent
+		return false, order_errors.ErrDeleteAllOrderPermanent.WithInternal(err)
 	}
 	return true, nil
 }
+

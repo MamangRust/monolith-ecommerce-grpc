@@ -5,11 +5,11 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/internal/apps"
+	app "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/internal/apps"
 )
 
 func main() {
-	client, shutdown, err := apps.RunClient()
+	client, shutdown, err := app.RunClient()
 	if err != nil {
 		log.Fatalf("failed to run client: %v", err)
 	}

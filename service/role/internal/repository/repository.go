@@ -2,7 +2,6 @@ package repository
 
 import (
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type Repositories struct {
@@ -11,10 +10,8 @@ type Repositories struct {
 }
 
 func NewRepositories(DB *db.Queries) *Repositories {
-	roleMapper := recordmapper.NewRoleRecordMapper()
-
 	return &Repositories{
-		RoleCommand: NewRoleCommandRepository(DB, roleMapper),
-		RoleQuery:   NewRoleQueryRepository(DB, roleMapper),
+		RoleCommand: NewRoleCommandRepository(DB),
+		RoleQuery:   NewRoleQueryRepository(DB),
 	}
 }

@@ -5,17 +5,19 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 )
 
+type Handler struct {
+	ProductQuery   ProductQueryHandler
+	ProductCommand ProductCommandHandler
+}
+
 type Deps struct {
 	Service *service.Service
 	Logger  logger.LoggerInterface
 }
 
-type Handler struct {
-	Product ProductHandleGrpc
-}
-
 func NewHandler(deps *Deps) *Handler {
 	return &Handler{
-		Product: NewProductHandleGrpc(deps.Service, deps.Logger),
+		ProductQuery:   NewProductQueryHandler(deps.Service.ProductQuery, deps.Logger),
+		ProductCommand: NewProductCommandHandler(deps.Service.ProductCommand, deps.Logger),
 	}
 }

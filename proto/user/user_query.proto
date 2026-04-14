@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package pb;
+
+import "user/user_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindAllUserRequest {
+    int32 page = 1;
+    int32 page_size = 2;
+    string search = 3;
+}
+
+service UserQueryService {
+    rpc FindAll(FindAllUserRequest) returns (ApiResponsePaginationUser);
+    rpc FindById(FindByIdUserRequest) returns (ApiResponseUser);
+
+    rpc FindByActive(FindAllUserRequest) returns (ApiResponsePaginationUserDeleteAt);
+    rpc FindByTrashed(FindAllUserRequest) returns (ApiResponsePaginationUserDeleteAt);
+}

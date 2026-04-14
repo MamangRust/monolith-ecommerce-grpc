@@ -11,11 +11,13 @@ type Deps struct {
 }
 
 type Handler struct {
-	Cart CartHandleGrpc
+	CartQuery   CartQueryHandler
+	CartCommand CartCommandHandler
 }
 
 func NewHandler(deps *Deps) *Handler {
 	return &Handler{
-		Cart: NewCartHandleGrpc(deps.Service, deps.Logger),
+		CartQuery:   NewCartQueryHandler(deps.Service.CartQuery, deps.Logger),
+		CartCommand: NewCartCommandHandler(deps.Service.CartCommand, deps.Logger),
 	}
 }

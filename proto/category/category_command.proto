@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/empty.proto";
+import "category/category_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message CreateCategoryRequest {
+    string name = 1;
+    string description = 2;
+    string slug_category = 3;
+    string image_category = 4;
+}
+
+message UpdateCategoryRequest {
+    int32 category_id = 1;
+    string name = 2;
+    string description = 3;
+    string slug_category = 4;
+    string image_category = 5;
+}
+
+service CategoryCommandService {
+    rpc Create(CreateCategoryRequest) returns (ApiResponseCategory);
+    rpc Update(UpdateCategoryRequest) returns (ApiResponseCategory);
+    rpc TrashedCategory(FindByIdCategoryRequest) returns (ApiResponseCategoryDeleteAt);
+    rpc RestoreCategory(FindByIdCategoryRequest) returns (ApiResponseCategoryDeleteAt);
+    rpc DeleteCategoryPermanent(FindByIdCategoryRequest) returns (ApiResponseCategoryDelete);
+
+    rpc RestoreAllCategory(google.protobuf.Empty) returns (ApiResponseCategoryAll);
+    rpc DeleteAllCategoryPermanent(google.protobuf.Empty) returns (ApiResponseCategoryAll);
+}

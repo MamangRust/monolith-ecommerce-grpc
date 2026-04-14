@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/empty.proto";
+import "merchant_award/merchant_award_common.proto";
+import "merchant/merchant_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message CreateMerchantAwardRequest {
+    int32 merchant_id = 1;
+    string title = 2;
+    string description = 3;
+    string issued_by = 4;
+    string issue_date = 5;
+    string expiry_date = 6;
+    string certificate_url = 7;
+}
+
+message UpdateMerchantAwardRequest {
+    int32 merchant_certification_id = 1;
+    string title = 2;
+    string description = 3;
+    string issued_by = 4;
+    string issue_date = 5;
+    string expiry_date = 6;
+    string certificate_url = 7;
+}
+
+service MerchantAwardCommandService {
+    rpc Create(CreateMerchantAwardRequest) returns (ApiResponseMerchantAward);
+    rpc Update(UpdateMerchantAwardRequest) returns (ApiResponseMerchantAward);
+    rpc TrashedMerchantAward(FindByIdMerchantAwardRequest) returns (ApiResponseMerchantAwardDeleteAt);
+    rpc RestoreMerchantAward(FindByIdMerchantAwardRequest) returns (ApiResponseMerchantAwardDeleteAt);
+    rpc DeleteMerchantAwardPermanent(FindByIdMerchantAwardRequest) returns (ApiResponseMerchantDelete);
+
+    rpc RestoreAllMerchantAward(google.protobuf.Empty) returns (ApiResponseMerchantAll);
+    rpc DeleteAllMerchantAwardPermanent(google.protobuf.Empty) returns (ApiResponseMerchantAll);
+}

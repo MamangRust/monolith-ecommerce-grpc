@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package pb;
+
+import "common/api.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindByIdUserRequest {
+    int32 id = 1;
+}
+
+message UserResponse {
+    int32 id = 1;
+    string firstname = 2;
+    string lastname = 3;
+    string email = 4;
+    string created_at = 5;
+    string updated_at = 6;
+}
+
+message UserResponseDeleteAt{
+    int32 id = 1;
+    string firstname = 2;
+    string lastname = 3;
+    string email = 4;
+    string created_at = 5;
+    string updated_at = 6;
+    google.protobuf.StringValue deleted_at = 7;
+}
+
+message ApiResponseUser {
+    string status = 1;
+    string message = 2;
+    UserResponse data = 3;
+}
+
+message ApiResponseUserDeleteAt{
+    string status = 1;
+    string message = 2;
+    UserResponseDeleteAt data = 3;
+}
+
+message ApiResponsesUser {
+    string status = 1;
+    string message = 2;
+    repeated UserResponse data = 3;
+}
+
+message ApiResponseUserDelete {
+    string status = 1;
+    string message = 2;
+}
+
+message ApiResponseUserAll {
+    string status = 1;
+    string message = 2;
+}
+
+message ApiResponsePaginationUserDeleteAt{
+    string status = 1;
+    string message = 2;
+    repeated UserResponseDeleteAt data = 3;
+    PaginationMeta pagination = 4;
+}
+
+message ApiResponsePaginationUser {
+    string status = 1;
+    string message = 2;
+    repeated UserResponse data = 3;
+    PaginationMeta pagination = 4;
+}

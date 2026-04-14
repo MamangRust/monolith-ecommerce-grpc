@@ -2,29 +2,26 @@ package repository
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
 
+	"database/sql"
+ 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/product_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
+
 type productQueryRepository struct {
-	db      *db.Queries
-	mapping recordmapper.ProductRecordMapping
+	db *db.Queries
 }
 
-func NewProductQueryRepository(db *db.Queries, mapping recordmapper.ProductRecordMapping) *productQueryRepository {
+func NewProductQueryRepository(db *db.Queries) *productQueryRepository {
 	return &productQueryRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *productQueryRepository) FindAllProducts(ctx context.Context, req *requests.FindAllProduct) ([]*record.ProductRecord, *int, error) {
+func (r *productQueryRepository) FindAllProducts(ctx context.Context, req *requests.FindAllProduct) ([]*db.GetProductsRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetProductsParams{
@@ -34,26 +31,15 @@ func (r *productQueryRepository) FindAllProducts(ctx context.Context, req *reque
 	}
 
 	res, err := r.db.GetProducts(ctx, reqDb)
-
 	if err != nil {
-		return nil, nil, err
+		return nil, product_errors.ErrFindAllProducts.WithInternal(err)
 	}
 
-	var totalCount int
 
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	fmt.Println("Hello response", res)
-	fmt.Println("Hello error", err)
-
-	return r.mapping.ToProductsRecordPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *productQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllProduct) ([]*record.ProductRecord, *int, error) {
+func (r *productQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllProduct) ([]*db.GetProductsActiveRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetProductsActiveParams{
@@ -63,23 +49,15 @@ func (r *productQueryRepository) FindByActive(ctx context.Context, req *requests
 	}
 
 	res, err := r.db.GetProductsActive(ctx, reqDb)
-
 	if err != nil {
-		return nil, nil, product_errors.ErrFindByActive
+		return nil, product_errors.ErrFindActiveProducts.WithInternal(err)
 	}
 
-	var totalCount int
 
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToProductsRecordActivePagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *productQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllProduct) ([]*record.ProductRecord, *int, error) {
+func (r *productQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllProduct) ([]*db.GetProductsTrashedRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetProductsTrashedParams{
@@ -89,97 +67,79 @@ func (r *productQueryRepository) FindByTrashed(ctx context.Context, req *request
 	}
 
 	res, err := r.db.GetProductsTrashed(ctx, reqDb)
-
 	if err != nil {
-		return nil, nil, product_errors.ErrFindByTrashed
+		return nil, product_errors.ErrFindTrashedProducts.WithInternal(err)
 	}
 
-	var totalCount int
 
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToProductsRecordTrashedPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *productQueryRepository) FindByMerchant(ctx context.Context, req *requests.FindAllProductByMerchant) ([]*record.ProductRecord, *int, error) {
+func (r *productQueryRepository) FindByMerchant(ctx context.Context, req *requests.FindAllProductByMerchant) ([]*db.GetProductsByMerchantRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetProductsByMerchantParams{
 		MerchantID: int32(req.MerchantID),
-		Column2:    sql.NullString{String: req.Search, Valid: true},
-		Column3:    req.CategoryID,
-		Column4:    req.MinPrice,
-		Column5:    req.MaxPrice,
+		Column2:    stringPtr(req.Search),
+		Column3:    int32(req.CategoryID),
+		Column4:    int32(IntPtrToInt(req.MinPrice)),
+		Column5:    int32(IntPtrToInt(req.MaxPrice)),
 		Limit:      int32(req.PageSize),
 		Offset:     int32(offset),
 	}
 
 	res, err := r.db.GetProductsByMerchant(ctx, reqDb)
-
 	if err != nil {
-		return nil, nil, product_errors.ErrFindByMerchant
+		return nil, product_errors.ErrFindProductsByMerchant.WithInternal(err)
 	}
 
-	var totalCount int
 
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToProductsRecordMerchantPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *productQueryRepository) FindByCategory(ctx context.Context, req *requests.FindAllProductByCategory) ([]*record.ProductRecord, *int, error) {
+func (r *productQueryRepository) FindByCategory(ctx context.Context, req *requests.FindAllProductByCategory) ([]*db.GetProductsByCategoryNameRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetProductsByCategoryNameParams{
 		Name:    req.CategoryName,
 		Column2: req.Search,
-		Column3: req.MinPrice,
-		Column4: req.MaxPrice,
+		Column3: int32(IntPtrToInt(req.MinPrice)),
+		Column4: int32(IntPtrToInt(req.MaxPrice)),
 		Limit:   int32(req.PageSize),
 		Offset:  int32(offset),
 	}
 
 	res, err := r.db.GetProductsByCategoryName(ctx, reqDb)
-
 	if err != nil {
-		return nil, nil, product_errors.ErrFindByCategory
+		return nil, product_errors.ErrFindProductsByCategory.WithInternal(err)
 	}
 
-	var totalCount int
 
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToProductsRecordCategoryPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *productQueryRepository) FindById(ctx context.Context, product_id int) (*record.ProductRecord, error) {
+func (r *productQueryRepository) FindById(ctx context.Context, product_id int) (*db.GetProductByIDRow, error) {
 	res, err := r.db.GetProductByID(ctx, int32(product_id))
-
 	if err != nil {
-		return nil, product_errors.ErrFindById
+		if err == sql.ErrNoRows {
+			return nil, product_errors.ErrProductNotFound.WithInternal(err)
+		}
+		return nil, product_errors.ErrProductInternal.WithInternal(err)
 	}
 
-	return r.mapping.ToProductRecord(res), nil
+
+	return res, nil
 }
 
-func (r *productQueryRepository) FindByIdTrashed(ctx context.Context, product_id int) (*record.ProductRecord, error) {
+func (r *productQueryRepository) FindByIdTrashed(ctx context.Context, product_id int) (*db.Product, error) {
 	res, err := r.db.GetProductByIdTrashed(ctx, int32(product_id))
-
 	if err != nil {
-		return nil, product_errors.ErrFindByIdTrashed
+		if err == sql.ErrNoRows {
+			return nil, product_errors.ErrProductNotFound.WithInternal(err)
+		}
+		return nil, product_errors.ErrProductInternal.WithInternal(err)
 	}
 
-	return r.mapping.ToProductRecord(res), nil
+
+	return res, nil
 }

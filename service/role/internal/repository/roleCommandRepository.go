@@ -4,77 +4,80 @@ import (
 	"context"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/role_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
+
 type roleCommandRepository struct {
-	db      *db.Queries
-	mapping recordmapper.RoleRecordMapping
+	db *db.Queries
 }
 
-func NewRoleCommandRepository(db *db.Queries, mapping recordmapper.RoleRecordMapping) *roleCommandRepository {
+func NewRoleCommandRepository(db *db.Queries) *roleCommandRepository {
 	return &roleCommandRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *roleCommandRepository) CreateRole(ctx context.Context, req *requests.CreateRoleRequest) (*record.RoleRecord, error) {
+func (r *roleCommandRepository) CreateRole(ctx context.Context, req *requests.CreateRoleRequest) (*db.Role, error) {
 	res, err := r.db.CreateRole(ctx, req.Name)
 
 	if err != nil {
-		return nil, role_errors.ErrCreateRole
+		return nil, role_errors.ErrCreateRole.WithInternal(err)
 	}
 
-	return r.mapping.ToRoleRecord(res), nil
+
+	return res, nil
 }
 
-func (r *roleCommandRepository) UpdateRole(ctx context.Context, req *requests.UpdateRoleRequest) (*record.RoleRecord, error) {
+func (r *roleCommandRepository) UpdateRole(ctx context.Context, req *requests.UpdateRoleRequest) (*db.Role, error) {
 	res, err := r.db.UpdateRole(ctx, db.UpdateRoleParams{
 		RoleID:   int32(*req.ID),
 		RoleName: req.Name,
 	})
 
 	if err != nil {
-		return nil, role_errors.ErrUpdateRole
+		return nil, role_errors.ErrUpdateRole.WithInternal(err)
 	}
 
-	return r.mapping.ToRoleRecord(res), nil
+
+	return res, nil
 }
 
-func (r *roleCommandRepository) TrashedRole(ctx context.Context, id int) (*record.RoleRecord, error) {
+func (r *roleCommandRepository) TrashedRole(ctx context.Context, id int) (*db.Role, error) {
 	res, err := r.db.TrashRole(ctx, int32(id))
 	if err != nil {
-		return nil, role_errors.ErrTrashedRole
+		return nil, role_errors.ErrTrashedRole.WithInternal(err)
 	}
-	return r.mapping.ToRoleRecord(res), nil
+	return res, nil
 }
 
-func (r *roleCommandRepository) RestoreRole(ctx context.Context, id int) (*record.RoleRecord, error) {
+
+func (r *roleCommandRepository) RestoreRole(ctx context.Context, id int) (*db.Role, error) {
 	res, err := r.db.RestoreRole(ctx, int32(id))
 	if err != nil {
-		return nil, role_errors.ErrRestoreRole
+		return nil, role_errors.ErrRestoreRole.WithInternal(err)
 	}
-	return r.mapping.ToRoleRecord(res), nil
+	return res, nil
 }
+
 
 func (r *roleCommandRepository) DeleteRolePermanent(ctx context.Context, role_id int) (bool, error) {
 	err := r.db.DeletePermanentRole(ctx, int32(role_id))
 	if err != nil {
-		return false, role_errors.ErrDeleteRolePermanent
+		return false, role_errors.ErrDeleteRolePermanent.WithInternal(err)
 	}
 	return true, nil
 }
+
 
 func (r *roleCommandRepository) RestoreAllRole(ctx context.Context) (bool, error) {
 	err := r.db.RestoreAllRoles(ctx)
 
 	if err != nil {
-		return false, role_errors.ErrRestoreAllRoles
+		return false, role_errors.ErrRestoreAllRoles.WithInternal(err)
 	}
+
 
 	return true, nil
 }
@@ -83,8 +86,9 @@ func (r *roleCommandRepository) DeleteAllRolePermanent(ctx context.Context) (boo
 	err := r.db.DeleteAllPermanentRoles(ctx)
 
 	if err != nil {
-		return false, role_errors.ErrDeleteAllRoles
+		return false, role_errors.ErrDeleteAllRoles.WithInternal(err)
 	}
+
 
 	return true, nil
 }

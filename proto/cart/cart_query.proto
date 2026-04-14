@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package pb;
+
+import "cart/cart_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindAllCartRequest {
+    int32 user_id = 1;
+    int32 page = 2;
+    int32 page_size = 3;
+    string search = 4;
+}
+
+message FindByIdCartRequest {
+    int32 id = 1;
+}
+
+service CartQueryService {
+    rpc FindAll(FindAllCartRequest) returns(ApiResponsePaginationCart);
+}

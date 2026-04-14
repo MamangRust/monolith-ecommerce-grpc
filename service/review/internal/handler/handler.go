@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/MamangRust/monolith-ecommerce-grpc-review/internal/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 )
 
 type Deps struct {
@@ -11,11 +12,17 @@ type Deps struct {
 }
 
 type Handler struct {
-	Review ReviewHandleGrpc
+	ReviewQuery   pb.ReviewQueryServiceServer
+	ReviewCommand pb.ReviewCommandServiceServer
 }
 
 func NewHandler(deps *Deps) *Handler {
 	return &Handler{
-		Review: NewReviewHandleGrpc(deps.Service, deps.Logger),
+		ReviewQuery:   NewReviewQueryHandler(deps.Service.ReviewQuery, deps.Logger),
+		ReviewCommand: NewReviewCommandHandler(deps.Service.ReviewCommand, deps.Logger),
 	}
+}
+
+type reviewHandleGrpc struct {
+	// Dummy struct for mapping receiver
 }

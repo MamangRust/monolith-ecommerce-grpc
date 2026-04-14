@@ -3,283 +3,281 @@ package service
 import (
 	"context"
 	"os"
-	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-review-detail/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-review-detail/internal/redis"
+	"github.com/MamangRust/monolith-ecommerce-grpc-review-detail/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-review-detail/internal/repository"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel"
+	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
+	review_detail_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/review_detail"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
 type reviewDetailCommandService struct {
-	mencache                      mencache.ReviewDetailCommandCache
-	errorhandler                  errorhandler.ReviewDetailCommandError
-	trace                         trace.Tracer
-	reviewDetailQueryRepository   repository.ReviewDetailQueryRepository
-	reviewDetailCommandRepository repository.ReviewDetailCommandRepository
-	mapping                       response_service.ReviewDetailResponeMapper
-	logger                        logger.LoggerInterface
-	requestCounter                *prometheus.CounterVec
-	requestDuration               *prometheus.HistogramVec
+	observability               observability.TraceLoggerObservability
+	cache                       cache.ReviewDetailCommandCache
+	reviewDetailRepository      repository.ReviewDetailCommandRepository
+	reviewDetailQueryRepository repository.ReviewDetailQueryRepository
+	logger                      logger.LoggerInterface
 }
 
-func NewReviewDetailCommandService(
-	mencache mencache.ReviewDetailCommandCache,
-	errorhandler errorhandler.ReviewDetailCommandError,
-	reviewDetailQueryRepository repository.ReviewDetailQueryRepository,
-	reviewDetailCommandRepository repository.ReviewDetailCommandRepository,
-	mapping response_service.ReviewDetailResponeMapper,
-	logger logger.LoggerInterface,
-) *reviewDetailCommandService {
-	requestCounter := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "review_detail_command_service_request_count",
-			Help: "Total number of requests to the ReviewDetailCommandService",
-		},
-		[]string{"method", "status"},
-	)
+type ReviewDetailCommandServiceDeps struct {
+	Observability               observability.TraceLoggerObservability
+	Cache                       cache.ReviewDetailCommandCache
+	ReviewDetailRepository      repository.ReviewDetailCommandRepository
+	ReviewDetailQueryRepository repository.ReviewDetailQueryRepository
+	Logger                      logger.LoggerInterface
+}
 
-	requestDuration := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "review_detail_command_service_request_duration",
-			Help:    "Histogram of request durations for the ReviewDetailCommandService",
-			Buckets: prometheus.DefBuckets,
-		},
-		[]string{"method", "status"},
-	)
-
-	prometheus.MustRegister(requestCounter, requestDuration)
-
+func NewReviewDetailCommandService(deps *ReviewDetailCommandServiceDeps) ReviewDetailCommandService {
 	return &reviewDetailCommandService{
-		mencache:                      mencache,
-		errorhandler:                  errorhandler,
-		trace:                         otel.Tracer("review-detail-command-service"),
-		reviewDetailQueryRepository:   reviewDetailQueryRepository,
-		reviewDetailCommandRepository: reviewDetailCommandRepository,
-		mapping:                       mapping,
-		logger:                        logger,
-		requestCounter:                requestCounter,
-		requestDuration:               requestDuration,
+		observability:               deps.Observability,
+		cache:                       deps.Cache,
+		reviewDetailRepository:      deps.ReviewDetailRepository,
+		reviewDetailQueryRepository: deps.ReviewDetailQueryRepository,
+		logger:                      deps.Logger,
 	}
 }
 
-func (s *reviewDetailCommandService) CreateReviewDetail(ctx context.Context, req *requests.CreateReviewDetailRequest) (*response.ReviewDetailsResponse, *response.ErrorResponse) {
+func (s *reviewDetailCommandService) CreateReviewDetail(ctx context.Context, req *requests.CreateReviewDetailRequest) (*db.CreateReviewDetailRow, error) {
 	const method = "CreateReviewDetail"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("review.id", req.ReviewID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	res, err := s.reviewDetailCommandRepository.CreateReviewDetail(ctx, req)
-
+	reviewDetail, err := s.reviewDetailRepository.CreateReviewDetail(ctx, req)
 	if err != nil {
-		return s.errorhandler.HandleCreateReviewDetailError(err, method, "FAILED_CREATE_REVIEW_DETAIL", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.CreateReviewDetailRow](
+			s.logger,
+			review_detail_errors.ErrFailedCreateReviewDetail.WithInternal(err),
+			method,
+			span,
+
+			zap.Any("request", req),
+		)
 	}
 
-	so := s.mapping.ToReviewDetailsResponse(res)
+	s.cache.DeleteReviewDetailCache(ctx, int(reviewDetail.ReviewDetailID))
 
-	logSuccess("Successfully created Review Detail", zap.Int("reviewDetail.id", so.ID), zap.Int("review.id", req.ReviewID))
+	logSuccess("Successfully created review detail",
+		zap.Int("review_detail_id", int(reviewDetail.ReviewDetailID)))
 
-	return so, nil
+	return reviewDetail, nil
 }
 
-func (s *reviewDetailCommandService) UpdateReviewDetail(ctx context.Context, req *requests.UpdateReviewDetailRequest) (*response.ReviewDetailsResponse, *response.ErrorResponse) {
+func (s *reviewDetailCommandService) UpdateReviewDetail(ctx context.Context, req *requests.UpdateReviewDetailRequest) (*db.UpdateReviewDetailRow, error) {
 	const method = "UpdateReviewDetail"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("reviewDetail.id", *req.ReviewDetailID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("review_detail_id", *req.ReviewDetailID))
 
 	defer func() {
 		end(status)
 	}()
 
-	res, err := s.reviewDetailCommandRepository.UpdateReviewDetail(ctx, req)
-
+	reviewDetail, err := s.reviewDetailRepository.UpdateReviewDetail(ctx, req)
 	if err != nil {
-		return s.errorhandler.HandleUpdateReviewDetailError(err, method, "FAILED_UPDATE_REVIEW_DETAIL", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.UpdateReviewDetailRow](
+			s.logger,
+			review_detail_errors.ErrFailedUpdateReviewDetail.WithInternal(err),
+			method,
+			span,
+
+			zap.Any("request", req),
+		)
 	}
 
-	so := s.mapping.ToReviewDetailsResponse(res)
+	s.cache.DeleteReviewDetailCache(ctx, int(reviewDetail.ReviewDetailID))
 
-	logSuccess("Successfully updated Review Detail", zap.Int("reviewDetail.id", *req.ReviewDetailID))
+	logSuccess("Successfully updated review detail",
+		zap.Int("review_detail_id", int(reviewDetail.ReviewDetailID)))
 
-	return so, nil
+	return reviewDetail, nil
 }
 
-func (s *reviewDetailCommandService) TrashedReviewDetail(ctx context.Context, review_id int) (*response.ReviewDetailsResponseDeleteAt, *response.ErrorResponse) {
+func (s *reviewDetailCommandService) TrashedReviewDetail(ctx context.Context, review_id int) (*db.ReviewDetail, error) {
 	const method = "TrashedReviewDetail"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("reviewDetail.id", review_id))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("review_id", review_id))
 
 	defer func() {
 		end(status)
 	}()
 
-	res, err := s.reviewDetailCommandRepository.TrashedReviewDetail(ctx, review_id)
-
+	reviewDetail, err := s.reviewDetailRepository.TrashedReviewDetail(ctx, review_id)
 	if err != nil {
-		return s.errorhandler.HandleTrashedReviewDetailError(err, method, "FAILED_TRASH_REVIEW_DETAIL", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.ReviewDetail](
+			s.logger,
+			review_detail_errors.ErrFailedTrashedReviewDetail.WithInternal(err),
+			method,
+			span,
+
+			zap.Int("review_id", review_id),
+		)
 	}
 
-	so := s.mapping.ToReviewDetailResponseDeleteAt(res)
+	s.cache.DeleteReviewDetailCache(ctx, int(reviewDetail.ReviewDetailID))
 
-	logSuccess("Successfully trashed Review Detail", zap.Int("reviewDetail.id", review_id))
+	logSuccess("Successfully trashed review detail",
+		zap.Int("review_id", review_id))
 
-	return so, nil
+	return reviewDetail, nil
 }
 
-func (s *reviewDetailCommandService) RestoreReviewDetail(ctx context.Context, review_id int) (*response.ReviewDetailsResponseDeleteAt, *response.ErrorResponse) {
+func (s *reviewDetailCommandService) RestoreReviewDetail(ctx context.Context, review_id int) (*db.ReviewDetail, error) {
 	const method = "RestoreReviewDetail"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("reviewDetail.id", review_id))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("review_id", review_id))
 
 	defer func() {
 		end(status)
 	}()
 
-	res, err := s.reviewDetailCommandRepository.RestoreReviewDetail(ctx, review_id)
-
+	reviewDetail, err := s.reviewDetailRepository.RestoreReviewDetail(ctx, review_id)
 	if err != nil {
-		return s.errorhandler.HandleRestoreReviewDetailError(err, method, "FAILED_RESTORE_REVIEW_DETAIL", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.ReviewDetail](
+			s.logger,
+			review_detail_errors.ErrFailedRestoreReviewDetail.WithInternal(err),
+			method,
+			span,
+
+			zap.Int("review_id", review_id),
+		)
 	}
 
-	so := s.mapping.ToReviewDetailResponseDeleteAt(res)
+	s.cache.DeleteReviewDetailCache(ctx, int(reviewDetail.ReviewDetailID))
 
-	logSuccess("Successfully restored Review Detail", zap.Int("reviewDetail.id", review_id))
+	logSuccess("Successfully restored review detail",
+		zap.Int("review_id", review_id))
 
-	return so, nil
+	return reviewDetail, nil
 }
 
-func (s *reviewDetailCommandService) DeleteReviewDetailPermanent(ctx context.Context, review_id int) (bool, *response.ErrorResponse) {
+func (s *reviewDetailCommandService) DeleteReviewDetailPermanent(ctx context.Context, review_id int) (bool, error) {
 	const method = "DeleteReviewDetailPermanent"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("reviewDetail.id", review_id))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("review_id", review_id))
 
 	defer func() {
 		end(status)
 	}()
 
-	res, err := s.reviewDetailQueryRepository.FindByIdTrashed(ctx, review_id)
-
+	reviewDetail, err := s.reviewDetailQueryRepository.FindByIdTrashed(ctx, review_id)
 	if err != nil {
-		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_DELETE_REVIEW_DETAIL", span, &status, nil, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			review_detail_errors.ErrFailedFindReviewDetail.WithInternal(err),
+			method,
+			span,
+			zap.Int("review_id", review_id),
+		)
 	}
 
-	if res.Url != "" {
-		err := os.Remove(res.Url)
+	if reviewDetail.Url != "" {
+		err := os.Remove(reviewDetail.Url)
 		if err != nil {
 			if os.IsNotExist(err) {
-				s.logger.Debug("File not found, but continuing with review detail deletion",
-					zap.String("upload path", res.Url))
+				status = "error"
+				return errorhandler.HandleError[bool](
+					s.logger,
+					review_detail_errors.ErrFailedImageNotFound,
+					method,
+					span,
+					zap.String("upload_path", reviewDetail.Url),
+				)
 			} else {
-				return s.errorhandler.HandleInvalidFileError(err, method, "FAILED_DELETE_REVIEW_DETAIL", res.Url, span, &status, zap.Error(err))
+				status = "error"
+				return errorhandler.HandleError[bool](
+					s.logger,
+					review_detail_errors.ErrFailedRemoveImage,
+					method,
+					span,
+					zap.String("upload_path", reviewDetail.Url),
+				)
 			}
-		} else {
-			s.logger.Debug("Successfully deleted review detail upload path",
-				zap.String("upload path", res.Url))
 		}
 	}
 
-	success, err := s.reviewDetailCommandRepository.DeleteReviewDetailPermanent(ctx, review_id)
-
+	success, err := s.reviewDetailRepository.DeleteReviewDetailPermanent(ctx, review_id)
 	if err != nil {
-		return s.errorhandler.HandleDeleteReviewDetailError(err, method, "FAILED_DELETE_REVIEW_DETAIL", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			review_detail_errors.ErrFailedDeleteReviewDetailPermanent.WithInternal(err),
+			method,
+			span,
+			zap.Int("review_id", review_id),
+		)
 	}
 
-	logSuccess("Successfully deleted Review Detail", zap.Int("reviewDetail.id", review_id))
+	s.cache.DeleteReviewDetailCache(ctx, review_id)
+
+	logSuccess("Successfully permanently deleted review detail",
+		zap.Int("review_id", review_id))
 
 	return success, nil
 }
 
-func (s *reviewDetailCommandService) RestoreAllReviewDetail(ctx context.Context) (bool, *response.ErrorResponse) {
+func (s *reviewDetailCommandService) RestoreAllReviewDetail(ctx context.Context) (bool, error) {
 	const method = "RestoreAllReviewDetail"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.reviewDetailCommandRepository.RestoreAllReviewDetail(ctx)
-
+	success, err := s.reviewDetailRepository.RestoreAllReviewDetail(ctx)
 	if err != nil {
-		return s.errorhandler.HandleRestoreAllReviewDetailError(err, method, "FAILED_RESTORE_ALL_REVIEW_DETAIL", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			review_detail_errors.ErrFailedRestoreAllReviewDetails.WithInternal(err),
+			method,
+			span,
+		)
 	}
 
-	logSuccess("Successfully restored all Review Details", zap.Bool("success", success))
+	logSuccess("Successfully restored all trashed review details")
 
 	return success, nil
 }
 
-func (s *reviewDetailCommandService) DeleteAllReviewDetailPermanent(ctx context.Context) (bool, *response.ErrorResponse) {
+func (s *reviewDetailCommandService) DeleteAllReviewDetailPermanent(ctx context.Context) (bool, error) {
 	const method = "DeleteAllReviewDetailPermanent"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.reviewDetailCommandRepository.DeleteAllReviewDetailPermanent(ctx)
-
+	success, err := s.reviewDetailRepository.DeleteAllReviewDetailPermanent(ctx)
 	if err != nil {
-		return s.errorhandler.HandleDeleteAllReviewDetailError(err, method, "FAILED_DELETE_ALL_PERMANENT_REVIEW_DETAIL", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			review_detail_errors.ErrFailedDeleteAllReviewDetails.WithInternal(err),
+			method,
+			span,
+		)
 	}
 
-	logSuccess("Successfully deleted all Review Details", zap.Bool("success", success))
+	logSuccess("Successfully permanently deleted all trashed review details")
 
 	return success, nil
-}
-
-func (s *reviewDetailCommandService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
-	context.Context,
-	trace.Span,
-	func(string),
-	string,
-	func(string, ...zap.Field),
-) {
-	start := time.Now()
-	status := "success"
-
-	ctx, span := s.trace.Start(ctx, method)
-
-	if len(attrs) > 0 {
-		span.SetAttributes(attrs...)
-	}
-
-	span.AddEvent("Start: " + method)
-
-	s.logger.Debug("Start: " + method)
-
-	end := func(status string) {
-		s.recordMetrics(method, status, start)
-		code := codes.Ok
-		if status != "success" {
-			code = codes.Error
-		}
-		span.SetStatus(code, status)
-		span.End()
-	}
-
-	logSuccess := func(msg string, fields ...zap.Field) {
-		span.AddEvent(msg)
-		s.logger.Debug(msg, fields...)
-	}
-
-	return ctx, span, end, status, logSuccess
-}
-
-func (s *reviewDetailCommandService) recordMetrics(method string, status string, start time.Time) {
-	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

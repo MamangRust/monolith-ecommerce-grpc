@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/empty.proto";
+import "review_detail/review_detail_common.proto";
+import "review/review_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message CreateReviewDetailRequest {
+    int32 review_id = 1;
+    string type = 2;
+    string url = 3;
+    string caption = 4;
+}
+
+message UpdateReviewDetailRequest {
+    int32 review_detail_id = 1;
+    string type = 2;
+    string url = 3;
+    string caption = 4;
+}
+
+service ReviewDetailCommandService {
+    rpc Create(CreateReviewDetailRequest) returns (ApiResponseReviewDetail);
+    rpc Update(UpdateReviewDetailRequest) returns (ApiResponseReviewDetail);
+    rpc TrashedReviewDetail(FindByIdReviewDetailRequest) returns (ApiResponseReviewDetailDeleteAt);
+    rpc RestoreReviewDetail(FindByIdReviewDetailRequest) returns (ApiResponseReviewDetailDeleteAt);
+    rpc DeleteReviewDetailPermanent(FindByIdReviewDetailRequest) returns (ApiResponseReviewDelete);
+
+    rpc RestoreAllReviewDetail(google.protobuf.Empty) returns (ApiResponseReviewAll);
+    rpc DeleteAllReviewDetailPermanent(google.protobuf.Empty) returns (ApiResponseReviewAll);
+}

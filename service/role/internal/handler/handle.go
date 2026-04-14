@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 )
 
 type Deps struct {
@@ -11,11 +12,13 @@ type Deps struct {
 }
 
 type Handler struct {
-	Role RoleHandleGrpc
+	RoleQuery   pb.RoleQueryServiceServer
+	RoleCommand pb.RoleCommandServiceServer
 }
 
 func NewHandler(deps *Deps) *Handler {
 	return &Handler{
-		Role: NewRoleHandleGrpc(deps.Service, deps.Logger),
+		RoleQuery:   NewRoleQueryHandler(deps.Service.RoleQuery, deps.Logger),
+		RoleCommand: NewRoleCommandHandler(deps.Service.RoleCommand, deps.Logger),
 	}
 }

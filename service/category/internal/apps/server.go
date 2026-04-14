@@ -1,181 +1,42 @@
 package apps
 
 import (
-	"context"
-	"flag"
-	"fmt"
-	"net"
-	"net/http"
-	"sync"
-	"time"
-
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/internal/errorhandler"
+	"github.com/MamangRust/monolith-ecommerce-grpc-category/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-category/internal/handler"
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/internal/middleware"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-category/internal/redis"
 	"github.com/MamangRust/monolith-ecommerce-grpc-category/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-grpc-category/internal/service"
-	"github.com/MamangRust/monolith-ecommerce-pkg/database"
-	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-pkg/dotenv"
-	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	otel_pkg "github.com/MamangRust/monolith-ecommerce-pkg/otel"
+	"github.com/MamangRust/monolith-ecommerce-pkg/server"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/redis/go-redis/v9"
-	"github.com/spf13/viper"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"go.opentelemetry.io/otel"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
-var (
-	port int
-)
-
-func init() {
-	port = viper.GetInt("GRPC_CATEGORY_ADDR")
-	if port == 0 {
-		port = 50054
-	}
-
-	flag.IntVar(&port, "port", port, "gRPC server port")
-}
-
-type Server struct {
-	Logger   logger.LoggerInterface
-	DB       *db.Queries
-	Services *service.Service
-	Handlers *handler.Handler
-	Ctx      context.Context
-}
-
-func NewServer(ctx context.Context) (*Server, func(context.Context) error, error) {
-	logger, err := logger.NewLogger("category-service")
-
+func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
+	srv, err := server.New(cfg)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to initialize logger: %w", err)
+		return nil, err
 	}
 
-	if err := dotenv.Viper(); err != nil {
-		logger.Fatal("Failed to load .env file", zap.Error(err))
-	}
+	repos := repository.NewRepositories(srv.DB)
+	obs, _ := observability.NewObservability("category-server", srv.Logger)
+	cache := cache.NewMencache(srv.CacheStore)
 
-	flag.Parse()
-
-	conn, err := database.NewClient(logger)
-
-	if err != nil {
-		logger.Fatal("Failed to connect to database", zap.Error(err))
-	}
-
-	DB := db.New(conn)
-
-	repositories := repository.NewRepositories(DB)
-
-	shutdownTracerProvider, err := otel_pkg.InitTracerProvider("Category-service", ctx)
-
-	if err != nil {
-		logger.Fatal("Failed to initialize tracer provider", zap.Error(err))
-	}
-
-	myredis := redis.NewClient(&redis.Options{
-		Addr:         fmt.Sprintf("%s:%s", viper.GetString("REDIS_HOST"), viper.GetString("REDIS_PORT")),
-		Password:     viper.GetString("REDIS_PASSWORD"),
-		DB:           viper.GetInt("REDIS_DB_CATEGORY"),
-		DialTimeout:  5 * time.Second,
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 3 * time.Second,
-		PoolSize:     10,
-		MinIdleConns: 3,
+	svc := service.NewService(&service.Deps{
+		Cache:         cache,
+		Logger:        srv.Logger,
+		Repositories:  repos,
+		Observability: obs,
 	})
 
-	if err := myredis.Ping(ctx).Err(); err != nil {
-		logger.Fatal("Failed to ping redis", zap.Error(err))
+	h := handler.NewHandler(&handler.Deps{Service: svc, Logger: srv.Logger})
+
+	srv.RegisterServices = func(gs *grpc.Server) {
+		pb.RegisterCategoryQueryServiceServer(gs, h.CategoryQuery)
+		pb.RegisterCategoryCommandServiceServer(gs, h.CategoryCommand)
+		pb.RegisterCategoryStatsServiceServer(gs, h.CategoryStats)
+		pb.RegisterCategoryStatsByIdServiceServer(gs, h.CategoryStatsById)
+		pb.RegisterCategoryStatsByMerchantServiceServer(gs, h.CategoryStatsByMerchant)
 	}
 
-	mencache := mencache.NewMencache(&mencache.Deps{
-		Redis:  myredis,
-		Logger: logger,
-	})
-
-	errorhandler := errorhandler.NewErrorHandler(logger)
-
-	services := service.NewService(&service.Deps{
-		Mencache:     mencache,
-		ErrorHandler: errorhandler,
-		Repositories: repositories,
-		Logger:       logger,
-	})
-
-	handlers := handler.NewHandler(&handler.Deps{
-		Service: services,
-		Logger:  logger,
-	})
-
-	return &Server{
-		Logger:   logger,
-		DB:       DB,
-		Services: services,
-		Handlers: handlers,
-		Ctx:      ctx,
-	}, shutdownTracerProvider, nil
-}
-
-func (s *Server) Run() {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if err != nil {
-		s.Logger.Fatal("Failed to listen", zap.Error(err))
-	}
-	metricsAddr := fmt.Sprintf(":%s", viper.GetString("METRIC_CATEGORY_ADDR"))
-	metricsLis, err := net.Listen("tcp", metricsAddr)
-	if err != nil {
-		s.Logger.Fatal("failed to listen on", zap.Error(err))
-	}
-
-	if err != nil {
-		s.Logger.Fatal("Failed to listen for metrics", zap.Error(err))
-	}
-
-	grpcServer := grpc.NewServer(
-		grpc.StatsHandler(
-			otelgrpc.NewServerHandler(
-				otelgrpc.WithTracerProvider(otel.GetTracerProvider()),
-				otelgrpc.WithPropagators(otel.GetTextMapPropagator()),
-			),
-		),
-		grpc.ChainUnaryInterceptor(
-			middleware.RecoveryMiddleware(s.Logger),
-			middleware.ContextMiddleware(60*time.Second, s.Logger),
-		),
-	)
-
-	pb.RegisterCategoryServiceServer(grpcServer, s.Handlers.Category)
-
-	metricsServer := http.NewServeMux()
-	metricsServer.Handle("/metrics", promhttp.Handler())
-
-	s.Logger.Info(fmt.Sprintf("Server running on port %d", port))
-
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
-		s.Logger.Info("Metrics server listening on :8084")
-		if err := http.Serve(metricsLis, metricsServer); err != nil {
-			s.Logger.Fatal("Metrics server error", zap.Error(err))
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		s.Logger.Info("gRPC server listening on :50054")
-		if err := grpcServer.Serve(lis); err != nil {
-			s.Logger.Fatal("gRPC server error", zap.Error(err))
-		}
-	}()
-
-	wg.Wait()
+	return srv, nil
 }

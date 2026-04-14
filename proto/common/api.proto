@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message PaginationMeta{
+  int32 current_page = 1;
+  int32 page_size = 2;
+  int32 total_pages = 3;
+  int32 total_records = 4;
+}
+
+message ErrorResponse{
+  string status = 1;
+  string message = 2;
+  int32 code = 3;
+  string type = 4;
+}
+

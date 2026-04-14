@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/empty.proto";
+import "merchant_policy/merchant_policy_common.proto";
+import "merchant/merchant_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message CreateMerchantPoliciesRequest {
+    int32 merchant_id = 1;
+    string policy_type = 2;
+    string title = 3;
+    string description = 4;
+}
+
+message UpdateMerchantPoliciesRequest {
+    int32 merchant_policy_id = 1;
+    string policy_type = 2;
+    string title = 3;
+    string description = 4;
+}
+
+service MerchantPolicyCommandService {
+    rpc Create(CreateMerchantPoliciesRequest) returns (ApiResponseMerchantPolicies);
+    rpc Update(UpdateMerchantPoliciesRequest) returns (ApiResponseMerchantPolicies);
+    rpc TrashedMerchantPolicies(FindByIdMerchantPoliciesRequest) returns (ApiResponseMerchantPoliciesDeleteAt);
+    rpc RestoreMerchantPolicies(FindByIdMerchantPoliciesRequest) returns (ApiResponseMerchantPoliciesDeleteAt);
+    rpc DeleteMerchantPoliciesPermanent(FindByIdMerchantPoliciesRequest) returns (ApiResponseMerchantDelete);
+
+    rpc RestoreAllMerchantPolicies(google.protobuf.Empty) returns (ApiResponseMerchantAll);
+    rpc DeleteAllMerchantPoliciesPermanent(google.protobuf.Empty) returns (ApiResponseMerchantAll);
+}

@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/empty.proto";
+import "user/user_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message CreateUserRequest {
+    string firstname = 1;
+    string lastname = 2;
+    string email = 3;
+    string password = 4;
+    string confirm_password = 5;
+}
+
+message UpdateUserRequest {
+    int32 id = 1;
+    string firstname = 2;
+    string lastname = 3;
+    string email = 4;
+    string password = 5;
+    string confirm_password = 6;
+}
+
+service UserCommandService {
+    rpc Create(CreateUserRequest) returns (ApiResponseUser);
+    rpc Update(UpdateUserRequest) returns (ApiResponseUser);
+    rpc TrashedUser(FindByIdUserRequest) returns (ApiResponseUserDeleteAt);
+    rpc RestoreUser(FindByIdUserRequest) returns (ApiResponseUserDeleteAt);
+    rpc DeleteUserPermanent(FindByIdUserRequest) returns (ApiResponseUserDelete);
+
+    rpc RestoreAllUser(google.protobuf.Empty) returns (ApiResponseUserAll);
+    rpc DeleteAllUserPermanent(google.protobuf.Empty) returns (ApiResponseUserAll);
+}

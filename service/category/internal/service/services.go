@@ -1,11 +1,10 @@
 package service
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-category/internal/redis"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-category/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-category/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 )
 
 type Service struct {
@@ -17,20 +16,45 @@ type Service struct {
 }
 
 type Deps struct {
-	ErrorHandler *errorhandler.ErrorHandler
-	Mencache     *mencache.Mencache
-	Repositories *repository.Repositories
-	Logger       logger.LoggerInterface
+	Cache         *mencache.Mencache
+	Repositories  *repository.Repositories
+	Logger        logger.LoggerInterface
+	Observability observability.TraceLoggerObservability
 }
 
 func NewService(deps *Deps) *Service {
-	categoryMapper := response_service.NewCategoryResponseMapper()
-
 	return &Service{
-		CategoryQuery:           NewCategoryQueryService(deps.ErrorHandler.CategoryQueryError, deps.Mencache.CategoryQueryCache, deps.Repositories.CategoryQuery, deps.Logger, categoryMapper),
-		CategoryCommand:         NewCategoryCommandService(deps.Mencache.CategoryCommandCache, deps.ErrorHandler.CategoryCommandError, deps.Repositories.CategoryCommand, deps.Repositories.CategoryQuery, deps.Logger, categoryMapper),
-		CategoryStats:           NewCategoryStatsService(deps.Mencache.CategoryStatsCache, deps.ErrorHandler.CategoryStatsByIdError, deps.Repositories.CategoryStats, deps.Logger, categoryMapper),
-		CategoryStatsById:       NewCategoryStatsByIdService(deps.Mencache.CategoryStatsByIdCache, deps.ErrorHandler.CategoryStatsByIdError, deps.Repositories.CategoryStatsById, deps.Logger, categoryMapper),
-		CategoryStatsByMerchant: NewCategoryStatsByMerchantService(deps.Mencache.CategoryStatsByMerchantCache, deps.ErrorHandler.CategoryStatsByMerchantError, deps.Repositories.CategoryStatsByMerchant, deps.Logger, categoryMapper),
+		CategoryQuery: NewCategoryQueryService(&CategoryQueryServiceDeps{
+			Observability:           deps.Observability,
+			Cache:                   deps.Cache.CategoryQueryCache,
+			CategoryQueryRepository: deps.Repositories.CategoryQuery,
+			Logger:                  deps.Logger,
+		}),
+		CategoryCommand: NewCategoryCommandService(&CategoryCommandServiceDeps{
+			Observability: deps.Observability,
+			Cache:         deps.Cache.CategoryCommandCache,
+			CategoryCommandRepository: deps.Repositories.
+				CategoryCommand,
+			CategoryQueryRepository: deps.Repositories.CategoryQuery,
+			Logger:                  deps.Logger,
+		}),
+		CategoryStats: NewCategoryStatsService(&CategoryStatsServiceDeps{
+			Observability:           deps.Observability,
+			Cache:                   deps.Cache.CategoryStatsCache,
+			CategoryStatsRepository: deps.Repositories.CategoryStats,
+			Logger:                  deps.Logger,
+		}),
+		CategoryStatsById: NewCategoryStatsByIdService(&CategoryStatsByIdServiceDeps{
+			Observability:               deps.Observability,
+			Cache:                       deps.Cache.CategoryStatsByIdCache,
+			CategoryStatsByIdRepository: deps.Repositories.CategoryStatsById,
+			Logger:                      deps.Logger,
+		}),
+		CategoryStatsByMerchant: NewCategoryStatsByMerchantService(&CategoryStatsByMerchantServiceDeps{
+			Observability:                     deps.Observability,
+			Cache:                             deps.Cache.CategoryStatsByMerchantCache,
+			CategoryStatsByMerchantRepository: deps.Repositories.CategoryStatsByMerchant,
+			Logger:                            deps.Logger,
+		}),
 	}
 }

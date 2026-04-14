@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package pb;
+
+import "shipping_address/shipping_address_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindAllShippingRequest {
+    int32 page = 1;
+    int32 page_size = 2;
+    string search = 3;
+}
+
+message FindAllShippingOrderRequest{
+    int32 order_id = 1;
+    int32 page = 2;
+    int32 page_size = 3;
+    string search = 4;
+}
+
+service ShippingQueryService {
+    rpc FindAll(FindAllShippingRequest) returns (ApiResponsePaginationShipping);
+    rpc FindById(FindByIdShippingRequest) returns (ApiResponseShipping);
+    rpc FindByOrder(FindByIdShippingRequest) returns(ApiResponseShipping);
+    rpc FindByActive(FindAllShippingRequest) returns(ApiResponsePaginationShippingDeleteAt);
+    rpc FindByTrashed(FindAllShippingRequest) returns (ApiResponsePaginationShippingDeleteAt);
+}

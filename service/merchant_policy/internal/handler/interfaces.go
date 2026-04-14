@@ -1,7 +1,13 @@
 package handler
 
-import "github.com/MamangRust/monolith-ecommerce-shared/pb"
+import (
+	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+)
 
-type MerchantPoliciesHandleGrpc interface {
-	pb.MerchantPoliciesServiceServer
+type MerchantPolicyQueryHandler interface {
+	pb.MerchantPolicyQueryServiceServer
+}
+
+type MerchantPolicyCommandHandler interface {
+	pb.MerchantPolicyCommandServiceServer
 }

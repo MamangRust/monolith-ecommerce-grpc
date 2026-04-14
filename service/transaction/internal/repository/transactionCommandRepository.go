@@ -4,25 +4,21 @@ import (
 	"context"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/transaction_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type transactionCommandRepository struct {
-	db      *db.Queries
-	mapping recordmapper.TransactionRecordMapping
+	db *db.Queries
 }
 
-func NewTransactionCommandRepository(db *db.Queries, mapping recordmapper.TransactionRecordMapping) *transactionCommandRepository {
+func NewTransactionCommandRepository(db *db.Queries) *transactionCommandRepository {
 	return &transactionCommandRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *transactionCommandRepository) CreateTransaction(ctx context.Context, request *requests.CreateTransactionRequest) (*record.TransactionRecord, error) {
+func (r *transactionCommandRepository) CreateTransaction(ctx context.Context, request *requests.CreateTransactionRequest) (*db.CreateTransactionRow, error) {
 	req := db.CreateTransactionParams{
 		OrderID:       int32(request.OrderID),
 		MerchantID:    int32(request.MerchantID),
@@ -31,16 +27,15 @@ func (r *transactionCommandRepository) CreateTransaction(ctx context.Context, re
 		PaymentStatus: *request.PaymentStatus,
 	}
 
-	transaction, err := r.db.CreateTransaction(ctx, req)
-
+	res, err := r.db.CreateTransaction(ctx, req)
 	if err != nil {
-		return nil, transaction_errors.ErrCreateTransaction
+		return nil, transaction_errors.ErrCreateTransaction.WithInternal(err)
 	}
 
-	return r.mapping.ToTransactionRecord(transaction), nil
+	return res, nil
 }
 
-func (r *transactionCommandRepository) UpdateTransaction(ctx context.Context, request *requests.UpdateTransactionRequest) (*record.TransactionRecord, error) {
+func (r *transactionCommandRepository) UpdateTransaction(ctx context.Context, request *requests.UpdateTransactionRequest) (*db.UpdateTransactionRow, error) {
 	req := db.UpdateTransactionParams{
 		TransactionID: int32(*request.TransactionID),
 		MerchantID:    int32(request.MerchantID),
@@ -51,39 +46,38 @@ func (r *transactionCommandRepository) UpdateTransaction(ctx context.Context, re
 	}
 
 	res, err := r.db.UpdateTransaction(ctx, req)
-
 	if err != nil {
-		return nil, transaction_errors.ErrUpdateTransaction
+		return nil, transaction_errors.ErrUpdateTransaction.WithInternal(err)
 	}
 
-	return r.mapping.ToTransactionRecord(res), nil
+	return res, nil
 }
 
-func (r *transactionCommandRepository) TrashTransaction(ctx context.Context, transaction_id int) (*record.TransactionRecord, error) {
+func (r *transactionCommandRepository) TrashTransaction(ctx context.Context, transaction_id int) (*db.Transaction, error) {
 	res, err := r.db.TrashTransaction(ctx, int32(transaction_id))
 
 	if err != nil {
-		return nil, transaction_errors.ErrTrashTransaction
+		return nil, transaction_errors.ErrTrashTransaction.WithInternal(err)
 	}
 
-	return r.mapping.ToTransactionRecord(res), nil
+	return res, nil
 }
 
-func (r *transactionCommandRepository) RestoreTransaction(ctx context.Context, transaction_id int) (*record.TransactionRecord, error) {
+func (r *transactionCommandRepository) RestoreTransaction(ctx context.Context, transaction_id int) (*db.Transaction, error) {
 	res, err := r.db.RestoreTransaction(ctx, int32(transaction_id))
 
 	if err != nil {
-		return nil, transaction_errors.ErrRestoreTransaction
+		return nil, transaction_errors.ErrRestoreTransaction.WithInternal(err)
 	}
 
-	return r.mapping.ToTransactionRecord(res), nil
+	return res, nil
 }
 
 func (r *transactionCommandRepository) DeleteTransactionPermanently(ctx context.Context, transaction_id int) (bool, error) {
 	err := r.db.DeleteTransactionPermanently(ctx, int32(transaction_id))
 
 	if err != nil {
-		return false, transaction_errors.ErrDeleteTransactionPermanently
+		return false, transaction_errors.ErrDeleteTransactionPermanently.WithInternal(err)
 	}
 
 	return true, nil
@@ -93,7 +87,7 @@ func (r *transactionCommandRepository) RestoreAllTransactions(ctx context.Contex
 	err := r.db.RestoreAllTransactions(ctx)
 
 	if err != nil {
-		return false, transaction_errors.ErrRestoreAllTransactions
+		return false, transaction_errors.ErrRestoreAllTransactions.WithInternal(err)
 	}
 	return true, nil
 }
@@ -102,7 +96,8 @@ func (r *transactionCommandRepository) DeleteAllTransactionPermanent(ctx context
 	err := r.db.DeleteAllPermanentTransactions(ctx)
 
 	if err != nil {
-		return false, transaction_errors.ErrDeleteAllTransactionPermanent
+		return false, transaction_errors.ErrDeleteAllTransactionPermanent.WithInternal(err)
 	}
 	return true, nil
 }
+

@@ -11,11 +11,17 @@ type Deps struct {
 }
 
 type Handler struct {
-	Order OrderHandleGrpc
+	OrderQuery            OrderQueryHandler
+	OrderCommand          OrderCommandHandler
+	OrderStats            OrderStatsHandler
+	OrderStatsByMerchant  OrderStatsByMerchantHandler
 }
 
 func NewHandler(deps *Deps) *Handler {
 	return &Handler{
-		Order: NewOrderHandleGrpc(deps.Service, deps.Logger),
+		OrderQuery:            NewOrderQueryHandler(deps.Service.OrderQuery, deps.Logger),
+		OrderCommand:          NewOrderCommandHandler(deps.Service.OrderCommand, deps.Logger),
+		OrderStats:            NewOrderStatsHandler(deps.Service.OrderStats, deps.Logger),
+		OrderStatsByMerchant:  NewOrderStatsByMerchantHandler(deps.Service.OrderStatsByMerchant, deps.Logger),
 	}
 }

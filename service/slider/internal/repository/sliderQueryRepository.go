@@ -4,25 +4,21 @@ import (
 	"context"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/slider_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type sliderQueryRepository struct {
-	db      *db.Queries
-	mapping recordmapper.SliderMapping
+	db *db.Queries
 }
 
-func NewSliderQueryRepository(db *db.Queries, mapping recordmapper.SliderMapping) *sliderQueryRepository {
+func NewSliderQueryRepository(db *db.Queries) *sliderQueryRepository {
 	return &sliderQueryRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *sliderQueryRepository) FindAllSlider(ctx context.Context, req *requests.FindAllSlider) ([]*record.SliderRecord, *int, error) {
+func (r *sliderQueryRepository) FindAllSlider(ctx context.Context, req *requests.FindAllSlider) ([]*db.GetSlidersRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetSlidersParams{
@@ -34,21 +30,13 @@ func (r *sliderQueryRepository) FindAllSlider(ctx context.Context, req *requests
 	res, err := r.db.GetSliders(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, slider_errors.ErrFindAllSliders
+		return nil, slider_errors.ErrFindAllSliders
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToSlidersRecordPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *sliderQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllSlider) ([]*record.SliderRecord, *int, error) {
+func (r *sliderQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllSlider) ([]*db.GetSlidersActiveRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetSlidersActiveParams{
@@ -60,21 +48,13 @@ func (r *sliderQueryRepository) FindByActive(ctx context.Context, req *requests.
 	res, err := r.db.GetSlidersActive(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, slider_errors.ErrFindActiveSliders
+		return nil, slider_errors.ErrFindActiveSliders
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToSlidersRecordActivePagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *sliderQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllSlider) ([]*record.SliderRecord, *int, error) {
+func (r *sliderQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllSlider) ([]*db.GetSlidersTrashedRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetSlidersTrashedParams{
@@ -86,16 +66,18 @@ func (r *sliderQueryRepository) FindByTrashed(ctx context.Context, req *requests
 	res, err := r.db.GetSlidersTrashed(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, slider_errors.ErrFindTrashedSliders
+		return nil, slider_errors.ErrFindTrashedSliders
 	}
 
-	var totalCount int
+	return res, nil
+}
 
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
+func (r *sliderQueryRepository) FindById(ctx context.Context, slider_id int) (*db.GetSliderByIDRow, error) {
+	res, err := r.db.GetSliderByID(ctx, int32(slider_id))
+
+	if err != nil {
+		return nil, slider_errors.ErrFindSliderByID
 	}
 
-	return r.mapping.ToSlidersRecordTrashedPagination(res), &totalCount, nil
+	return res, nil
 }

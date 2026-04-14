@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package pb;
+
+import "order_item/order_item_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindAllOrderItemRequest {
+    int32 page = 1;
+    int32 page_size = 2;
+    string search = 3;
+}
+
+service OrderItemQueryService {
+    rpc FindAll(FindAllOrderItemRequest) returns (ApiResponsePaginationOrderItem);
+    rpc FindByActive(FindAllOrderItemRequest) returns (ApiResponsePaginationOrderItemDeleteAt);
+    rpc FindByTrashed(FindAllOrderItemRequest) returns (ApiResponsePaginationOrderItemDeleteAt);
+    rpc FindOrderItemByOrder(FindByIdOrderItemRequest) returns (ApiResponsesOrderItem);
+}

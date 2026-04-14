@@ -1,11 +1,10 @@
 package service
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/redis"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 )
 
 type Service struct {
@@ -14,17 +13,25 @@ type Service struct {
 }
 
 type Deps struct {
-	ErrorHandler *errorhandler.ErrorHandler
-	Mencache     *mencache.Mencache
-	Repositories *repository.Repositories
-	Logger       logger.LoggerInterface
+	Repositories  *repository.Repositories
+	Mencache      mencache.SliderMencache
+	Logger        logger.LoggerInterface
+	Observability observability.TraceLoggerObservability
 }
 
 func NewService(deps *Deps) *Service {
-	mapper := response_service.NewSliderResponseMapper()
-
 	return &Service{
-		SliderQuery:   NewSliderQueryService(deps.ErrorHandler.SliderQueryError, deps.Mencache.SliderQueryCache, deps.Repositories.SliderQuery, deps.Logger, mapper),
-		SliderCommand: NewSliderCommandService(deps.ErrorHandler.SliderCommandError, deps.Repositories.SliderCommand, deps.Logger, mapper),
+		SliderQuery: NewSliderQueryService(&SliderQueryServiceDeps{
+			Repositories:  deps.Repositories.SliderQuery,
+			Cache:         deps.Mencache,
+			Logger:        deps.Logger,
+			Observability: deps.Observability,
+		}),
+		SliderCommand: NewSliderCommandService(&SliderCommandServiceDeps{
+			Repositories:  deps.Repositories.SliderCommand,
+			Cache:         deps.Mencache,
+			Logger:        deps.Logger,
+			Observability: deps.Observability,
+		}),
 	}
 }

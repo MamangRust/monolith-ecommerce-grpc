@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package pb;
+
+import "common/api.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message MerchantDocument {
+    int32 document_id = 1;
+    int32 merchant_id = 2;
+    string document_type = 3;
+    string document_url = 4;
+    string status = 5;
+    string note = 6;
+    string uploaded_at = 7;
+    string updated_at = 8;
+}
+
+message MerchantDocumentDeleteAt{
+    int32 document_id = 1;
+    int32 merchant_id = 2;
+    string document_type = 3;
+    string document_url = 4;
+    string status = 5;
+    string note = 6;
+    string uploaded_at = 7;
+    string updated_at = 8;
+    google.protobuf.StringValue deleted_at = 9;
+}
+
+message ApiResponseMerchantDocument {
+    string status = 1;
+    string message = 2;
+    MerchantDocument data = 3;
+}
+
+message ApiResponsesMerchantDocument {
+    string status = 1;
+    string message = 2;
+    repeated MerchantDocument data = 3;
+}
+
+message ApiResponsePaginationMerchantDocument {
+    string status = 1;
+    string message = 2;
+    repeated MerchantDocument data = 3;
+    PaginationMeta pagination = 4;
+}
+
+message ApiResponsePaginationMerchantDocumentAt {
+    string status = 1;
+    string message = 2;
+    repeated MerchantDocumentDeleteAt data = 3;
+    PaginationMeta pagination = 4;
+}
+
+message ApiResponseMerchantDocumentDelete{
+    string status = 1;
+    string message = 2;
+}
+
+message ApiResponseMerchantDocumentAll {
+    string status = 1;
+    string message = 2;
+}

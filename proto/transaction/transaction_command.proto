@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/empty.proto";
+import "transaction/transaction_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message CreateTransactionRequest {
+    int32 order_id = 1;
+    int32 merchant_id = 2;
+    string payment_method = 3;
+    int32 amount = 4;
+    int32 user_id = 5;
+    string payment_status = 6;
+}
+
+message UpdateTransactionRequest {
+    int32 transaction_id = 1;
+    int32 order_id = 2;
+    int32 merchant_id = 3;
+    string payment_method = 4;
+    int32 amount = 5;
+    string payment_status = 6;
+}
+
+service TransactionCommandService {
+    rpc Create(CreateTransactionRequest) returns (ApiResponseTransaction);
+    rpc Update(UpdateTransactionRequest) returns (ApiResponseTransaction);
+    rpc TrashedTransaction(FindByIdTransactionRequest) returns (ApiResponseTransactionDeleteAt);
+    rpc RestoreTransaction(FindByIdTransactionRequest) returns (ApiResponseTransactionDeleteAt);
+    rpc DeleteTransactionPermanent(FindByIdTransactionRequest) returns (ApiResponseTransactionDelete);
+
+    rpc RestoreAllTransaction(google.protobuf.Empty) returns (ApiResponseTransactionAll);
+    rpc DeleteAllTransactionPermanent(google.protobuf.Empty) returns (ApiResponseTransactionAll);
+}

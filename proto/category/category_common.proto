@@ -1,0 +1,175 @@
+syntax = "proto3";
+
+package pb;
+
+import "common/api.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindByIdCategoryRequest {
+    int32 id = 1;
+}
+
+message CategoryResponse {
+    int32 id = 1;
+    string name = 2;
+    string description = 3;
+    string slug_category = 4;
+    string image_category = 5;
+    string created_at = 6;
+    string updated_at = 7;
+}
+  
+message CategoryResponseDeleteAt {
+    int32 id = 1;
+    string name = 2;
+    string description = 3;
+    string slug_category = 4;
+    string image_category = 5;
+    string created_at = 6;
+    string updated_at = 7;
+    google.protobuf.StringValue deleted_at = 8;
+}
+
+message ApiResponseCategory {
+    string status = 1;
+    string message = 2;
+    CategoryResponse data = 3;
+}
+
+message ApiResponseCategoryDeleteAt {
+    string status = 1;
+    string message = 2;
+    CategoryResponseDeleteAt data = 3;
+}
+  
+message ApiResponsesCategory {
+    string status = 1;
+    string message = 2;
+    repeated CategoryResponse data = 3;
+}
+  
+message ApiResponseCategoryDelete {
+    string status = 1;
+    string message = 2;
+}
+  
+message ApiResponseCategoryAll {
+    string status = 1;
+    string message = 2;
+}
+  
+message ApiResponsePaginationCategoryDeleteAt {
+    string status = 1;
+    string message = 2;
+    repeated CategoryResponseDeleteAt data = 3;
+    PaginationMeta pagination = 4;
+}
+  
+message ApiResponsePaginationCategory {
+    string status = 1;
+    string message = 2;
+    repeated CategoryResponse data = 3;
+    PaginationMeta pagination = 4;
+}
+
+message CategoryMonthPriceResponse {
+    string month = 1;
+    int32 category_id = 2;
+    string category_name = 3;
+    int32 order_count = 4;
+    int32 items_sold = 5;
+    int32 total_revenue = 6;
+}
+  
+message CategoryYearPriceResponse {
+    string year = 1;
+    int32 category_id = 2;
+    string category_name = 3;
+    int32 order_count = 4;
+    int32 items_sold = 5;
+    int32 total_revenue = 6;
+    int32 unique_products_sold = 7;
+}
+
+message CategoriesMonthlyTotalPriceResponse {
+    string year = 1;
+    string month = 2;
+    int32 total_revenue = 3;
+}
+  
+message CategoriesYearlyTotalPriceResponse {
+    string year = 1;
+    int32 total_revenue = 2;
+}
+
+message ApiResponseCategoryMonthPrice {
+    string status = 1;
+    string message = 2;
+    repeated CategoryMonthPriceResponse data = 3;
+}
+
+message ApiResponseCategoryYearPrice{
+    string status = 1;
+    string message = 2;
+    repeated CategoryYearPriceResponse data = 3;
+}
+
+message ApiResponseCategoryMonthlyTotalPrice {
+    string status = 1;
+    string message = 2;
+    repeated CategoriesMonthlyTotalPriceResponse data = 3;
+}
+  
+
+message ApiResponseCategoryYearlyTotalPrice {
+    string status = 1;
+    string message = 2;
+    repeated CategoriesYearlyTotalPriceResponse data = 3;
+}
+
+message FindYearCategory {
+    int32 year = 1;
+}
+
+message FindYearCategoryByMerchant {
+    int32 merchant_id = 1;
+    int32 year = 2;
+}
+
+message FindYearCategoryById {
+    int32 category_id = 1;
+    int32 year = 2;
+}
+
+message FindYearMonthTotalPrices {
+    int32 year = 1;
+    int32 month = 2;
+}
+
+message FindYearTotalPrices {
+    int32 year = 1;
+}
+
+message FindYearMonthTotalPriceById {
+    int32 year = 1;
+    int32 month = 2;
+    int32 category_id = 3;
+}
+
+message FindYearTotalPriceById {
+    int32 year = 1;
+    int32 category_id = 2;
+}
+
+message FindYearMonthTotalPriceByMerchant {
+    int32 year = 1;
+    int32 month = 2;
+    int32 merchant_id = 3;
+}
+
+message FindYearTotalPriceByMerchant {
+    int32 year = 1;
+    int32 merchant_id = 2;
+}

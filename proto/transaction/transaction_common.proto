@@ -1,0 +1,161 @@
+syntax = "proto3";
+
+package pb;
+
+import "common/api.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindByIdTransactionRequest {
+    int32 id = 1;
+}
+
+message TransactionResponse {
+    int32 id = 1;
+    int32 order_id = 2;
+    int32 merchant_id = 3;
+    string payment_method = 4;
+    int32 amount = 5;
+    string payment_status = 7;
+    string created_at = 8;
+    string updated_at = 9;
+}
+  
+message TransactionResponseDeleteAt {
+    int32 id = 1;
+    int32 order_id = 2;
+    int32 merchant_id = 3;
+    string payment_method = 4;
+    int32 amount = 5;
+    string payment_status = 7;
+    string created_at = 8;
+    string updated_at = 9;
+    google.protobuf.StringValue deleted_at = 10;
+}
+
+message ApiResponseTransaction {
+    string status = 1;
+    string message = 2;
+    TransactionResponse data = 3;
+}
+
+message ApiResponseTransactionDeleteAt {
+    string status = 1;
+    string message = 2;
+    TransactionResponseDeleteAt data = 3;
+}
+
+message ApiResponsesTransaction {
+    string status = 1;
+    string message = 2;
+    repeated TransactionResponse data = 3;
+}
+
+message ApiResponseTransactionDelete {
+    string status = 1;
+    string message = 2;
+}
+
+message ApiResponseTransactionAll {
+    string status = 1;
+    string message = 2;
+}
+
+message ApiResponsePaginationTransactionDeleteAt {
+    string status = 1;
+    string message = 2;
+    repeated TransactionResponseDeleteAt data = 3;
+    PaginationMeta pagination = 4;
+}
+  
+message ApiResponsePaginationTransaction {
+    string status = 1;
+    string message = 2;
+    repeated TransactionResponse data = 3;
+    PaginationMeta pagination = 4;
+}
+
+message TransactionMonthlyAmountSuccess {
+    string year = 1;
+    string month = 2;
+    int32 total_success = 3;
+    int32 total_amount = 4;
+}
+  
+message TransactionMonthlyAmountFailed {
+    string year = 1;
+    string month = 2;
+    int32 total_failed = 3;
+    int32 total_amount = 4;
+}
+  
+message TransactionYearlyAmountSuccess {
+    string year = 1;
+    int32 total_success = 2;
+    int32 total_amount = 3;
+}
+  
+message TransactionYearlyAmountFailed {
+    string year = 1;
+    int32 total_failed = 2;
+    int32 total_amount = 3;
+}
+  
+message TransactionMonthlyMethod {
+    string month = 1;
+    string payment_method = 2;
+    int32 total_transactions = 3;
+    int32 total_amount = 4;
+}
+  
+message TransactionYearlyMethod {
+    string year = 1;
+    string payment_method = 2;
+    int32 total_transactions = 3;
+    int32 total_amount = 4;
+}
+
+message TransactionEmpty {}
+
+message ApiResponseTransactionMonthAmountSuccess{
+    string status = 1;
+    string message = 2;
+    repeated TransactionMonthlyAmountSuccess data = 3;
+}
+
+
+message ApiResponseTransactionYearAmountSuccess{
+    string status = 1;
+    string message = 2;
+    repeated TransactionYearlyAmountSuccess data = 3;
+}
+
+
+message ApiResponseTransactionMonthAmountFailed{
+    string status = 1;
+    string message = 2;
+    repeated TransactionMonthlyAmountFailed data = 3;
+}
+
+
+message ApiResponseTransactionYearAmountFailed{
+    string status = 1;
+    string message = 2;
+    repeated TransactionYearlyAmountFailed data = 3;
+}
+
+
+
+message ApiResponseTransactionMonthPaymentMethod{
+    string status = 1;
+    string message = 2;
+    repeated TransactionMonthlyMethod data = 3;
+}
+
+
+message ApiResponseTransactionYearPaymentmethod{
+    string status = 1;
+    string message = 2;
+    repeated TransactionYearlyMethod data = 3;
+}

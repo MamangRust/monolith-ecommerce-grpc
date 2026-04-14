@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 )
 
 type AuthHandleGrpc interface {

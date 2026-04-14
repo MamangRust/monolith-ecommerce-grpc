@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/internal/redis"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"

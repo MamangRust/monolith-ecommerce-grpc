@@ -2,7 +2,6 @@ package repository
 
 import (
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type Repositories struct {
@@ -11,10 +10,9 @@ type Repositories struct {
 }
 
 func NewRepositories(db *db.Queries) *Repositories {
-	bannerMapper := recordmapper.NewBannerRecordMapper()
 
 	return &Repositories{
-		BannerQuery:   NewBannerQueryRepository(db, bannerMapper),
-		BannerCommand: NewBannerCommandRepository(db, bannerMapper),
+		BannerQuery:   NewBannerQueryRepository(db),
+		BannerCommand: NewBannerCommandRepository(db),
 	}
 }

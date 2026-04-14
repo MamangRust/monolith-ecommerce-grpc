@@ -2,30 +2,25 @@ package repository
 
 import (
 	"context"
-	"fmt"
-	"log"
+
+	"database/sql"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	merchantdetail_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant_detail"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type merchantDetailQueryRepository struct {
 	db *db.Queries
-
-	mapping recordmapper.MerchantDetailMapping
 }
 
-func NewMerchantDetailQueryRepository(db *db.Queries, mapping recordmapper.MerchantDetailMapping) *merchantDetailQueryRepository {
+func NewMerchantDetailQueryRepository(db *db.Queries) *merchantDetailQueryRepository {
 	return &merchantDetailQueryRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *merchantDetailQueryRepository) FindAllMerchants(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantDetailRecord, *int, error) {
+func (r *merchantDetailQueryRepository) FindAllMerchants(ctx context.Context, req *requests.FindAllMerchant) ([]*db.GetMerchantDetailsRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantDetailsParams{
@@ -35,23 +30,14 @@ func (r *merchantDetailQueryRepository) FindAllMerchants(ctx context.Context, re
 	}
 
 	res, err := r.db.GetMerchantDetails(ctx, reqDb)
-
 	if err != nil {
-		return nil, nil, merchantdetail_errors.ErrFindAllMerchantDetails
+		return nil, merchantdetail_errors.ErrFindAllMerchantDetails.WithInternal(err)
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToMerchantDetailsRecordPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *merchantDetailQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantDetailRecord, *int, error) {
+func (r *merchantDetailQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllMerchant) ([]*db.GetMerchantDetailsActiveRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantDetailsActiveParams{
@@ -61,23 +47,14 @@ func (r *merchantDetailQueryRepository) FindByActive(ctx context.Context, req *r
 	}
 
 	res, err := r.db.GetMerchantDetailsActive(ctx, reqDb)
-
 	if err != nil {
-		return nil, nil, merchantdetail_errors.ErrFindByActiveMerchantDetails
+		return nil, merchantdetail_errors.ErrFindActiveMerchantDetails.WithInternal(err)
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToMerchantDetailsRecordActivePagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *merchantDetailQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantDetailRecord, *int, error) {
+func (r *merchantDetailQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*db.GetMerchantDetailsTrashedRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantDetailsTrashedParams{
@@ -87,41 +64,33 @@ func (r *merchantDetailQueryRepository) FindByTrashed(ctx context.Context, req *
 	}
 
 	res, err := r.db.GetMerchantDetailsTrashed(ctx, reqDb)
-
 	if err != nil {
-		return nil, nil, merchantdetail_errors.ErrFindByTrashedMerchantDetails
+		return nil, merchantdetail_errors.ErrFindTrashedMerchantDetails.WithInternal(err)
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToMerchantDetailsRecordTrashedPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *merchantDetailQueryRepository) FindById(ctx context.Context, user_id int) (*record.MerchantDetailRecord, error) {
+func (r *merchantDetailQueryRepository) FindById(ctx context.Context, user_id int) (*db.GetMerchantDetailRow, error) {
 	res, err := r.db.GetMerchantDetail(ctx, int32(user_id))
-
 	if err != nil {
-		log.Fatal("hello", err)
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, merchantdetail_errors.ErrMerchantDetailNotFound.WithInternal(err)
+		}
+		return nil, merchantdetail_errors.ErrMerchantDetailInternal.WithInternal(err)
 	}
 
-	fmt.Println("Hello", res)
-
-	return r.mapping.ToMerchantDetailRelationRecord(res), nil
+	return res, nil
 }
 
-func (r *merchantDetailQueryRepository) FindByIdTrashed(ctx context.Context, user_id int) (*record.MerchantDetailRecord, error) {
+func (r *merchantDetailQueryRepository) FindByIdTrashed(ctx context.Context, user_id int) (*db.GetMerchantDetailTrashedRow, error) {
 	res, err := r.db.GetMerchantDetailTrashed(ctx, int32(user_id))
-
 	if err != nil {
-		return nil, merchantdetail_errors.ErrFindByIdTrashedMerchantDetail
+		if err == sql.ErrNoRows {
+			return nil, merchantdetail_errors.ErrMerchantDetailNotFound.WithInternal(err)
+		}
+		return nil, merchantdetail_errors.ErrFindByIdTrashedMerchantDetail.WithInternal(err)
 	}
 
-	return r.mapping.ToMerchantDetailRecord(res), nil
+	return res, nil
 }

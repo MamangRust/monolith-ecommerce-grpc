@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/empty.proto";
+import "banner/banner_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+
+message CreateBannerRequest {
+    string name = 1;
+    string start_date = 2; 
+    string end_date = 3;
+    string start_time = 4; 
+    string end_time = 5;
+    bool is_active = 6;
+}
+  
+message UpdateBannerRequest {
+    int32 banner_id = 1;
+    string name = 2;
+    string start_date = 3;
+    string end_date = 4;
+    string start_time = 5;
+    string end_time = 6;
+    bool is_active = 7;
+}
+
+service BannerCommandService {
+    rpc Create(CreateBannerRequest) returns (ApiResponseBanner);
+    rpc Update(UpdateBannerRequest) returns (ApiResponseBanner);
+    
+    rpc TrashedBanner(FindByIdBannerRequest) returns (ApiResponseBannerDeleteAt);
+    rpc RestoreBanner(FindByIdBannerRequest) returns (ApiResponseBannerDeleteAt);
+    
+    rpc DeleteBannerPermanent(FindByIdBannerRequest) returns (ApiResponseBannerDelete);
+
+    rpc RestoreAllBanner(google.protobuf.Empty) returns (ApiResponseBannerAll);
+    rpc DeleteAllBannerPermanent(google.protobuf.Empty) returns (ApiResponseBannerAll);
+}

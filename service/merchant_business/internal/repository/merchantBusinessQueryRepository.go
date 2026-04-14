@@ -3,29 +3,26 @@ package repository
 import (
 	"context"
 
+	"database/sql"
+
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	merchantbusiness_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant_business"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type merchantBusinessQueryRepository struct {
-	db      *db.Queries
-	mapping recordmapper.MerchantBusinessMapping
+	db *db.Queries
 }
 
 func NewMerchantBusinessQueryRepository(
 	db *db.Queries,
-	mapping recordmapper.MerchantBusinessMapping,
 ) *merchantBusinessQueryRepository {
 	return &merchantBusinessQueryRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *merchantBusinessQueryRepository) FindAllMerchants(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantBusinessRecord, *int, error) {
+func (r *merchantBusinessQueryRepository) FindAllMerchants(ctx context.Context, req *requests.FindAllMerchant) ([]*db.GetMerchantsBusinessInformationRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantsBusinessInformationParams{
@@ -37,21 +34,13 @@ func (r *merchantBusinessQueryRepository) FindAllMerchants(ctx context.Context, 
 	res, err := r.db.GetMerchantsBusinessInformation(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, merchantbusiness_errors.ErrFindAllMerchantBusinesses
+		return nil, merchantbusiness_errors.ErrFindAllMerchantBusinesses.WithInternal(err)
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToMerchantBusinesssRecordPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *merchantBusinessQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantBusinessRecord, *int, error) {
+func (r *merchantBusinessQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllMerchant) ([]*db.GetMerchantsBusinessInformationActiveRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantsBusinessInformationActiveParams{
@@ -63,21 +52,13 @@ func (r *merchantBusinessQueryRepository) FindByActive(ctx context.Context, req 
 	res, err := r.db.GetMerchantsBusinessInformationActive(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, merchantbusiness_errors.ErrFindActiveMerchantBusinesses
+		return nil, merchantbusiness_errors.ErrFindActiveMerchantBusinesses.WithInternal(err)
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToMerchantBusinesssRecordActivePagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *merchantBusinessQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantBusinessRecord, *int, error) {
+func (r *merchantBusinessQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*db.GetMerchantsBusinessInformationTrashedRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantsBusinessInformationTrashedParams{
@@ -89,26 +70,21 @@ func (r *merchantBusinessQueryRepository) FindByTrashed(ctx context.Context, req
 	res, err := r.db.GetMerchantsBusinessInformationTrashed(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, merchantbusiness_errors.ErrFindTrashedMerchantBusinesses
+		return nil, merchantbusiness_errors.ErrFindTrashedMerchantBusinesses.WithInternal(err)
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToMerchantBusinesssRecordTrashedPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *merchantBusinessQueryRepository) FindById(ctx context.Context, user_id int) (*record.MerchantBusinessRecord, error) {
+func (r *merchantBusinessQueryRepository) FindById(ctx context.Context, user_id int) (*db.GetMerchantBusinessInformationRow, error) {
 	res, err := r.db.GetMerchantBusinessInformation(ctx, int32(user_id))
 
 	if err != nil {
-		return nil, merchantbusiness_errors.ErrMerchantBusinessNotFound
+		if err == sql.ErrNoRows {
+			return nil, merchantbusiness_errors.ErrMerchantBusinessNotFound.WithInternal(err)
+		}
+		return nil, merchantbusiness_errors.ErrMerchantBusinessInternal.WithInternal(err)
 	}
 
-	return r.mapping.ToMerchantBusinessRecord(res), nil
+	return res, nil
 }

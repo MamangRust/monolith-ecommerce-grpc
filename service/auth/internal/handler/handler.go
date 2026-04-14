@@ -14,7 +14,7 @@ type Handler struct {
 	Auth AuthHandleGrpc
 }
 
-func NewHandler(deps Deps) *Handler {
+func NewHandler(deps *Deps) *Handler {
 	return &Handler{
 		Auth: NewAuthHandleGrpc(
 			deps.Service,

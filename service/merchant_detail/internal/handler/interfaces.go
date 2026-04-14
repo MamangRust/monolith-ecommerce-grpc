@@ -2,10 +2,14 @@ package handler
 
 import "github.com/MamangRust/monolith-ecommerce-shared/pb"
 
-type MerchantDetailHandleGrpc interface {
-	pb.MerchantDetailServiceServer
+type MerchantDetailQueryHandler interface {
+	pb.MerchantDetailQueryServiceServer
 }
 
-type MerchantSocialLinkHandleGrpc interface {
-	pb.MerchantSocialServiceServer
+type MerchantDetailCommandHandler interface {
+	pb.MerchantDetailCommandServiceServer
+}
+
+type MerchantSocialLinkCommandHandler interface {
+	pb.MerchantSocialCommandServiceServer
 }

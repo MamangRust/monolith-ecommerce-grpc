@@ -4,25 +4,21 @@ import (
 	"context"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	orderitem_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/order_item_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type orderItemCommandRepository struct {
-	db      *db.Queries
-	mapping recordmapper.OrderItemRecordMapping
+	db *db.Queries
 }
 
-func NewOrderItemCommandRepository(db *db.Queries, mapping recordmapper.OrderItemRecordMapping) *orderItemCommandRepository {
+func NewOrderItemCommandRepository(db *db.Queries) OrderItemCommandRepository {
 	return &orderItemCommandRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *orderItemCommandRepository) CreateOrderItem(ctx context.Context, req *requests.CreateOrderItemRecordRequest) (*record.OrderItemRecord, error) {
+func (r *orderItemCommandRepository) CreateOrderItem(ctx context.Context, req *requests.CreateOrderItemRecordRequest) (*db.CreateOrderItemRow, error) {
 	res, err := r.db.CreateOrderItem(ctx, db.CreateOrderItemParams{
 		OrderID:   int32(req.OrderID),
 		ProductID: int32(req.ProductID),
@@ -31,13 +27,13 @@ func (r *orderItemCommandRepository) CreateOrderItem(ctx context.Context, req *r
 	})
 
 	if err != nil {
-		return nil, orderitem_errors.ErrCreateOrderItem
+		return nil, orderitem_errors.ErrCreateOrderItem.WithInternal(err)
 	}
 
-	return r.mapping.ToOrderItemRecord(res), nil
+	return res, nil
 }
 
-func (r *orderItemCommandRepository) UpdateOrderItem(ctx context.Context, req *requests.UpdateOrderItemRecordRequest) (*record.OrderItemRecord, error) {
+func (r *orderItemCommandRepository) UpdateOrderItem(ctx context.Context, req *requests.UpdateOrderItemRecordRequest) (*db.UpdateOrderItemRow, error) {
 	res, err := r.db.UpdateOrderItem(ctx, db.UpdateOrderItemParams{
 		OrderItemID: int32(req.OrderItemID),
 		Quantity:    int32(req.Quantity),
@@ -45,37 +41,37 @@ func (r *orderItemCommandRepository) UpdateOrderItem(ctx context.Context, req *r
 	})
 
 	if err != nil {
-		return nil, orderitem_errors.ErrUpdateOrderItem
+		return nil, orderitem_errors.ErrUpdateOrderItem.WithInternal(err)
 	}
 
-	return r.mapping.ToOrderItemRecord(res), nil
+	return res, nil
 }
 
-func (r *orderItemCommandRepository) TrashedOrderItem(ctx context.Context, order_id int) (*record.OrderItemRecord, error) {
+func (r *orderItemCommandRepository) TrashedOrderItem(ctx context.Context, order_id int) (*db.OrderItem, error) {
 	res, err := r.db.TrashOrderItem(ctx, int32(order_id))
 
 	if err != nil {
-		return nil, orderitem_errors.ErrTrashedOrderItem
+		return nil, orderitem_errors.ErrTrashedOrderItem.WithInternal(err)
 	}
 
-	return r.mapping.ToOrderItemRecord(res), nil
+	return res, nil
 }
 
-func (r *orderItemCommandRepository) RestoreOrderItem(ctx context.Context, order_id int) (*record.OrderItemRecord, error) {
+func (r *orderItemCommandRepository) RestoreOrderItem(ctx context.Context, order_id int) (*db.OrderItem, error) {
 	res, err := r.db.RestoreOrderItem(ctx, int32(order_id))
 
 	if err != nil {
-		return nil, orderitem_errors.ErrRestoreOrderItem
+		return nil, orderitem_errors.ErrRestoreOrderItem.WithInternal(err)
 	}
 
-	return r.mapping.ToOrderItemRecord(res), nil
+	return res, nil
 }
 
 func (r *orderItemCommandRepository) DeleteOrderItemPermanent(ctx context.Context, order_id int) (bool, error) {
 	err := r.db.DeleteOrderItemPermanently(ctx, int32(order_id))
 
 	if err != nil {
-		return false, orderitem_errors.ErrDeleteOrderItemPermanent
+		return false, orderitem_errors.ErrDeleteOrderItemPermanent.WithInternal(err)
 	}
 
 	return true, nil
@@ -85,7 +81,7 @@ func (r *orderItemCommandRepository) RestoreAllOrderItem(ctx context.Context) (b
 	err := r.db.RestoreAllUsers(ctx)
 
 	if err != nil {
-		return false, orderitem_errors.ErrRestoreAllOrderItem
+		return false, orderitem_errors.ErrRestoreAllOrderItem.WithInternal(err)
 	}
 	return true, nil
 }
@@ -94,8 +90,9 @@ func (r *orderItemCommandRepository) DeleteAllOrderPermanent(ctx context.Context
 	err := r.db.DeleteAllPermanentOrders(ctx)
 
 	if err != nil {
-		return false, orderitem_errors.ErrDeleteAllOrderPermanent
+		return false, orderitem_errors.ErrDeleteAllOrderPermanent.WithInternal(err)
 	}
 
 	return true, nil
 }
+

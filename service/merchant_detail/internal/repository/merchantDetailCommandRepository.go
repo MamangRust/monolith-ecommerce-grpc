@@ -2,88 +2,80 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	merchantdetail_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant_detail"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type merchantDetailCommandRepository struct {
-	db      *db.Queries
-	mapping recordmapper.MerchantDetailMapping
+	db *db.Queries
 }
 
-func NewMerchantDetailCommandRepository(db *db.Queries, mapping recordmapper.MerchantDetailMapping) *merchantDetailCommandRepository {
+func NewMerchantDetailCommandRepository(db *db.Queries) *merchantDetailCommandRepository {
 	return &merchantDetailCommandRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *merchantDetailCommandRepository) CreateMerchantDetail(ctx context.Context, request *requests.CreateMerchantDetailRequest) (*record.MerchantDetailRecord, error) {
+func (r *merchantDetailCommandRepository) CreateMerchantDetail(ctx context.Context, request *requests.CreateMerchantDetailRequest) (*db.CreateMerchantDetailRow, error) {
 	req := db.CreateMerchantDetailParams{
 		MerchantID:       int32(request.MerchantID),
-		DisplayName:      sql.NullString{String: request.DisplayName, Valid: true},
-		CoverImageUrl:    sql.NullString{String: request.CoverImageUrl, Valid: true},
-		LogoUrl:          sql.NullString{String: request.LogoUrl, Valid: true},
-		ShortDescription: sql.NullString{String: request.ShortDescription, Valid: true},
-		WebsiteUrl:       sql.NullString{String: request.WebsiteUrl, Valid: request.WebsiteUrl != ""},
+		DisplayName:      &request.DisplayName,
+		CoverImageUrl:    &request.CoverImageUrl,
+		LogoUrl:          &request.LogoUrl,
+		ShortDescription: &request.ShortDescription,
+		WebsiteUrl:       &request.WebsiteUrl,
 	}
 
 	merchant, err := r.db.CreateMerchantDetail(ctx, req)
 	if err != nil {
-		return nil, merchantdetail_errors.ErrCreateMerchantDetail
+		return nil, merchantdetail_errors.ErrCreateMerchantDetail.WithInternal(err)
 	}
 
-	return r.mapping.ToMerchantDetailRecord(merchant), nil
+	return merchant, nil
 }
 
-func (r *merchantDetailCommandRepository) UpdateMerchantDetail(ctx context.Context, request *requests.UpdateMerchantDetailRequest) (*record.MerchantDetailRecord, error) {
+func (r *merchantDetailCommandRepository) UpdateMerchantDetail(ctx context.Context, request *requests.UpdateMerchantDetailRequest) (*db.UpdateMerchantDetailRow, error) {
 	req := db.UpdateMerchantDetailParams{
 		MerchantDetailID: int32(*request.MerchantDetailID),
-		DisplayName:      sql.NullString{String: request.DisplayName, Valid: true},
-		CoverImageUrl:    sql.NullString{String: request.CoverImageUrl, Valid: true},
-		LogoUrl:          sql.NullString{String: request.LogoUrl, Valid: true},
-		ShortDescription: sql.NullString{String: request.ShortDescription, Valid: true},
-		WebsiteUrl:       sql.NullString{String: request.WebsiteUrl, Valid: request.WebsiteUrl != ""},
+		DisplayName:      &request.DisplayName,
+		CoverImageUrl:    &request.CoverImageUrl,
+		LogoUrl:          &request.LogoUrl,
+		ShortDescription: &request.ShortDescription,
+		WebsiteUrl:       &request.WebsiteUrl,
 	}
 
 	res, err := r.db.UpdateMerchantDetail(ctx, req)
 	if err != nil {
-		return nil, merchantdetail_errors.ErrUpdateMerchantDetail
+		return nil, merchantdetail_errors.ErrUpdateMerchantDetail.WithInternal(err)
 	}
 
-	return r.mapping.ToMerchantDetailRecord(res), nil
+	return res, nil
 }
 
-func (r *merchantDetailCommandRepository) TrashedMerchantDetail(ctx context.Context, merchant_id int) (*record.MerchantDetailRecord, error) {
+func (r *merchantDetailCommandRepository) TrashedMerchantDetail(ctx context.Context, merchant_id int) (*db.MerchantDetail, error) {
 	res, err := r.db.TrashMerchantDetail(ctx, int32(merchant_id))
-
 	if err != nil {
-		return nil, merchantdetail_errors.ErrTrashedMerchantDetail
+		return nil, merchantdetail_errors.ErrTrashMerchantDetail.WithInternal(err)
 	}
 
-	return r.mapping.ToMerchantDetailRecord(res), nil
+	return res, nil
 }
 
-func (r *merchantDetailCommandRepository) RestoreMerchantDetail(ctx context.Context, merchant_id int) (*record.MerchantDetailRecord, error) {
+func (r *merchantDetailCommandRepository) RestoreMerchantDetail(ctx context.Context, merchant_id int) (*db.MerchantDetail, error) {
 	res, err := r.db.RestoreMerchantDetail(ctx, int32(merchant_id))
-
 	if err != nil {
-		return nil, merchantdetail_errors.ErrRestoreMerchantDetail
+		return nil, merchantdetail_errors.ErrRestoreMerchantDetail.WithInternal(err)
 	}
 
-	return r.mapping.ToMerchantDetailRecord(res), nil
+	return res, nil
 }
 
 func (r *merchantDetailCommandRepository) DeleteMerchantDetailPermanent(ctx context.Context, Merchant_id int) (bool, error) {
 	err := r.db.DeleteMerchantDetailPermanently(ctx, int32(Merchant_id))
-
 	if err != nil {
-		return false, merchantdetail_errors.ErrDeleteMerchantDetailPermanent
+		return false, merchantdetail_errors.ErrDeletePermanentMerchantDetail.WithInternal(err)
 	}
 
 	return true, nil
@@ -91,18 +83,16 @@ func (r *merchantDetailCommandRepository) DeleteMerchantDetailPermanent(ctx cont
 
 func (r *merchantDetailCommandRepository) RestoreAllMerchantDetail(ctx context.Context) (bool, error) {
 	err := r.db.RestoreAllMerchantDetails(ctx)
-
 	if err != nil {
-		return false, merchantdetail_errors.ErrRestoreAllMerchantDetails
+		return false, merchantdetail_errors.ErrRestoreAllMerchantDetails.WithInternal(err)
 	}
 	return true, nil
 }
 
 func (r *merchantDetailCommandRepository) DeleteAllMerchantDetailPermanent(ctx context.Context) (bool, error) {
 	err := r.db.DeleteAllPermanentMerchantDetails(ctx)
-
 	if err != nil {
-		return false, merchantdetail_errors.ErrDeleteAllMerchantDetailsPermanent
+		return false, merchantdetail_errors.ErrDeleteAllPermanentMerchantDetails.WithInternal(err)
 	}
 	return true, nil
 }

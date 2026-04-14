@@ -2,108 +2,96 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	merchant_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
+
 type merchantCommandRepository struct {
-	db      *db.Queries
-	mapping recordmapper.MerchantRecordMapping
+	db *db.Queries
 }
 
-func NewMerchantCommandRepository(db *db.Queries, mapping recordmapper.MerchantRecordMapping) *merchantCommandRepository {
+func NewMerchantCommandRepository(db *db.Queries) *merchantCommandRepository {
 	return &merchantCommandRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *merchantCommandRepository) CreateMerchant(ctx context.Context, request *requests.CreateMerchantRequest) (*record.MerchantRecord, error) {
+func (r *merchantCommandRepository) CreateMerchant(
+	ctx context.Context,
+	request *requests.CreateMerchantRequest,
+) (*db.CreateMerchantRow, error) {
 	req := db.CreateMerchantParams{
 		UserID:       int32(request.UserID),
 		Name:         request.Name,
-		Description:  sql.NullString{String: request.Description, Valid: true},
-		Address:      sql.NullString{String: request.Address, Valid: true},
-		ContactEmail: sql.NullString{String: request.ContactEmail, Valid: true},
-		ContactPhone: sql.NullString{String: request.ContactPhone, Valid: true},
-		Status:       "inactive",
+		Status:       "active",
+		Description:  stringPtr(request.Description),
+		Address:      stringPtr(request.Address),
+		ContactEmail: stringPtr(request.ContactEmail),
+		ContactPhone: stringPtr(request.ContactPhone),
 	}
 
 	merchant, err := r.db.CreateMerchant(ctx, req)
-
 	if err != nil {
-		return nil, merchant_errors.ErrCreateMerchant
+		return nil, merchant_errors.ErrCreateMerchant.WithInternal(err)
 	}
 
-	return r.mapping.ToMerchantRecord(merchant), nil
+
+	return merchant, nil
 }
 
-func (r *merchantCommandRepository) UpdateMerchant(ctx context.Context, request *requests.UpdateMerchantRequest) (*record.MerchantRecord, error) {
+func (r *merchantCommandRepository) UpdateMerchant(ctx context.Context, request *requests.UpdateMerchantRequest) (*db.UpdateMerchantRow, error) {
 	req := db.UpdateMerchantParams{
 		MerchantID:   int32(*request.MerchantID),
 		Name:         request.Name,
-		Description:  sql.NullString{String: request.Description, Valid: true},
-		Address:      sql.NullString{String: request.Address, Valid: true},
-		ContactEmail: sql.NullString{String: request.ContactEmail, Valid: true},
-		ContactPhone: sql.NullString{String: request.ContactPhone, Valid: true},
+		Description:  stringPtr(request.Description),
+		Address:      stringPtr(request.Address),
+		ContactEmail: stringPtr(request.ContactEmail),
+		ContactPhone: stringPtr(request.ContactPhone),
 		Status:       request.Status,
 	}
 
 	res, err := r.db.UpdateMerchant(ctx, req)
 
 	if err != nil {
-		return nil, merchant_errors.ErrUpdateMerchant
+		return nil, merchant_errors.ErrUpdateMerchant.WithInternal(err)
 	}
 
-	return r.mapping.ToMerchantRecord(res), nil
+
+	return res, nil
 }
 
-func (r *merchantCommandRepository) UpdateMerchantStatus(ctx context.Context, request *requests.UpdateMerchantStatusRequest) (*record.MerchantRecord, error) {
-	req := db.UpdateMerchantStatusParams{
-		MerchantID: int32(*request.MerchantID),
-		Status:     request.Status,
-	}
-
-	res, err := r.db.UpdateMerchantStatus(ctx, req)
-
-	if err != nil {
-		return nil, merchant_errors.ErrUpdateMerchantStatusFailed
-	}
-
-	return r.mapping.ToMerchantRecord(res), nil
-}
-
-func (r *merchantCommandRepository) TrashedMerchant(ctx context.Context, merchant_id int) (*record.MerchantRecord, error) {
+func (r *merchantCommandRepository) TrashedMerchant(ctx context.Context, merchant_id int) (*db.Merchant, error) {
 	res, err := r.db.TrashMerchant(ctx, int32(merchant_id))
 
 	if err != nil {
-		return nil, merchant_errors.ErrTrashedMerchant
+		return nil, merchant_errors.ErrTrashedMerchant.WithInternal(err)
 	}
 
-	return r.mapping.ToMerchantRecord(res), nil
+
+	return res, nil
 }
 
-func (r *merchantCommandRepository) RestoreMerchant(ctx context.Context, merchant_id int) (*record.MerchantRecord, error) {
+func (r *merchantCommandRepository) RestoreMerchant(ctx context.Context, merchant_id int) (*db.Merchant, error) {
 	res, err := r.db.RestoreMerchant(ctx, int32(merchant_id))
 
 	if err != nil {
-		return nil, merchant_errors.ErrRestoreMerchant
+		return nil, merchant_errors.ErrRestoreMerchant.WithInternal(err)
 	}
 
-	return r.mapping.ToMerchantRecord(res), nil
+
+	return res, nil
 }
 
 func (r *merchantCommandRepository) DeleteMerchantPermanent(ctx context.Context, Merchant_id int) (bool, error) {
 	err := r.db.DeleteMerchantPermanently(ctx, int32(Merchant_id))
 
 	if err != nil {
-		return false, merchant_errors.ErrDeleteMerchantPermanent
+		return false, merchant_errors.ErrDeleteMerchantPermanent.WithInternal(err)
 	}
+
 
 	return true, nil
 }
@@ -112,8 +100,9 @@ func (r *merchantCommandRepository) RestoreAllMerchant(ctx context.Context) (boo
 	err := r.db.RestoreAllMerchants(ctx)
 
 	if err != nil {
-		return false, merchant_errors.ErrRestoreAllMerchant
+		return false, merchant_errors.ErrRestoreAllMerchants.WithInternal(err)
 	}
+
 	return true, nil
 }
 
@@ -121,7 +110,23 @@ func (r *merchantCommandRepository) DeleteAllMerchantPermanent(ctx context.Conte
 	err := r.db.DeleteAllPermanentMerchants(ctx)
 
 	if err != nil {
-		return false, merchant_errors.ErrDeleteAllMerchantPermanent
+		return false, merchant_errors.ErrDeleteAllMerchants.WithInternal(err)
 	}
+
 	return true, nil
+}
+
+func (r *merchantCommandRepository) UpdateMerchantStatus(ctx context.Context, request *requests.UpdateMerchantStatusRequest) (*db.UpdateMerchantStatusRow, error) {
+	req := db.UpdateMerchantStatusParams{
+		MerchantID: int32(*request.MerchantID),
+		Status:     request.Status,
+	}
+
+	res, err := r.db.UpdateMerchantStatus(ctx, req)
+	if err != nil {
+		return nil, merchant_errors.ErrMerchantInternal.WithInternal(err)
+	}
+
+
+	return res, nil
 }

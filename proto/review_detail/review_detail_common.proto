@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package pb;
+
+import "common/api.proto";
+import "google/protobuf/wrappers.proto";
+
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindByIdReviewDetailRequest{
+    int32 id = 1;
+}
+
+message ReviewDetailsResponse {
+    int32 id = 1;
+    int32 review_id = 2;
+    string type = 3;
+    string url = 4;
+    string caption = 5;
+    string created_at = 6;
+    string updated_at = 7;
+}
+
+message ReviewDetailsResponseDeleteAt {
+    int32 id = 1;
+    int32 review_id = 2;
+    string type = 3;
+    string url = 4;
+    string caption = 5;
+    string created_at = 6;
+    string updated_at = 7;
+    google.protobuf.StringValue deleted_at = 8;
+}
+
+message ApiResponseReviewDetail {
+    string status = 1;
+    string message = 2;
+    ReviewDetailsResponse data = 3;
+}
+
+message ApiResponseReviewDetailDeleteAt {
+    string status = 1;
+    string message = 2;
+    ReviewDetailsResponseDeleteAt data = 3;
+}
+
+message ApiResponsesReviewDetails {
+    string status = 1;
+    string message = 2;
+    repeated ReviewDetailsResponse data = 3;
+}
+
+message ApiResponsePaginationReviewDetails {
+    string status = 1;
+    string message = 2;
+    repeated ReviewDetailsResponse data = 3;
+    PaginationMeta pagination = 4;
+}
+
+message ApiResponsePaginationReviewDetailsDeleteAt {
+    string status = 1;
+    string message = 2;
+    repeated ReviewDetailsResponseDeleteAt data = 3;
+    PaginationMeta pagination = 4;
+}

@@ -6,25 +6,24 @@ import (
 	"errors"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/user_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
+
+
 type userQueryRepository struct {
-	db      *db.Queries
-	mapping recordmapper.UserRecordMapping
+	db *db.Queries
 }
 
-func NewUserQueryRepository(db *db.Queries, mapping recordmapper.UserRecordMapping) *userQueryRepository {
+func NewUserQueryRepository(db *db.Queries) *userQueryRepository {
 	return &userQueryRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *userQueryRepository) FindAllUsers(ctx context.Context, req *requests.FindAllUsers) ([]*record.UserRecord, *int, error) {
+func (r *userQueryRepository) FindAllUsers(ctx context.Context, req *requests.FindAllUsers) ([]*db.GetUsersRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetUsersParams{
@@ -36,34 +35,46 @@ func (r *userQueryRepository) FindAllUsers(ctx context.Context, req *requests.Fi
 	res, err := r.db.GetUsers(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, user_errors.ErrFindAllUsers
+		return nil, user_errors.ErrFindAllUsers.WithInternal(err)
 	}
 
-	var totalCount int
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
 
-	return r.mapping.ToUsersRecordPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *userQueryRepository) FindById(ctx context.Context, user_id int) (*record.UserRecord, error) {
+func (r *userQueryRepository) FindById(ctx context.Context, user_id int) (*db.GetUserByIDRow, error) {
 	res, err := r.db.GetUserByID(ctx, int32(user_id))
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, user_errors.ErrUserNotFound
+			return nil, user_errors.ErrUserNotFound.WithInternal(err)
 		}
 
-		return nil, user_errors.ErrUserNotFound
+		return nil, sharedErrors.ErrInternal.WithInternal(err)
 	}
 
-	return r.mapping.ToUserRecord(res), nil
+
+	return res, nil
 }
 
-func (r *userQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllUsers) ([]*record.UserRecord, *int, error) {
+
+func (r *userQueryRepository) FindByIdWithPassword(ctx context.Context, user_id int) (*db.GetUserByIDRow, error) {
+	res, err := r.db.GetUserByID(ctx, int32(user_id))
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, user_errors.ErrUserNotFound.WithInternal(err)
+		}
+
+		return nil, sharedErrors.ErrInternal.WithInternal(err)
+	}
+
+
+	return res, nil
+}
+
+
+func (r *userQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllUsers) ([]*db.GetUsersActiveRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetUsersActiveParams{
@@ -75,20 +86,14 @@ func (r *userQueryRepository) FindByActive(ctx context.Context, req *requests.Fi
 	res, err := r.db.GetUsersActive(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, user_errors.ErrFindActiveUsers
+		return nil, user_errors.ErrFindActiveUsers.WithInternal(err)
 	}
 
-	var totalCount int
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
 
-	return r.mapping.ToUsersRecordActivePagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *userQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllUsers) ([]*record.UserRecord, *int, error) {
+func (r *userQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllUsers) ([]*db.GetUserTrashedRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetUserTrashedParams{
@@ -100,29 +105,41 @@ func (r *userQueryRepository) FindByTrashed(ctx context.Context, req *requests.F
 	res, err := r.db.GetUserTrashed(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, user_errors.ErrFindTrashedUsers
+		return nil, user_errors.ErrFindTrashedUsers.WithInternal(err)
 	}
 
-	var totalCount int
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
 
-	return r.mapping.ToUsersRecordTrashedPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *userQueryRepository) FindByEmail(ctx context.Context, email string) (*record.UserRecord, error) {
+func (r *userQueryRepository) FindByEmail(ctx context.Context, email string) (*db.User, error) {
 	res, err := r.db.GetUserByEmail(ctx, email)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, user_errors.ErrUserNotFound
+			return nil, user_errors.ErrUserNotFound.WithInternal(err)
 		}
 
-		return nil, user_errors.ErrUserNotFound
+		return nil, sharedErrors.ErrInternal.WithInternal(err)
 	}
 
-	return r.mapping.ToUserRecord(res), nil
+
+	return res, nil
 }
+
+
+func (r *userQueryRepository) FindByEmailWithPassword(ctx context.Context, email string) (*db.GetUserByEmailWithPasswordRow, error) {
+	res, err := r.db.GetUserByEmailWithPassword(ctx, email)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, user_errors.ErrUserNotFound.WithInternal(err)
+		}
+
+		return nil, sharedErrors.ErrInternal.WithInternal(err)
+	}
+
+
+	return res, nil
+}
+

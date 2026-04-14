@@ -1,30 +1,37 @@
 package service
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_business/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_business/internal/redis"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_business/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_business/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 )
 
 type Service struct {
-	MerchantBusinessCommand MerchantBusinessCommandService
 	MerchantBusinessQuery   MerchantBusinessQueryService
+	MerchantBusinessCommand MerchantBusinessCommandService
 }
 
 type Deps struct {
-	ErrorHandler *errorhandler.ErrorHandler
-	Mencache     *mencache.Mencache
-	Repositories *repository.Repositories
-	Logger       logger.LoggerInterface
+	Cache         *mencache.Mencache
+	Repository    *repository.Repositories
+	Logger        logger.LoggerInterface
+	Observability observability.TraceLoggerObservability
 }
 
 func NewService(deps *Deps) *Service {
-	mapper := response_service.NewMerchantBusinessResponseMapper()
-
 	return &Service{
-		MerchantBusinessCommand: NewMerchantBusinessCommandService(deps.ErrorHandler.MerchantBusinessCommandError, deps.Mencache.MerchantBusinessCommandCache, deps.Repositories.MerchantQuery, deps.Repositories.MerchantBusinessCmd, deps.Logger, mapper),
-		MerchantBusinessQuery:   NewMerchantBusinessQueryService(deps.Mencache.MerchantBusinessQueryCache, deps.ErrorHandler.MerchantBusinessQueryError, deps.Repositories.MerchantBusinessQuery, deps.Logger, mapper),
+		MerchantBusinessQuery: NewMerchantBusinessQueryService(&MerchantBusinessQueryServiceDeps{
+			Observability:              deps.Observability,
+			Cache:                      deps.Cache.MerchantBusinessQueryCache,
+			MerchantBusinessRepository: deps.Repository.MerchantBusinessQuery,
+			Logger:                     deps.Logger,
+		}),
+		MerchantBusinessCommand: NewMerchantBusinessCommandService(&MerchantBusinessCommandServiceDeps{
+			Observability:              deps.Observability,
+			Cache:                      deps.Cache.MerchantBusinessCommandCache,
+			MerchantBusinessRepository: deps.Repository.MerchantBusinessCommand,
+			Logger:                     deps.Logger,
+		}),
 	}
 }

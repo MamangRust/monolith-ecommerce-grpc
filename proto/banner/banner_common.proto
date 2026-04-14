@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/wrappers.proto";
+import "common/api.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindByIdBannerRequest {
+    int32 id = 1;
+}
+
+// Entity Messages
+message BannerResponse {
+    int32 banner_id = 1;
+    string name = 2;
+    string start_date = 3;
+    string end_date = 4;
+    string start_time = 5;
+    string end_time = 6;
+    bool is_active = 7;
+    string created_at = 8;
+    string updated_at = 9;
+}
+  
+message BannerResponseDeleteAt {
+    int32 banner_id = 1;
+    string name = 2;
+    string start_date = 3;
+    string end_date = 4;
+    string start_time = 5;
+    string end_time = 6;
+    bool is_active = 7;
+    string created_at = 8;
+    string updated_at = 9;
+    google.protobuf.StringValue deleted_at = 10; 
+}
+
+// API Response Wrappers
+message ApiResponseBanner {
+    string status = 1;
+    string message = 2;
+    BannerResponse data = 3;
+}
+  
+message ApiResponseBannerDeleteAt {
+    string status = 1;
+    string message = 2;
+    BannerResponseDeleteAt data = 3;
+}
+  
+message ApiResponsesBanner {
+    string status = 1;
+    string message = 2;
+    repeated BannerResponse data = 3;
+}
+  
+message ApiResponseBannerDelete {
+    string status = 1;
+    string message = 2;
+}
+  
+message ApiResponseBannerAll {
+    string status = 1;
+    string message = 2;
+}
+  
+message ApiResponsePaginationBannerDeleteAt {
+    string status = 1;
+    string message = 2;
+    repeated BannerResponseDeleteAt data = 3;
+    PaginationMeta pagination = 4;
+}
+  
+message ApiResponsePaginationBanner {
+    string status = 1;
+    string message = 2;
+    repeated BannerResponse data = 3;
+    PaginationMeta pagination = 4;
+}

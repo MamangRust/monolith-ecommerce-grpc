@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/internal/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 )
 
 type Deps struct {
@@ -11,11 +12,13 @@ type Deps struct {
 }
 
 type Handler struct {
-	MerchantPolicy MerchantPoliciesHandleGrpc
+	MerchantPolicyQuery   pb.MerchantPolicyQueryServiceServer
+	MerchantPolicyCommand pb.MerchantPolicyCommandServiceServer
 }
 
 func NewHandler(deps *Deps) *Handler {
 	return &Handler{
-		MerchantPolicy: NewMerchantPolicyHandleGrpc(deps.Service, deps.Logger),
+		MerchantPolicyQuery:   NewMerchantPolicyQueryHandler(deps.Service.MerchantPoliciesQuery, deps.Logger),
+		MerchantPolicyCommand: NewMerchantPolicyCommandHandler(deps.Service.MerchantPoliciesCommand, deps.Logger),
 	}
 }

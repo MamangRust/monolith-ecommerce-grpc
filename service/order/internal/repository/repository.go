@@ -2,7 +2,6 @@ package repository
 
 import (
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type Repositories struct {
@@ -20,27 +19,19 @@ type Repositories struct {
 }
 
 func NewRepositories(DB *db.Queries) *Repositories {
-	mapperOrder := recordmapper.NewOrderRecordMapper()
-	mapperOrderItem := recordmapper.NewOrderItemRecordMapper()
-	mapperProduct := recordmapper.NewProductRecordMapper()
-	mapperMerchant := recordmapper.NewMerchantRecordMapper()
-	mapperUser := recordmapper.NewUserRecordMapper()
-	mapperShipping := recordmapper.NewShippingAddressRecordMapper()
-
 	return &Repositories{
-		MerchantQuery:    NewMerchantQueryRepository(DB, mapperMerchant),
-		ProductQuery:     NewProductQueryRepository(DB, mapperProduct),
-		ProductCommand:   NewProductCommandRepository(DB, mapperProduct),
-		OrderItemQuery:   NewOrderItemQueryRepository(DB, mapperOrderItem),
-		OrderItemCommand: NewOrderItemCommandRepository(DB, mapperOrderItem),
-		OrderQuery:       NewOrderQueryRepository(DB, mapperOrder),
-		OrderCommand:     NewOrderCommandRepository(DB, mapperOrder),
-		UserQuery:        NewUserQueryRepository(DB, mapperUser),
-		ShippingAddress:  NewShippingAddressCommandRepository(DB, mapperShipping),
-		OrderStats:       NewOrderStatsRepository(DB, mapperOrder),
+		MerchantQuery:    NewMerchantQueryRepository(DB),
+		ProductQuery:     NewProductQueryRepository(DB),
+		ProductCommand:   NewProductCommandRepository(DB),
+		OrderItemQuery:   NewOrderItemQueryRepository(DB),
+		OrderItemCommand: NewOrderItemCommandRepository(DB),
+		OrderQuery:       NewOrderQueryRepository(DB),
+		OrderCommand:     NewOrderCommandRepository(DB),
+		UserQuery:        NewUserQueryRepository(DB),
+		ShippingAddress:  NewShippingAddressCommandRepository(DB),
+		OrderStats:       NewOrderStatsRepository(DB),
 		OrderStatsByMerchant: NewOrderStatsByMerchantRepository(
 			DB,
-			mapperOrder,
 		),
 	}
 }

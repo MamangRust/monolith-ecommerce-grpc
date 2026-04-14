@@ -2,277 +2,243 @@ package service
 
 import (
 	"context"
-	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/errorhandler"
+	"github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/repository"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel"
+	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
 type sliderCommandService struct {
-	errorhandler            errorhandler.SliderCommandError
-	trace                   trace.Tracer
-	sliderCommandRepository repository.SliderCommandRepository
-	logger                  logger.LoggerInterface
-	mapping                 response_service.SliderResponseMapper
-	requestCounter          *prometheus.CounterVec
-	requestDuration         *prometheus.HistogramVec
+	observability    observability.TraceLoggerObservability
+	cache            cache.SliderCommandCache
+	sliderRepository repository.SliderCommandRepository
+	logger           logger.LoggerInterface
 }
 
-func NewSliderCommandService(
-	errorhandler errorhandler.SliderCommandError,
-	sliderCommandRepository repository.SliderCommandRepository, logger logger.LoggerInterface, mapping response_service.SliderResponseMapper) *sliderCommandService {
-	requestCounter := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "slider_command_service_request_count",
-			Help: "Total number of requests to the SliderCommandService",
-		},
-		[]string{"method", "status"},
-	)
+type SliderCommandServiceDeps struct {
+	Observability observability.TraceLoggerObservability
+	Cache         cache.SliderCommandCache
+	Repositories  repository.SliderCommandRepository
+	Logger        logger.LoggerInterface
+}
 
-	requestDuration := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "slider_command_service_request_duration",
-			Help:    "Histogram of request durations for the SliderCommandService",
-			Buckets: prometheus.DefBuckets,
-		},
-		[]string{"method", "status"},
-	)
-
-	prometheus.MustRegister(requestCounter, requestDuration)
-
+func NewSliderCommandService(deps *SliderCommandServiceDeps) SliderCommandService {
 	return &sliderCommandService{
-		errorhandler:            errorhandler,
-		trace:                   otel.Tracer("slider-command-service"),
-		sliderCommandRepository: sliderCommandRepository,
-		logger:                  logger,
-		mapping:                 mapping,
-		requestCounter:          requestCounter,
-		requestDuration:         requestDuration,
+		observability:    deps.Observability,
+		cache:            deps.Cache,
+		sliderRepository: deps.Repositories,
+		logger:           deps.Logger,
 	}
 }
 
-func (s *sliderCommandService) CreateSlider(ctx context.Context, req *requests.CreateSliderRequest) (*response.SliderResponse, *response.ErrorResponse) {
+func (s *sliderCommandService) CreateSlider(ctx context.Context, req *requests.CreateSliderRequest) (*db.CreateSliderRow, error) {
 	const method = "CreateSlider"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("slider.name", req.Nama))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.String("slider", req.Nama))
 
 	defer func() {
 		end(status)
 	}()
 
-	s.logger.Debug("Creating new slider")
-
-	slider, err := s.sliderCommandRepository.CreateSlider(ctx, req)
-
+	slider, err := s.sliderRepository.CreateSlider(ctx, req)
 	if err != nil {
-		return s.errorhandler.HandleCreateSliderError(
-			err, method, "FAILED_CREATE_SLIDER", span, &status, zap.Error(err),
+		status = "error"
+		return errorhandler.HandleError[*db.CreateSliderRow](
+			s.logger,
+			err,
+			method,
+			span,
+			zap.String("slider", req.Nama),
 		)
 	}
 
-	so := s.mapping.ToSliderResponse(slider)
+	s.cache.InvalidateSliderCache(ctx)
 
-	logSuccess("Successfully created new slider", zap.Int("slider.id", slider.ID), zap.Bool("success", true))
+	logSuccess("Successfully created slider",
+		zap.Int("slider_id", int(slider.SliderID)),
+		zap.String("slider_name", slider.Name))
 
-	return so, nil
+	return slider, nil
 }
 
-func (s *sliderCommandService) UpdateSlider(ctx context.Context, req *requests.UpdateSliderRequest) (*response.SliderResponse, *response.ErrorResponse) {
+func (s *sliderCommandService) UpdateSlider(ctx context.Context, req *requests.UpdateSliderRequest) (*db.UpdateSliderRow, error) {
 	const method = "UpdateSlider"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("slider.name", req.Nama), attribute.Int("slider.id", *req.ID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("slider_id", *req.ID),
+		attribute.String("new_name", req.Nama))
 
 	defer func() {
 		end(status)
 	}()
 
-	slider, err := s.sliderCommandRepository.UpdateSlider(ctx, req)
-
+	slider, err := s.sliderRepository.UpdateSlider(ctx, req)
 	if err != nil {
-		return s.errorhandler.HandleUpdateSliderError(
-			err, method, "FAILED_UPDATE_SLIDER", span, &status, zap.Error(err),
+		status = "error"
+		return errorhandler.HandleError[*db.UpdateSliderRow](
+			s.logger,
+			err,
+			method,
+			span,
+			zap.Int("slider_id", *req.ID),
+			zap.String("new_name", req.Nama),
 		)
 	}
 
-	so := s.mapping.ToSliderResponse(slider)
+	s.cache.InvalidateSliderCache(ctx)
 
-	logSuccess("Successfully updated slider", zap.Int("slider.id", slider.ID), zap.Bool("success", true))
+	logSuccess("Successfully updated slider",
+		zap.Int("slider_id", int(slider.SliderID)),
+		zap.String("slider_name", slider.Name))
 
-	return so, nil
+	return slider, nil
 }
 
-func (s *sliderCommandService) TrashedSlider(ctx context.Context, slider_id int) (*response.SliderResponseDeleteAt, *response.ErrorResponse) {
-	const method = "TrashedSlider"
+func (s *sliderCommandService) TrashSlider(ctx context.Context, slider_id int) (*db.Slider, error) {
+	const method = "TrashSlider"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("slider.id", slider_id))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("slider_id", slider_id))
 
 	defer func() {
 		end(status)
 	}()
 
-	slider, err := s.sliderCommandRepository.TrashSlider(ctx, slider_id)
-
+	slider, err := s.sliderRepository.TrashSlider(ctx, slider_id)
 	if err != nil {
-		return s.errorhandler.HandleTrashedSliderError(err, method, "FAILED_TRASH_SLIDER", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.Slider](
+			s.logger,
+			err,
+			method,
+			span,
+			zap.Int("slider_id", slider_id),
+		)
 	}
 
-	so := s.mapping.ToSliderResponseDeleteAt(slider)
+	s.cache.InvalidateSliderCache(ctx)
 
-	logSuccess("Successfully trashed slider", zap.Int("slider.id", slider.ID), zap.Bool("success", true))
+	logSuccess("Successfully trashed slider",
+		zap.Int("slider_id", int(slider.SliderID)))
 
-	return so, nil
+	return slider, nil
 }
 
-func (s *sliderCommandService) RestoreSlider(ctx context.Context, sliderID int) (*response.SliderResponseDeleteAt, *response.ErrorResponse) {
+func (s *sliderCommandService) RestoreSlider(ctx context.Context, sliderID int) (*db.Slider, error) {
 	const method = "RestoreSlider"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("slider.id", sliderID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("sliderID", sliderID))
 
 	defer func() {
 		end(status)
 	}()
 
-	slider, err := s.sliderCommandRepository.RestoreSlider(ctx, sliderID)
-
+	slider, err := s.sliderRepository.RestoreSlider(ctx, sliderID)
 	if err != nil {
-		return s.errorhandler.HandleRestoreSliderError(err, method, "FAILED_RESTORE_SLIDER", span, &status, zap.Error(err))
-	}
-
-	so := s.mapping.ToSliderResponseDeleteAt(slider)
-
-	logSuccess("Successfully restored slider", zap.Int("slider.id", slider.ID), zap.Bool("success", true))
-
-	return so, nil
-}
-
-func (s *sliderCommandService) DeleteSliderPermanent(ctx context.Context, sliderID int) (bool, *response.ErrorResponse) {
-	const method = "DeleteSliderPermanent"
-
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("slider.id", sliderID))
-
-	defer func() {
-		end(status)
-	}()
-
-	success, err := s.sliderCommandRepository.DeleteSliderPermanently(ctx, sliderID)
-	if err != nil {
-		return s.errorhandler.HandleDeleteSliderError(
+		status = "error"
+		return errorhandler.HandleError[*db.Slider](
+			s.logger,
 			err,
 			method,
-			"FAILED_DELETE_PERMANENT_SLIDER",
 			span,
-			&status,
-			zap.Error(err),
+			zap.Int("sliderID", sliderID),
 		)
 	}
 
-	logSuccess("Successfully permanently deleted slider", zap.Int("slider.id", sliderID), zap.Bool("success", success))
+	s.cache.InvalidateSliderCache(ctx)
+
+	logSuccess("Successfully restored slider",
+		zap.Int("slider_id", int(slider.SliderID)))
+
+	return slider, nil
+}
+
+func (s *sliderCommandService) DeleteSliderPermanently(ctx context.Context, sliderID int) (bool, error) {
+	const method = "DeleteSliderPermanently"
+
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("sliderID", sliderID))
+
+	defer func() {
+		end(status)
+	}()
+
+	success, err := s.sliderRepository.DeleteSliderPermanently(ctx, sliderID)
+	if err != nil {
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			err,
+			method,
+			span,
+			zap.Int("sliderID", sliderID),
+		)
+	}
+
+	s.cache.InvalidateSliderCache(ctx)
+
+	logSuccess("Successfully permanently deleted slider",
+		zap.Int("sliderID", sliderID))
 
 	return success, nil
 }
 
-func (s *sliderCommandService) RestoreAllSliders(ctx context.Context) (bool, *response.ErrorResponse) {
+func (s *sliderCommandService) RestoreAllSliders(ctx context.Context) (bool, error) {
 	const method = "RestoreAllSliders"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.sliderCommandRepository.RestoreAllSlider(ctx)
-
+	success, err := s.sliderRepository.RestoreAllSlider(ctx)
 	if err != nil {
-		return s.errorhandler.HandleRestoreAllSliderError(
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
 			err,
 			method,
-			"FAILED_RESTORE_ALL_SLIDERS",
 			span,
-			&status,
-			zap.Error(err),
 		)
 	}
 
-	logSuccess("All trashed sliders restored successfully", zap.Bool("success", success))
+	s.cache.InvalidateSliderCache(ctx)
+	logSuccess("Successfully restored all trashed sliders")
 
 	return success, nil
 }
 
-func (s *sliderCommandService) DeleteAllSlidersPermanent(ctx context.Context) (bool, *response.ErrorResponse) {
+func (s *sliderCommandService) DeleteAllPermanentSlider(ctx context.Context) (bool, error) {
 	const method = "DeleteAllSlidersPermanent"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.sliderCommandRepository.DeleteAllPermanentSlider(ctx)
-
+	success, err := s.sliderRepository.DeleteAllPermanentSlider(ctx)
 	if err != nil {
-		return s.errorhandler.HandleDeleteAllSliderError(
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
 			err,
 			method,
-			"FAILED_DELETE_ALL_PERMANENT_SLIDERS",
 			span,
-			&status,
-			zap.Error(err),
 		)
 	}
 
-	logSuccess("All trashed sliders permanently deleted successfully", zap.Bool("success", success))
+	s.cache.InvalidateSliderCache(ctx)
+	logSuccess("Successfully permanently deleted all trashed sliders")
 
 	return success, nil
-}
-
-func (s *sliderCommandService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
-	context.Context,
-	trace.Span,
-	func(string),
-	string,
-	func(string, ...zap.Field),
-) {
-	start := time.Now()
-	status := "success"
-
-	ctx, span := s.trace.Start(ctx, method)
-
-	if len(attrs) > 0 {
-		span.SetAttributes(attrs...)
-	}
-
-	span.AddEvent("Start: " + method)
-
-	s.logger.Debug("Start: " + method)
-
-	end := func(status string) {
-		s.recordMetrics(method, status, start)
-		code := codes.Ok
-		if status != "success" {
-			code = codes.Error
-		}
-		span.SetStatus(code, status)
-		span.End()
-	}
-
-	logSuccess := func(msg string, fields ...zap.Field) {
-		span.AddEvent(msg)
-		s.logger.Debug(msg, fields...)
-	}
-
-	return ctx, span, end, status, logSuccess
-}
-func (s *sliderCommandService) recordMetrics(method string, status string, start time.Time) {
-	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

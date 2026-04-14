@@ -3,26 +3,24 @@ package repository
 import (
 	"context"
 
+	"database/sql"
+
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	merchantaward_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant_award"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type merchantAwardQueryRepository struct {
-	db      *db.Queries
-	mapping recordmapper.MerchantAwardMapping
+	db *db.Queries
 }
 
-func NewMerchantAwardQueryRepository(db *db.Queries, mapping recordmapper.MerchantAwardMapping) *merchantAwardQueryRepository {
+func NewMerchantAwardQueryRepository(db *db.Queries) *merchantAwardQueryRepository {
 	return &merchantAwardQueryRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *merchantAwardQueryRepository) FindAllMerchants(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantAwardRecord, *int, error) {
+func (r *merchantAwardQueryRepository) FindAllMerchants(ctx context.Context, req *requests.FindAllMerchant) ([]*db.GetMerchantCertificationsAndAwardsRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantCertificationsAndAwardsParams{
@@ -34,21 +32,13 @@ func (r *merchantAwardQueryRepository) FindAllMerchants(ctx context.Context, req
 	res, err := r.db.GetMerchantCertificationsAndAwards(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, merchantaward_errors.ErrFindAllMerchantAwards
+		return nil, merchantaward_errors.ErrFindAllMerchantAwards.WithInternal(err)
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToMerchantAwardsRecordPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *merchantAwardQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantAwardRecord, *int, error) {
+func (r *merchantAwardQueryRepository) FindByActive(ctx context.Context, req *requests.FindAllMerchant) ([]*db.GetMerchantCertificationsAndAwardsActiveRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantCertificationsAndAwardsActiveParams{
@@ -60,21 +50,13 @@ func (r *merchantAwardQueryRepository) FindByActive(ctx context.Context, req *re
 	res, err := r.db.GetMerchantCertificationsAndAwardsActive(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, merchantaward_errors.ErrFindByActiveMerchantAwards
+		return nil, merchantaward_errors.ErrFindByActiveMerchantAwards.WithInternal(err)
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToMerchantAwardsRecordActivePagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *merchantAwardQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*record.MerchantAwardRecord, *int, error) {
+func (r *merchantAwardQueryRepository) FindByTrashed(ctx context.Context, req *requests.FindAllMerchant) ([]*db.GetMerchantCertificationsAndAwardsTrashedRow, error) {
 	offset := (req.Page - 1) * req.PageSize
 
 	reqDb := db.GetMerchantCertificationsAndAwardsTrashedParams{
@@ -86,26 +68,21 @@ func (r *merchantAwardQueryRepository) FindByTrashed(ctx context.Context, req *r
 	res, err := r.db.GetMerchantCertificationsAndAwardsTrashed(ctx, reqDb)
 
 	if err != nil {
-		return nil, nil, merchantaward_errors.ErrFindByTrashedMerchantAwards
+		return nil, merchantaward_errors.ErrFindByTrashedMerchantAwards.WithInternal(err)
 	}
 
-	var totalCount int
-
-	if len(res) > 0 {
-		totalCount = int(res[0].TotalCount)
-	} else {
-		totalCount = 0
-	}
-
-	return r.mapping.ToMerchantAwardsRecordTrashedPagination(res), &totalCount, nil
+	return res, nil
 }
 
-func (r *merchantAwardQueryRepository) FindById(ctx context.Context, user_id int) (*record.MerchantAwardRecord, error) {
+func (r *merchantAwardQueryRepository) FindById(ctx context.Context, user_id int) (*db.GetMerchantCertificationOrAwardRow, error) {
 	res, err := r.db.GetMerchantCertificationOrAward(ctx, int32(user_id))
 
 	if err != nil {
-		return nil, merchantaward_errors.ErrFindByIdMerchantAward
+		if err == sql.ErrNoRows {
+			return nil, merchantaward_errors.ErrMerchantAwardNotFound.WithInternal(err)
+		}
+		return nil, merchantaward_errors.ErrFindByIdMerchantAward.WithInternal(err)
 	}
 
-	return r.mapping.ToMerchantAwardRecord(res), nil
+	return res, nil
 }

@@ -2,257 +2,218 @@ package service
 
 import (
 	"context"
-	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-role/internal/redis"
+	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/repository"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel"
+	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors/role_errors"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
 type roleCommandService struct {
-	errorhandler    errorhandler.RoleCommandErrorHandler
-	mencache        mencache.RoleCommandCache
-	trace           trace.Tracer
-	roleCommand     repository.RoleCommandRepository
-	logger          logger.LoggerInterface
-	mapping         response_service.RoleResponseMapper
-	requestCounter  *prometheus.CounterVec
-	requestDuration *prometheus.HistogramVec
+	observability  observability.TraceLoggerObservability
+	cache          cache.RoleCommandCache
+	roleRepository repository.RoleCommandRepository
+	logger         logger.LoggerInterface
 }
 
-func NewRoleCommandService(errorhandler errorhandler.RoleCommandErrorHandler,
-	mencache mencache.RoleCommandCache, roleCommand repository.RoleCommandRepository, logger logger.LoggerInterface, mapping response_service.RoleResponseMapper) *roleCommandService {
-	requestCounter := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "role_command_service_request_total",
-			Help: "Total number of requests to the RoleCommandService",
-		},
-		[]string{"method", "status"},
-	)
+type RoleCommandServiceDeps struct {
+	Observability  observability.TraceLoggerObservability
+	Cache          cache.RoleCommandCache
+	RoleRepository repository.RoleCommandRepository
+	Logger         logger.LoggerInterface
+}
 
-	requestDuration := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "role_command_service_request_duration_seconds",
-			Help:    "Histogram of request durations for the RoleCommandService",
-			Buckets: prometheus.DefBuckets,
-		},
-		[]string{"method", "status"},
-	)
-
-	prometheus.MustRegister(requestCounter, requestDuration)
-
+func NewRoleCommandService(deps *RoleCommandServiceDeps) RoleCommandService {
 	return &roleCommandService{
-		errorhandler:    errorhandler,
-		mencache:        mencache,
-		trace:           otel.Tracer("role-command-service"),
-		roleCommand:     roleCommand,
-		logger:          logger,
-		mapping:         mapping,
-		requestCounter:  requestCounter,
-		requestDuration: requestDuration,
+		observability:  deps.Observability,
+		cache:          deps.Cache,
+		roleRepository: deps.RoleRepository,
+		logger:         deps.Logger,
 	}
 }
 
-func (s *roleCommandService) CreateRole(ctx context.Context, request *requests.CreateRoleRequest) (*response.RoleResponse, *response.ErrorResponse) {
+func (s *roleCommandService) CreateRole(ctx context.Context, request *requests.CreateRoleRequest) (*db.Role, error) {
 	const method = "CreateRole"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.String("name", request.Name))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method, attribute.String("name", request.Name))
 
 	defer func() {
 		end(status)
 	}()
 
-	role, err := s.roleCommand.CreateRole(ctx, request)
-
+	role, err := s.roleRepository.CreateRole(ctx, request)
 	if err != nil {
-		return s.errorhandler.HandleCreateRoleError(err, method, "FAILED_CREATE_ROLE", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.Role](
+			s.logger,
+			role_errors.ErrCreateRole,
+			method,
+			span,
+			zap.String("name", request.Name),
+		)
 	}
 
-	so := s.mapping.ToRoleResponse(role)
+	logSuccess("Successfully created role", zap.Int32("role.id", role.RoleID))
 
-	logSuccess("Successfully created role", zap.Int("role.id", role.ID), zap.Bool("success", true))
-
-	return so, nil
+	return role, nil
 }
 
-func (s *roleCommandService) UpdateRole(ctx context.Context, request *requests.UpdateRoleRequest) (*response.RoleResponse, *response.ErrorResponse) {
+func (s *roleCommandService) UpdateRole(ctx context.Context, request *requests.UpdateRoleRequest) (*db.Role, error) {
 	const method = "UpdateRole"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("id", *request.ID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method, attribute.Int("id", *request.ID))
 
 	defer func() {
 		end(status)
 	}()
 
-	role, err := s.roleCommand.UpdateRole(ctx, request)
+	role, err := s.roleRepository.UpdateRole(ctx, request)
 	if err != nil {
-		return s.errorhandler.HandleUpdateRoleError(err, method, "FAILED_UPDATE_ROLE", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.Role](
+			s.logger,
+			role_errors.ErrUpdateRole,
+			method,
+			span,
+			zap.Int("role.id", *request.ID),
+		)
 	}
 
-	so := s.mapping.ToRoleResponse(role)
+	logSuccess("Successfully updated role", zap.Int32("role.id", role.RoleID))
 
-	s.mencache.DeleteCachedRole(ctx, *request.ID)
-
-	logSuccess("Successfully updated role", zap.Int("role.id", role.ID), zap.Bool("success", true))
-
-	return so, nil
+	return role, nil
 }
 
-func (s *roleCommandService) TrashedRole(ctx context.Context, id int) (*response.RoleResponse, *response.ErrorResponse) {
+func (s *roleCommandService) TrashedRole(ctx context.Context, id int) (*db.Role, error) {
 	const method = "TrashedRole"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("id", id))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method, attribute.Int("id", id))
 
 	defer func() {
 		end(status)
 	}()
 
-	role, err := s.roleCommand.TrashedRole(ctx, id)
-
+	role, err := s.roleRepository.TrashedRole(ctx, id)
 	if err != nil {
-		return s.errorhandler.HandleTrashedRoleError(err, method, "FAILED_TRASH_ROLE", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.Role](
+			s.logger,
+			role_errors.ErrTrashedRole,
+			method,
+			span,
+			zap.Int("role.id", id),
+		)
 	}
 
-	so := s.mapping.ToRoleResponse(role)
+	logSuccess("Successfully trashed role", zap.Int32("role.id", role.RoleID))
 
-	s.mencache.DeleteCachedRole(ctx, id)
-
-	logSuccess("Successfully trashed role", zap.Int("role.id", role.ID), zap.Bool("success", true))
-
-	return so, nil
+	return role, nil
 }
 
-func (s *roleCommandService) RestoreRole(ctx context.Context, id int) (*response.RoleResponse, *response.ErrorResponse) {
+func (s *roleCommandService) RestoreRole(ctx context.Context, id int) (*db.Role, error) {
 	const method = "RestoreRole"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("id", id))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method, attribute.Int("id", id))
 
 	defer func() {
 		end(status)
 	}()
 
-	role, err := s.roleCommand.RestoreRole(ctx, id)
-
+	role, err := s.roleRepository.RestoreRole(ctx, id)
 	if err != nil {
-		return s.errorhandler.HandleRestoreRoleError(err, method, "FAILED_RESTORE_ROLE", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.Role](
+			s.logger,
+			role_errors.ErrRestoreRole,
+			method,
+			span,
+			zap.Int("role.id", id),
+		)
 	}
 
-	so := s.mapping.ToRoleResponse(role)
+	logSuccess("Successfully restored role", zap.Int32("role.id", role.RoleID))
 
-	s.mencache.DeleteCachedRole(ctx, id)
-
-	logSuccess("Successfully restored role", zap.Int("role.id", role.ID), zap.Bool("success", true))
-
-	return so, nil
+	return role, nil
 }
 
-func (s *roleCommandService) DeleteRolePermanent(ctx context.Context, id int) (bool, *response.ErrorResponse) {
+func (s *roleCommandService) DeleteRolePermanent(ctx context.Context, id int) (bool, error) {
 	const method = "DeleteRolePermanent"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("id", id))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method, attribute.Int("id", id))
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.roleCommand.DeleteRolePermanent(ctx, id)
+	success, err := s.roleRepository.DeleteRolePermanent(ctx, id)
 	if err != nil {
-		return s.errorhandler.HandleDeleteRolePermanentError(err, method, "FAILED_DELETE_ROLE_PERMANENT", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			role_errors.ErrDeleteRolePermanent,
+			method,
+			span,
+			zap.Int("role.id", id),
+		)
 	}
 
-	logSuccess("Successfully deleted role permanently", zap.Int("role.id", id), zap.Bool("success", success))
+	logSuccess("Successfully deleted role permanently", zap.Int("role.id", id))
 
 	return success, nil
 }
 
-func (s *roleCommandService) RestoreAllRole(ctx context.Context) (bool, *response.ErrorResponse) {
+func (s *roleCommandService) RestoreAllRole(ctx context.Context) (bool, error) {
 	const method = "RestoreAllRole"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.roleCommand.RestoreAllRole(ctx)
+	success, err := s.roleRepository.RestoreAllRole(ctx)
 	if err != nil {
-		return s.errorhandler.HandleRestoreAllRoleError(err, method, "FAILED_RESTORE_ALL_ROLE", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			role_errors.ErrRestoreAllRoles,
+			method,
+			span,
+		)
 	}
 
-	logSuccess("Successfully restored all roles", zap.Bool("success", success))
+	logSuccess("Successfully restored all roles")
 
 	return success, nil
 }
 
-func (s *roleCommandService) DeleteAllRolePermanent(ctx context.Context) (bool, *response.ErrorResponse) {
+func (s *roleCommandService) DeleteAllRolePermanent(ctx context.Context) (bool, error) {
 	const method = "DeleteAllRolePermanent"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.roleCommand.DeleteAllRolePermanent(ctx)
-
+	success, err := s.roleRepository.DeleteAllRolePermanent(ctx)
 	if err != nil {
-		return s.errorhandler.HandleDeleteAllRolePermanentError(err, method, "FAILED_DELETE_ALL_ROLE_PERMANENT", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			role_errors.ErrDeleteAllRoles,
+			method,
+			span,
+		)
 	}
 
-	logSuccess("Successfully deleted all roles permanently", zap.Bool("success", success))
+	logSuccess("Successfully deleted all roles permanently")
 
 	return success, nil
-}
-
-func (s *roleCommandService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
-	context.Context,
-	trace.Span,
-	func(string),
-	string,
-	func(string, ...zap.Field),
-) {
-	start := time.Now()
-	status := "success"
-
-	ctx, span := s.trace.Start(ctx, method)
-
-	if len(attrs) > 0 {
-		span.SetAttributes(attrs...)
-	}
-
-	span.AddEvent("Start: " + method)
-
-	s.logger.Debug("Start: " + method)
-
-	end := func(status string) {
-		s.recordMetrics(method, status, start)
-		code := codes.Ok
-		if status != "success" {
-			code = codes.Error
-		}
-		span.SetStatus(code, status)
-		span.End()
-	}
-
-	logSuccess := func(msg string, fields ...zap.Field) {
-		span.AddEvent(msg)
-		s.logger.Debug(msg, fields...)
-	}
-
-	return ctx, span, end, status, logSuccess
-}
-
-func (s *roleCommandService) recordMetrics(method string, status string, start time.Time) {
-	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

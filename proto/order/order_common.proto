@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package pb;
+
+import "common/api.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindByIdOrderRequest {
+    int32 id = 1;
+}
+
+message OrderResponse {
+    int32 id = 1;
+    int32 merchant_id = 2;
+    int32 user_id = 3;
+    int32 total_price = 4;
+    string created_at = 5;
+    string updated_at = 6;
+}
+  
+message OrderResponseDeleteAt {
+    int32 id = 1;
+    int32 merchant_id = 2;
+    int32 user_id = 3;
+    int32 total_price = 4;
+    string created_at = 5;
+    string updated_at = 6;
+    google.protobuf.StringValue deleted_at = 7;
+}
+
+message ApiResponseOrder {
+    string status = 1;
+    string message = 2;
+    OrderResponse data = 3;
+}
+
+message ApiResponseOrderDeleteAt{
+    string status = 1;
+    string message = 2;
+    OrderResponseDeleteAt data = 3;
+}
+
+message ApiResponsesOrder {
+    string status = 1;
+    string message = 2;
+    repeated OrderResponse data = 3;
+}
+
+message ApiResponseOrderDelete {
+    string status = 1;
+    string message = 2;
+}
+
+message ApiResponseOrderAll {
+    string status = 1;
+    string message = 2;
+}
+
+message ApiResponsePaginationOrderDeleteAt {
+    string status = 1;
+    string message = 2;
+    repeated OrderResponseDeleteAt data = 3;
+    PaginationMeta pagination = 4;
+}
+
+message ApiResponsePaginationOrder {
+    string status = 1;
+    string message = 2;
+    repeated OrderResponse data = 3;
+    PaginationMeta pagination = 4;
+}
+
+message OrderMonthlyResponse {
+    string month = 1;
+    int32 order_count = 2;
+    int32 total_revenue = 3;
+    int32 total_items_sold = 4;
+}
+  
+message OrderYearlyResponse {
+    string year = 1;
+    int32 order_count = 2;
+    int32 total_revenue = 3;
+    int32 total_items_sold = 4;
+    int32 active_cashiers = 5;
+    int32 unique_products_sold = 6;
+}
+
+message OrderMonthlyTotalRevenueResponse {
+    string year = 1;
+    string month = 2;
+    int32 order_count = 3;
+    int32 total_revenue = 4;
+    int32 total_items_sold = 5;
+}
+  
+message OrderYearlyTotalRevenueResponse {
+    string year = 1;
+    int32 order_count = 2;
+    int32 total_revenue = 3;
+    int32 total_items_sold = 4;
+    int32 active_cashiers = 5;
+    int32 unique_products_sold = 6;
+}
+
+message ApiResponseOrderMonthly {
+    string status = 1;
+    string message = 2;
+    repeated OrderMonthlyResponse data = 3;
+}
+
+message ApiResponseOrderYearly{
+    string status = 1;
+    string message = 2;
+    repeated OrderYearlyResponse data = 3;
+}
+
+message ApiResponseOrderMonthlyTotalRevenue {
+    string status = 1;
+    string message = 2;
+    repeated OrderMonthlyTotalRevenueResponse data = 3;
+}
+  
+message ApiResponseOrderYearlyTotalRevenue {
+    string status = 1;
+    string message = 2;
+    repeated OrderYearlyTotalRevenueResponse data = 3;
+}

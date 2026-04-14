@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package pb;
+
+import "common/api.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindByIdRoleRequest{
+    int32 role_id = 1;
+}
+
+message RoleResponse {
+    int32 id = 1;
+    string name = 2;
+    string created_at = 3;
+    string updated_at = 4;
+}
+
+message RoleResponseDeleteAt {
+    int32 id = 1;
+    string name = 2;
+    string created_at = 3;
+    string updated_at = 4;
+    google.protobuf.StringValue deleted_at = 5;
+}
+
+message ApiResponseRole{
+    string status = 1;
+    string message = 2;
+    RoleResponse data = 3;
+}
+
+message ApiResponsesRole{
+    string status = 1;
+    string message = 2;
+    repeated RoleResponse data = 3;
+}
+
+message ApiResponseRoleAll{
+    string status = 1;
+    string message = 2;
+}
+
+message ApiResponseRoleDelete{
+    string status = 1;
+    string message = 2;
+}
+
+message ApiResponsePaginationRole{
+    string status = 1;
+    string message = 2;
+    repeated RoleResponse data = 3;
+    PaginationMeta pagination = 4;
+}
+
+message ApiResponsePaginationRoleDeleteAt{
+    string status = 1;
+    string message = 2;
+    repeated RoleResponseDeleteAt data = 3;
+    PaginationMeta pagination = 4;
+}

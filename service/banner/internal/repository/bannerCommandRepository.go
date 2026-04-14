@@ -2,45 +2,40 @@ package repository
 
 import (
 	"context"
-	"database/sql"
-	"time"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
+	"github.com/MamangRust/monolith-ecommerce-pkg/utils"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/banner_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type bannerCommandRepository struct {
-	db      *db.Queries
-	mapping recordmapper.BannerRecordMapping
+	db *db.Queries
 }
 
-func NewBannerCommandRepository(db *db.Queries, mapping recordmapper.BannerRecordMapping) *bannerCommandRepository {
+func NewBannerCommandRepository(db *db.Queries) *bannerCommandRepository {
 	return &bannerCommandRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *bannerCommandRepository) CreateBanner(ctx context.Context, request *requests.CreateBannerRequest) (*record.BannerRecord, error) {
-	startDate, err := time.Parse("2006-01-02", request.StartDate)
+func (r *bannerCommandRepository) CreateBanner(ctx context.Context, request *requests.CreateBannerRequest) (*db.CreateBannerRow, error) {
+	startDate, err := utils.ParseDate(request.StartDate)
 	if err != nil {
 		return nil, banner_errors.ErrBannerStartDate
 	}
 
-	endDate, err := time.Parse("2006-01-02", request.EndDate)
+	endDate, err := utils.ParseDate(request.EndDate)
 	if err != nil {
 		return nil, banner_errors.ErrBannerEndDate
 	}
 
-	startTime, err := time.Parse("15:04", request.StartTime)
+	startTime, err := utils.ParseTime(request.StartTime)
 	if err != nil {
 		return nil, banner_errors.ErrBannerStartTime
 	}
 
-	endTime, err := time.Parse("15:04", request.EndTime)
+	endTime, err := utils.ParseTime(request.EndTime)
 	if err != nil {
 		return nil, banner_errors.ErrBannerEndTime
 	}
@@ -51,36 +46,36 @@ func (r *bannerCommandRepository) CreateBanner(ctx context.Context, request *req
 		EndDate:   endDate,
 		StartTime: startTime,
 		EndTime:   endTime,
-		IsActive:  sql.NullBool{Bool: request.IsActive, Valid: true},
+		IsActive:  &request.IsActive,
 	}
 
 	result, err := r.db.CreateBanner(ctx, req)
 	if err != nil {
-		return nil, banner_errors.ErrCreateBanner
+		return nil, banner_errors.ErrCreateBanner.WithInternal(err)
 	}
 
-	return r.mapping.ToBannerRecord(result), nil
+	return result, nil
 }
 
-func (r *bannerCommandRepository) UpdateBanner(ctx context.Context, request *requests.UpdateBannerRequest) (*record.BannerRecord, error) {
-	startDate, err := time.Parse("2006-01-02", request.StartDate)
+func (r *bannerCommandRepository) UpdateBanner(ctx context.Context, request *requests.UpdateBannerRequest) (*db.UpdateBannerRow, error) {
+	startDate, err := utils.ParseDate(request.StartDate)
 	if err != nil {
-		return nil, banner_errors.ErrBannerStartDate
+		return nil, banner_errors.ErrBannerStartDate.WithInternal(err)
 	}
 
-	endDate, err := time.Parse("2006-01-02", request.EndDate)
+	endDate, err := utils.ParseDate(request.EndDate)
 	if err != nil {
-		return nil, banner_errors.ErrBannerEndDate
+		return nil, banner_errors.ErrBannerEndDate.WithInternal(err)
 	}
 
-	startTime, err := time.Parse("15:04", request.StartTime)
+	startTime, err := utils.ParseTime(request.StartTime)
 	if err != nil {
-		return nil, banner_errors.ErrBannerStartTime
+		return nil, banner_errors.ErrBannerStartTime.WithInternal(err)
 	}
 
-	endTime, err := time.Parse("15:04", request.EndTime)
+	endTime, err := utils.ParseTime(request.EndTime)
 	if err != nil {
-		return nil, banner_errors.ErrBannerEndTime
+		return nil, banner_errors.ErrBannerEndTime.WithInternal(err)
 	}
 
 	req := db.UpdateBannerParams{
@@ -90,42 +85,42 @@ func (r *bannerCommandRepository) UpdateBanner(ctx context.Context, request *req
 		EndDate:   endDate,
 		StartTime: startTime,
 		EndTime:   endTime,
-		IsActive:  sql.NullBool{Bool: request.IsActive, Valid: true},
+		IsActive:  &request.IsActive,
 	}
 
 	result, err := r.db.UpdateBanner(ctx, req)
 	if err != nil {
-		return nil, banner_errors.ErrUpdateBanner
+		return nil, banner_errors.ErrUpdateBanner.WithInternal(err)
 	}
 
-	return r.mapping.ToBannerRecord(result), nil
+	return result, nil
 }
 
-func (r *bannerCommandRepository) TrashedBanner(ctx context.Context, Banner_id int) (*record.BannerRecord, error) {
-	res, err := r.db.TrashBanner(ctx, int32(Banner_id))
+func (r *bannerCommandRepository) TrashedBanner(ctx context.Context, bannerID int) (*db.Banner, error) {
+	res, err := r.db.TrashBanner(ctx, int32(bannerID))
 
 	if err != nil {
-		return nil, banner_errors.ErrTrashedBanner
+		return nil, banner_errors.ErrTrashedBanner.WithInternal(err)
 	}
 
-	return r.mapping.ToBannerRecord(res), nil
+	return res, nil
 }
 
-func (r *bannerCommandRepository) RestoreBanner(ctx context.Context, Banner_id int) (*record.BannerRecord, error) {
-	res, err := r.db.RestoreBanner(ctx, int32(Banner_id))
+func (r *bannerCommandRepository) RestoreBanner(ctx context.Context, bannerID int) (*db.Banner, error) {
+	res, err := r.db.RestoreBanner(ctx, int32(bannerID))
 
 	if err != nil {
-		return nil, banner_errors.ErrRestoreBanner
+		return nil, banner_errors.ErrRestoreBanner.WithInternal(err)
 	}
 
-	return r.mapping.ToBannerRecord(res), nil
+	return res, nil
 }
 
-func (r *bannerCommandRepository) DeleteBannerPermanent(ctx context.Context, Banner_id int) (bool, error) {
-	err := r.db.DeleteBannerPermanently(ctx, int32(Banner_id))
+func (r *bannerCommandRepository) DeleteBannerPermanent(ctx context.Context, bannerID int) (bool, error) {
+	err := r.db.DeleteBannerPermanently(ctx, int32(bannerID))
 
 	if err != nil {
-		return false, banner_errors.ErrDeleteBannerPermanent
+		return false, banner_errors.ErrDeleteBannerPermanent.WithInternal(err)
 	}
 
 	return true, nil
@@ -135,7 +130,7 @@ func (r *bannerCommandRepository) RestoreAllBanner(ctx context.Context) (bool, e
 	err := r.db.RestoreAllBanners(ctx)
 
 	if err != nil {
-		return false, banner_errors.ErrRestoreAllBanners
+		return false, banner_errors.ErrRestoreAllBanners.WithInternal(err)
 	}
 	return true, nil
 }
@@ -144,7 +139,8 @@ func (r *bannerCommandRepository) DeleteAllBannerPermanent(ctx context.Context) 
 	err := r.db.DeleteAllPermanentBanners(ctx)
 
 	if err != nil {
-		return false, banner_errors.ErrDeleteAllBanners
+		return false, banner_errors.ErrDeleteAllBanners.WithInternal(err)
 	}
 	return true, nil
 }
+

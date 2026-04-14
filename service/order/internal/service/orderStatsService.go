@@ -2,234 +2,185 @@ package service
 
 import (
 	"context"
-	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-order/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-order/internal/redis"
+	"github.com/MamangRust/monolith-ecommerce-grpc-order/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-order/internal/repository"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel"
+	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
 type orderStatsService struct {
-	errorhandler         errorhandler.OrderStatsError
-	mencache             mencache.OrderStatsCache
-	trace                trace.Tracer
+	observability        observability.TraceLoggerObservability
+	cache                cache.OrderStatsCache
 	orderStatsRepository repository.OrderStatsRepository
 	logger               logger.LoggerInterface
-	mapping              response_service.OrderResponseMapper
-	requestCounter       *prometheus.CounterVec
-	requestDuration      *prometheus.HistogramVec
 }
 
-func NewOrderStatsService(
-	errorhandler errorhandler.OrderStatsError,
-	mencache mencache.OrderStatsCache,
-	orderStatsRepository repository.OrderStatsRepository,
-	logger logger.LoggerInterface,
-	mapping response_service.OrderResponseMapper,
-) *orderStatsService {
-	requestCounter := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "order_stats_service_request_count",
-			Help: "Total number of requests to the OrderStatsService",
-		},
-		[]string{"method", "status"},
-	)
+type OrderStatsServiceDeps struct {
+	Observability        observability.TraceLoggerObservability
+	Cache                cache.OrderStatsCache
+	OrderStatsRepository repository.OrderStatsRepository
+	Logger               logger.LoggerInterface
+}
 
-	requestDuration := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "order_stats_service_request_duration",
-			Help:    "Histogram of request durations for the OrderStatsService",
-			Buckets: prometheus.DefBuckets,
-		},
-		[]string{"method", "status"},
-	)
-
-	prometheus.MustRegister(requestCounter, requestDuration)
-
+func NewOrderStatsService(deps *OrderStatsServiceDeps) OrderStatsService {
 	return &orderStatsService{
-		errorhandler:         errorhandler,
-		mencache:             mencache,
-		trace:                otel.Tracer("order-stats-service"),
-		orderStatsRepository: orderStatsRepository,
-		logger:               logger,
-		mapping:              mapping,
-		requestCounter:       requestCounter,
-		requestDuration:      requestDuration,
+		observability:        deps.Observability,
+		cache:                deps.Cache,
+		orderStatsRepository: deps.OrderStatsRepository,
+		logger:               deps.Logger,
 	}
 }
 
-func (s *orderStatsService) FindMonthlyTotalRevenue(ctx context.Context, req *requests.MonthTotalRevenue) ([]*response.OrderMonthlyTotalRevenueResponse, *response.ErrorResponse) {
+func (s *orderStatsService) FindMonthlyTotalRevenue(ctx context.Context, req *requests.MonthTotalRevenue) ([]*db.GetMonthlyTotalRevenueRow, error) {
 	const method = "FindMonthlyTotalRevenue"
 
-	year := req.Year
-	month := req.Month
-
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year), attribute.Int("month", month))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", req.Year),
+		attribute.Int("month", req.Month))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetMonthlyTotalRevenueCache(ctx, req); found {
-		logSuccess("Successfully fetched monthly total revenue from cache", zap.Int("year", year), zap.Int("month", month))
-
+	if data, found := s.cache.GetMonthlyTotalRevenueCache(ctx, req); found {
+		logSuccess("Successfully retrieved monthly total revenue from cache",
+			zap.Int("year", req.Year),
+			zap.Int("month", req.Month))
 		return data, nil
 	}
 
 	res, err := s.orderStatsRepository.GetMonthlyTotalRevenue(ctx, req)
-
 	if err != nil {
-		return s.errorhandler.HandleMonthlyTotalRevenueError(err, method, "FAILED_FIND_MONTHLY_TOTAL_REVENUE", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetMonthlyTotalRevenueRow](
+			s.logger,
+			err,
+			method,
+			span,
+			zap.Int("year", req.Year),
+			zap.Int("month", req.Month),
+		)
 	}
 
-	so := s.mapping.ToOrderMonthlyTotalRevenues(res)
+	s.cache.SetMonthlyTotalRevenueCache(ctx, req, res)
 
-	s.mencache.SetMonthlyTotalRevenueCache(ctx, req, so)
+	logSuccess("Successfully fetched monthly total revenue from repository",
+		zap.Int("year", req.Year),
+		zap.Int("month", req.Month))
 
-	logSuccess("Successfully fetched monthly total revenue", zap.Int("year", year), zap.Int("month", month))
-
-	return so, nil
+	return res, nil
 }
 
-func (s *orderStatsService) FindYearlyTotalRevenue(ctx context.Context, year int) ([]*response.OrderYearlyTotalRevenueResponse, *response.ErrorResponse) {
+func (s *orderStatsService) FindYearlyTotalRevenue(ctx context.Context, year int) ([]*db.GetYearlyTotalRevenueRow, error) {
 	const method = "FindYearlyTotalRevenue"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", year))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetYearlyTotalRevenueCache(ctx, year); found {
-		logSuccess("Successfully fetched yearly total revenue from cache", zap.Int("year", year))
-
+	if data, found := s.cache.GetYearlyTotalRevenueCache(ctx, year); found {
+		logSuccess("Successfully retrieved yearly total revenue from cache",
+			zap.Int("year", year))
 		return data, nil
 	}
 
 	res, err := s.orderStatsRepository.GetYearlyTotalRevenue(ctx, year)
-
 	if err != nil {
-		return s.errorhandler.HandleYearlyTotalRevenueError(err, method, "FAILED_FIND_YEARLY_TOTAL_REVENUE", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetYearlyTotalRevenueRow](
+			s.logger,
+			err,
+			method,
+			span,
+			zap.Int("year", year),
+		)
 	}
 
-	so := s.mapping.ToOrderYearlyTotalRevenues(res)
+	s.cache.SetYearlyTotalRevenueCache(ctx, year, res)
 
-	s.mencache.SetYearlyTotalRevenueCache(ctx, year, so)
+	logSuccess("Successfully fetched yearly total revenue from repository",
+		zap.Int("year", year))
 
-	logSuccess("Successfully fetched yearly total revenue", zap.Int("year", year))
-
-	return so, nil
+	return res, nil
 }
 
-func (s *orderStatsService) FindMonthlyOrder(ctx context.Context, year int) ([]*response.OrderMonthlyResponse, *response.ErrorResponse) {
+func (s *orderStatsService) FindMonthlyOrder(ctx context.Context, year int) ([]*db.GetMonthlyOrderRow, error) {
 	const method = "FindMonthlyOrder"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", year))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetMonthlyOrderCache(ctx, year); found {
-		logSuccess("Successfully fetched monthly orders from cache", zap.Int("year", year))
-
+	if data, found := s.cache.GetMonthlyOrderCache(ctx, year); found {
+		logSuccess("Successfully retrieved monthly orders from cache",
+			zap.Int("year", year))
 		return data, nil
 	}
 
 	res, err := s.orderStatsRepository.GetMonthlyOrder(ctx, year)
-
 	if err != nil {
-		return s.errorhandler.HandleMonthOrderStatsError(err, method, "FAILED_FIND_MONTHLY_ORDER", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetMonthlyOrderRow](
+			s.logger,
+			err,
+			method,
+			span,
+			zap.Int("year", year),
+		)
 	}
 
-	so := s.mapping.ToOrderMonthlyPrices(res)
+	s.cache.SetMonthlyOrderCache(ctx, year, res)
 
-	s.mencache.SetMonthlyOrderCache(ctx, year, so)
+	logSuccess("Successfully fetched monthly orders from repository",
+		zap.Int("year", year))
 
-	logSuccess("Successfully fetched monthly orders", zap.Int("year", year))
-
-	return so, nil
+	return res, nil
 }
 
-func (s *orderStatsService) FindYearlyOrder(ctx context.Context, year int) ([]*response.OrderYearlyResponse, *response.ErrorResponse) {
+func (s *orderStatsService) FindYearlyOrder(ctx context.Context, year int) ([]*db.GetYearlyOrderRow, error) {
 	const method = "FindYearlyOrder"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("year", year))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("year", year))
 
 	defer func() {
 		end(status)
 	}()
 
-	if data, found := s.mencache.GetYearlyOrderCache(ctx, year); found {
-		logSuccess("Successfully fetched yearly orders from cache", zap.Int("year", year))
-
+	if data, found := s.cache.GetYearlyOrderCache(ctx, year); found {
+		logSuccess("Successfully retrieved yearly orders from cache",
+			zap.Int("year", year))
 		return data, nil
 	}
 
 	res, err := s.orderStatsRepository.GetYearlyOrder(ctx, year)
-
 	if err != nil {
-		return s.errorhandler.HandleYearOrderStatsError(err, method, "FAILED_FIND_YEARLY_ORDER", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[[]*db.GetYearlyOrderRow](
+			s.logger,
+			err,
+			method,
+			span,
+			zap.Int("year", year),
+		)
 	}
 
-	so := s.mapping.ToOrderYearlyPrices(res)
+	s.cache.SetYearlyOrderCache(ctx, year, res)
 
-	s.mencache.SetYearlyOrderCache(ctx, year, so)
+	logSuccess("Successfully fetched yearly orders from repository",
+		zap.Int("year", year))
 
-	logSuccess("Successfully fetched yearly orders", zap.Int("year", year))
-
-	return so, nil
-}
-
-func (s *orderStatsService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
-	context.Context,
-	trace.Span,
-	func(string),
-	string,
-	func(string, ...zap.Field),
-) {
-	start := time.Now()
-	status := "success"
-
-	ctx, span := s.trace.Start(ctx, method)
-
-	if len(attrs) > 0 {
-		span.SetAttributes(attrs...)
-	}
-
-	span.AddEvent("Start: " + method)
-
-	s.logger.Debug("Start: " + method)
-
-	end := func(status string) {
-		s.recordMetrics(method, status, start)
-		code := codes.Ok
-		if status != "success" {
-			code = codes.Error
-		}
-		span.SetStatus(code, status)
-		span.End()
-	}
-
-	logSuccess := func(msg string, fields ...zap.Field) {
-		span.AddEvent(msg)
-		s.logger.Debug(msg, fields...)
-	}
-
-	return ctx, span, end, status, logSuccess
-}
-
-func (s *orderStatsService) recordMetrics(method string, status string, start time.Time) {
-	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
+	return res, nil
 }

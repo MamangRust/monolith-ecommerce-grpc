@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/empty.proto";
+import "shipping_address/shipping_address_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message CreateShippingAddressRequest {
+    string alamat = 2;
+    string provinsi = 3;
+    string kota = 4;
+    string courier = 5;
+    string shipping_method = 6;
+    int32 shipping_cost = 7;
+    string negara = 8;
+}
+
+message UpdateShippingAddressRequest {
+    int32 shipping_id = 1;
+    string alamat = 3;
+    string provinsi = 4;
+    string kota = 5;
+    string courier = 6;
+    string shipping_method = 7;
+    int32 shipping_cost = 8;
+    string negara = 9;
+}
+
+service ShippingCommandService {
+    rpc TrashedShipping(FindByIdShippingRequest) returns (ApiResponseShippingDeleteAt);
+    rpc RestoreShipping(FindByIdShippingRequest) returns (ApiResponseShippingDeleteAt);
+    rpc DeleteShippingPermanent(FindByIdShippingRequest) returns (ApiResponseShippingDelete);
+
+    rpc RestoreAllShipping(google.protobuf.Empty) returns (ApiResponseShippingAll);
+    rpc DeleteAllShippingPermanent(google.protobuf.Empty) returns (ApiResponseShippingAll);
+}

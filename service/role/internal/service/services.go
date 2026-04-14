@@ -1,13 +1,10 @@
 package service
 
 import (
-	"context"
-
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-role/internal/redis"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-role/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 )
 
 type Service struct {
@@ -16,18 +13,25 @@ type Service struct {
 }
 
 type Deps struct {
-	Ctx          context.Context
-	ErrorHandler *errorhandler.ErrorHandler
-	Mencache     *mencache.Mencache
-	Repositories *repository.Repositories
-	Logger       logger.LoggerInterface
+	Cache         mencache.RoleMencache
+	Repository    *repository.Repositories
+	Logger        logger.LoggerInterface
+	Observability observability.TraceLoggerObservability
 }
 
 func NewService(deps *Deps) *Service {
-	roleMapper := response_service.NewRoleResponseMapper()
-
 	return &Service{
-		RoleQuery:   NewRoleQueryService(deps.ErrorHandler.RoleQueryError, deps.Mencache.RoleQueryCache, deps.Repositories.RoleQuery, deps.Logger, roleMapper),
-		RoleCommand: NewRoleCommandService(deps.ErrorHandler.RoleCommandError, deps.Mencache.RoleCommandCache, deps.Repositories.RoleCommand, deps.Logger, roleMapper),
+		RoleQuery: NewRoleQueryService(&RoleQueryServiceDeps{
+			Observability:  deps.Observability,
+			Cache:          deps.Cache,
+			RoleRepository: deps.Repository.RoleQuery,
+			Logger:         deps.Logger,
+		}),
+		RoleCommand: NewRoleCommandService(&RoleCommandServiceDeps{
+			Observability:  deps.Observability,
+			Cache:          deps.Cache,
+			RoleRepository: deps.Repository.RoleCommand,
+			Logger:         deps.Logger,
+		}),
 	}
 }

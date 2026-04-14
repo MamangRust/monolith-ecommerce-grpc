@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package pb;
+
+import "common/api.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindByIdMerchantRequest {
+    int32 id = 1;
+}
+
+message MerchantResponse {
+    int32 id = 1;
+    int32 user_id = 2;
+    string name = 3;
+    string description = 4;
+    string address = 5;
+    string contact_email = 6;
+    string contact_phone = 7;
+    string status = 8;
+    string created_at = 9;
+    string updated_at = 10;
+}
+  
+message MerchantResponseDeleteAt {
+    int32 id = 1;
+    int32 user_id = 2;
+    string name = 3;
+    string description = 4;
+    string address = 5;
+    string contact_email = 6;
+    string contact_phone = 7;
+    string status = 8;
+    string created_at = 9;
+    string updated_at = 10;
+    google.protobuf.StringValue deleted_at = 11;
+}
+
+message ApiResponseMerchant {
+    string status = 1;
+    string message = 2;
+    MerchantResponse data = 3;
+}
+
+message ApiResponseMerchantDeleteAt{
+    string status = 1;
+    string message = 2;
+    MerchantResponseDeleteAt data = 3;
+}
+
+message ApiResponsesMerchant {
+    string status = 1;
+    string message = 2;
+    repeated MerchantResponse data = 3;
+}
+
+message ApiResponseMerchantDelete {
+    string status = 1;
+    string message = 2;
+}
+
+message ApiResponseMerchantAll {
+    string status = 1;
+    string message = 2;
+}
+
+message ApiResponsePaginationMerchantDeleteAt {
+    string status = 1;
+    string message = 2;
+    repeated MerchantResponseDeleteAt data = 3;
+    PaginationMeta pagination = 4;
+}
+
+message ApiResponsePaginationMerchant {
+    string status = 1;
+    string message = 2;
+    repeated MerchantResponse data = 3;
+    PaginationMeta pagination = 4;
+}

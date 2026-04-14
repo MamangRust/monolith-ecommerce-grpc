@@ -1,41 +1,24 @@
 package main
 
 import (
-	"context"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
-
 	"github.com/MamangRust/monolith-ecommerce-grpc-order-item/internal/apps"
-	"go.uber.org/zap"
+	"github.com/MamangRust/monolith-ecommerce-pkg/server"
 )
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	go func() {
-		sig := make(chan os.Signal, 1)
-		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-		<-sig
-
-		log.Println("Shutting down gracefully...")
-		cancel()
-	}()
-
-	server, shutdown, err := apps.NewServer(ctx)
+	srv, err := apps.NewServer(&server.Config{
+		ServiceName:    "order_item-service",
+		ServiceVersion: "1.0.0",
+		Environment:    "production",
+		OtelEndpoint:   "otel-collector:4317",
+		Port:           50056,
+	})
 
 	if err != nil {
-		server.Logger.Fatal("Failed to create server", zap.Error(err))
 		panic(err)
 	}
 
-	defer func() {
-		if err := shutdown(server.Ctx); err != nil {
-			server.Logger.Error("Failed to shutdown tracer", zap.Error(err))
-		}
-	}()
-
-	server.Run()
+	if err := srv.Run(); err != nil {
+		panic(err)
+	}
 }

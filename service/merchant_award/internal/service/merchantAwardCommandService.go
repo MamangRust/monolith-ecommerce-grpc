@@ -2,194 +2,203 @@ package service
 
 import (
 	"context"
-	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/internal/redis"
+	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/internal/repository"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel"
+	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
+	merchantaward_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant_award"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
 type merchantAwardCommandService struct {
-	errorhandler                   errorhandler.MerchantAwardCommandError
-	mencache                       mencache.MerchantAwardCommandCache
-	trace                          trace.Tracer
-	merchantAwardCommandRepository repository.MerchantAwardCommandRepository
-	logger                         logger.LoggerInterface
-	mapping                        response_service.MerchantAwardResponseMapper
-	requestCounter                 *prometheus.CounterVec
-	requestDuration                *prometheus.HistogramVec
+	observability           observability.TraceLoggerObservability
+	cache                   cache.MerchantAwardCommandCache
+	merchantAwardRepository repository.MerchantAwardCommandRepository
+	logger                  logger.LoggerInterface
 }
 
-func NewMerchantAwardCommandService(
-	errorhandler errorhandler.MerchantAwardCommandError,
-	mencache mencache.MerchantAwardCommandCache,
-	merchantAwardCommandRepositroy repository.MerchantAwardCommandRepository, logger logger.LoggerInterface, mapping response_service.MerchantAwardResponseMapper) *merchantAwardCommandService {
-	requestCounter := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "merchant_award_command_service_request_total",
-			Help: "Total number of requests to the MerchantAwardCommandService",
-		},
-		[]string{"method", "status"},
-	)
+type MerchantAwardCommandServiceDeps struct {
+	Observability           observability.TraceLoggerObservability
+	Cache                   cache.MerchantAwardCommandCache
+	MerchantAwardRepository repository.MerchantAwardCommandRepository
+	Logger                  logger.LoggerInterface
+}
 
-	requestDuration := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "merchant_award_command_service_request_duration_seconds",
-			Help:    "Histogram of request durations for the MerchantAwardCommandService",
-			Buckets: prometheus.DefBuckets,
-		},
-		[]string{"method", "status"},
-	)
-
-	prometheus.MustRegister(requestCounter, requestDuration)
-
+func NewMerchantAwardCommandService(deps *MerchantAwardCommandServiceDeps) MerchantAwardCommandService {
 	return &merchantAwardCommandService{
-		errorhandler:                   errorhandler,
-		mencache:                       mencache,
-		trace:                          otel.Tracer("merchant-award-Command-service"),
-		merchantAwardCommandRepository: merchantAwardCommandRepositroy,
-		logger:                         logger,
-		mapping:                        mapping,
-		requestCounter:                 requestCounter,
-		requestDuration:                requestDuration,
+		observability:           deps.Observability,
+		cache:                   deps.Cache,
+		merchantAwardRepository: deps.MerchantAwardRepository,
+		logger:                  deps.Logger,
 	}
 }
 
-func (s *merchantAwardCommandService) CreateMerchant(ctx context.Context, req *requests.CreateMerchantCertificationOrAwardRequest) (*response.MerchantAwardResponse, *response.ErrorResponse) {
-	const method = "CreateMerchant"
+func (s *merchantAwardCommandService) CreateMerchantAward(ctx context.Context, req *requests.CreateMerchantCertificationOrAwardRequest) (*db.CreateMerchantCertificationOrAwardRow, error) {
+	const method = "CreateMerchantAward"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchant.id", req.MerchantID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method, attribute.Int("merchant.id", req.MerchantID))
 
 	defer func() {
 		end(status)
 	}()
 
-	merchant, err := s.merchantAwardCommandRepository.CreateMerchantAward(ctx, req)
+	merchant, err := s.merchantAwardRepository.CreateMerchantAward(ctx, req)
 
 	if err != nil {
-		return s.errorhandler.HandleCreateMerchantAwardError(err, method, "FAILED_CREATE_MERCHANT_AWARD", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.CreateMerchantCertificationOrAwardRow](
+			s.logger,
+			merchantaward_errors.ErrFailedCreateMerchantAward,
+			method,
+			span,
+			zap.Error(err),
+		)
 	}
 
-	so := s.mapping.ToMerchantAwardResponse(merchant)
+	logSuccess("Merchant Award created", zap.Int("merchantAward.id", int(merchant.MerchantCertificationID)))
 
-	logSuccess("Merchant Award created", zap.Int("merchantAward.id", so.ID))
-
-	return so, nil
+	return merchant, nil
 }
 
-func (s *merchantAwardCommandService) UpdateMerchant(ctx context.Context, req *requests.UpdateMerchantCertificationOrAwardRequest) (*response.MerchantAwardResponse, *response.ErrorResponse) {
-	const method = "UpdateMerchant"
+func (s *merchantAwardCommandService) UpdateMerchantAward(ctx context.Context, req *requests.UpdateMerchantCertificationOrAwardRequest) (*db.UpdateMerchantCertificationOrAwardRow, error) {
+	const method = "UpdateMerchantAward"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantAward.id", *req.MerchantCertificationID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method, attribute.Int("merchantAward.id", *req.MerchantCertificationID))
 
 	defer func() {
 		end(status)
 	}()
 
-	merchant, err := s.merchantAwardCommandRepository.UpdateMerchantAward(ctx, req)
+	merchant, err := s.merchantAwardRepository.UpdateMerchantAward(ctx, req)
 
 	if err != nil {
-		return s.errorhandler.HandleUpdateMerchantAwardError(err, method, "FAILED_UPDATE_MERCHANT_AWARD", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.UpdateMerchantCertificationOrAwardRow](
+			s.logger,
+			merchantaward_errors.ErrFailedUpdateMerchantAward,
+			method,
+			span,
+			zap.Error(err),
+		)
 	}
 
-	so := s.mapping.ToMerchantAwardResponse(merchant)
+	s.cache.DeleteMerchantAwardCache(ctx, *req.MerchantCertificationID)
 
-	s.mencache.DeleteMerchantAwardCache(ctx, *req.MerchantCertificationID)
+	logSuccess("Merchant Award updated", zap.Int("merchantAward.id", int(merchant.MerchantCertificationID)))
 
-	logSuccess("Merchant Award updated", zap.Int("merchantAward.id", *req.MerchantCertificationID))
-
-	return so, nil
+	return merchant, nil
 }
 
-func (s *merchantAwardCommandService) TrashedMerchant(ctx context.Context, merchantID int) (*response.MerchantAwardResponseDeleteAt, *response.ErrorResponse) {
-	const method = "TrashedMerchant"
+func (s *merchantAwardCommandService) TrashedMerchantAward(ctx context.Context, merchantID int) (*db.MerchantCertificationsAndAward, error) {
+	const method = "TrashedMerchantAward"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantAward.id", merchantID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method, attribute.Int("merchantAward.id", merchantID))
 
 	defer func() {
 		end(status)
 	}()
 
-	merchant, err := s.merchantAwardCommandRepository.TrashedMerchantAward(ctx, merchantID)
+	merchant, err := s.merchantAwardRepository.TrashedMerchantAward(ctx, merchantID)
 
 	if err != nil {
-		return s.errorhandler.HandleTrashedMerchantAwardError(err, method, "FAILED_TRASH_MERCHANT_AWARD", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.MerchantCertificationsAndAward](
+			s.logger,
+			merchantaward_errors.ErrFailedTrashedMerchantAward,
+			method,
+			span,
+			zap.Error(err),
+		)
 	}
 
-	so := s.mapping.ToMerchantAwardResponseDeleteAt(merchant)
+	s.cache.DeleteMerchantAwardCache(ctx, merchantID)
 
-	s.mencache.DeleteMerchantAwardCache(ctx, merchantID)
+	logSuccess("Merchant Award trashed", zap.Int("merchantAward.id", int(merchant.MerchantCertificationID)))
 
-	logSuccess("Merchant Award trashed", zap.Int("merchantAward.id", merchantID))
-
-	return so, nil
+	return merchant, nil
 }
 
-func (s *merchantAwardCommandService) RestoreMerchant(ctx context.Context, merchantID int) (*response.MerchantAwardResponseDeleteAt, *response.ErrorResponse) {
-	const method = "RestoreMerchant"
+func (s *merchantAwardCommandService) RestoreMerchantAward(ctx context.Context, merchantID int) (*db.MerchantCertificationsAndAward, error) {
+	const method = "RestoreMerchantAward"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantAward.id", merchantID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method, attribute.Int("merchantAward.id", merchantID))
 
 	defer func() {
 		end(status)
 	}()
 
-	merchant, err := s.merchantAwardCommandRepository.RestoreMerchantAward(ctx, merchantID)
+	merchant, err := s.merchantAwardRepository.RestoreMerchantAward(ctx, merchantID)
 
 	if err != nil {
-		return s.errorhandler.HandleRestoreMerchantAwardError(err, method, "FAILED_RESTORE_MERCHANT_AWARD", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.MerchantCertificationsAndAward](
+			s.logger,
+			merchantaward_errors.ErrFailedRestoreMerchantAward,
+			method,
+			span,
+			zap.Error(err),
+		)
 	}
 
-	so := s.mapping.ToMerchantAwardResponseDeleteAt(merchant)
+	logSuccess("Merchant Award restored", zap.Int("merchantAward.id", int(merchant.MerchantCertificationID)))
 
-	logSuccess("Merchant Award restored", zap.Int("merchantAward.id", merchantID))
-
-	return so, nil
+	return merchant, nil
 }
 
-func (s *merchantAwardCommandService) DeleteMerchantPermanent(ctx context.Context, merchantID int) (bool, *response.ErrorResponse) {
+func (s *merchantAwardCommandService) DeleteMerchantPermanent(ctx context.Context, merchantID int) (bool, error) {
 	const method = "DeleteMerchantPermanent"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantAward.id", merchantID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method, attribute.Int("merchantAward.id", merchantID))
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.merchantAwardCommandRepository.DeleteMerchantPermanent(ctx, merchantID)
+	success, err := s.merchantAwardRepository.DeleteMerchantPermanent(ctx, merchantID)
 
 	if err != nil {
-		return s.errorhandler.HandleDeleteMerchantAwardError(err, "DeleteMerchantPermanent", "FAILED_DELETE_MERCHANT_PERMANENT", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			merchantaward_errors.ErrFailedDeleteMerchantAwardPermanent,
+			method,
+			span,
+			zap.Error(err),
+		)
 	}
+
+	s.cache.DeleteMerchantAwardCache(ctx, merchantID)
 
 	logSuccess("Successfully deleted merchant permanently", zap.Int("merchantAward.id", merchantID), zap.Bool("success", success))
 
 	return success, nil
 }
 
-func (s *merchantAwardCommandService) RestoreAllMerchant(ctx context.Context) (bool, *response.ErrorResponse) {
-	const method = "RestoreAllMerchant"
+func (s *merchantAwardCommandService) RestoreAllMerchantAward(ctx context.Context) (bool, error) {
+	const method = "RestoreAllMerchantAward"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.merchantAwardCommandRepository.RestoreAllMerchantAward(ctx)
+	success, err := s.merchantAwardRepository.RestoreAllMerchantAward(ctx)
 
 	if err != nil {
-		return s.errorhandler.HandleRestoreAllMerchantAwardError(err, method, "FAILED_RESTORE_ALL_MERCHANT_AWARD", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			merchantaward_errors.ErrFailedRestoreAllMerchantAwards,
+			method,
+			span,
+			zap.Error(err),
+		)
 	}
 
 	logSuccess("All trashed merchants restored", zap.Bool("success", success))
@@ -197,65 +206,29 @@ func (s *merchantAwardCommandService) RestoreAllMerchant(ctx context.Context) (b
 	return success, nil
 }
 
-func (s *merchantAwardCommandService) DeleteAllMerchantPermanent(ctx context.Context) (bool, *response.ErrorResponse) {
-	const method = "DeleteAllMerchantPermanent"
+func (s *merchantAwardCommandService) DeleteAllMerchantAwardPermanent(ctx context.Context) (bool, error) {
+	const method = "DeleteAllMerchantAwardPermanent"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.merchantAwardCommandRepository.DeleteAllMerchantAwardPermanent(ctx)
+	success, err := s.merchantAwardRepository.DeleteAllMerchantAwardPermanent(ctx)
 
 	if err != nil {
-		return s.errorhandler.HandleDeleteAllMerchantAwardError(err, method, "FAILED_DELETE_ALL_MERCHANT_PERMANENT", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			merchantaward_errors.ErrFailedDeleteAllMerchantAwardsPermanent,
+			method,
+			span,
+			zap.Error(err),
+		)
 	}
 
 	logSuccess("Successfully deleted all merchants permanently", zap.Bool("success", success))
 
 	return success, nil
-}
-
-func (s *merchantAwardCommandService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
-	context.Context,
-	trace.Span,
-	func(string),
-	string,
-	func(string, ...zap.Field),
-) {
-	start := time.Now()
-	status := "success"
-
-	ctx, span := s.trace.Start(ctx, method)
-
-	if len(attrs) > 0 {
-		span.SetAttributes(attrs...)
-	}
-
-	span.AddEvent("Start: " + method)
-
-	s.logger.Debug("Start: " + method)
-
-	end := func(status string) {
-		s.recordMetrics(method, status, start)
-		code := codes.Ok
-		if status != "success" {
-			code = codes.Error
-		}
-		span.SetStatus(code, status)
-		span.End()
-	}
-
-	logSuccess := func(msg string, fields ...zap.Field) {
-		span.AddEvent(msg)
-		s.logger.Debug(msg, fields...)
-	}
-
-	return ctx, span, end, status, logSuccess
-}
-
-func (s *merchantAwardCommandService) recordMetrics(method string, status string, start time.Time) {
-	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
 }

@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package pb;
+
+import "common/api.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindByIdReviewRequest{
+    int32 id = 1;
+}
+
+message ReviewResponse {
+    int32 id = 1;
+    int32 user_id = 2;
+    int32 product_id = 3;
+    string name = 4;
+    string comment = 5;
+    int32 rating = 6;
+    string created_at = 7;
+    string updated_at = 8;
+}
+
+message ReviewResponseDeleteAt {
+    int32 id = 1;
+    int32 user_id = 2;
+    int32 product_id = 3;
+    string name = 4;
+    string comment = 5;
+    int32 rating = 6;
+    string created_at = 7;
+    string updated_at = 8;
+    google.protobuf.StringValue deleted_at = 9;
+}
+
+message ReviewDetailResponse {
+    int32 id = 1;
+    string type = 2;
+    string url = 3;
+    string caption = 4;
+    string created_at = 5;
+}
+  
+message ReviewsDetailResponse {
+    int32 id = 1;
+    int32 user_id = 2;
+    int32 product_id = 3;
+    string name = 4;
+    string comment = 5;
+    int32 rating = 6;
+    ReviewDetailResponse review_detail = 7;
+    string created_at = 8;
+    string updated_at = 9;
+    string deleted_at = 10; 
+}
+
+message ApiResponseReview {
+    string status = 1;
+    string message = 2;
+    ReviewResponse data = 3;
+}
+
+message ApiResponseReviewDeleteAt {
+    string status = 1;
+    string message = 2;
+    ReviewResponseDeleteAt data = 3;
+}
+
+message ApiResponsesReview {
+    string status = 1;
+    string message = 2;
+    repeated ReviewResponse data = 3;
+}
+
+message ApiResponsePaginationReview {
+    string status = 1;
+    string message = 2;
+    repeated ReviewResponse data = 3;
+    PaginationMeta pagination = 4;
+}
+
+message ApiResponseReviewDelete {
+    string status = 1;
+    string message = 2;
+}
+
+message ApiResponseReviewAll {
+    string status = 1;
+    string message = 2;
+}
+  
+message ApiResponsePaginationReviewDeleteAt {
+    string status = 1;
+    string message = 2;
+    repeated ReviewResponseDeleteAt data = 3;
+    PaginationMeta pagination = 4;
+}
+
+message ApiResponsePaginationReviewDetail{
+    string status = 1;
+    string message = 2;
+    repeated ReviewsDetailResponse data = 3;
+    PaginationMeta pagination = 4;
+}

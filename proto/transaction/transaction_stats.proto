@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package pb;
+
+import "transaction/transaction_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message MonthAmountTransactionRequest {
+    int32 year = 1;
+    int32 month = 2;
+}
+
+message YearAmountTransactionRequest {
+    int32 year = 1;
+}
+
+message MonthMethodTransactionRequest {
+    int32 year = 1;
+    int32 month = 2;
+}
+
+message YearMethodTransactionRequest {
+    int32 year = 1;
+}
+
+service TransactionStatsService {
+    rpc GetMonthlyAmountSuccess(MonthAmountTransactionRequest) returns (ApiResponseTransactionMonthAmountSuccess);
+    rpc GetYearlyAmountSuccess(YearAmountTransactionRequest) returns (ApiResponseTransactionYearAmountSuccess);
+    rpc GetMonthlyAmountFailed(MonthAmountTransactionRequest) returns (ApiResponseTransactionMonthAmountFailed);
+    rpc GetYearlyAmountFailed(YearAmountTransactionRequest) returns (ApiResponseTransactionYearAmountFailed);
+    rpc GetMonthlyTransactionMethodSuccess(MonthMethodTransactionRequest) returns (ApiResponseTransactionMonthPaymentMethod);
+    rpc GetYearlyTransactionMethodSuccess(YearMethodTransactionRequest) returns (ApiResponseTransactionYearPaymentmethod);
+    rpc GetMonthlyTransactionMethodFailed(MonthMethodTransactionRequest) returns (ApiResponseTransactionMonthPaymentMethod);
+    rpc GetYearlyTransactionMethodFailed(YearMethodTransactionRequest) returns (ApiResponseTransactionYearPaymentmethod);
+}

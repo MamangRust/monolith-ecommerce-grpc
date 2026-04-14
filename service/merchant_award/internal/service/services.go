@@ -1,11 +1,10 @@
 package service
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/internal/redis"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 )
 
 type Service struct {
@@ -14,17 +13,25 @@ type Service struct {
 }
 
 type Deps struct {
-	ErrorHandler *errorhandler.ErrorHandler
-	Mencache     *mencache.Mencache
-	Repositories *repository.Repositories
-	Logger       logger.LoggerInterface
+	Cache         *mencache.Mencache
+	Repository    *repository.Repositories
+	Logger        logger.LoggerInterface
+	Observability observability.TraceLoggerObservability
 }
 
 func NewService(deps *Deps) *Service {
-	merchantMapper := response_service.NewMerchantAwardResponseMapper()
-
 	return &Service{
-		MerchantAwardQuery:   NewMerchantAwardQueryService(deps.ErrorHandler.MerchantAwardQueryError, deps.Mencache.MerchantAwardQueryCache, deps.Repositories.MerchantAwardQuery, deps.Logger, merchantMapper),
-		MerchantAwardCommand: NewMerchantAwardCommandService(deps.ErrorHandler.MerchantAwardCommandError, deps.Mencache.MerchantAwardCommandCache, deps.Repositories.MerchantAwardCommand, deps.Logger, merchantMapper),
+		MerchantAwardQuery: NewMerchantAwardQueryService(&MerchantAwardQueryServiceDeps{
+			Observability:           deps.Observability,
+			Cache:                   deps.Cache.MerchantAwardQueryCache,
+			MerchantAwardRepository: deps.Repository.MerchantAwardQuery,
+			Logger:                  deps.Logger,
+		}),
+		MerchantAwardCommand: NewMerchantAwardCommandService(&MerchantAwardCommandServiceDeps{
+			Observability:           deps.Observability,
+			Cache:                   deps.Cache.MerchantAwardCommandCache,
+			MerchantAwardRepository: deps.Repository.MerchantAwardCommand,
+			Logger:                  deps.Logger,
+		}),
 	}
 }

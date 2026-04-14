@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package pb;
+
+import "order/order_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindAllOrderRequest {
+    int32 page = 1;
+    int32 page_size = 2;
+    string search = 3;
+}
+
+message FindAllOrderMerchantRequest {
+    int32 page = 1;
+    int32 page_size = 2;
+    string search = 3;
+    int32 merchant_id = 4;
+}
+
+message FindYearOrder{
+    int32 year = 1;
+}
+
+message FindYearOrderByMerchant{
+    int32 merchant_id = 1;
+    int32 year = 2;
+}
+
+message FindYearMonthTotalRevenue{
+    int32 year = 1;
+    int32 month = 2;
+}
+
+message FindYearTotalRevenue{
+    int32 year = 1;
+}
+
+message FindYearMonthTotalRevenueById{
+    int32 year = 1;
+    int32 month = 2;
+    int32 order_id = 3;
+}
+
+message FindYearTotalRevenueById{
+    int32 year = 1;
+    int32 order_id = 2;
+}
+
+message FindYearMonthTotalRevenueByMerchant{
+    int32 year = 1;
+    int32 month = 2;
+    int32 merchant_id = 3;
+}
+
+message FindYearTotalRevenueByMerchant{
+    int32 year = 1;
+    int32 merchant_id = 2;
+}
+
+service OrderQueryService {
+    rpc FindMonthlyTotalRevenue(FindYearMonthTotalRevenue) returns (ApiResponseOrderMonthlyTotalRevenue);
+    rpc FindYearlyTotalRevenue(FindYearTotalRevenue) returns (ApiResponseOrderYearlyTotalRevenue);
+
+    rpc FindMonthlyTotalRevenueByMerchant(FindYearMonthTotalRevenueByMerchant) returns (ApiResponseOrderMonthlyTotalRevenue);
+    rpc FindYearlyTotalRevenueByMerchant(FindYearTotalRevenueByMerchant) returns (ApiResponseOrderYearlyTotalRevenue);
+
+    rpc FindMonthlyRevenue(FindYearOrder) returns(ApiResponseOrderMonthly);
+    rpc FindYearlyRevenue(FindYearOrder) returns(ApiResponseOrderYearly);
+
+    rpc FindMonthlyRevenueByMerchant(FindYearOrderByMerchant) returns(ApiResponseOrderMonthly);
+    rpc FindYearlyRevenueByMerchant(FindYearOrderByMerchant) returns(ApiResponseOrderYearly);
+
+    rpc FindAll(FindAllOrderRequest) returns(ApiResponsePaginationOrder);
+    rpc FindById(FindByIdOrderRequest) returns(ApiResponseOrder);
+    
+    rpc FindByActive(FindAllOrderRequest) returns (ApiResponsePaginationOrderDeleteAt);
+    rpc FindByTrashed(FindAllOrderRequest) returns (ApiResponsePaginationOrderDeleteAt);
+}

@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/empty.proto";
+import "slider/slider_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message CreateSliderRequest {
+    string name = 1;
+    string image = 2;
+}
+
+message UpdateSliderRequest {
+    int32 id = 1;
+    string name = 2;
+    string image = 3;
+}
+
+service SliderCommandService {
+    rpc Create(CreateSliderRequest) returns (ApiResponseSlider);
+    rpc Update(UpdateSliderRequest) returns (ApiResponseSlider);
+    
+    rpc TrashedSlider(FindByIdSliderRequest) returns (ApiResponseSliderDeleteAt);
+    rpc RestoreSlider(FindByIdSliderRequest) returns (ApiResponseSliderDeleteAt);
+    rpc DeleteSliderPermanent(FindByIdSliderRequest) returns (ApiResponseSliderDelete);
+
+    rpc RestoreAllSlider(google.protobuf.Empty) returns (ApiResponseSliderAll);
+    rpc DeleteAllSliderPermanent(google.protobuf.Empty) returns (ApiResponseSliderAll);
+}

@@ -70,19 +70,19 @@ func (h *roleKafkaHandler) ConsumeClaim(session sarama.ConsumerGroupSession, cla
 			zap.String("correlation_id", payload.CorrelationID))
 
 		// Panggil service untuk mendapatkan role
-		roles, errResp := h.roleService.FindByUserId(msgCtx, payload.UserID)
+		roles, err := h.roleService.FindByUserId(msgCtx, payload.UserID)
 
 		// Siapkan payload respons
 		resp := response.RoleResponsePayload{
 			CorrelationID: payload.CorrelationID,
-			Valid:         errResp == nil && len(roles) > 0,
+			Valid:         err == nil && len(roles) > 0,
 			RoleNames:     make([]string, 0),
 		}
 
 		// Isi nama role jika valid
-		if errResp == nil && len(roles) > 0 {
+		if err == nil && len(roles) > 0 {
 			for _, r := range roles {
-				resp.RoleNames = append(resp.RoleNames, r.Name)
+				resp.RoleNames = append(resp.RoleNames, r.RoleName)
 			}
 			h.logger.Info("Role validation successful",
 				zap.Int("user_id", payload.UserID),
@@ -91,7 +91,7 @@ func (h *roleKafkaHandler) ConsumeClaim(session sarama.ConsumerGroupSession, cla
 		} else {
 			h.logger.Debug("Role validation failed",
 				zap.Int("user_id", payload.UserID),
-				zap.Any("error", errResp),
+				zap.Any("error", err),
 				zap.String("correlation_id", payload.CorrelationID))
 		}
 

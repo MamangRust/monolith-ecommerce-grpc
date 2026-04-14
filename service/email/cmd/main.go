@@ -16,19 +16,44 @@ import (
 	otel_pkg "github.com/MamangRust/monolith-ecommerce-pkg/otel"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
 func main() {
-	logger, err := logger.NewLogger("email-service")
+	ctx := context.Background()
+
+	if err := dotenv.Viper(); err != nil {
+		log.Fatalf("Failed to load .env file: %v", err)
+	}
+
+	otelCfg := otel_pkg.Config{
+		ServiceName:          "email-service",
+		ServiceVersion:       "1.0.0",
+		Environment:          viper.GetString("ENV"),
+		Endpoint:             viper.GetString("OTEL_EXPORTER_OTLP_ENDPOINT"),
+		Insecure:             true,
+		EnableRuntimeMetrics: true,
+	}
+
+	if otelCfg.Endpoint == "" {
+		otelCfg.Endpoint = "otel-collector:4317"
+	}
+
+	telemetry := otel_pkg.NewTelemetry(otelCfg)
+
+	if err := telemetry.Init(ctx); err != nil {
+		log.Fatalf("Failed to initialize telemetry: %v", err)
+	}
+
+	defer func() {
+		if err := telemetry.Shutdown(ctx); err != nil {
+			log.Printf("Error shutting down telemetry: %v", err)
+		}
+	}()
+
+	logger, err := logger.NewLogger("email-service", telemetry.GetLogger())
 	if err != nil {
 		log.Fatalf("Error creating logger: %v", err)
 	}
-
-	if err := dotenv.Viper(); err != nil {
-		logger.Fatal("Failed to load .env file", zap.Error(err))
-	}
-	ctx := context.Background()
 
 	cfg := config.Config{
 		KafkaBrokers: []string{viper.GetString("KAFKA_BROKERS")},
@@ -45,18 +70,6 @@ func main() {
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
 		log.Fatal(http.ListenAndServe(metricsAddr, nil))
-	}()
-
-	shutdownTracerProvider, err := otel_pkg.InitTracerProvider("email-service", ctx)
-
-	if err != nil {
-		logger.Fatal("Failed to initialize tracer provider", zap.Error(err))
-	}
-
-	defer func() {
-		if err := shutdownTracerProvider(ctx); err != nil {
-			logger.Fatal("Failed to shutdown tracer provider", zap.Error(err))
-		}
 	}()
 
 	m := mailer.NewMailer(

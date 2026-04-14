@@ -3,71 +3,181 @@ package repository
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 )
 
 type UserQueryRepository interface {
-	FindById(ctx context.Context, user_id int) (*record.UserRecord, error)
+	FindById(ctx context.Context, user_id int) (*db.GetUserByIDRow, error)
 }
 
 type MerchantQueryRepository interface {
-	FindById(ctx context.Context, id int) (*record.MerchantRecord, error)
+	FindById(ctx context.Context, user_id int) (*db.GetMerchantByIDRow, error)
 }
 
 type OrderItemRepository interface {
-	FindOrderItemByOrder(ctx context.Context, order_id int) ([]*record.OrderItemRecord, error)
+	FindOrderItemByOrder(
+		ctx context.Context,
+		order_id int,
+	) ([]*db.GetOrderItemsByOrderRow, error)
 }
 
 type OrderQueryRepository interface {
-	FindById(ctx context.Context, id int) (*record.OrderRecord, error)
+	FindById(
+		ctx context.Context,
+		order_id int,
+	) (*db.GetOrderByIDRow, error)
 }
 
 type ShippingAddressQueryRepository interface {
-	FindByOrder(ctx context.Context, order_id int) (*record.ShippingAddressRecord, error)
+	FindByOrder(
+		ctx context.Context,
+		shipping_id int,
+	) (*db.GetShippingAddressByOrderIDRow, error)
 }
 
 type TransactionStatsRepository interface {
-	GetMonthlyAmountSuccess(ctx context.Context, req *requests.MonthAmountTransaction) ([]*record.TransactionMonthlyAmountSuccessRecord, error)
-	GetYearlyAmountSuccess(ctx context.Context, year int) ([]*record.TransactionYearlyAmountSuccessRecord, error)
-	GetMonthlyAmountFailed(ctx context.Context, req *requests.MonthAmountTransaction) ([]*record.TransactionMonthlyAmountFailedRecord, error)
-	GetYearlyAmountFailed(ctx context.Context, year int) ([]*record.TransactionYearlyAmountFailedRecord, error)
+	GetMonthlyAmountSuccess(
+		ctx context.Context,
+		req *requests.MonthAmountTransaction,
+	) ([]*db.GetMonthlyAmountTransactionSuccessRow, error)
 
-	GetMonthlyTransactionMethodSuccess(ctx context.Context, req *requests.MonthMethodTransaction) ([]*record.TransactionMonthlyMethodRecord, error)
-	GetYearlyTransactionMethodSuccess(ctx context.Context, year int) ([]*record.TransactionYearlyMethodRecord, error)
+	GetYearlyAmountSuccess(
+		ctx context.Context,
+		year int,
+	) ([]*db.GetYearlyAmountTransactionSuccessRow, error)
 
-	GetMonthlyTransactionMethodFailed(ctx context.Context, req *requests.MonthMethodTransaction) ([]*record.TransactionMonthlyMethodRecord, error)
-	GetYearlyTransactionMethodFailed(ctx context.Context, year int) ([]*record.TransactionYearlyMethodRecord, error)
+	GetMonthlyAmountFailed(
+		ctx context.Context,
+		req *requests.MonthAmountTransaction,
+	) ([]*db.GetMonthlyAmountTransactionFailedRow, error)
+
+	GetYearlyAmountFailed(
+		ctx context.Context,
+		year int,
+	) ([]*db.GetYearlyAmountTransactionFailedRow, error)
+
+	GetMonthlyTransactionMethodSuccess(
+		ctx context.Context,
+		req *requests.MonthMethodTransaction,
+	) ([]*db.GetMonthlyTransactionMethodsSuccessRow, error)
+
+	GetYearlyTransactionMethodSuccess(
+		ctx context.Context,
+		year int,
+	) ([]*db.GetYearlyTransactionMethodsSuccessRow, error)
+
+	GetMonthlyTransactionMethodFailed(
+		ctx context.Context,
+		req *requests.MonthMethodTransaction,
+	) ([]*db.GetMonthlyTransactionMethodsFailedRow, error)
+
+	GetYearlyTransactionMethodFailed(
+		ctx context.Context,
+		year int,
+	) ([]*db.GetYearlyTransactionMethodsFailedRow, error)
 }
 
-type TransactonStatsByMerchantRepository interface {
-	GetMonthlyAmountSuccessByMerchant(ctx context.Context, req *requests.MonthAmountTransactionMerchant) ([]*record.TransactionMonthlyAmountSuccessRecord, error)
-	GetYearlyAmountSuccessByMerchant(ctx context.Context, req *requests.YearAmountTransactionMerchant) ([]*record.TransactionYearlyAmountSuccessRecord, error)
-	GetMonthlyAmountFailedByMerchant(ctx context.Context, req *requests.MonthAmountTransactionMerchant) ([]*record.TransactionMonthlyAmountFailedRecord, error)
-	GetYearlyAmountFailedByMerchant(ctx context.Context, req *requests.YearAmountTransactionMerchant) ([]*record.TransactionYearlyAmountFailedRecord, error)
+type TransactionStatsByMerchantRepository interface {
+	GetMonthlyAmountSuccessByMerchant(
+		ctx context.Context,
+		req *requests.MonthAmountTransactionMerchant,
+	) ([]*db.GetMonthlyAmountTransactionSuccessByMerchantRow, error)
 
-	GetMonthlyTransactionMethodByMerchantSuccess(ctx context.Context, req *requests.MonthMethodTransactionMerchant) ([]*record.TransactionMonthlyMethodRecord, error)
-	GetYearlyTransactionMethodByMerchantSuccess(ctx context.Context, req *requests.YearMethodTransactionMerchant) ([]*record.TransactionYearlyMethodRecord, error)
+	GetYearlyAmountSuccessByMerchant(
+		ctx context.Context,
+		req *requests.YearAmountTransactionMerchant,
+	) ([]*db.GetYearlyAmountTransactionSuccessByMerchantRow, error)
 
-	GetMonthlyTransactionMethodByMerchantFailed(ctx context.Context, req *requests.MonthMethodTransactionMerchant) ([]*record.TransactionMonthlyMethodRecord, error)
-	GetYearlyTransactionMethodByMerchantFailed(ctx context.Context, req *requests.YearMethodTransactionMerchant) ([]*record.TransactionYearlyMethodRecord, error)
+	GetMonthlyAmountFailedByMerchant(
+		ctx context.Context,
+		req *requests.MonthAmountTransactionMerchant,
+	) ([]*db.GetMonthlyAmountTransactionFailedByMerchantRow, error)
+
+	GetYearlyAmountFailedByMerchant(
+		ctx context.Context,
+		req *requests.YearAmountTransactionMerchant,
+	) ([]*db.GetYearlyAmountTransactionFailedByMerchantRow, error)
+
+	GetMonthlyTransactionMethodByMerchantSuccess(
+		ctx context.Context,
+		req *requests.MonthMethodTransactionMerchant,
+	) ([]*db.GetMonthlyTransactionMethodsByMerchantSuccessRow, error)
+
+	GetYearlyTransactionMethodByMerchantSuccess(
+		ctx context.Context,
+		req *requests.YearMethodTransactionMerchant,
+	) ([]*db.GetYearlyTransactionMethodsByMerchantSuccessRow, error)
+
+	GetMonthlyTransactionMethodByMerchantFailed(
+		ctx context.Context,
+		req *requests.MonthMethodTransactionMerchant,
+	) ([]*db.GetMonthlyTransactionMethodsByMerchantFailedRow, error)
+
+	GetYearlyTransactionMethodByMerchantFailed(
+		ctx context.Context,
+		req *requests.YearMethodTransactionMerchant,
+	) ([]*db.GetYearlyTransactionMethodsByMerchantFailedRow, error)
 }
 
 type TransactionQueryRepository interface {
-	FindAllTransactions(ctx context.Context, req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error)
-	FindByActive(ctx context.Context, req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error)
-	FindByTrashed(ctx context.Context, req *requests.FindAllTransaction) ([]*record.TransactionRecord, *int, error)
-	FindByMerchant(ctx context.Context, req *requests.FindAllTransactionByMerchant) ([]*record.TransactionRecord, *int, error)
-	FindById(ctx context.Context, transaction_id int) (*record.TransactionRecord, error)
-	FindByOrderId(ctx context.Context, order_id int) (*record.TransactionRecord, error)
+	FindAllTransactions(
+		ctx context.Context,
+		req *requests.FindAllTransaction,
+	) ([]*db.GetTransactionsRow, error)
+
+	FindByActive(
+		ctx context.Context,
+		req *requests.FindAllTransaction,
+	) ([]*db.GetTransactionsActiveRow, error)
+
+	FindByTrashed(
+		ctx context.Context,
+		req *requests.FindAllTransaction,
+	) ([]*db.GetTransactionsTrashedRow, error)
+
+	FindByMerchant(
+		ctx context.Context,
+		req *requests.FindAllTransactionByMerchant,
+	) ([]*db.GetTransactionByMerchantRow, error)
+
+	FindById(
+		ctx context.Context,
+		transaction_id int,
+	) (*db.GetTransactionByIDRow, error)
+
+	FindByOrderId(
+		ctx context.Context,
+		order_id int,
+	) (*db.GetTransactionByOrderIDRow, error)
 }
 
 type TransactionCommandRepository interface {
-	CreateTransaction(ctx context.Context, request *requests.CreateTransactionRequest) (*record.TransactionRecord, error)
-	UpdateTransaction(ctx context.Context, request *requests.UpdateTransactionRequest) (*record.TransactionRecord, error)
-	TrashTransaction(ctx context.Context, transaction_id int) (*record.TransactionRecord, error)
-	RestoreTransaction(ctx context.Context, transaction_id int) (*record.TransactionRecord, error)
-	DeleteTransactionPermanently(ctx context.Context, transaction_id int) (bool, error)
+	CreateTransaction(
+		ctx context.Context,
+		request *requests.CreateTransactionRequest,
+	) (*db.CreateTransactionRow, error)
+
+	UpdateTransaction(
+		ctx context.Context,
+		request *requests.UpdateTransactionRequest,
+	) (*db.UpdateTransactionRow, error)
+
+	TrashTransaction(
+		ctx context.Context,
+		transaction_id int,
+	) (*db.Transaction, error)
+
+	RestoreTransaction(
+		ctx context.Context,
+		transaction_id int,
+	) (*db.Transaction, error)
+
+	DeleteTransactionPermanently(
+		ctx context.Context,
+		transaction_id int,
+	) (bool, error)
+
 	RestoreAllTransactions(ctx context.Context) (bool, error)
 	DeleteAllTransactionPermanent(ctx context.Context) (bool, error)
 }

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package pb;
+
+import "slider/slider_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindAllSliderRequest {
+    int32 page = 1;
+    int32 page_size = 2;
+    string search = 3;
+}
+
+service SliderQueryService {
+    rpc FindAll(FindAllSliderRequest) returns (ApiResponsePaginationSlider);
+    rpc FindByTrashed(FindAllSliderRequest) returns (ApiResponsePaginationSliderDeleteAt);
+    rpc FindByActive(FindAllSliderRequest) returns (ApiResponsePaginationSliderDeleteAt);
+}

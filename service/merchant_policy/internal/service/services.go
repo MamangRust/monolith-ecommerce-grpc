@@ -1,30 +1,37 @@
 package service
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/internal/redis"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 )
 
 type Service struct {
-	MerchantPolicyQuery MerchantPoliciesQueryService
-	MerchantPolicyCmd   MerchantPoliciesCommandService
+	MerchantPoliciesQuery   MerchantPoliciesQueryService
+	MerchantPoliciesCommand MerchantPoliciesCommandService
 }
 
 type Deps struct {
-	ErrorHandler *errorhandler.ErrorHandler
-	Mencache     *mencache.Mencache
-	Repositories *repository.Repositories
-	Logger       logger.LoggerInterface
+	Cache         *mencache.Mencache
+	Repository    *repository.Repositories
+	Logger        logger.LoggerInterface
+	Observability observability.TraceLoggerObservability
 }
 
-func NewServices(deps *Deps) *Service {
-	mapper := response_service.NewMerchantPolicyResponseMapper()
-
+func NewService(deps *Deps) *Service {
 	return &Service{
-		MerchantPolicyQuery: NewMerchantPolicyQueryService(deps.ErrorHandler.MerchantPolicyQueryError, deps.Mencache.MerchantPolicyQueryCache, deps.Logger, deps.Repositories.MerchantPolicyQuery, mapper),
-		MerchantPolicyCmd:   NewMerchantPolicyCommandService(deps.ErrorHandler.MerchantPolicyCommandError, deps.Mencache.MerchantPolicyCommandCache, deps.Logger, deps.Repositories.MerchantPolicyCmd, deps.Repositories.MerchantQuery, mapper),
+		MerchantPoliciesQuery: NewMerchantPoliciesQueryService(&MerchantPoliciesQueryServiceDeps{
+			Observability:            deps.Observability,
+			Cache:                    deps.Cache.MerchantPoliciesQueryCache,
+			MerchantPolicyRepository: deps.Repository.MerchantPoliciesQuery,
+			Logger:                   deps.Logger,
+		}),
+		MerchantPoliciesCommand: NewMerchantPoliciesCommandService(&MerchantPoliciesCommandServiceDeps{
+			Observability:            deps.Observability,
+			Cache:                    deps.Cache.MerchantPoliciesCommandCache,
+			MerchantPolicyRepository: deps.Repository.MerchantPoliciesCommand,
+			Logger:                   deps.Logger,
+		}),
 	}
 }

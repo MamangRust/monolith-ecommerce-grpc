@@ -2,267 +2,241 @@ package service
 
 import (
 	"context"
-	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_business/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_business/internal/redis"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_business/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_business/internal/repository"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel"
+	merchantbusiness_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant_business"
+	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
 type merchantBusinessCommandService struct {
-	errorhandler                      errorhandler.MerchantBusinessCommandError
-	mencache                          mencache.MerchantBusinessCommandCache
-	trace                             trace.Tracer
-	merchantQueryRepository           repository.MerchantQueryRepository
-	merchantBusinessCommandRepository repository.MerchantBusinessCommandRepository
-	logger                            logger.LoggerInterface
-	mapping                           response_service.MerchantBusinessResponseMapper
-	requestCounter                    *prometheus.CounterVec
-	requestDuration                   *prometheus.HistogramVec
+	observability              observability.TraceLoggerObservability
+	cache                      mencache.MerchantBusinessCommandCache
+	merchantBusinessRepository repository.MerchantBusinessCommandRepository
+	logger                     logger.LoggerInterface
 }
 
-func NewMerchantBusinessCommandService(
-	errorhandler errorhandler.MerchantBusinessCommandError,
-	mencache mencache.MerchantBusinessCommandCache,
-	merchantQueryRepository repository.MerchantQueryRepository,
-	merchantBusinessCommandRepository repository.MerchantBusinessCommandRepository,
-	logger logger.LoggerInterface,
-	mapping response_service.MerchantBusinessResponseMapper,
-) *merchantBusinessCommandService {
-	requestCounter := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "merchant_business_command_service_requests_total",
-			Help: "Total number of requests to the MerchantBusinessCommandService",
-		},
-		[]string{"method", "status"},
-	)
+type MerchantBusinessCommandServiceDeps struct {
+	Observability              observability.TraceLoggerObservability
+	Cache                      mencache.MerchantBusinessCommandCache
+	MerchantBusinessRepository repository.MerchantBusinessCommandRepository
+	Logger                     logger.LoggerInterface
+}
 
-	requestDuration := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "merchant_business_command_service_request_duration_seconds",
-			Help:    "Histogram of request durations for the MerchantBusinessCommandService",
-			Buckets: prometheus.DefBuckets,
-		},
-		[]string{"method", "status"},
-	)
-
-	prometheus.MustRegister(requestCounter, requestDuration)
-
+func NewMerchantBusinessCommandService(deps *MerchantBusinessCommandServiceDeps) MerchantBusinessCommandService {
 	return &merchantBusinessCommandService{
-		errorhandler:                      errorhandler,
-		mencache:                          mencache,
-		trace:                             otel.Tracer("merchant-business-command-service"),
-		merchantQueryRepository:           merchantQueryRepository,
-		merchantBusinessCommandRepository: merchantBusinessCommandRepository,
-		logger:                            logger,
-		mapping:                           mapping,
-		requestCounter:                    requestCounter,
-		requestDuration:                   requestDuration,
+		observability:              deps.Observability,
+		cache:                      deps.Cache,
+		merchantBusinessRepository: deps.MerchantBusinessRepository,
+		logger:                     deps.Logger,
 	}
 }
 
-func (s *merchantBusinessCommandService) CreateMerchant(ctx context.Context, req *requests.CreateMerchantBusinessInformationRequest) (*response.MerchantBusinessResponse, *response.ErrorResponse) {
-	const method = "CreateMerchant"
+func (s *merchantBusinessCommandService) CreateMerchantBusiness(ctx context.Context, req *requests.CreateMerchantBusinessInformationRequest) (*db.CreateMerchantBusinessInformationRow, error) {
+	const method = "CreateMerchantBusiness"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantBusiness.id", req.MerchantID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	merchant, err := s.merchantBusinessCommandRepository.CreateMerchantBusiness(ctx, req)
-
+	merchant, err := s.merchantBusinessRepository.CreateMerchantBusiness(ctx, req)
 	if err != nil {
-		return s.errorhandler.HandleCreateMerchantBusinessError(err, method, "FAILED_CREATE_MERCHANT_BUSINESS", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.CreateMerchantBusinessInformationRow](
+			s.logger,
+			merchantbusiness_errors.ErrFailedCreateMerchantBusiness,
+			method,
+			span,
+
+			zap.Any("request", req),
+		)
 	}
 
-	so := s.mapping.ToMerchantBusinessResponse(merchant)
+	s.cache.DeleteMerchantBusinessCache(ctx, int(merchant.MerchantBusinessInfoID))
 
-	logSuccess("Created merchant", zap.Int("merchantBusiness.id", req.MerchantID))
+	logSuccess("Successfully created merchant business",
+		zap.Int("merchantID", int(merchant.MerchantBusinessInfoID)))
 
-	return so, nil
+	return merchant, nil
 }
 
-func (s *merchantBusinessCommandService) UpdateMerchant(ctx context.Context, req *requests.UpdateMerchantBusinessInformationRequest) (*response.MerchantBusinessResponse, *response.ErrorResponse) {
-	const method = "UpdateMerchant"
+func (s *merchantBusinessCommandService) UpdateMerchantBusiness(ctx context.Context, req *requests.UpdateMerchantBusinessInformationRequest) (*db.UpdateMerchantBusinessInformationRow, error) {
+	const method = "UpdateMerchantBusiness"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantBusiness.id", *req.MerchantBusinessInfoID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("merchantID", *req.MerchantBusinessInfoID))
 
 	defer func() {
 		end(status)
 	}()
 
-	merchant, err := s.merchantBusinessCommandRepository.UpdateMerchantBusiness(ctx, req)
-
+	merchant, err := s.merchantBusinessRepository.UpdateMerchantBusiness(ctx, req)
 	if err != nil {
-		return s.errorhandler.HandleUpdateMerchantBusinessError(err, method, "FAILED_UPDATE_MERCHANT_BUSINESS", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.UpdateMerchantBusinessInformationRow](
+			s.logger,
+			merchantbusiness_errors.ErrFailedUpdateMerchantBusiness,
+			method,
+			span,
+
+			zap.Any("request", req),
+		)
 	}
 
-	so := s.mapping.ToMerchantBusinessResponse(merchant)
+	s.cache.DeleteMerchantBusinessCache(ctx, int(merchant.MerchantBusinessInfoID))
 
-	s.mencache.DeleteMerchantBusinessCache(ctx, *req.MerchantBusinessInfoID)
+	logSuccess("Successfully updated merchant business",
+		zap.Int("merchantID", int(merchant.MerchantBusinessInfoID)))
 
-	logSuccess("Updated merchant", zap.Int("merchantBusiness.id", *req.MerchantBusinessInfoID))
-
-	return so, nil
+	return merchant, nil
 }
 
-func (s *merchantBusinessCommandService) TrashedMerchant(ctx context.Context, merchantID int) (*response.MerchantBusinessResponseDeleteAt, *response.ErrorResponse) {
-	const method = "TrashedMerchant"
+func (s *merchantBusinessCommandService) TrashedMerchantBusiness(ctx context.Context, merchantID int) (*db.MerchantBusinessInformation, error) {
+	const method = "TrashedMerchantBusiness"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantBusiness.id", merchantID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("merchantID", merchantID))
 
 	defer func() {
 		end(status)
 	}()
 
-	merchant, err := s.merchantBusinessCommandRepository.TrashedMerchantBusiness(ctx, merchantID)
-
+	merchant, err := s.merchantBusinessRepository.TrashedMerchantBusiness(ctx, merchantID)
 	if err != nil {
-		return s.errorhandler.HandleTrashedMerchantBusinessError(err, method, "FAILED_TRASH_MERCHANT_BUSINESS", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.MerchantBusinessInformation](
+			s.logger,
+			merchantbusiness_errors.ErrFailedTrashedMerchantBusiness,
+			method,
+			span,
+
+			zap.Int("merchant_id", merchantID),
+		)
 	}
 
-	so := s.mapping.ToMerchantBusinessResponseDeleteAt(merchant)
+	s.cache.DeleteMerchantBusinessCache(ctx, merchantID)
 
-	s.mencache.DeleteMerchantBusinessCache(ctx, merchantID)
+	logSuccess("Successfully trashed merchant business",
+		zap.Int("merchantID", merchantID))
 
-	logSuccess("Trashed merchant", zap.Int("merchantBusiness.id", merchantID))
-
-	return so, nil
+	return merchant, nil
 }
 
-func (s *merchantBusinessCommandService) RestoreMerchant(ctx context.Context, merchantID int) (*response.MerchantBusinessResponseDeleteAt, *response.ErrorResponse) {
-	const method = "RestoreMerchant"
+func (s *merchantBusinessCommandService) RestoreMerchantBusiness(ctx context.Context, merchantID int) (*db.MerchantBusinessInformation, error) {
+	const method = "RestoreMerchantBusiness"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantBusiness.id", merchantID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("merchantID", merchantID))
 
 	defer func() {
 		end(status)
 	}()
 
-	merchant, err := s.merchantBusinessCommandRepository.RestoreMerchantBusiness(ctx, merchantID)
-
+	merchant, err := s.merchantBusinessRepository.RestoreMerchantBusiness(ctx, merchantID)
 	if err != nil {
-		return s.errorhandler.HandleRestoreMerchantBusinessError(err, method, "FAILED_RESTORE_MERCHANT_BUSINESS", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.MerchantBusinessInformation](
+			s.logger,
+			merchantbusiness_errors.ErrFailedRestoreMerchantBusiness,
+			method,
+			span,
+
+			zap.Int("merchant_id", merchantID),
+		)
 	}
 
-	so := s.mapping.ToMerchantBusinessResponseDeleteAt(merchant)
+	s.cache.DeleteMerchantBusinessCache(ctx, merchantID)
 
-	logSuccess("Restored merchant", zap.Int("merchantBusiness.id", merchantID))
+	logSuccess("Successfully restored merchant business",
+		zap.Int("merchantID", merchantID))
 
-	return so, nil
-
+	return merchant, nil
 }
 
-func (s *merchantBusinessCommandService) DeleteMerchantPermanent(ctx context.Context, merchantID int) (bool, *response.ErrorResponse) {
-	const method = "DeleteMerchantPermanent"
+func (s *merchantBusinessCommandService) DeleteMerchantBusinessPermanent(ctx context.Context, merchantID int) (bool, error) {
+	const method = "DeleteMerchantBusinessPermanent"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("merchantBusiness.id", merchantID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.merchantBusinessCommandRepository.DeleteMerchantBusinessPermanent(ctx, merchantID)
-
+	success, err := s.merchantBusinessRepository.DeleteMerchantBusinessPermanent(ctx, merchantID)
 	if err != nil {
-		return s.errorhandler.HandleDeleteMerchantBusinessError(err, method, "FAILED_DELETE_MERCHANT_BUSINESS_PERMANENT", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			merchantbusiness_errors.ErrFailedDeleteMerchantBusinessPermanent,
+			method,
+			span,
+
+			zap.Int("merchant_id", merchantID),
+		)
 	}
 
-	logSuccess("Successfully deleted merchant permanently", zap.Int("merchantBusiness.id", merchantID), zap.Bool("success", success))
+	s.cache.DeleteMerchantBusinessCache(ctx, merchantID)
+
+	logSuccess("Successfully permanently deleted merchant business",
+		zap.Int("merchantID", merchantID))
 
 	return success, nil
 }
 
-func (s *merchantBusinessCommandService) RestoreAllMerchant(ctx context.Context) (bool, *response.ErrorResponse) {
-	const method = "RestoreAllMerchant"
+func (s *merchantBusinessCommandService) RestoreAllMerchantBusiness(ctx context.Context) (bool, error) {
+	const method = "RestoreAllMerchantBusiness"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
-
-	defer func() {
-		end(status)
-	}()
-
-	success, err := s.merchantBusinessCommandRepository.RestoreAllMerchantBusiness(ctx)
-
-	if err != nil {
-		return s.errorhandler.HandleRestoreAllMerchantBusinessError(err, method, "FAILED_RESTORE_ALL_MERCHANT_BUSINESS", span, &status, zap.Error(err))
-	}
-
-	logSuccess("All trashed merchants restored", zap.Bool("success", success))
-
-	return success, nil
-}
-
-func (s *merchantBusinessCommandService) DeleteAllMerchantPermanent(ctx context.Context) (bool, *response.ErrorResponse) {
-	const method = "DeleteAllMerchantPermanent"
-
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.merchantBusinessCommandRepository.DeleteAllMerchantBusinessPermanent(ctx)
-
+	success, err := s.merchantBusinessRepository.RestoreAllMerchantBusiness(ctx)
 	if err != nil {
-		return s.errorhandler.HandleDeleteAllMerchantBusinessError(err, method, "FAILED_DELETE_ALL_MERCHANT_BUSINESS_PERMANENT", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			merchantbusiness_errors.ErrFailedRestoreAllMerchantBusiness,
+			method,
+			span,
+		)
 	}
 
-	logSuccess("Successfully deleted all trashed merchants permanently", zap.Bool("success", success))
+	logSuccess("Successfully restored all trashed merchant businesses")
 
 	return success, nil
 }
 
-func (s *merchantBusinessCommandService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
-	context.Context,
-	trace.Span,
-	func(string),
-	string,
-	func(string, ...zap.Field),
-) {
-	start := time.Now()
-	status := "success"
+func (s *merchantBusinessCommandService) DeleteAllMerchantBusinessPermanent(ctx context.Context) (bool, error) {
+	const method = "DeleteAllMerchantBusinessPermanent"
 
-	ctx, span := s.trace.Start(ctx, method)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
-	if len(attrs) > 0 {
-		span.SetAttributes(attrs...)
+	defer func() {
+		end(status)
+	}()
+
+	success, err := s.merchantBusinessRepository.DeleteAllMerchantBusinessPermanent(ctx)
+	if err != nil {
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			merchantbusiness_errors.ErrFailedDeleteAllMerchantBusinessPermanent,
+			method,
+			span,
+		)
 	}
 
-	span.AddEvent("Start: " + method)
+	logSuccess("Successfully permanently deleted all trashed merchant businesses")
 
-	s.logger.Debug("Start: " + method)
-
-	end := func(status string) {
-		s.recordMetrics(method, status, start)
-		code := codes.Ok
-		if status != "success" {
-			code = codes.Error
-		}
-		span.SetStatus(code, status)
-		span.End()
-	}
-
-	logSuccess := func(msg string, fields ...zap.Field) {
-		span.AddEvent(msg)
-		s.logger.Debug(msg, fields...)
-	}
-
-	return ctx, span, end, status, logSuccess
-}
-
-func (s *merchantBusinessCommandService) recordMetrics(method string, status string, start time.Time) {
-	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
+	return success, nil
 }

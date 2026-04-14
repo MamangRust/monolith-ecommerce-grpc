@@ -3,24 +3,38 @@ package repository
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 )
 
 type CartQueryRepository interface {
-	FindCarts(ctx context.Context, req *requests.FindAllCarts) ([]*record.CartRecord, *int, error)
+	FindCarts(
+		ctx context.Context,
+		req *requests.FindAllCarts,
+	) ([]*db.GetCartsRow, error)
 }
 
 type CartCommandRepository interface {
-	CreateCart(ctx context.Context, req *requests.CartCreateRecord) (*record.CartRecord, error)
-	DeletePermanent(ctx context.Context, req *requests.DeleteCartRequest) (bool, error)
-	DeleteAllPermanently(ctx context.Context, req *requests.DeleteAllCartRequest) (bool, error)
+	CreateCart(
+		ctx context.Context,
+		req *requests.CartCreateRecord,
+	) (*db.CreateCartRow, error)
+
+	DeletePermanent(
+		ctx context.Context,
+		req *requests.DeleteCartRequest,
+	) (bool, error)
+
+	DeleteAllPermanently(
+		ctx context.Context,
+		req *requests.DeleteAllCartRequest,
+	) (bool, error)
 }
 
 type ProductQueryRepository interface {
-	FindById(ctx context.Context, productID int) (*record.ProductRecord, error)
+	FindById(ctx context.Context, product_id int) (*db.GetProductByIDRow, error)
 }
 
 type UserQueryRepository interface {
-	FindById(ctx context.Context, userID int) (*record.UserRecord, error)
+	FindById(ctx context.Context, user_id int) (*db.GetUserByIDRow, error)
 }

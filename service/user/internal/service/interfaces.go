@@ -3,24 +3,26 @@ package service
 import (
 	"context"
 
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
+// UserQueryService handles query operations related to user data.
 type UserQueryService interface {
-	FindAll(ctx context.Context, req *requests.FindAllUsers) ([]*response.UserResponse, *int, *response.ErrorResponse)
-	FindByID(ctx context.Context, id int) (*response.UserResponse, *response.ErrorResponse)
-	FindByActive(ctx context.Context, req *requests.FindAllUsers) ([]*response.UserResponseDeleteAt, *int, *response.ErrorResponse)
-	FindByTrashed(ctx context.Context, req *requests.FindAllUsers) ([]*response.UserResponseDeleteAt, *int, *response.ErrorResponse)
+	FindAll(ctx context.Context, req *requests.FindAllUsers) ([]*db.GetUsersRow, *int, error)
+	FindByID(ctx context.Context, id int) (*db.GetUserByIDRow, error)
+	FindByActive(ctx context.Context, req *requests.FindAllUsers) ([]*db.GetUsersActiveRow, *int, error)
+	FindByTrashed(ctx context.Context, req *requests.FindAllUsers) ([]*db.GetUserTrashedRow, *int, error)
 }
 
+// UserCommandService handles command operations related to user management.
 type UserCommandService interface {
-	CreateUser(ctx context.Context, request *requests.CreateUserRequest) (*response.UserResponse, *response.ErrorResponse)
-	UpdateUser(ctx context.Context, request *requests.UpdateUserRequest) (*response.UserResponse, *response.ErrorResponse)
-	TrashedUser(ctx context.Context, user_id int) (*response.UserResponseDeleteAt, *response.ErrorResponse)
-	RestoreUser(ctx context.Context, user_id int) (*response.UserResponseDeleteAt, *response.ErrorResponse)
-	DeleteUserPermanent(ctx context.Context, user_id int) (bool, *response.ErrorResponse)
+	CreateUser(ctx context.Context, request *requests.CreateUserRequest) (*db.CreateUserRow, error)
+	UpdateUser(ctx context.Context, request *requests.UpdateUserRequest) (*db.User, error)
+	TrashedUser(ctx context.Context, user_id int) (*db.TrashUserRow, error)
+	RestoreUser(ctx context.Context, user_id int) (*db.RestoreUserRow, error)
+	DeleteUserPermanent(ctx context.Context, user_id int) (bool, error)
 
-	RestoreAllUser(ctx context.Context) (bool, *response.ErrorResponse)
-	DeleteAllUserPermanent(ctx context.Context) (bool, *response.ErrorResponse)
+	RestoreAllUser(ctx context.Context) (bool, error)
+	DeleteAllUserPermanent(ctx context.Context) (bool, error)
 }

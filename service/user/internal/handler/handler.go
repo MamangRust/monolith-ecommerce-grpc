@@ -11,11 +11,13 @@ type Deps struct {
 }
 
 type Handler struct {
-	User UserHandleGrpc
+	UserQuery   UserQueryHandler
+	UserCommand UserCommandHandler
 }
 
 func NewHandler(deps *Deps) *Handler {
 	return &Handler{
-		User: NewUserHandleGrpc(deps.Service, deps.Logger),
+		UserQuery:   NewUserQueryHandler(deps.Service.UserQuery, deps.Logger),
+		UserCommand: NewUserCommandHandler(deps.Service.UserCommand, deps.Logger),
 	}
 }

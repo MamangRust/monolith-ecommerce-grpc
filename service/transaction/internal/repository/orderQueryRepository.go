@@ -2,31 +2,33 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/order_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type orderQueryRepository struct {
-	db      *db.Queries
-	mapping recordmapper.OrderRecordMapping
+	db *db.Queries
 }
 
-func NewOrderQueryRepository(db *db.Queries, mapping recordmapper.OrderRecordMapping) *orderQueryRepository {
+func NewOrderQueryRepository(db *db.Queries) OrderQueryRepository {
 	return &orderQueryRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *orderQueryRepository) FindById(ctx context.Context, id int) (*record.OrderRecord, error) {
+func (r *orderQueryRepository) FindById(ctx context.Context, id int) (*db.GetOrderByIDRow, error) {
 	res, err := r.db.GetOrderByID(ctx, int32(id))
 
 	if err != nil {
-		return nil, order_errors.ErrFindById
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, order_errors.ErrOrderNotFound.WithInternal(err)
+		}
+		return nil, order_errors.ErrFindById.WithInternal(err)
 	}
 
-	return r.mapping.ToOrderRecord(res), nil
+	return res, nil
 }
+

@@ -2,32 +2,33 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	shippingaddress_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/shipping_address_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type shippingAddressQueryRepository struct {
-	db      *db.Queries
-	mapping recordmapper.ShippingAddressMapping
+	db *db.Queries
 }
 
-func NewShippingAddressQueryRepository(db *db.Queries, mapping recordmapper.ShippingAddressMapping) *shippingAddressQueryRepository {
+func NewShippingAddressQueryRepository(db *db.Queries) ShippingAddressQueryRepository {
 	return &shippingAddressQueryRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *shippingAddressQueryRepository) FindByOrder(ctx context.Context, order_id int) (*record.ShippingAddressRecord, error) {
+func (r *shippingAddressQueryRepository) FindByOrder(ctx context.Context, order_id int) (*db.GetShippingAddressByOrderIDRow, error) {
 	res, err := r.db.GetShippingAddressByOrderID(ctx, int32(order_id))
 
 	if err != nil {
-		return nil, shippingaddress_errors.ErrFindShippingAddressByOrder
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, shippingaddress_errors.ErrShippingAddressNotFound.WithInternal(err)
+		}
+		return nil, shippingaddress_errors.ErrFindShippingAddressByOrder.WithInternal(err)
 	}
 
-	return r.mapping.ToShippingAddressRecord(res), nil
-
+	return res, nil
 }
+

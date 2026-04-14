@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package pb;
+
+import "transaction/transaction_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindAllTransactionRequest {
+    int32 page = 1;
+    int32 page_size = 2;
+    string search = 3;
+}
+
+message FindAllTransactionByMerchantRequest {
+    int32 merchant_id = 1;
+    int32 page = 2;
+    int32 page_size = 3;
+    string search = 4;
+}
+
+message FindByOrderIdTransactionRequest {
+    int32 order_id = 1;
+}
+
+service TransactionQueryService {
+    rpc FindAllTransactions(FindAllTransactionRequest) returns (ApiResponsePaginationTransaction);
+    rpc FindByMerchant(FindAllTransactionByMerchantRequest) returns (ApiResponsePaginationTransaction);
+    rpc FindById(FindByIdTransactionRequest) returns (ApiResponseTransaction);
+    rpc FindByOrderId(FindByOrderIdTransactionRequest) returns (ApiResponseTransaction);
+    
+    rpc FindByActive(FindAllTransactionRequest) returns (ApiResponsePaginationTransaction);
+    rpc FindByTrashed(FindAllTransactionRequest) returns (ApiResponsePaginationTransactionDeleteAt);
+}

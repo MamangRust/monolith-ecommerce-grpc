@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package pb;
+
+import "common/api.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message CartResponse {
+    int32 id = 1;
+    int32 user_id = 2;
+    int32 product_id = 3;
+    string name = 4;
+    int32 price = 5;
+    string image = 6;
+    int32 quantity = 7;
+    int32 weight = 8;
+    string created_at = 9;
+    string updated_at = 10;
+}
+  
+message CartResponseDeletedAt {
+    int32 id = 1;
+    int32 user_id = 2;
+    int32 product_id = 3;
+    string name = 4;
+    int32 price = 5;
+    string image = 6;
+    int32 quantity = 7;
+    int32 weight = 8;
+    string created_at = 9;
+    string updated_at = 10;
+    string deleted_at = 11;
+}
+
+message ApiResponseCart {
+    string status = 1;
+    string message = 2;
+    CartResponse data = 3;
+}
+
+message ApiResponseCartDelete {
+    string status = 1;
+    string message = 2;
+}
+
+message ApiResponseCartAll {
+    string status = 1;
+    string message = 2;
+}
+
+message ApiResponsePaginationCart {
+    string status = 1;
+    string message = 2;
+    repeated CartResponse data = 3;
+    PaginationMeta pagination = 4;
+}

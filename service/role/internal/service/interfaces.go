@@ -3,25 +3,25 @@ package service
 import (
 	"context"
 
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
 type RoleQueryService interface {
-	FindAll(ctx context.Context, req *requests.FindAllRole) ([]*response.RoleResponse, *int, *response.ErrorResponse)
-	FindByActiveRole(ctx context.Context, req *requests.FindAllRole) ([]*response.RoleResponseDeleteAt, *int, *response.ErrorResponse)
-	FindByTrashedRole(ctx context.Context, req *requests.FindAllRole) ([]*response.RoleResponseDeleteAt, *int, *response.ErrorResponse)
-	FindById(ctx context.Context, role_id int) (*response.RoleResponse, *response.ErrorResponse)
-	FindByUserId(ctx context.Context, id int) ([]*response.RoleResponse, *response.ErrorResponse)
+	FindAll(ctx context.Context, req *requests.FindAllRole) ([]*db.GetRolesRow, *int, error)
+	FindByActiveRole(ctx context.Context, req *requests.FindAllRole) ([]*db.GetActiveRolesRow, *int, error)
+	FindByTrashedRole(ctx context.Context, req *requests.FindAllRole) ([]*db.GetTrashedRolesRow, *int, error)
+	FindById(ctx context.Context, role_id int) (*db.Role, error)
+	FindByUserId(ctx context.Context, id int) ([]*db.Role, error)
 }
 
 type RoleCommandService interface {
-	CreateRole(ctx context.Context, request *requests.CreateRoleRequest) (*response.RoleResponse, *response.ErrorResponse)
-	UpdateRole(ctx context.Context, request *requests.UpdateRoleRequest) (*response.RoleResponse, *response.ErrorResponse)
-	TrashedRole(ctx context.Context, role_id int) (*response.RoleResponse, *response.ErrorResponse)
-	RestoreRole(ctx context.Context, role_id int) (*response.RoleResponse, *response.ErrorResponse)
-	DeleteRolePermanent(ctx context.Context, role_id int) (bool, *response.ErrorResponse)
+	CreateRole(ctx context.Context, request *requests.CreateRoleRequest) (*db.Role, error)
+	UpdateRole(ctx context.Context, request *requests.UpdateRoleRequest) (*db.Role, error)
+	TrashedRole(ctx context.Context, role_id int) (*db.Role, error)
+	RestoreRole(ctx context.Context, role_id int) (*db.Role, error)
+	DeleteRolePermanent(ctx context.Context, role_id int) (bool, error)
 
-	RestoreAllRole(ctx context.Context) (bool, *response.ErrorResponse)
-	DeleteAllRolePermanent(ctx context.Context) (bool, *response.ErrorResponse)
+	RestoreAllRole(ctx context.Context) (bool, error)
+	DeleteAllRolePermanent(ctx context.Context) (bool, error)
 }

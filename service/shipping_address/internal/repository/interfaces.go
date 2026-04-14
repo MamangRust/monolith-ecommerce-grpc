@@ -3,24 +3,63 @@ package repository
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 )
 
 type ShippingAddressQueryRepository interface {
-	FindAllShippingAddress(ctx context.Context, req *requests.FindAllShippingAddress) ([]*record.ShippingAddressRecord, *int, error)
-	FindByActive(ctx context.Context, req *requests.FindAllShippingAddress) ([]*record.ShippingAddressRecord, *int, error)
-	FindByTrashed(ctx context.Context, req *requests.FindAllShippingAddress) ([]*record.ShippingAddressRecord, *int, error)
-	FindByOrder(ctx context.Context, shipping_id int) (*record.ShippingAddressRecord, error)
-	FindById(ctx context.Context, shipping_id int) (*record.ShippingAddressRecord, error)
+	FindAllShippingAddress(
+		ctx context.Context,
+		req *requests.FindAllShippingAddress,
+	) ([]*db.GetShippingAddressRow, error)
+
+	FindByActive(
+		ctx context.Context,
+		req *requests.FindAllShippingAddress,
+	) ([]*db.GetShippingAddressActiveRow, error)
+
+	FindByTrashed(
+		ctx context.Context,
+		req *requests.FindAllShippingAddress,
+	) ([]*db.GetShippingAddressTrashedRow, error)
+
+	FindByOrder(
+		ctx context.Context,
+		shipping_id int,
+	) (*db.GetShippingAddressByOrderIDRow, error)
+
+	FindById(
+		ctx context.Context,
+		shipping_id int,
+	) (*db.GetShippingByIDRow, error)
 }
 
 type ShippingAddressCommandRepository interface {
-	CreateShippingAddress(ctx context.Context, request *requests.CreateShippingAddressRequest) (*record.ShippingAddressRecord, error)
-	UpdateShippingAddress(ctx context.Context, request *requests.UpdateShippingAddressRequest) (*record.ShippingAddressRecord, error)
-	TrashShippingAddress(ctx context.Context, category_id int) (*record.ShippingAddressRecord, error)
-	RestoreShippingAddress(ctx context.Context, category_id int) (*record.ShippingAddressRecord, error)
-	DeleteShippingAddressPermanently(ctx context.Context, category_id int) (bool, error)
+	CreateShippingAddress(
+		ctx context.Context,
+		request *requests.CreateShippingAddressRequest,
+	) (*db.CreateShippingAddressRow, error)
+
+	UpdateShippingAddress(
+		ctx context.Context,
+		request *requests.UpdateShippingAddressRequest,
+	) (*db.UpdateShippingAddressRow, error)
+
+	TrashShippingAddress(
+		ctx context.Context,
+		shipping_id int,
+	) (*db.ShippingAddress, error)
+
+	RestoreShippingAddress(
+		ctx context.Context,
+		shipping_id int,
+	) (*db.ShippingAddress, error)
+
+	DeleteShippingAddressPermanently(
+		ctx context.Context,
+		shipping_id int,
+	) (bool, error)
+
 	RestoreAllShippingAddress(ctx context.Context) (bool, error)
 	DeleteAllPermanentShippingAddress(ctx context.Context) (bool, error)
 }

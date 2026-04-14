@@ -1,11 +1,10 @@
 package service
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/redis"
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-cart/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 )
 
 type Service struct {
@@ -14,17 +13,26 @@ type Service struct {
 }
 
 type Deps struct {
-	ErrorHandler *errorhandler.ErrorHandler
-	Mencached    *mencache.Mencache
-	Repositories *repository.Repositories
-	Logger       logger.LoggerInterface
+	Cache         mencache.CartMencache
+	Repositories  *repository.Repositories
+	Logger        logger.LoggerInterface
+	Observability observability.TraceLoggerObservability
 }
 
 func NewService(deps *Deps) *Service {
-	mapper := response_service.NewCartResponseMapper()
-
 	return &Service{
-		CartQuery:   NewCartQueryService(deps.ErrorHandler.CartQueryError, deps.Mencached.CartQueryCache, deps.Repositories.CartQuery, deps.Logger, mapper),
-		CartCommand: NewCardCommandService(deps.ErrorHandler.CartCommandError, deps.Repositories.CartCommand, deps.Repositories.ProductQuery, deps.Repositories.UserQuery, deps.Logger, mapper),
+		CartQuery: NewCartQueryService(&CartQueryServiceDeps{
+			Observability:       deps.Observability,
+			Mencache:            deps.Cache,
+			CartQueryRepository: deps.Repositories.CartQuery,
+			Logger:              deps.Logger,
+		}),
+		CartCommand: NewCartCommandService(&CartCommandServiceDeps{
+			Observability:          deps.Observability,
+			CartCommandRepository:  deps.Repositories.CartCommand,
+			ProductQueryRepository: deps.Repositories.ProductQuery,
+			UserQueryRepository:    deps.Repositories.UserQuery,
+			Logger:                 deps.Logger,
+		}),
 	}
 }

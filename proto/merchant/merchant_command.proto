@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/empty.proto";
+import "merchant/merchant_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message CreateMerchantRequest {
+    int32 user_id = 1;
+    string name = 2;
+    string description = 3;
+    string address = 4;
+    string contact_email = 5;
+    string contact_phone = 6;
+    string status = 7;
+}
+
+message UpdateMerchantRequest {
+    int32 merchant_id = 1;
+    int32 user_id = 2;
+    string name = 3;
+    string description = 4;
+    string address = 5;
+    string contact_email = 6;
+    string contact_phone = 7;
+    string status = 8;
+}
+
+message UpdateMerchantStatusRequest{
+    int32 merchant_id = 1;
+    string status = 2;
+}
+
+service MerchantCommandService {
+    rpc Create(CreateMerchantRequest) returns (ApiResponseMerchant);
+    rpc Update(UpdateMerchantRequest) returns (ApiResponseMerchant);
+    rpc UpdateStatus(UpdateMerchantStatusRequest) returns (ApiResponseMerchant);
+
+    rpc TrashedMerchant(FindByIdMerchantRequest) returns (ApiResponseMerchantDeleteAt);
+    rpc RestoreMerchant(FindByIdMerchantRequest) returns (ApiResponseMerchant);
+    rpc DeleteMerchantPermanent(FindByIdMerchantRequest) returns (ApiResponseMerchantDelete);
+
+    rpc RestoreAllMerchant(google.protobuf.Empty) returns (ApiResponseMerchantAll);
+    rpc DeleteAllMerchantPermanent(google.protobuf.Empty) returns (ApiResponseMerchantAll);
+}

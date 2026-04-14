@@ -4,25 +4,21 @@ import (
 	"context"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/record"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	shippingaddress_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/shipping_address_errors"
-	recordmapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/record"
 )
 
 type shippingAddressCommandRepository struct {
-	db      *db.Queries
-	mapping recordmapper.ShippingAddressMapping
+	db *db.Queries
 }
 
-func NewShippingAddressCommandRepository(db *db.Queries, mapping recordmapper.ShippingAddressMapping) *shippingAddressCommandRepository {
+func NewShippingAddressCommandRepository(db *db.Queries) *shippingAddressCommandRepository {
 	return &shippingAddressCommandRepository{
-		db:      db,
-		mapping: mapping,
+		db: db,
 	}
 }
 
-func (r *shippingAddressCommandRepository) CreateShippingAddress(ctx context.Context, request *requests.CreateShippingAddressRequest) (*record.ShippingAddressRecord, error) {
+func (r *shippingAddressCommandRepository) CreateShippingAddress(ctx context.Context, request *requests.CreateShippingAddressRequest) (*db.CreateShippingAddressRow, error) {
 	req := db.CreateShippingAddressParams{
 		OrderID:        int32(*request.OrderID),
 		Alamat:         request.Alamat,
@@ -40,10 +36,10 @@ func (r *shippingAddressCommandRepository) CreateShippingAddress(ctx context.Con
 		return nil, shippingaddress_errors.ErrCreateShippingAddress
 	}
 
-	return r.mapping.ToShippingAddressRecord(address), nil
+	return address, nil
 }
 
-func (r *shippingAddressCommandRepository) UpdateShippingAddress(ctx context.Context, request *requests.UpdateShippingAddressRequest) (*record.ShippingAddressRecord, error) {
+func (r *shippingAddressCommandRepository) UpdateShippingAddress(ctx context.Context, request *requests.UpdateShippingAddressRequest) (*db.UpdateShippingAddressRow, error) {
 	req := db.UpdateShippingAddressParams{
 		ShippingAddressID: int32(*request.ShippingID),
 		Alamat:            request.Alamat,
@@ -60,31 +56,31 @@ func (r *shippingAddressCommandRepository) UpdateShippingAddress(ctx context.Con
 		return nil, shippingaddress_errors.ErrUpdateShippingAddress
 	}
 
-	return r.mapping.ToShippingAddressRecord(res), nil
+	return res, nil
 }
 
-func (r *shippingAddressCommandRepository) TrashShippingAddress(ctx context.Context, shipping_id int) (*record.ShippingAddressRecord, error) {
+func (r *shippingAddressCommandRepository) TrashShippingAddress(ctx context.Context, shipping_id int) (*db.ShippingAddress, error) {
 	res, err := r.db.TrashShippingAddress(ctx, int32(shipping_id))
 
 	if err != nil {
 		return nil, shippingaddress_errors.ErrTrashShippingAddress
 	}
 
-	return r.mapping.ToShippingAddressRecord(res), nil
+	return res, nil
 }
 
-func (r *shippingAddressCommandRepository) RestoreShippingAddress(ctx context.Context, category_id int) (*record.ShippingAddressRecord, error) {
-	res, err := r.db.RestoreShippingAddress(ctx, int32(category_id))
+func (r *shippingAddressCommandRepository) RestoreShippingAddress(ctx context.Context, shipping_id int) (*db.ShippingAddress, error) {
+	res, err := r.db.RestoreShippingAddress(ctx, int32(shipping_id))
 
 	if err != nil {
 		return nil, shippingaddress_errors.ErrRestoreShippingAddress
 	}
 
-	return r.mapping.ToShippingAddressRecord(res), nil
+	return res, nil
 }
 
-func (r *shippingAddressCommandRepository) DeleteShippingAddressPermanently(ctx context.Context, category_id int) (bool, error) {
-	err := r.db.DeleteShippingAddressPermanently(ctx, int32(category_id))
+func (r *shippingAddressCommandRepository) DeleteShippingAddressPermanently(ctx context.Context, shipping_id int) (bool, error) {
+	err := r.db.DeleteShippingAddressPermanently(ctx, int32(shipping_id))
 
 	if err != nil {
 		return false, shippingaddress_errors.ErrDeleteShippingAddressPermanent

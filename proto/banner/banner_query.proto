@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package pb;
+
+import "banner/banner_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindAllBannerRequest {
+    int32 page = 1;
+    int32 page_size = 2;
+    string search = 3;
+}
+
+service BannerQueryService {
+    rpc FindAll(FindAllBannerRequest) returns (ApiResponsePaginationBanner);
+    rpc FindById(FindByIdBannerRequest) returns (ApiResponseBanner);
+    rpc FindByActive(FindAllBannerRequest) returns (ApiResponsePaginationBannerDeleteAt);
+    rpc FindByTrashed(FindAllBannerRequest) returns (ApiResponsePaginationBannerDeleteAt);
+}

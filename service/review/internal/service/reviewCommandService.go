@@ -2,282 +2,293 @@ package service
 
 import (
 	"context"
-	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-review/internal/errorhandler"
+	"github.com/MamangRust/monolith-ecommerce-grpc-review/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-review/internal/repository"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/product_errors"
 	review_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/review"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/user_errors"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
+	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
 type reviewCommandService struct {
-	errorhandler            errorhandler.ReviewCommandError
-	trace                   trace.Tracer
-	productQueryRepository  repository.ProductQueryRepository
-	userQueryRepository     repository.UserQueryRepository
-	reviewQueryRepository   repository.ReviewQueryRepository
-	reviewCommandRepository repository.ReviewCommandRepository
-	mapping                 response_service.ReviewResponseMapper
-	logger                  logger.LoggerInterface
-	requestCounter          *prometheus.CounterVec
-	requestDuration         *prometheus.HistogramVec
+	observability    observability.TraceLoggerObservability
+	cache            cache.ReviewCommandCache
+	reviewRepository      repository.ReviewCommandRepository
+	reviewQueryRepository repository.ReviewQueryRepository
+	userRepository        repository.UserQueryRepository
+	productRepository     repository.ProductQueryRepository
+	logger                logger.LoggerInterface
 }
 
-func NewReviewCommandService(
-	errorhandler errorhandler.ReviewCommandError,
-	productQueryRepository repository.ProductQueryRepository, userQueryRepository repository.UserQueryRepository,
-	reviewQueryRepository repository.ReviewQueryRepository,
-	reviewCommandRepository repository.ReviewCommandRepository, mapping response_service.ReviewResponseMapper, logger logger.LoggerInterface) *reviewCommandService {
-	requestCounter := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "review_command_service_request_count",
-			Help: "Total number of requests to the ReviewCommandService",
-		},
-		[]string{"method", "status"},
-	)
+type ReviewCommandServiceDeps struct {
+	Observability         observability.TraceLoggerObservability
+	Cache                 cache.ReviewCommandCache
+	ReviewRepository      repository.ReviewCommandRepository
+	ReviewQueryRepository repository.ReviewQueryRepository
+	UserRepository        repository.UserQueryRepository
+	ProductRepository     repository.ProductQueryRepository
+	Logger                logger.LoggerInterface
+}
 
-	requestDuration := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "review_command_service_request_duration",
-			Help:    "Histogram of request durations for the ReviewCommandService",
-			Buckets: prometheus.DefBuckets,
-		},
-		[]string{"method", "status"},
-	)
-
-	prometheus.MustRegister(requestCounter, requestDuration)
-
+func NewReviewCommandService(deps *ReviewCommandServiceDeps) ReviewCommandService {
 	return &reviewCommandService{
-		errorhandler:            errorhandler,
-		trace:                   otel.Tracer("review-command-service"),
-		productQueryRepository:  productQueryRepository,
-		userQueryRepository:     userQueryRepository,
-		reviewQueryRepository:   reviewQueryRepository,
-		reviewCommandRepository: reviewCommandRepository,
-		mapping:                 mapping,
-		logger:                  logger,
-		requestCounter:          requestCounter,
-		requestDuration:         requestDuration,
+		observability:         deps.Observability,
+		cache:                 deps.Cache,
+		reviewRepository:      deps.ReviewRepository,
+		reviewQueryRepository: deps.ReviewQueryRepository,
+		userRepository:        deps.UserRepository,
+		productRepository:     deps.ProductRepository,
+		logger:                deps.Logger,
 	}
 }
-func (s *reviewCommandService) CreateReview(ctx context.Context, req *requests.CreateReviewRequest) (*response.ReviewResponse, *response.ErrorResponse) {
+
+func (s *reviewCommandService) CreateReview(ctx context.Context, req *requests.CreateReviewRequest) (*db.CreateReviewRow, error) {
 	const method = "CreateReview"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("user.id", req.UserID), attribute.Int("product.id", req.ProductID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("user_id", req.UserID),
+		attribute.Int("product_id", req.ProductID))
 
 	defer func() {
 		end(status)
 	}()
 
-	_, err := s.userQueryRepository.FindById(ctx, req.UserID)
-
+	_, err := s.userRepository.FindById(ctx, req.UserID)
 	if err != nil {
-		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_USER_BY_ID", span, &status, user_errors.ErrUserNotFoundRes)
+		status = "error"
+		return errorhandler.HandleError[*db.CreateReviewRow](
+			s.logger,
+			user_errors.ErrUserNotFound,
+			method,
+			span,
+			zap.Int("user_id", req.UserID),
+		)
 	}
 
-	_, err = s.productQueryRepository.FindById(ctx, req.ProductID)
-
+	_, err = s.productRepository.FindById(ctx, req.ProductID)
 	if err != nil {
-		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_PRODUCT_BY_ID", span, &status, product_errors.ErrFailedFindProductById, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.CreateReviewRow](
+			s.logger,
+			product_errors.ErrProductNotFound,
+			method,
+			span,
+			zap.Int("product_id", req.ProductID),
+		)
 	}
 
-	review, err := s.reviewCommandRepository.CreateReview(ctx, req)
-
+	review, err := s.reviewRepository.CreateReview(ctx, req)
 	if err != nil {
-		return s.errorhandler.HandleCreateReviewError(err, method, "FAILED_CREATE_REVIEW", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.CreateReviewRow](
+			s.logger,
+			review_errors.ErrFailedCreateReview.WithInternal(err),
+			method,
+			span,
+
+			zap.Any("request", req),
+		)
 	}
 
-	so := s.mapping.ToReviewResponse(review)
+	s.cache.DeleteReviewCache(ctx, int(review.ReviewID))
 
-	logSuccess("Successfully created review", zap.Int("review.id", review.ID), zap.Bool("success", true))
+	logSuccess("Successfully created review",
+		zap.Int("review_id", int(review.ReviewID)),
+		zap.Int("user_id", req.UserID),
+		zap.Int("product_id", req.ProductID))
 
-	return so, nil
+	return review, nil
 }
 
-func (s *reviewCommandService) UpdateReview(ctx context.Context, req *requests.UpdateReviewRequest) (*response.ReviewResponse, *response.ErrorResponse) {
+func (s *reviewCommandService) UpdateReview(ctx context.Context, req *requests.UpdateReviewRequest) (*db.UpdateReviewRow, error) {
 	const method = "UpdateReview"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("review.id", *req.ReviewID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("review_id", *req.ReviewID))
 
 	defer func() {
 		end(status)
 	}()
 
 	_, err := s.reviewQueryRepository.FindById(ctx, *req.ReviewID)
-
 	if err != nil {
-		return s.errorhandler.HandleRepositorySingleError(err, method, "FAILED_FIND_REVIEW_BY_ID", span, &status, review_errors.ErrFailedReviewNotFound, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.UpdateReviewRow](
+			s.logger,
+			review_errors.ErrReviewNotFound,
+			method,
+			span,
+			zap.Int("review_id", *req.ReviewID),
+		)
 	}
 
-	review, err := s.reviewCommandRepository.UpdateReview(ctx, req)
-
+	review, err := s.reviewRepository.UpdateReview(ctx, req)
 	if err != nil {
-		return s.errorhandler.HandleUpdateReviewError(err, method, "FAILED_UPDATE_REVIEW", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.UpdateReviewRow](
+			s.logger,
+			review_errors.ErrFailedUpdateReview.WithInternal(err),
+			method,
+			span,
+
+			zap.Any("request", req),
+		)
 	}
 
-	so := s.mapping.ToReviewResponse(review)
+	s.cache.DeleteReviewCache(ctx, int(review.ReviewID))
 
-	logSuccess("Successfully updated review", zap.Int("review.id", review.ID), zap.Bool("success", true))
+	logSuccess("Successfully updated review",
+		zap.Int("review_id", int(review.ReviewID)))
 
-	return so, nil
+	return review, nil
 }
 
-func (s *reviewCommandService) TrashedReview(ctx context.Context, reviewID int) (*response.ReviewResponseDeleteAt, *response.ErrorResponse) {
-	const method = "TrashedReview"
+func (s *reviewCommandService) TrashReview(ctx context.Context, reviewID int) (*db.Review, error) {
+	const method = "TrashReview"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("review.id", reviewID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("reviewID", reviewID))
 
 	defer func() {
 		end(status)
 	}()
 
-	review, err := s.reviewCommandRepository.TrashReview(ctx, reviewID)
-
+	review, err := s.reviewRepository.TrashReview(ctx, reviewID)
 	if err != nil {
-		return s.errorhandler.HandleTrashedReviewError(err, method, "FAILED_TRASH_REVIEW", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.Review](
+			s.logger,
+			review_errors.ErrFailedTrashedReview.WithInternal(err),
+			method,
+			span,
+
+			zap.Int("reviewID", reviewID),
+		)
 	}
 
-	so := s.mapping.ToReviewResponseDeleteAt(review)
+	s.cache.DeleteReviewCache(ctx, int(review.ReviewID))
 
-	msgSuccess := "Successfully trashed Review"
+	logSuccess("Successfully trashed review",
+		zap.Int("review_id", int(review.ReviewID)))
 
-	logSuccess(msgSuccess, zap.Int("review.id", review.ID), zap.Bool("success", true))
-
-	return so, nil
+	return review, nil
 }
 
-func (s *reviewCommandService) RestoreReview(ctx context.Context, reviewID int) (*response.ReviewResponseDeleteAt, *response.ErrorResponse) {
+func (s *reviewCommandService) RestoreReview(ctx context.Context, reviewID int) (*db.Review, error) {
 	const method = "RestoreReview"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("review.id", reviewID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("reviewID", reviewID))
 
 	defer func() {
 		end(status)
 	}()
 
-	review, err := s.reviewCommandRepository.RestoreReview(ctx, reviewID)
-
+	review, err := s.reviewRepository.RestoreReview(ctx, reviewID)
 	if err != nil {
-		return s.errorhandler.HandleRestoreReviewError(err, method, "FAILED_RESTORE_REVIEW", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[*db.Review](
+			s.logger,
+			review_errors.ErrFailedRestoreReview.WithInternal(err),
+			method,
+			span,
+
+			zap.Int("reviewID", reviewID),
+		)
 	}
 
-	so := s.mapping.ToReviewResponseDeleteAt(review)
+	s.cache.DeleteReviewCache(ctx, int(review.ReviewID))
 
-	logSuccess("Successfully restored review", zap.Int("review.id", review.ID), zap.Bool("success", true))
+	logSuccess("Successfully restored review",
+		zap.Int("review_id", int(review.ReviewID)))
 
-	return so, nil
+	return review, nil
 }
 
-func (s *reviewCommandService) DeleteReviewPermanent(ctx context.Context, reviewID int) (bool, *response.ErrorResponse) {
-	const method = "DeleteReviewPermanent"
+func (s *reviewCommandService) DeleteReviewPermanently(ctx context.Context, reviewID int) (bool, error) {
+	const method = "DeleteReviewPermanently"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method, attribute.Int("review.id", reviewID))
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("reviewID", reviewID))
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.reviewCommandRepository.DeleteReviewPermanently(ctx, reviewID)
-
+	success, err := s.reviewRepository.DeleteReviewPermanently(ctx, reviewID)
 	if err != nil {
-		return s.errorhandler.HandleDeleteReviewError(err, method, "FAILED_DELETE_PERMANENT_REVIEW", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			review_errors.ErrFailedDeletePermanentReview.WithInternal(err),
+			method,
+			span,
+
+			zap.Int("reviewID", reviewID),
+		)
 	}
 
-	logSuccess("Successfully deleted review permanently", zap.Int("review.id", reviewID), zap.Bool("success", success))
+	s.cache.DeleteReviewCache(ctx, reviewID)
+
+	logSuccess("Successfully permanently deleted review",
+		zap.Int("review_id", reviewID))
 
 	return success, nil
 }
 
-func (s *reviewCommandService) RestoreAllReviews(ctx context.Context) (bool, *response.ErrorResponse) {
-	const method = "RestoreAllReviews"
+func (s *reviewCommandService) RestoreAllReview(ctx context.Context) (bool, error) {
+	const method = "RestoreAllReview"
 
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
-
-	defer func() {
-		end(status)
-	}()
-
-	success, err := s.reviewCommandRepository.RestoreAllReview(ctx)
-
-	if err != nil {
-		return s.errorhandler.HandleRestoreAllReviewError(err, method, "FAILED_RESTORE_ALL_REVIEW", span, &status, zap.Error(err))
-	}
-
-	logSuccess("Successfully restored all reviews", zap.Bool("success", success))
-
-	return success, nil
-}
-
-func (s *reviewCommandService) DeleteAllReviewsPermanent(ctx context.Context) (bool, *response.ErrorResponse) {
-	const method = "DeleteAllReviewsPermanent"
-
-	ctx, span, end, status, logSuccess := s.startTracingAndLogging(ctx, method)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
 	defer func() {
 		end(status)
 	}()
 
-	success, err := s.reviewCommandRepository.DeleteAllPermanentReview(ctx)
-
+	success, err := s.reviewRepository.RestoreAllReview(ctx)
 	if err != nil {
-		return s.errorhandler.HandleDeleteAllReviewError(err, method, "FAILED_DELETE_ALL_PERMANENT_REVIEW", span, &status, zap.Error(err))
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			review_errors.ErrFailedRestoreAllReviews.WithInternal(err),
+			method,
+			span,
+		)
 	}
 
-	logSuccess("Successfully deleted all reviews permanently", zap.Bool("success", success))
+	logSuccess("Successfully restored all trashed reviews")
 
 	return success, nil
 }
 
-func (s *reviewCommandService) startTracingAndLogging(ctx context.Context, method string, attrs ...attribute.KeyValue) (
-	context.Context,
-	trace.Span,
-	func(string),
-	string,
-	func(string, ...zap.Field),
-) {
-	start := time.Now()
-	status := "success"
+func (s *reviewCommandService) DeleteAllPermanentReview(ctx context.Context) (bool, error) {
+	const method = "DeleteAllPermanentReview"
 
-	ctx, span := s.trace.Start(ctx, method)
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method)
 
-	if len(attrs) > 0 {
-		span.SetAttributes(attrs...)
+	defer func() {
+		end(status)
+	}()
+
+	success, err := s.reviewRepository.DeleteAllPermanentReview(ctx)
+	if err != nil {
+		status = "error"
+		return errorhandler.HandleError[bool](
+			s.logger,
+			review_errors.ErrFailedDeleteAllPermanentReviews.WithInternal(err),
+			method,
+			span,
+		)
 	}
 
-	span.AddEvent("Start: " + method)
+	logSuccess("Successfully permanently deleted all reviews")
 
-	s.logger.Debug("Start: " + method)
-
-	end := func(status string) {
-		s.recordMetrics(method, status, start)
-		code := codes.Ok
-		if status != "success" {
-			code = codes.Error
-		}
-		span.SetStatus(code, status)
-		span.End()
-	}
-
-	logSuccess := func(msg string, fields ...zap.Field) {
-		span.AddEvent(msg)
-		s.logger.Debug(msg, fields...)
-	}
-
-	return ctx, span, end, status, logSuccess
-}
-
-func (s *reviewCommandService) recordMetrics(method string, status string, start time.Time) {
-	s.requestCounter.WithLabelValues(method, status).Inc()
-	s.requestDuration.WithLabelValues(method, status).Observe(time.Since(start).Seconds())
+	return success, nil
 }

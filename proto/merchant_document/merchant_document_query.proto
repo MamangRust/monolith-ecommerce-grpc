@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package pb;
+
+import "merchant_document/merchant_document_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindMerchantDocumentByIdRequest {
+    int32 document_id = 1;
+}
+
+message FindAllMerchantDocumentsRequest {
+    int32 page = 1;
+    int32 page_size = 2;
+    string search = 3;
+}
+
+service MerchantDocumentQueryService {
+    rpc FindAll (FindAllMerchantDocumentsRequest) returns (ApiResponsePaginationMerchantDocument);
+    rpc FindAllActive (FindAllMerchantDocumentsRequest) returns (ApiResponsePaginationMerchantDocument);
+    rpc FindAllTrashed (FindAllMerchantDocumentsRequest) returns (ApiResponsePaginationMerchantDocumentAt);
+    rpc FindById (FindMerchantDocumentByIdRequest) returns (ApiResponseMerchantDocument);
+}

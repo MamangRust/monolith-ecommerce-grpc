@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package pb;
+
+import "review_detail/review_detail_common.proto";
+import "review/review_query.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+service ReviewDetailQueryService {
+    rpc FindAll(FindAllReviewRequest) returns (ApiResponsePaginationReviewDetails);
+    rpc FindById(FindByIdReviewDetailRequest) returns (ApiResponseReviewDetail);
+
+    rpc FindByActive(FindAllReviewRequest) returns (ApiResponsePaginationReviewDetailsDeleteAt);
+    rpc FindByTrashed(FindAllReviewRequest) returns (ApiResponsePaginationReviewDetailsDeleteAt);
+}

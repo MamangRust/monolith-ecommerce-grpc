@@ -1,11 +1,10 @@
 package service
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-review/internal/errorhandler"
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-review/internal/redis"
+	"github.com/MamangRust/monolith-ecommerce-grpc-review/internal/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-review/internal/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	response_service "github.com/MamangRust/monolith-ecommerce-shared/mapper/response/services"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 )
 
 type Service struct {
@@ -14,16 +13,28 @@ type Service struct {
 }
 
 type Deps struct {
-	ErrorHandler *errorhandler.ErrorHandler
-	Mencache     *mencache.Mencache
-	Repositories *repository.Repositories
-	Logger       logger.LoggerInterface
+	Observability observability.TraceLoggerObservability
+	Cache         *cache.Mencache
+	Repositories  *repository.Repositories
+	Logger        logger.LoggerInterface
 }
 
 func NewService(deps *Deps) *Service {
-	mapper := response_service.NewReviewResponseMapper()
 	return &Service{
-		ReviewQuery:   NewReviewQueryService(deps.Mencache.ReviewQueryCache, deps.ErrorHandler.ReviewQueryError, deps.Repositories.ReviewQuery, mapper, deps.Logger),
-		ReviewCommand: NewReviewCommandService(deps.ErrorHandler.ReviewCommandError, deps.Repositories.ProductQuery, deps.Repositories.UserQuery, deps.Repositories.ReviewQuery, deps.Repositories.ReviewCommand, mapper, deps.Logger),
+		ReviewQuery: NewReviewQueryService(&ReviewQueryServiceDeps{
+			Observability:    deps.Observability,
+			Cache:            deps.Cache.ReviewQuery,
+			ReviewRepository: deps.Repositories.ReviewQuery,
+			Logger:           deps.Logger,
+		}),
+		ReviewCommand: NewReviewCommandService(&ReviewCommandServiceDeps{
+			Observability:         deps.Observability,
+			Cache:                 deps.Cache.ReviewCommand,
+			ReviewRepository:      deps.Repositories.ReviewCommand,
+			ReviewQueryRepository: deps.Repositories.ReviewQuery,
+			UserRepository:        deps.Repositories.UserQuery,
+			ProductRepository:     deps.Repositories.ProductQuery,
+			Logger:                deps.Logger,
+		}),
 	}
 }

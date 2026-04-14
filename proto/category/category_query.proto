@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package pb;
+
+import "category/category_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindAllCategoryRequest {
+    int32 page = 1;
+    int32 page_size = 2;
+    string search = 3;
+}
+
+
+service CategoryQueryService {
+    rpc FindMonthlyTotalPrices(FindYearMonthTotalPrices) returns (ApiResponseCategoryMonthlyTotalPrice);
+    rpc FindYearlyTotalPrices(FindYearTotalPrices) returns (ApiResponseCategoryYearlyTotalPrice);
+
+    rpc FindMonthlyTotalPricesById(FindYearMonthTotalPriceById) returns (ApiResponseCategoryMonthlyTotalPrice);
+    rpc FindYearlyTotalPricesById(FindYearTotalPriceById) returns (ApiResponseCategoryYearlyTotalPrice);
+
+    rpc FindMonthlyTotalPricesByMerchant(FindYearMonthTotalPriceByMerchant) returns (ApiResponseCategoryMonthlyTotalPrice);
+    rpc FindYearlyTotalPricesByMerchant(FindYearTotalPriceByMerchant) returns (ApiResponseCategoryYearlyTotalPrice);
+
+    rpc FindMonthPrice(FindYearCategory) returns(ApiResponseCategoryMonthPrice);
+    rpc FindYearPrice(FindYearCategory) returns(ApiResponseCategoryYearPrice);
+    rpc FindMonthPriceByMerchant(FindYearCategoryByMerchant) returns(ApiResponseCategoryMonthPrice);
+    rpc FindYearPriceByMerchant(FindYearCategoryByMerchant) returns(ApiResponseCategoryYearPrice);
+
+    rpc FindMonthPriceById(FindYearCategoryById) returns(ApiResponseCategoryMonthPrice);
+    rpc FindYearPriceById(FindYearCategoryById) returns(ApiResponseCategoryYearPrice);
+    
+    rpc FindAll(FindAllCategoryRequest) returns (ApiResponsePaginationCategory);
+    rpc FindById(FindByIdCategoryRequest) returns (ApiResponseCategory);
+
+    rpc FindByActive(FindAllCategoryRequest) returns (ApiResponsePaginationCategoryDeleteAt);
+    rpc FindByTrashed(FindAllCategoryRequest) returns (ApiResponsePaginationCategoryDeleteAt);
+}

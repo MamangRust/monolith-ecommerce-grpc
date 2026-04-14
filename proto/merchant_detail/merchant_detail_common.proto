@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/wrappers.proto";
+import "common/api.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindByIdMerchantDetailRequest {
+    int32 id = 1;
+}
+
+message MerchantSocialMediaLinkResponse {
+    int32 id = 1;
+    int32 merchant_detail_id = 2;
+    string platform = 3;
+    string url = 4;
+    string created_at = 5;
+    string updated_at = 6;
+}
+
+message MerchantDetailResponse {
+    int32 id = 1;
+    int32 merchant_id = 2;
+    string display_name = 3;
+    string cover_image_url = 4;
+    string logo_url = 5;
+    string short_description = 6;
+    string website_url = 7;
+    repeated MerchantSocialMediaLinkResponse social_media_links = 8;
+    string created_at = 9;
+    string updated_at = 10;
+}
+  
+message MerchantDetailResponseDeleteAt {
+    int32 id = 1;
+    int32 merchant_id = 2;
+    string display_name = 3;
+    string cover_image_url = 4;
+    string logo_url = 5;
+    string short_description = 6;
+    string website_url = 7;
+    repeated MerchantSocialMediaLinkResponse social_media_links = 8;
+    string created_at = 9;
+    string updated_at = 10;
+    google.protobuf.StringValue deleted_at = 11;
+}
+  
+message ApiResponseMerchantDetail {
+    string status = 1;
+    string message = 2;
+    MerchantDetailResponse data = 3;
+}
+  
+message ApiResponseMerchantDetailDeleteAt {
+    string status = 1;
+    string message = 2;
+    MerchantDetailResponseDeleteAt data = 3;
+}
+
+message ApiResponsesMerchantDetail {
+    string status = 1;
+    string message = 2;
+    repeated MerchantDetailResponse data = 3;
+}
+  
+message ApiResponsePaginationMerchantDetail {
+    string status = 1;
+    string message = 2;
+    repeated MerchantDetailResponse data = 3;
+    PaginationMeta pagination = 4;
+}
+  
+message ApiResponsePaginationMerchantDetailDeleteAt {
+    string status = 1;
+    string message = 2;
+    repeated MerchantDetailResponseDeleteAt data = 3;
+    PaginationMeta pagination = 4;
+}

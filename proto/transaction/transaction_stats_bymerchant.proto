@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package pb;
+
+import "transaction/transaction_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message MonthAmountTransactionMerchantRequest {
+    int32 merchant_id = 1;
+    int32 year = 2;
+    int32 month = 3;
+}
+
+message YearAmountTransactionMerchantRequest {
+    int32 merchant_id = 1;
+    int32 year = 2;
+}
+
+message MonthMethodTransactionMerchantRequest {
+    int32 merchant_id = 1;
+    int32 year = 2;
+    int32 month = 3;
+}
+
+message YearMethodTransactionMerchantRequest {
+    int32 merchant_id = 1;
+    int32 year = 2;
+}
+
+service TransactionStatsByMerchantService {
+    rpc GetMonthlyAmountSuccessByMerchant(MonthAmountTransactionMerchantRequest) returns (ApiResponseTransactionMonthAmountSuccess);
+    rpc GetYearlyAmountSuccessByMerchant(YearAmountTransactionMerchantRequest) returns (ApiResponseTransactionYearAmountSuccess);
+    rpc GetMonthlyAmountFailedByMerchant(MonthAmountTransactionMerchantRequest) returns (ApiResponseTransactionMonthAmountFailed);
+    rpc GetYearlyAmountFailedByMerchant(YearAmountTransactionMerchantRequest) returns (ApiResponseTransactionYearAmountFailed);
+    rpc GetMonthlyTransactionMethodByMerchantSuccess(MonthMethodTransactionMerchantRequest) returns (ApiResponseTransactionMonthPaymentMethod);
+    rpc GetYearlyTransactionMethodByMerchantSuccess(YearMethodTransactionMerchantRequest) returns (ApiResponseTransactionYearPaymentmethod);
+    rpc GetMonthlyTransactionMethodByMerchantFailed(MonthMethodTransactionMerchantRequest) returns (ApiResponseTransactionMonthPaymentMethod);
+    rpc GetYearlyTransactionMethodByMerchantFailed(YearMethodTransactionMerchantRequest) returns (ApiResponseTransactionYearPaymentmethod);
+}
