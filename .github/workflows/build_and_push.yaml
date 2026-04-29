@@ -36,6 +36,7 @@ jobs:
           - shipping_address
           - slider
           - transaction
+          - seeder
 
     steps:
       - name: Checkout
@@ -78,13 +79,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          context: ./service/${{ matrix.service }}
+          context: .
           file: ./service/${{ matrix.service }}/Dockerfile
           tags: |
             ${{ steps.meta.outputs.tags }}
             ghcr.io/mamangrust/monolith-ecommerce-grpc/${{ matrix.service }}:latest
           labels: ${{ steps.meta.outputs.labels }}
-
-
-
-

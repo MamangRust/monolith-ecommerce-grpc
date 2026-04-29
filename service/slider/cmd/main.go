@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-slider/internal/apps"
+	"github.com/MamangRust/monolith-ecommerce-grpc-slider/apps"
 	"github.com/MamangRust/monolith-ecommerce-pkg/server"
 )
 

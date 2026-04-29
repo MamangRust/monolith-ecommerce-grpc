@@ -1,0 +1,30 @@
+go 1.25.1
+
+use (
+	./pkg
+	./service/apigateway
+	./service/auth
+	./service/banner
+	./service/cart
+	./service/category
+	./service/email
+	./service/merchant
+	./service/merchant_award
+	./service/merchant_business
+	./service/merchant_detail
+	./service/merchant_policy
+	./service/migrate
+	./service/order
+	./service/order_item
+	./service/product
+	./service/review
+	./service/review_detail
+	./service/role
+	./service/seeder
+	./service/shipping_address
+	./service/slider
+	./service/transaction
+	./service/user
+	./shared
+	./tests
+)

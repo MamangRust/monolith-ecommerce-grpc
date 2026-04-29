@@ -24,9 +24,21 @@ message UpdateUserRequest {
     string confirm_password = 6;
 }
 
+message UpdateUserPasswordRequest {
+    int32 id = 1;
+    string password = 2;
+}
+
+message UpdateUserIsVerifiedRequest {
+    int32 id = 1;
+    bool is_verified = 2;
+}
+
 service UserCommandService {
     rpc Create(CreateUserRequest) returns (ApiResponseUser);
     rpc Update(UpdateUserRequest) returns (ApiResponseUser);
+    rpc UpdateIsVerified(UpdateUserIsVerifiedRequest) returns (ApiResponseUser);
+    rpc UpdatePassword(UpdateUserPasswordRequest) returns (ApiResponseUser);
     rpc TrashedUser(FindByIdUserRequest) returns (ApiResponseUserDeleteAt);
     rpc RestoreUser(FindByIdUserRequest) returns (ApiResponseUserDeleteAt);
     rpc DeleteUserPermanent(FindByIdUserRequest) returns (ApiResponseUserDelete);

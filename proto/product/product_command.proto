@@ -38,9 +38,15 @@ message UpdateProductRequest {
     string barcode = 13;
 }
 
+message UpdateProductCountStockRequest {
+    int32 product_id = 1;
+    int32 stock = 2;
+}
+
 service ProductCommandService {
     rpc Create(CreateProductRequest) returns (ApiResponseProduct);
     rpc Update(UpdateProductRequest) returns (ApiResponseProduct);
+    rpc UpdateProductCountStock(UpdateProductCountStockRequest) returns (ApiResponseProduct);
     rpc TrashedProduct(FindByIdProductRequest) returns (ApiResponseProductDeleteAt);
     rpc RestoreProduct(FindByIdProductRequest) returns (ApiResponseProductDeleteAt);
     rpc DeleteProductPermanent(FindByIdProductRequest) returns (ApiResponseProductDelete);

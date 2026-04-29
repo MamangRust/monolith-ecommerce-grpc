@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/MamangRust/monolith-ecommerce-pkg/server"
-	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/internal/apps"
+	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/apps"
 )
 
 func main() {

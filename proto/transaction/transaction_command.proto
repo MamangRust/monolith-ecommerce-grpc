@@ -33,5 +33,6 @@ service TransactionCommandService {
     rpc DeleteTransactionPermanent(FindByIdTransactionRequest) returns (ApiResponseTransactionDelete);
 
     rpc RestoreAllTransaction(google.protobuf.Empty) returns (ApiResponseTransactionAll);
+    rpc DeleteTransactionByOrderPermanent(FindByIdTransactionRequest) returns (ApiResponseTransactionDelete);
     rpc DeleteAllTransactionPermanent(google.protobuf.Empty) returns (ApiResponseTransactionAll);
 }

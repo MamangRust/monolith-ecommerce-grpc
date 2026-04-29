@@ -60,6 +60,14 @@ message FindYearTotalRevenueByMerchant{
 }
 
 service OrderQueryService {
+    rpc FindAll(FindAllOrderRequest) returns(ApiResponsePaginationOrder);
+    rpc FindById(FindByIdOrderRequest) returns(ApiResponseOrder);
+    
+    rpc FindByActive(FindAllOrderRequest) returns (ApiResponsePaginationOrderDeleteAt);
+    rpc FindByTrashed(FindAllOrderRequest) returns (ApiResponsePaginationOrderDeleteAt);
+}
+
+service OrderStatsService {
     rpc FindMonthlyTotalRevenue(FindYearMonthTotalRevenue) returns (ApiResponseOrderMonthlyTotalRevenue);
     rpc FindYearlyTotalRevenue(FindYearTotalRevenue) returns (ApiResponseOrderYearlyTotalRevenue);
 
@@ -71,10 +79,4 @@ service OrderQueryService {
 
     rpc FindMonthlyRevenueByMerchant(FindYearOrderByMerchant) returns(ApiResponseOrderMonthly);
     rpc FindYearlyRevenueByMerchant(FindYearOrderByMerchant) returns(ApiResponseOrderYearly);
-
-    rpc FindAll(FindAllOrderRequest) returns(ApiResponsePaginationOrder);
-    rpc FindById(FindByIdOrderRequest) returns(ApiResponseOrder);
-    
-    rpc FindByActive(FindAllOrderRequest) returns (ApiResponsePaginationOrderDeleteAt);
-    rpc FindByTrashed(FindAllOrderRequest) returns (ApiResponsePaginationOrderDeleteAt);
 }

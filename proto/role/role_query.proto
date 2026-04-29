@@ -16,9 +16,14 @@ message FindByIdUserRoleRequest{
     int32 user_id = 1;
 }
 
+message FindByNameRoleRequest {
+    string name = 1;
+}
+
 service RoleQueryService {
     rpc FindAllRole(FindAllRoleRequest) returns(ApiResponsePaginationRole);
     rpc FindByIdRole(FindByIdRoleRequest) returns(ApiResponseRole);
+    rpc FindByNameRole(FindByNameRoleRequest) returns(ApiResponseRole);
 
     rpc FindByActive(FindAllRoleRequest) returns(ApiResponsePaginationRoleDeleteAt);
     rpc FindByTrashed(FindAllRoleRequest) returns(ApiResponsePaginationRoleDeleteAt);

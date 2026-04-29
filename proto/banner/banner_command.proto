@@ -31,11 +31,11 @@ service BannerCommandService {
     rpc Create(CreateBannerRequest) returns (ApiResponseBanner);
     rpc Update(UpdateBannerRequest) returns (ApiResponseBanner);
     
-    rpc TrashedBanner(FindByIdBannerRequest) returns (ApiResponseBannerDeleteAt);
-    rpc RestoreBanner(FindByIdBannerRequest) returns (ApiResponseBannerDeleteAt);
+    rpc Trash(FindByIdBannerRequest) returns (ApiResponseBannerDeleteAt);
+    rpc Restore(FindByIdBannerRequest) returns (ApiResponseBannerDeleteAt);
     
-    rpc DeleteBannerPermanent(FindByIdBannerRequest) returns (ApiResponseBannerDelete);
+    rpc DeletePermanent(FindByIdBannerRequest) returns (ApiResponseBannerDelete);
 
-    rpc RestoreAllBanner(google.protobuf.Empty) returns (ApiResponseBannerAll);
-    rpc DeleteAllBannerPermanent(google.protobuf.Empty) returns (ApiResponseBannerAll);
+    rpc RestoreAll(google.protobuf.Empty) returns (ApiResponseBannerAll);
+    rpc DeleteAll(google.protobuf.Empty) returns (ApiResponseBannerAll);
 }

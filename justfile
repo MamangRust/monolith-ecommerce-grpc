@@ -64,3 +64,16 @@ down:
 
 # Build images and start compose
 build-up: build-image up
+
+# Run unit tests in pkg/
+test-unit:
+    @echo "🧪 Running unit tests in pkg/..."
+    @cd pkg && go test ./... -v
+
+# Run integration tests in tests/
+test-integration:
+    @echo "🧪 Running integration tests in tests/..."
+    @cd tests && GOWORK=off APP_ENV=development go test ./... -v
+
+# Run all tests (unit and integration)
+test-all: test-unit test-integration

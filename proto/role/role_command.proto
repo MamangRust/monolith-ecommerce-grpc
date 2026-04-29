@@ -24,4 +24,7 @@ service RoleCommandService {
     rpc DeleteRolePermanent(FindByIdRoleRequest) returns (ApiResponseRoleDelete);
     rpc RestoreAllRole(google.protobuf.Empty) returns (ApiResponseRoleAll);
     rpc DeleteAllRolePermanent(google.protobuf.Empty) returns (ApiResponseRoleAll);
+
+    rpc AssignRoleToUser(AssignRoleToUserRequest) returns (ApiResponseUserRole);
+    rpc RemoveRoleFromUser(RemoveRoleFromUserRequest) returns (google.protobuf.Empty);
 }

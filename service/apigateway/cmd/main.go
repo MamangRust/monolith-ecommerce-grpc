@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/signal"
 
-	app "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/internal/apps"
+	app "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/apps"
 )
 
 func main() {

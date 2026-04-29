@@ -14,6 +14,7 @@ message FindAllSliderRequest {
 
 service SliderQueryService {
     rpc FindAll(FindAllSliderRequest) returns (ApiResponsePaginationSlider);
+    rpc FindById(FindByIdSliderRequest) returns (ApiResponseSlider);
     rpc FindByTrashed(FindAllSliderRequest) returns (ApiResponsePaginationSliderDeleteAt);
     rpc FindByActive(FindAllSliderRequest) returns (ApiResponsePaginationSliderDeleteAt);
 }
