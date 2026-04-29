@@ -1,0 +1,30 @@
+package merchantdetailapimapper
+
+import (
+	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
+)
+
+type MerchantDetailBaseResponseMapper interface {
+	ToResponseMerchantDetail(merchant *pb.MerchantDetailResponse) *response.MerchantDetailResponse
+	ToResponseMerchantDetailRelation(merchant *pb.MerchantDetailResponse) *response.MerchantDetailResponse
+	ToResponsesMerchantDetail(merchants []*pb.MerchantDetailResponse) []*response.MerchantDetailResponse
+}
+
+type MerchantDetailQueryResponseMapper interface {
+	MerchantDetailBaseResponseMapper
+	ToApiResponseMerchantDetail(pbResponse *pb.ApiResponseMerchantDetail) *response.ApiResponseMerchantDetail
+	ToApiResponseMerchantDetailRelation(pbResponse *pb.ApiResponseMerchantDetail) *response.ApiResponseMerchantDetailRelation
+	ToApiResponsesMerchantDetail(pbResponse *pb.ApiResponsesMerchantDetail) *response.ApiResponsesMerchantDetail
+	ToApiResponsePaginationMerchantDetail(pbResponse *pb.ApiResponsePaginationMerchantDetail) *response.ApiResponsePaginationMerchantDetail
+	ToApiResponsePaginationMerchantDetailDeleteAt(pbResponse *pb.ApiResponsePaginationMerchantDetailDeleteAt) *response.ApiResponsePaginationMerchantDetailDeleteAt
+}
+
+type MerchantDetailCommandResponseMapper interface {
+	MerchantDetailBaseResponseMapper
+	ToApiResponseMerchantDetail(pbResponse *pb.ApiResponseMerchantDetail) *response.ApiResponseMerchantDetail
+	ToResponseMerchantDetailDeleteAt(merchant *pb.MerchantDetailResponseDeleteAt) *response.MerchantDetailResponseDeleteAt
+	ToResponsesMerchantDetailDeleteAt(merchants []*pb.MerchantDetailResponseDeleteAt) []*response.MerchantDetailResponseDeleteAt
+	ToApiResponseMerchantDetailDeleteAt(pbResponse *pb.ApiResponseMerchantDetailDeleteAt) *response.ApiResponseMerchantDetailDeleteAt
+	ToApiResponsePaginationMerchantDetailDeleteAt(pbResponse *pb.ApiResponsePaginationMerchantDetailDeleteAt) *response.ApiResponsePaginationMerchantDetailDeleteAt
+}

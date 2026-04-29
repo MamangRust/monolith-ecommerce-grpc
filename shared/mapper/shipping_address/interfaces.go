@@ -1,0 +1,29 @@
+package shippingaddressapimapper
+
+import (
+	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
+)
+
+type ShippingAddressBaseResponseMapper interface {
+	ToResponseShippingAddress(pbResponse *pb.ShippingResponse) *response.ShippingAddressResponse
+	ToResponsesShippingAddress(pbResponses []*pb.ShippingResponse) []*response.ShippingAddressResponse
+}
+
+type ShippingAddressQueryResponseMapper interface {
+	ShippingAddressBaseResponseMapper
+	ToApiResponseShippingAddress(pbResponse *pb.ApiResponseShipping) *response.ApiResponseShippingAddress
+	ToApiResponsesShippingAddress(pbResponse *pb.ApiResponsesShipping) *response.ApiResponsesShippingAddress
+	ToApiResponsePaginationShippingAddress(pbResponse *pb.ApiResponsePaginationShipping) *response.ApiResponsePaginationShippingAddress
+	ToApiResponsePaginationShippingAddressDeleteAt(pbResponse *pb.ApiResponsePaginationShippingDeleteAt) *response.ApiResponsePaginationShippingAddressDeleteAt
+}
+
+type ShippingAddressCommandResponseMapper interface {
+	ShippingAddressBaseResponseMapper
+	ToResponseShippingAddressDeleteAt(pbResponse *pb.ShippingResponseDeleteAt) *response.ShippingAddressResponseDeleteAt
+	ToResponsesShippingAddressDeleteAt(pbResponses []*pb.ShippingResponseDeleteAt) []*response.ShippingAddressResponseDeleteAt
+	ToApiResponseShippingAddressDeleteAt(pbResponse *pb.ApiResponseShippingDeleteAt) *response.ApiResponseShippingAddressDeleteAt
+	ToApiResponseShippingAddressDelete(pbResponse *pb.ApiResponseShippingDelete) *response.ApiResponseShippingAddressDelete
+	ToApiResponseShippingAddressAll(pbResponse *pb.ApiResponseShippingAll) *response.ApiResponseShippingAddressAll
+	ToApiResponsePaginationShippingAddressDeleteAt(pbResponse *pb.ApiResponsePaginationShippingDeleteAt) *response.ApiResponsePaginationShippingAddressDeleteAt
+}
