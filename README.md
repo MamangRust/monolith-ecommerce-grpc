@@ -24,7 +24,7 @@ The platform ships with a **full observability stack** (Prometheus, Grafana, Lok
 
 ## Architecture Overview
 
-The platform follows a **Distributed Modular Monolith** architecture — each module is a self-contained Go binary with its own clean-architecture internals, deployed as an independent container. An **API Gateway** (NGINX + Echo) provides a unified REST entry point, translating HTTP requests into gRPC calls to downstream services.
+The platform follows a **Distributed Modular Monolith** architecture — each module is a self-contained Go binary with its own clean-architecture internals, deployed as an independent container. An **API Gateway** (NGINX + Echo) provides a unified **REST API** entry point, translating HTTP REST requests into gRPC calls to downstream services.
 
 ### Core Architecture Principles
 
@@ -47,8 +47,8 @@ graph TB
 
     subgraph APIGateway["API Gateway — NGINX + Echo"]
         direction LR
-        REST["REST API<br/>/api/v1/*"]
-        Swagger["Swagger Docs<br/>/docs"]
+        REST["REST API Endpoints<br/>/api/*"]
+        Swagger["Swagger UI docs<br/>/swagger/index.html"]
         AuthMW["JWT Auth<br/>Middleware"]
     end
     class APIGateway gateway
@@ -153,7 +153,7 @@ graph LR
     classDef support fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px,rx:8
 
     subgraph Gateway
-        API["API Gateway<br/>Echo + REST + Swagger"]:::gw
+        API["API Gateway<br/>Echo + REST API + Swagger"]:::gw
     end
 
     subgraph Identity["Identity & Access (3)"]
@@ -286,12 +286,12 @@ All client-facing requests flow through the API Gateway, which forwards them ove
 sequenceDiagram
     autonumber
     participant C as Client
-    participant GW as API Gateway<br/>(Echo + REST)
+    participant GW as API Gateway<br/>(Echo + REST API)
     participant SVC as Domain Service<br/>(gRPC Server)
     participant DB as PostgreSQL
     participant CACHE as Redis
 
-    C->>GW: HTTP Request (REST)
+    C->>GW: REST API Request (GET/POST/PUT/DELETE)
     GW->>GW: JWT Authentication
     GW->>SVC: gRPC Call (Protobuf)
     SVC->>CACHE: Check Cache
@@ -303,7 +303,7 @@ sequenceDiagram
         SVC->>CACHE: Populate Cache
     end
     SVC-->>GW: gRPC Response
-    GW-->>C: HTTP Response (JSON)
+    GW-->>C: REST API Response (JSON)
 ```
 
 ### Asynchronous Flow (Kafka Events)
@@ -413,7 +413,7 @@ flowchart TD
 
         subgraph Gateway["API Gateway"]
             NGINX["NGINX<br/>Reverse Proxy :80"]
-            APIGW["API Gateway Container<br/>Echo + Swagger :5001"]
+            APIGW["API Gateway Container<br/>Echo + REST API :5000"]
         end
         class Gateway gateway
 
@@ -609,7 +609,7 @@ flowchart TD
 | Category | Technology | Purpose |
 |----------|-----------|---------|
 | **Language** | Go (Golang) | High-performance, statically typed backend |
-| **API Framework** | Echo | HTTP/REST API Gateway framework |
+| **API Framework** | Echo | High-performance REST API Gateway framework |
 | **RPC** | gRPC + Protobuf | High-performance inter-service communication |
 | **Database** | PostgreSQL | Primary relational data store |
 | **SQL Codegen** | sqlc | Type-safe SQL → Go code generation |
@@ -630,7 +630,7 @@ flowchart TD
 | **Reverse Proxy** | NGINX | API routing, load balancing, TLS termination |
 | **Containerization** | Docker + Docker Compose | Container image building & local orchestration |
 | **Orchestration** | Kubernetes | Production-grade container orchestration with HPA |
-| **API Docs** | Swaggo | Auto-generated Swagger/OpenAPI documentation |
+| **API Docs** | Swagger | Built-in interactive Swagger UI API documentation |
 | **Resilience** | Circuit Breaker, Rate Limiter, Load Monitor | Built-in fault tolerance patterns (`pkg/resilience`) |
 
 ---
@@ -691,8 +691,10 @@ make ps
 
 | Service | URL |
 |---------|-----|
-| API Gateway (REST) | `http://localhost:80` |
-| Swagger Docs | `http://localhost:5001/swagger/index.html` |
+| Swagger UI (via Nginx) | `http://localhost:80/swagger/index.html` |
+| REST API Base (via Nginx) | `http://localhost:80/api/` |
+| Swagger UI (Direct) | `http://localhost:5000/swagger/index.html` |
+| REST API Base (Direct) | `http://localhost:5000/api/` |
 | Grafana Dashboards | `http://localhost:3000` |
 | Prometheus | `http://localhost:9090` |
 | Jaeger UI | `http://localhost:16686` |
@@ -721,7 +723,7 @@ The project provides both a `Makefile` and a `justfile` with equivalent commands
 | `make seeder` | Seed the database with sample data |
 | `make generate-proto` | Regenerate Go code from `.proto` definitions |
 | `make generate-sql` | Regenerate Go code from SQL queries (sqlc) |
-| `make generate-swagger` | Regenerate Swagger/OpenAPI documentation |
+| `just generate-swagger` | Regenerate Swagger API documentation |
 | `make build-image` | Build Docker images for all services |
 | `make image-load` | Load Docker images into Minikube |
 | `make image-delete` | Delete Docker images from Minikube |
