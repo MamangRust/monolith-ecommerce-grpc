@@ -19,6 +19,7 @@ type Repositories struct {
 	ShippingAddress      ShippingAddressCommandRepository
 	TransactionCommand   TransactionCommandRepository
 	ShippingQuery        pb.ShippingQueryServiceClient
+	StockReservation     StockReservationRepository
 }
 
 type Deps struct {
@@ -31,7 +32,7 @@ type Deps struct {
 	UserQuery        pb.UserQueryServiceClient
 	ShippingCommand  pb.ShippingCommandServiceClient
 	TransactionCommand pb.TransactionCommandServiceClient
-	ShippingQuery    pb.ShippingQueryServiceClient
+	ShippingQuery      pb.ShippingQueryServiceClient
 }
 
 func NewRepositories(deps *Deps) *Repositories {
@@ -46,7 +47,8 @@ func NewRepositories(deps *Deps) *Repositories {
 		UserQuery:        NewUserQueryRepository(deps.UserQuery),
 		ShippingAddress:  NewShippingAddressCommandRepository(deps.ShippingCommand),
 		TransactionCommand: NewTransactionCommandRepository(deps.TransactionCommand),
-		ShippingQuery:    deps.ShippingQuery,
+		ShippingQuery:      deps.ShippingQuery,
+		StockReservation:   NewStockReservationRepository(deps.DB),
 		OrderStats:       NewOrderStatsRepository(deps.DB),
 		OrderStatsByMerchant: NewOrderStatsByMerchantRepository(
 			deps.DB,

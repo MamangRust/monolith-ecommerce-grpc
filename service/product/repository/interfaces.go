@@ -29,6 +29,7 @@ type ProductCommandRepository interface {
 	Create(ctx context.Context, request *requests.CreateProductRequest) (*db.CreateProductRow, error)
 	Update(ctx context.Context, request *requests.UpdateProductRequest) (*db.UpdateProductRow, error)
 	UpdateProductCountStock(ctx context.Context, product_id int, stock int) (*db.UpdateProductCountStockRow, error)
+	AdjustProductStock(ctx context.Context, product_id int, delta int, operationID string) (*db.AdjustProductStockRow, error)
 	Trash(ctx context.Context, product_id int) (*db.TrashProductRow, error)
 	Restore(ctx context.Context, product_id int) (*db.RestoreProductRow, error)
 	DeletePermanent(

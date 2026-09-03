@@ -3,13 +3,13 @@ package role_errors
 import (
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 
-	"google.golang.org/grpc/codes"
+	"net/http"
 )
 
 var (
-	ErrGrpcRoleNotFound  = errors.NewGrpcError("Role not found", int(codes.NotFound))
-	ErrGrpcRoleInvalidId = errors.NewGrpcError("Invalid Role ID", int(codes.NotFound))
+	ErrGrpcRoleNotFound  = errors.NewGrpcError("Role not found", http.StatusNotFound)
+	ErrGrpcRoleInvalidId = errors.NewGrpcError("Invalid Role ID", http.StatusNotFound)
 
-	ErrGrpcValidateCreateRole = errors.NewGrpcError("validation failed: invalid create Role request", int(codes.InvalidArgument))
-	ErrGrpcValidateUpdateRole = errors.NewGrpcError("validation failed: invalid update Role request", int(codes.InvalidArgument))
+	ErrGrpcValidateCreateRole = errors.NewGrpcError("validation failed: invalid create Role request", http.StatusBadRequest)
+	ErrGrpcValidateUpdateRole = errors.NewGrpcError("validation failed: invalid update Role request", http.StatusBadRequest)
 )

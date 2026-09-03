@@ -2,15 +2,17 @@ package cart_cache
 
 import (
 	"context"
+	"fmt"
+	"time"
+
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	"fmt"
-	"time"
+	"go.uber.org/zap"
 )
 
 const (
-	cartAllCacheKey = "cart:all:page:%d:pageSize:%d:search:%s"
+	cartAllCacheKey = "cart:all:user:%d:page:%d:pageSize:%d:search:%s"
 	ttlDefault      = 5 * time.Minute
 )
 
@@ -29,6 +31,7 @@ func (c *cartQueryCache) GetCachedCarts(
 
 	key := fmt.Sprintf(
 		cartAllCacheKey,
+		request.UserID,
 		request.Page,
 		request.PageSize,
 		request.Search,
@@ -58,10 +61,18 @@ func (c *cartQueryCache) SetCachedCarts(
 
 	key := fmt.Sprintf(
 		cartAllCacheKey,
+		request.UserID,
 		request.Page,
 		request.PageSize,
 		request.Search,
 	)
 
 	cache.SetToCache(ctx, c.store, key, resp, ttlDefault)
+}
+
+func (c *cartQueryCache) DeleteCachedCarts(ctx context.Context, userID int) {
+	pattern := fmt.Sprintf("cart:all:user:%d:*", userID)
+	if _, err := c.store.InvalidateCache(ctx, pattern); err != nil {
+		c.store.Logger.Error("Failed to invalidate cart cache", zap.Error(err))
+	}
 }

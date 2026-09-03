@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate
+  namespace: ecommerce
+spec:
+  template:
+    spec:
+      containers:
+        - name: migrate
+          image: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/db-migration:latest
+          workingDir: /app
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          imagePullPolicy: IfNotPresent
+      restartPolicy: OnFailure

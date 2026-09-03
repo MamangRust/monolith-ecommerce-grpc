@@ -4,8 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	shippingaddress_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/shipping_address"
+	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/shipping_address"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
@@ -168,5 +169,5 @@ func (h *shippingAddressCommandHandleApi) DeleteAllShippingAddressPermanent(c ec
 
 func (h *shippingAddressCommandHandleApi) handleGrpcError(err error, operation string) error {
 	h.logger.Error("Failed to "+operation, zap.Error(err))
-	return echo.NewHTTPError(http.StatusInternalServerError, "Failed to "+operation)
+	return sharedErrors.ParseGrpcError(err)
 }

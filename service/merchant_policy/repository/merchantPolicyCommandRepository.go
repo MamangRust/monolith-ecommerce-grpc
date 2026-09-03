@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"github.com/jackc/pgx/v5"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -28,6 +30,9 @@ func (r *merchantPolicyCommandRepository) Create(ctx context.Context, request *r
 
 	policy, err := r.db.CreateMerchantPolicy(ctx, req)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, merchant_policy_errors.ErrMerchantPolicyNotFound
+		}
 		return nil, merchant_policy_errors.ErrCreateMerchantPolicy.WithInternal(err)
 	}
 
@@ -44,6 +49,9 @@ func (r *merchantPolicyCommandRepository) Update(ctx context.Context, request *r
 
 	res, err := r.db.UpdateMerchantPolicy(ctx, req)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, merchant_policy_errors.ErrMerchantPolicyNotFound
+		}
 		return nil, merchant_policy_errors.ErrUpdateMerchantPolicy.WithInternal(err)
 	}
 
@@ -54,6 +62,9 @@ func (r *merchantPolicyCommandRepository) Trash(ctx context.Context, merchant_po
 	res, err := r.db.TrashMerchantPolicy(ctx, int32(merchant_policy_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, merchant_policy_errors.ErrMerchantPolicyNotFound
+		}
 		return nil, merchant_policy_errors.ErrTrashedMerchantPolicy.WithInternal(err)
 	}
 
@@ -64,6 +75,9 @@ func (r *merchantPolicyCommandRepository) Restore(ctx context.Context, merchant_
 	res, err := r.db.RestoreMerchantPolicy(ctx, int32(merchant_policy_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, merchant_policy_errors.ErrMerchantPolicyNotFound
+		}
 		return nil, merchant_policy_errors.ErrRestoreMerchantPolicy.WithInternal(err)
 	}
 
@@ -74,6 +88,9 @@ func (r *merchantPolicyCommandRepository) DeletePermanent(ctx context.Context, m
 	err := r.db.DeleteMerchantPolicyPermanently(ctx, int32(merchant_policy_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, merchant_policy_errors.ErrMerchantPolicyNotFound
+		}
 		return false, merchant_policy_errors.ErrDeleteMerchantPolicyPermanent.WithInternal(err)
 	}
 
@@ -84,6 +101,9 @@ func (r *merchantPolicyCommandRepository) RestoreAll(ctx context.Context) (bool,
 	err := r.db.RestoreAllMerchantPolicies(ctx)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, merchant_policy_errors.ErrMerchantPolicyNotFound
+		}
 		return false, merchant_policy_errors.ErrRestoreAllMerchantPolicies.WithInternal(err)
 	}
 	return true, nil
@@ -93,6 +113,9 @@ func (r *merchantPolicyCommandRepository) DeleteAll(ctx context.Context) (bool, 
 	err := r.db.DeleteAllMerchantPolicyPermanently(ctx)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, merchant_policy_errors.ErrMerchantPolicyNotFound
+		}
 		return false, merchant_policy_errors.ErrDeleteAllMerchantPoliciesPermanent.WithInternal(err)
 	}
 	return true, nil

@@ -5,11 +5,11 @@ import (
 	"strconv"
 
 	cart_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/cart"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/cart"
+	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 )
 
@@ -36,7 +36,7 @@ func NewCartQueryHandleApi(params *cartQueryHandleDeps) *cartQueryHandlerApi {
 		cache:  params.cache,
 	}
 
-	routerCart := params.router.Group("/api/cart-command")
+	routerCart := params.router.Group("/api/cart-query")
 	routerCart.GET("", handler.FindAll)
 
 	return handler
@@ -54,15 +54,21 @@ func NewCartQueryHandleApi(params *cartQueryHandleDeps) *cartQueryHandlerApi {
 // @Success 200 {object} response.ApiResponseCartPagination "List of cart items"
 // @Failure 401 {object} errors.ErrorResponse "Unauthorized"
 // @Failure 500 {object} errors.ErrorResponse "Failed to retrieve cart data"
-// @Router /api/cart-command [get]
+// @Router /api/cart-query [get]
 func (h *cartQueryHandlerApi) FindAll(c echo.Context) error {
 	userID, ok := c.Get("user_id").(int)
-	if !ok || userID <= 0 { return echo.NewHTTPError(http.StatusUnauthorized, "Unauthorized") }
+	if !ok || userID <= 0 {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Unauthorized")
+	}
 
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -87,4 +93,3 @@ func (h *cartQueryHandlerApi) FindAll(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
-

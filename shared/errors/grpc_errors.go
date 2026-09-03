@@ -1,11 +1,10 @@
 package errors
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"errors"
-	"fmt"
 	"net/http"
 
+	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -13,6 +12,12 @@ import (
 func ToGrpcError(err error) error {
 	if err == nil {
 		return nil
+	}
+
+	// Pertahankan error gRPC dari dependency service (NotFound/Unavailable/dll)
+	// alih-alih menimpanya menjadi Internal 500.
+	if st, ok := status.FromError(err); ok && st.Code() != codes.Unknown {
+		return err
 	}
 
 	var apiErr *AppError
@@ -43,7 +48,6 @@ func ParseGrpcError(err error) *AppError {
 	if err == nil {
 		return nil
 	}
-	fmt.Printf("DEBUG: Parsing gRPC error: %v\n", err)
 
 	st, ok := status.FromError(err)
 	if !ok {
@@ -86,6 +90,8 @@ func httpToGrpcCode(code int) codes.Code {
 		return codes.AlreadyExists
 	case http.StatusTooManyRequests:
 		return codes.ResourceExhausted
+	case http.StatusServiceUnavailable:
+		return codes.Unavailable
 	case http.StatusGatewayTimeout:
 		return codes.DeadlineExceeded
 	default:
@@ -107,6 +113,8 @@ func grpcToHttpCode(code codes.Code) int {
 		return http.StatusConflict
 	case codes.ResourceExhausted:
 		return http.StatusTooManyRequests
+	case codes.Unavailable:
+		return http.StatusServiceUnavailable
 	case codes.DeadlineExceeded:
 		return http.StatusGatewayTimeout
 	default:
@@ -128,6 +136,8 @@ func grpcToErrorType(code codes.Code) ErrorType {
 		return ErrorTypeUnauthorized
 	case codes.DeadlineExceeded:
 		return ErrorTypeTimeout
+	case codes.Unavailable:
+		return ErrorTypeInternal
 	default:
 		return ErrorTypeInternal
 	}
@@ -151,4 +161,3 @@ func NewGrpcError(message string, httpCode int) error {
 
 	return stWithDetails.Err()
 }
-

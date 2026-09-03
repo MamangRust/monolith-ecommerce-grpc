@@ -8,8 +8,8 @@ import (
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	merchantbusiness_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant_business"
 	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
+	merchantbusiness_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant_business"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
@@ -114,7 +114,7 @@ func (s *merchantBusinessCommandService) Trash(ctx context.Context, merchantID i
 		status = "error"
 		return errorhandler.HandleError[*db.MerchantBusinessInformation](
 			s.logger,
-			merchantbusiness_errors.ErrFailedTrashedMerchantBusiness,
+			err,
 			method,
 			span,
 
@@ -145,7 +145,7 @@ func (s *merchantBusinessCommandService) Restore(ctx context.Context, merchantID
 		status = "error"
 		return errorhandler.HandleError[*db.MerchantBusinessInformation](
 			s.logger,
-			merchantbusiness_errors.ErrFailedRestoreMerchantBusiness,
+			err,
 			method,
 			span,
 
@@ -175,7 +175,7 @@ func (s *merchantBusinessCommandService) DeletePermanent(ctx context.Context, me
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			merchantbusiness_errors.ErrFailedDeleteMerchantBusinessPermanent,
+			err,
 			method,
 			span,
 
@@ -230,7 +230,7 @@ func (s *merchantBusinessCommandService) DeleteAll(ctx context.Context) (bool, e
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			merchantbusiness_errors.ErrFailedDeleteAllMerchantBusinessPermanent,
+			err,
 			method,
 			span,
 		)

@@ -57,6 +57,17 @@ func NewBannerCommandHandleApi(params *bannerCommandHandleDeps) *bannerCommandHa
 	return handler
 }
 
+// @Security Bearer
+// @Summary Create a new banner
+// @Tags Banner Command
+// @Description Create a new banner
+// @Accept json
+// @Produce json
+// @Param request body requests.CreateBannerRequest true "Banner details"
+// @Success 200 {object} response.ApiResponseBanner "Banner created"
+// @Failure 400 {object} errors.ErrorResponse "Invalid request"
+// @Failure 500 {object} errors.ErrorResponse "Failed to create banner"
+// @Router /api/banner-command/create [post]
 func (h *bannerCommandHandlerApi) Create(c echo.Context) error {
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(
 		c.Request().Context(),
@@ -70,11 +81,11 @@ func (h *bannerCommandHandlerApi) Create(c echo.Context) error {
 	var body requests.CreateBannerRequest
 	if err := c.Bind(&body); err != nil {
 		status = "error"
-		return h.handleError(c, errors.NewBadRequestError("Invalid request"), span, "Create")
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
 	}
 	if err := body.Validate(); err != nil {
 		status = "error"
-		return h.handleError(c, errors.NewBadRequestError(err.Error()), span, "Create")
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	res, err := h.client.Create(ctx, &pb.CreateBannerRequest{
@@ -94,6 +105,18 @@ func (h *bannerCommandHandlerApi) Create(c echo.Context) error {
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseBanner(res))
 }
 
+// @Security Bearer
+// @Summary Update a banner
+// @Tags Banner Command
+// @Description Update an existing banner
+// @Accept json
+// @Produce json
+// @Param id path int true "Banner ID"
+// @Param request body requests.UpdateBannerRequest true "Banner details"
+// @Success 200 {object} response.ApiResponseBanner "Banner updated"
+// @Failure 400 {object} errors.ErrorResponse "Invalid request"
+// @Failure 500 {object} errors.ErrorResponse "Failed to update banner"
+// @Router /api/banner-command/update/{id} [post]
 func (h *bannerCommandHandlerApi) Update(c echo.Context) error {
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(
 		c.Request().Context(),
@@ -107,17 +130,17 @@ func (h *bannerCommandHandlerApi) Update(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil || id <= 0 {
 		status = "error"
-		return h.handleError(c, errors.NewBadRequestError("Invalid ID"), span, "Update")
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
 	}
 
 	var body requests.UpdateBannerRequest
 	if err := c.Bind(&body); err != nil {
 		status = "error"
-		return h.handleError(c, errors.NewBadRequestError("Invalid request"), span, "Update")
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
 	}
 	if err := body.Validate(); err != nil {
 		status = "error"
-		return h.handleError(c, errors.NewBadRequestError(err.Error()), span, "Update")
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	res, err := h.client.Update(ctx, &pb.UpdateBannerRequest{
@@ -140,6 +163,17 @@ func (h *bannerCommandHandlerApi) Update(c echo.Context) error {
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseBanner(res))
 }
 
+// @Security Bearer
+// @Summary Trash a banner
+// @Tags Banner Command
+// @Description Move a banner to trash
+// @Accept json
+// @Produce json
+// @Param id path int true "Banner ID"
+// @Success 200 {object} response.ApiResponseBannerDeleteAt "Banner trashed"
+// @Failure 400 {object} errors.ErrorResponse "Invalid ID"
+// @Failure 500 {object} errors.ErrorResponse "Failed to trash banner"
+// @Router /api/banner-command/trashed/{id} [post]
 func (h *bannerCommandHandlerApi) Trash(c echo.Context) error {
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(
 		c.Request().Context(),
@@ -153,7 +187,7 @@ func (h *bannerCommandHandlerApi) Trash(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil || id <= 0 {
 		status = "error"
-		return h.handleError(c, errors.NewBadRequestError("Invalid ID"), span, "Trash")
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
 	}
 
 	res, err := h.client.Trash(ctx, &pb.FindByIdBannerRequest{Id: int32(id)})
@@ -168,6 +202,17 @@ func (h *bannerCommandHandlerApi) Trash(c echo.Context) error {
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseBannerDeleteAt(res))
 }
 
+// @Security Bearer
+// @Summary Restore a banner
+// @Tags Banner Command
+// @Description Restore a trashed banner
+// @Accept json
+// @Produce json
+// @Param id path int true "Banner ID"
+// @Success 200 {object} response.ApiResponseBannerDeleteAt "Banner restored"
+// @Failure 400 {object} errors.ErrorResponse "Invalid ID"
+// @Failure 500 {object} errors.ErrorResponse "Failed to restore banner"
+// @Router /api/banner-command/restore/{id} [post]
 func (h *bannerCommandHandlerApi) Restore(c echo.Context) error {
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(
 		c.Request().Context(),
@@ -181,7 +226,7 @@ func (h *bannerCommandHandlerApi) Restore(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil || id <= 0 {
 		status = "error"
-		return h.handleError(c, errors.NewBadRequestError("Invalid ID"), span, "Restore")
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
 	}
 
 	res, err := h.client.Restore(ctx, &pb.FindByIdBannerRequest{Id: int32(id)})
@@ -196,6 +241,17 @@ func (h *bannerCommandHandlerApi) Restore(c echo.Context) error {
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseBannerDeleteAt(res))
 }
 
+// @Security Bearer
+// @Summary Delete a banner permanently
+// @Tags Banner Command
+// @Description Permanently delete a banner
+// @Accept json
+// @Produce json
+// @Param id path int true "Banner ID"
+// @Success 200 {object} response.ApiResponseBannerDelete "Banner deleted"
+// @Failure 400 {object} errors.ErrorResponse "Invalid ID"
+// @Failure 500 {object} errors.ErrorResponse "Failed to delete banner"
+// @Router /api/banner-command/permanent/{id} [delete]
 func (h *bannerCommandHandlerApi) DeletePermanent(c echo.Context) error {
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(
 		c.Request().Context(),
@@ -209,7 +265,7 @@ func (h *bannerCommandHandlerApi) DeletePermanent(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil || id <= 0 {
 		status = "error"
-		return h.handleError(c, errors.NewBadRequestError("Invalid ID"), span, "Delete")
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
 	}
 
 	res, err := h.client.DeletePermanent(ctx, &pb.FindByIdBannerRequest{Id: int32(id)})
@@ -224,6 +280,15 @@ func (h *bannerCommandHandlerApi) DeletePermanent(c echo.Context) error {
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseBannerDelete(res))
 }
 
+// @Security Bearer
+// @Summary Restore all banners
+// @Tags Banner Command
+// @Description Restore all trashed banners
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.ApiResponseBannerAll "All banners restored"
+// @Failure 500 {object} errors.ErrorResponse "Failed to restore banners"
+// @Router /api/banner-command/restore/all [post]
 func (h *bannerCommandHandlerApi) RestoreAll(c echo.Context) error {
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(
 		c.Request().Context(),
@@ -244,6 +309,15 @@ func (h *bannerCommandHandlerApi) RestoreAll(c echo.Context) error {
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseBannerAll(res))
 }
 
+// @Security Bearer
+// @Summary Delete all banners permanently
+// @Tags Banner Command
+// @Description Permanently delete all banners
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.ApiResponseBannerAll "All banners deleted"
+// @Failure 500 {object} errors.ErrorResponse "Failed to delete banners"
+// @Router /api/banner-command/permanent/all [post]
 func (h *bannerCommandHandlerApi) DeleteAllPermanent(c echo.Context) error {
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(
 		c.Request().Context(),
@@ -276,4 +350,3 @@ func (h *bannerCommandHandlerApi) handleError(c echo.Context, err error, span tr
 
 	return errors.HandleApiError(c, appErr, traceID)
 }
-

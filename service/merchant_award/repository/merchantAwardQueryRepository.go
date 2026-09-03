@@ -3,7 +3,8 @@ package repository
 import (
 	"context"
 
-	"database/sql"
+	"errors"
+	"github.com/jackc/pgx/v5"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -78,7 +79,7 @@ func (r *merchantAwardQueryRepository) FindByID(ctx context.Context, user_id int
 	res, err := r.db.GetMerchantCertificationOrAward(ctx, int32(user_id))
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, merchantaward_errors.ErrMerchantAwardNotFound.WithInternal(err)
 		}
 		return nil, merchantaward_errors.ErrFindByIdMerchantAward.WithInternal(err)

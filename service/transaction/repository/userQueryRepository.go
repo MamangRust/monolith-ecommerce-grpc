@@ -4,7 +4,6 @@ import (
 	"context"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	user_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/user_errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 )
 
@@ -21,7 +20,8 @@ func NewUserQueryRepository(client pb.UserQueryServiceClient) *userQueryReposito
 func (r *userQueryRepository) FindByID(ctx context.Context, user_id int) (*db.GetUserByIDRow, error) {
 	res, err := r.client.FindById(ctx, &pb.FindByIdUserRequest{Id: int32(user_id)})
 	if err != nil {
-		return nil, user_errors.ErrUserInternal.WithInternal(err)
+		// pertahankan status gRPC dari dependency service (NotFound -> 404, dst)
+		return nil, err
 	}
 
 	return &db.GetUserByIDRow{

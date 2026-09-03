@@ -84,15 +84,18 @@ func (s *orderCommandHandler) Update(ctx context.Context, request *pb.UpdateOrde
 		UserID:     int(request.GetUserId()),
 		TotalPrice: int(request.GetTotalPrice()),
 		Items:      items,
-		ShippingAddress: requests.UpdateShippingAddressRequest{
-			Alamat:         request.GetShipping().GetAlamat(),
-			Provinsi:       request.GetShipping().GetProvinsi(),
-			Kota:           request.GetShipping().GetKota(),
-			Courier:        request.GetShipping().GetCourier(),
-			ShippingMethod: request.GetShipping().GetShippingMethod(),
-			ShippingCost:   int(request.GetShipping().GetShippingCost()),
-			Negara:         request.GetShipping().GetNegara(),
-		},
+	}
+	if shipping := request.GetShipping(); shipping != nil {
+		req.ShippingAddress = &requests.UpdateShippingAddressRequest{
+			ShippingID:     pointerIntToInt(int(shipping.GetShippingId())),
+			Alamat:         shipping.GetAlamat(),
+			Provinsi:       shipping.GetProvinsi(),
+			Kota:           shipping.GetKota(),
+			Courier:        shipping.GetCourier(),
+			ShippingMethod: shipping.GetShippingMethod(),
+			ShippingCost:   int(shipping.GetShippingCost()),
+			Negara:         shipping.GetNegara(),
+		}
 	}
 
 	if err := req.Validate(); err != nil {
@@ -109,6 +112,13 @@ func (s *orderCommandHandler) Update(ctx context.Context, request *pb.UpdateOrde
 		Message: "Successfully updated order",
 		Data:    mapToProtoOrderResponse(order),
 	}, nil
+}
+
+func pointerIntToInt(v int) *int {
+	if v <= 0 {
+		return nil
+	}
+	return &v
 }
 
 func (s *orderCommandHandler) TrashedOrder(ctx context.Context, request *pb.FindByIdOrderRequest) (*pb.ApiResponseOrderDeleteAt, error) {

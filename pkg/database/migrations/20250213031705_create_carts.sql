@@ -7,8 +7,8 @@ CREATE TABLE "carts" (
     "name" VARCHAR(255) NOT NULL,
     "price" INT NOT NULL,
     "image" VARCHAR(255) NOT NULL,
-    "quantity" INT NOT NULL,
-    "weight" INT NOT NULL,
+    "quantity" INT NOT NULL CHECK ("quantity" > 0),
+    "weight" INT NOT NULL CHECK ("weight" >= 0),
     "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP DEFAULT NULL

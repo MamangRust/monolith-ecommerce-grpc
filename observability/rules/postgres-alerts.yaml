@@ -1,0 +1,44 @@
+groups:
+  - name: postgres-alerts
+    rules:
+      - alert: PostgresDown
+        expr: |
+          pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL is unreachable for 1 minute — all financial operations will fail."
+          runbook: "Check postgres container health and PVC status; verify PgBouncer can reconnect."
+
+      - alert: PostgresHighConnections
+        expr: |
+          pg_stat_database_numbackends{datname="PAYMENT_GATEWAY"} > 200
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High connection count on PAYMENT_GATEWAY ({{ $value }})"
+          description: "PAYMENT_GATEWAY has more than 200 active backends — connection pool pressure via PgBouncer."
+          runbook: "Check PgBouncer pool sizes and idle connections; verify no connection leak in Vert.x pools."
+
+      - alert: PostgresReplicationLag
+        expr: |
+          pg_replication_lag_seconds > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL replication lag ({{ $value }}s)"
+          description: "Replication lag exceeded 30 seconds for 5 minutes."
+
+      - alert: PostgresExporterScrapeError
+        expr: |
+          pg_exporter_last_scrape_error > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Postgres exporter scrape error"
+          description: "postgres-exporter is failing to scrape database metrics."

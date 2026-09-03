@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-cluster
+  namespace: ecommerce
+spec:
+  serviceName: redis-cluster-headless
+  replicas: 6
+  selector:
+    matchLabels:
+      app: redis-cluster
+  template:
+    metadata:
+      labels:
+        app: redis-cluster
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.4
+          command:
+            - redis-server
+            - /etc/redis/redis.conf
+          ports:
+            - containerPort: 6379
+              name: redis
+            - containerPort: 16379
+              name: gossip
+          volumeMounts:
+            - name: redis-config
+              mountPath: /etc/redis
+            - name: redis-data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+      volumes:
+        - name: redis-config
+          configMap:
+            name: redis-cluster-config
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

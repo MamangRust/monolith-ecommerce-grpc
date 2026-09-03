@@ -55,7 +55,7 @@ func (s *roleCommandService) Create(ctx context.Context, request *requests.Creat
 		status = "error"
 		return errorhandler.HandleError[*db.Role](
 			s.logger,
-			role_errors.ErrCreateRole,
+			err,
 			method,
 			span,
 			zap.String("name", request.Name),
@@ -81,7 +81,7 @@ func (s *roleCommandService) Update(ctx context.Context, request *requests.Updat
 		status = "error"
 		return errorhandler.HandleError[*db.Role](
 			s.logger,
-			role_errors.ErrUpdateRole,
+			err,
 			method,
 			span,
 			zap.Int("role.id", *request.ID),
@@ -107,7 +107,7 @@ func (s *roleCommandService) Trash(ctx context.Context, id int) (*db.Role, error
 		status = "error"
 		return errorhandler.HandleError[*db.Role](
 			s.logger,
-			role_errors.ErrTrashedRole,
+			err,
 			method,
 			span,
 			zap.Int("role.id", id),
@@ -133,7 +133,7 @@ func (s *roleCommandService) Restore(ctx context.Context, id int) (*db.Role, err
 		status = "error"
 		return errorhandler.HandleError[*db.Role](
 			s.logger,
-			role_errors.ErrRestoreRole,
+			err,
 			method,
 			span,
 			zap.Int("role.id", id),

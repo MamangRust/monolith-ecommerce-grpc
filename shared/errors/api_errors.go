@@ -16,8 +16,10 @@ import (
 	"go.uber.org/zap"
 )
 
+// InvalidAccessToken returns the shared unauthorized AppError instead of a
+// generic error so gateway middleware can map it to HTTP 401 consistently.
 func InvalidAccessToken() error {
-	return fmt.Errorf("invalid access token")
+	return ErrUnauthorized.WithMessage("invalid access token")
 }
 
 type ApiHandler interface {
@@ -113,6 +115,19 @@ func HandleApiError(c echo.Context, err error, traceID string) error {
 		return c.JSON(apiErr.Code, response)
 	}
 
+	// echo.HTTPError (e.g. 400 for bad path params) must keep its status code
+	// instead of collapsing into 500.
+	var httpErr *echo.HTTPError
+	if errors.As(err, &httpErr) {
+		response := ErrorResponse{
+			Status:  "error",
+			Message: fmt.Sprint(httpErr.Message),
+			Code:    httpErr.Code,
+			TraceID: traceID,
+		}
+		return c.JSON(httpErr.Code, response)
+	}
+
 	response := ErrorResponse{
 		Status:  "error",
 		Message: "An internal server error occurred",
@@ -142,4 +157,3 @@ func NewInternalError(err error) *AppError {
 func NewServiceUnavailableError(service string) *AppError {
 	return ErrServiceUnavailable.WithMessage(fmt.Sprintf("%s is temporarily unavailable", service))
 }
-

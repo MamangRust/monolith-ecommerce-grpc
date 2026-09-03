@@ -1,0 +1,114 @@
+groups:
+  - name: go-alerts
+    rules:
+      # ── Memory (heap) ──────────────────────────────────────────────────────
+      - alert: HighHeapUsage
+        expr: |
+          sum by (service_name) (
+            golang_app_go_memory_used_bytes
+          ) > 1.074e9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High heap usage on {{ $labels.service_name }} ({{ $value | humanize1024 }})"
+          description: "Heap usage of {{ $labels.service_name }} exceeded 1 GiB for 5 minutes."
+          runbook: "Check heap trend in Go Runtime dashboard; consider raising GOMEMLIMIT or investigating a leak."
+
+      - alert: CriticalHeapUsage
+        expr: |
+          sum by (service_name) (
+            golang_app_go_memory_used_bytes
+          ) > 2.147e9
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical heap usage on {{ $labels.service_name }} ({{ $value | humanize1024 }})"
+          description: "Heap usage of {{ $labels.service_name }} exceeded 2 GiB — OOM risk."
+
+      # ── Goroutine leak ─────────────────────────────────────────────────────
+      - alert: HighGoroutineCount
+        expr: |
+          golang_app_go_goroutine_count > 5000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High goroutine count on {{ $labels.service_name }} ({{ $value }})"
+          description: "{{ $labels.service_name }} has more than 5000 goroutines — possible goroutine leak."
+
+      # ── GC pressure (heap used > 90 % of GC goal) ─────────────────────────
+      - alert: GCPressure
+        expr: |
+          sum by (service_name) (
+            golang_app_go_memory_used_bytes
+          )
+          /
+          sum by (service_name) (
+            golang_app_go_memory_gc_goal_bytes
+          ) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "GC pressure on {{ $labels.service_name }} ({{ $value | humanizePercentage }})"
+          description: "Heap used by {{ $labels.service_name }} is above 90% of GC goal — frequent GC cycles likely."
+
+      # ── Per-service request error rate (status label is SUCCESS/ERROR) ──────
+      - alert: HighErrorRate
+        expr: |
+          sum by (service_name) (
+            rate(golang_app_requests_total{status="ERROR"}[5m])
+          )
+          /
+          sum by (service_name) (
+            rate(golang_app_requests_total[5m])
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on {{ $labels.service_name }} ({{ $value | humanizePercentage }})"
+          description: "More than 5% of requests to {{ $labels.service_name }} are failing in the last 5 minutes."
+          runbook: "Check service logs and traces (Jaeger) for {{ $labels.service_name }}; look for gRPC status mapping or dependency failures."
+
+      # ── Per-service p95 latency (histogram from OTel) ───────────────────────
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le, service_name) (
+              rate(golang_app_request_duration_seconds_bucket[5m])
+            )
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency on {{ $labels.service_name }} (p95 = {{ $value }}s)"
+          description: "95th percentile latency for {{ $labels.service_name }} exceeded 1s for 5 minutes."
+          runbook: "Inspect traces for slow downstream gRPC calls or database queries."
+
+      # ── No-traffic watchdog (flapping / stuck deployment) ───────────────────
+      - alert: NoTraffic
+        expr: |
+          sum by (service_name) (
+            rate(golang_app_requests_total[10m])
+          ) == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No traffic on {{ $labels.service_name }}"
+          description: "{{ $labels.service_name }} received no requests for 10 minutes. Verify the deployment is not stuck or scaled to zero."
+
+      # ── Service down (absense of runtime metrics) ───────────────────────────
+      - alert: ServiceDown
+        expr: |
+          absent(golang_app_go_memory_used_bytes{service_name="api-gateway"})
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API Gateway is down"
+          description: "No runtime metrics from api-gateway for 2 minutes — the gateway is not reporting metrics."

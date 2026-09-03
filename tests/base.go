@@ -2,33 +2,45 @@ package tests
 
 import (
 	"context"
+	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
+	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/jackc/pgx/v5/pgxpool"
+	goredis "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/suite"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
-	"github.com/jackc/pgx/v5/pgxpool"
-	goredis "github.com/redis/go-redis/v9"
 )
 
 type BaseTestSuite struct {
 	suite.Suite
-	ts          *TestSuite
-	Log         logger.LoggerInterface
-	Obs         observability.TraceLoggerObservability
-	Conns       map[string]*grpc.ClientConn
-	Servers     []*grpc.Server
-	Ctx         context.Context
-	Cancel      context.CancelFunc
+	ts      *TestSuite
+	Log     logger.LoggerInterface
+	Obs     observability.TraceLoggerObservability
+	Conns   map[string]*grpc.ClientConn
+	Servers []*grpc.Server
+	Ctx     context.Context
+	Cancel  context.CancelFunc
+}
+
+// seedUserCounter and seedUniqueSuffix make seeded values unique across multiple
+// seed calls within the same test process (suites share one database per package
+// run), so fixed slugs/emails never collide between test methods.
+var seedUserCounter int64
+
+func uniqueSuffix() string {
+	seedUserCounter++
+	return fmt.Sprintf("%d-%d", time.Now().UnixNano(), seedUserCounter)
 }
 
 func (s *BaseTestSuite) SetupSuite() {
 	s.Ctx, s.Cancel = context.WithCancel(context.Background())
-	
+
 	ts, err := SetupTestSuite()
 	s.Require().NoError(err)
 	s.ts = ts
@@ -36,7 +48,7 @@ func (s *BaseTestSuite) SetupSuite() {
 	logger.ResetInstance()
 	lp := sdklog.NewLoggerProvider()
 	s.Log, _ = logger.NewLogger("test", lp)
-	
+
 	if s.Log == nil || (reflect.ValueOf(s.Log).Kind() == reflect.Ptr && reflect.ValueOf(s.Log).IsNil()) {
 		z, _ := zap.NewDevelopment()
 		s.Log = &logger.Logger{Log: z}
@@ -85,10 +97,13 @@ func (s *BaseTestSuite) GetConnection(addr string) *grpc.ClientConn {
 }
 
 func (s *BaseTestSuite) SeedUser(ctx context.Context) int {
+	// Each call seeds a unique email so suites with multiple test methods can
+	// share one database without colliding on a fixed address.
+	email := fmt.Sprintf("seed.user.%s@example.com", uniqueSuffix())
 	res, err := pb.NewUserCommandServiceClient(s.Conns["user"]).Create(ctx, &pb.CreateUserRequest{
 		Firstname:       "Seed",
 		Lastname:        "User",
-		Email:           "seed.user@example.com",
+		Email:           email,
 		Password:        "password123",
 		ConfirmPassword: "password123",
 	})
@@ -97,10 +112,11 @@ func (s *BaseTestSuite) SeedUser(ctx context.Context) int {
 }
 
 func (s *BaseTestSuite) SeedCategory(ctx context.Context) int {
+	seedSuffix := uniqueSuffix()
 	res, err := pb.NewCategoryCommandServiceClient(s.Conns["category"]).Create(ctx, &pb.CreateCategoryRequest{
-		Name:          "Seed Category",
+		Name:          "Seed Category " + seedSuffix,
 		Description:   "Seed Description",
-		SlugCategory:  "seed-category",
+		SlugCategory:  "seed-category-" + seedSuffix,
 		ImageCategory: "seed.jpg",
 	})
 	s.Require().NoError(err)
@@ -122,16 +138,17 @@ func (s *BaseTestSuite) SeedMerchant(ctx context.Context, userID int) int {
 }
 
 func (s *BaseTestSuite) SeedProduct(ctx context.Context, merchantID int, categoryID int) int {
+	seedSuffix := uniqueSuffix()
 	res, err := pb.NewProductCommandServiceClient(s.Conns["product"]).Create(ctx, &pb.CreateProductRequest{
 		MerchantId:   int32(merchantID),
 		CategoryId:   int32(categoryID),
-		Name:         "Seed Product",
+		Name:         "Seed Product " + seedSuffix,
 		Description:  "Seed Description",
 		Price:        10000,
 		CountInStock: 100,
 		Brand:        "Seed Brand",
 		Weight:       1000,
-		SlugProduct:  "seed-product",
+		SlugProduct:  "seed-product-" + seedSuffix,
 		ImageProduct: "seed.jpg",
 		Barcode:      "123456789",
 		Rating:       5,
@@ -168,13 +185,13 @@ func (s *BaseTestSuite) SeedOrder(ctx context.Context, userID int, merchID int, 
 			},
 		},
 		Shipping: &pb.CreateShippingAddressRequest{
-			Alamat:          "Seed Address",
-			Provinsi:        "Seed Province",
-			Kota:            "Seed City",
-			Negara:          "Seed Country",
-			Courier:         "Seed Courier",
-			ShippingMethod:  "Seed Method",
-			ShippingCost:    1000,
+			Alamat:         "Seed Address",
+			Provinsi:       "Seed Province",
+			Kota:           "Seed City",
+			Negara:         "Seed Country",
+			Courier:        "Seed Courier",
+			ShippingMethod: "Seed Method",
+			ShippingCost:   1000,
 		},
 	})
 	s.Require().NoError(err)

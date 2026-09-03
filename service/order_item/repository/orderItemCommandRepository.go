@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"github.com/jackc/pgx/v5"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -38,6 +40,9 @@ func (r *orderItemCommandRepository) Update(ctx context.Context, req *requests.U
 func (r *orderItemCommandRepository) Trash(ctx context.Context, orderItemID int) (*db.OrderItem, error) {
 	res, err := r.db.TrashOrderItem(ctx, int32(orderItemID))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, orderitem_errors.ErrOrderItemNotFound
+		}
 		return nil, orderitem_errors.ErrTrashedOrderItem
 	}
 	return res, nil
@@ -46,6 +51,9 @@ func (r *orderItemCommandRepository) Trash(ctx context.Context, orderItemID int)
 func (r *orderItemCommandRepository) Restore(ctx context.Context, orderItemID int) (*db.OrderItem, error) {
 	res, err := r.db.RestoreOrderItem(ctx, int32(orderItemID))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, orderitem_errors.ErrOrderItemNotFound
+		}
 		return nil, orderitem_errors.ErrRestoreOrderItem
 	}
 	return res, nil
@@ -54,6 +62,9 @@ func (r *orderItemCommandRepository) Restore(ctx context.Context, orderItemID in
 func (r *orderItemCommandRepository) DeletePermanent(ctx context.Context, orderItemID int) (bool, error) {
 	err := r.db.DeleteOrderItemPermanently(ctx, int32(orderItemID))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, orderitem_errors.ErrOrderItemNotFound
+		}
 		return false, orderitem_errors.ErrDeleteOrderItemPermanent
 	}
 	return true, nil
@@ -62,6 +73,9 @@ func (r *orderItemCommandRepository) DeletePermanent(ctx context.Context, orderI
 func (r *orderItemCommandRepository) DeleteOrderItemByOrderPermanent(ctx context.Context, orderID int) (bool, error) {
 	err := r.db.DeleteOrderItemsByOrderPermanent(ctx, int32(orderID))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, orderitem_errors.ErrOrderItemNotFound
+		}
 		return false, orderitem_errors.ErrDeleteOrderItemPermanent
 	}
 	return true, nil
@@ -70,6 +84,9 @@ func (r *orderItemCommandRepository) DeleteOrderItemByOrderPermanent(ctx context
 func (r *orderItemCommandRepository) RestoreAll(ctx context.Context) (bool, error) {
 	err := r.db.RestoreAllOrdersItem(ctx)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, orderitem_errors.ErrOrderItemNotFound
+		}
 		return false, orderitem_errors.ErrRestoreAllOrderItem
 	}
 	return true, nil
@@ -78,6 +95,9 @@ func (r *orderItemCommandRepository) RestoreAll(ctx context.Context) (bool, erro
 func (r *orderItemCommandRepository) DeleteAll(ctx context.Context) (bool, error) {
 	err := r.db.DeleteAllPermanentOrdersItem(ctx)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, orderitem_errors.ErrOrderItemNotFound
+		}
 		return false, orderitem_errors.ErrDeleteAllOrderPermanent
 	}
 	return true, nil

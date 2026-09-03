@@ -3,16 +3,16 @@ package user_errors
 import (
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 
-	"google.golang.org/grpc/codes"
+	"net/http"
 )
 
 var (
-	ErrGrpcUserNotFound  = errors.NewGrpcError("User not found", int(codes.NotFound))
-	ErrGrpcUserInvalidId = errors.NewGrpcError("Invalid User ID", int(codes.NotFound))
+	ErrGrpcUserNotFound  = errors.NewGrpcError("User not found", http.StatusNotFound)
+	ErrGrpcUserInvalidId = errors.NewGrpcError("Invalid User ID", http.StatusNotFound)
 
-	ErrGrpcValidateCreateUser = errors.NewGrpcError("validation failed: invalid create User request", int(codes.InvalidArgument))
-	ErrGrpcValidateUpdateUser = errors.NewGrpcError("validation failed: invalid update User request", int(codes.InvalidArgument))
+	ErrGrpcValidateCreateUser = errors.NewGrpcError("validation failed: invalid create User request", http.StatusBadRequest)
+	ErrGrpcValidateUpdateUser = errors.NewGrpcError("validation failed: invalid update User request", http.StatusBadRequest)
 
-	ErrGrpcUserInvalidEmail            = errors.NewGrpcError("Invalid email address", int(codes.InvalidArgument))
-	ErrGrpcUserInvalidVerificationCode = errors.NewGrpcError("Invalid verification code", int(codes.InvalidArgument))
+	ErrGrpcUserInvalidEmail            = errors.NewGrpcError("Invalid email address", http.StatusBadRequest)
+	ErrGrpcUserInvalidVerificationCode = errors.NewGrpcError("Invalid verification code", http.StatusBadRequest)
 )

@@ -9,7 +9,6 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/cart_errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type cartCommandHandler struct {
@@ -48,7 +47,8 @@ func (h *cartCommandHandler) Create(ctx context.Context, request *pb.CreateCartR
 	}, nil
 }
 
-func (h *cartCommandHandler) DeletePermanent(ctx context.Context, request *pb.DeleteCartRequest) (*pb.ApiResponseCartDelete, error) {
+// Delete implements the proto RPC (method name must match the proto rpc name).
+func (h *cartCommandHandler) Delete(ctx context.Context, request *pb.DeleteCartRequest) (*pb.ApiResponseCartDelete, error) {
 	req := &requests.DeleteCartRequest{
 		CartID: int(request.GetCartId()),
 		UserID: int(request.GetUserId()),
@@ -69,9 +69,16 @@ func (h *cartCommandHandler) DeletePermanent(ctx context.Context, request *pb.De
 	}, nil
 }
 
-func (h *cartCommandHandler) DeleteAllPermanent(ctx context.Context, request *pb.DeleteAllCartRequest) (*pb.ApiResponseCartAll, error) {
+// DeleteAll implements the proto RPC (method name must match the proto rpc name).
+func (h *cartCommandHandler) DeleteAll(ctx context.Context, request *pb.DeleteAllCartRequest) (*pb.ApiResponseCartAll, error) {
+	cartIDs := make([]int, len(request.GetCartIds()))
+	for i, id := range request.GetCartIds() {
+		cartIDs[i] = int(id)
+	}
+
 	req := &requests.DeleteAllCartRequest{
-		UserID: int(request.GetUserId()),
+		UserID:  int(request.GetUserId()),
+		CartIds: cartIDs,
 	}
 
 	if err := req.Validate(); err != nil {
@@ -79,18 +86,6 @@ func (h *cartCommandHandler) DeleteAllPermanent(ctx context.Context, request *pb
 	}
 
 	_, err := h.cartCommand.DeleteAll(ctx, req)
-	if err != nil {
-		return nil, errors.ToGrpcError(err)
-	}
-
-	return &pb.ApiResponseCartAll{
-		Status:  "success",
-		Message: "Successfully deleted all cart items permanently",
-	}, nil
-}
-
-func (h *cartCommandHandler) DeleteAllPermanentEmptypb(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseCartAll, error) {
-	_, err := h.cartCommand.DeleteAll(ctx, &requests.DeleteAllCartRequest{})
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}

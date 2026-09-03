@@ -6,6 +6,7 @@ import (
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors/role_errors"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
 	"github.com/MamangRust/monolith-ecommerce-grpc-role/repository"
 
@@ -106,6 +107,64 @@ func (s *RoleRepositoryTestSuite) Test5_DeletePermanent() {
 	success, err := s.repo.RoleCommand.DeletePermanent(ctx, s.roleID)
 	s.NoError(err)
 	s.True(success)
+}
+
+func (s *RoleRepositoryTestSuite) Test6_TrashMissingRole_ReturnsNotFound() {
+	ctx := context.Background()
+
+	// Trashing a role that does not exist must surface as ErrRoleNotFound
+	// (HTTP 404), not as a generic internal error (HTTP 500).
+	res, err := s.repo.RoleCommand.Trash(ctx, 999999)
+	s.Nil(res)
+	s.Require().Error(err)
+	s.ErrorIs(err, role_errors.ErrRoleNotFound)
+}
+
+func (s *RoleRepositoryTestSuite) Test7_RestoreMissingRole_ReturnsNotFound() {
+	ctx := context.Background()
+
+	// Restoring a role that does not exist must surface as ErrRoleNotFound
+	// (HTTP 404), not as a generic internal error (HTTP 500).
+	res, err := s.repo.RoleCommand.Restore(ctx, 999999)
+	s.Nil(res)
+	s.Require().Error(err)
+	s.ErrorIs(err, role_errors.ErrRoleNotFound)
+}
+
+func (s *RoleRepositoryTestSuite) Test8_CreateDuplicateRole_ReturnsConflict() {
+	ctx := context.Background()
+
+	// Creating a role with a name that already exists must surface as
+	// ErrRoleConflict (HTTP 409), not as a generic internal error (HTTP 500).
+	name := "Duplicate Role"
+	_, err := s.repo.RoleCommand.Create(ctx, &requests.CreateRoleRequest{Name: name})
+	s.Require().NoError(err)
+
+	res, err := s.repo.RoleCommand.Create(ctx, &requests.CreateRoleRequest{Name: name})
+	s.Nil(res)
+	s.Require().Error(err)
+	s.ErrorIs(err, role_errors.ErrRoleConflict)
+}
+
+func (s *RoleRepositoryTestSuite) Test9_UpdateDuplicateRole_ReturnsConflict() {
+	ctx := context.Background()
+
+	// Renaming a role to a name that already exists must surface as
+	// ErrRoleConflict (HTTP 409), not as a generic internal error (HTTP 500).
+	original, err := s.repo.RoleCommand.Create(ctx, &requests.CreateRoleRequest{Name: "Original Role"})
+	s.Require().NoError(err)
+
+	other, err := s.repo.RoleCommand.Create(ctx, &requests.CreateRoleRequest{Name: "Other Role"})
+	s.Require().NoError(err)
+
+	otherID := int(other.RoleID)
+	res, err := s.repo.RoleCommand.Update(ctx, &requests.UpdateRoleRequest{
+		ID:   &otherID,
+		Name: original.RoleName,
+	})
+	s.Nil(res)
+	s.Require().Error(err)
+	s.ErrorIs(err, role_errors.ErrRoleConflict)
 }
 
 func TestRoleRepositorySuite(t *testing.T) {

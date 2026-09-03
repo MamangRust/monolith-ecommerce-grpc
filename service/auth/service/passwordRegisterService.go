@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"strconv"
 	"time"
@@ -11,12 +10,15 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-auth/repository"
 
 	emails "github.com/MamangRust/monolith-ecommerce-pkg/email"
+	"github.com/MamangRust/monolith-ecommerce-pkg/event"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-pkg/outbox"
 	randomstring "github.com/MamangRust/monolith-ecommerce-pkg/randomstring"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	sharederrorhandler "github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 )
@@ -25,6 +27,8 @@ import (
 type PasswordResetServiceDeps struct {
 	Cache         mencache.PasswordResetCache
 	Kafka         *kafka.Kafka
+	Pool          *pgxpool.Pool
+	Outbox        *outbox.OutboxService
 	Logger        logger.LoggerInterface
 	User          repository.UserRepository
 	ResetToken    repository.ResetTokenRepository
@@ -35,6 +39,8 @@ type PasswordResetServiceDeps struct {
 type passwordResetService struct {
 	mencache      mencache.PasswordResetCache
 	kafka         *kafka.Kafka
+	pool          *pgxpool.Pool
+	outbox        *outbox.OutboxService
 	logger        logger.LoggerInterface
 	user          repository.UserRepository
 	resetToken    repository.ResetTokenRepository
@@ -46,6 +52,8 @@ func NewPasswordResetService(params *PasswordResetServiceDeps) *passwordResetSer
 	return &passwordResetService{
 		mencache:      params.Cache,
 		kafka:         params.Kafka,
+		pool:          params.Pool,
+		outbox:        params.Outbox,
 		logger:        params.Logger,
 		user:          params.User,
 		resetToken:    params.ResetToken,
@@ -76,18 +84,6 @@ func (s *passwordResetService) ForgotPassword(ctx context.Context, email string)
 		return sharederrorhandler.HandleError[bool](s.logger, err, method, span, zap.String("email", email))
 	}
 
-	_, err = s.resetToken.CreateResetToken(ctx, &requests.CreateResetTokenRequest{
-		UserID:     int(res.UserID),
-		ResetToken: random,
-		ExpiredAt:  time.Now().Add(24 * time.Hour).Format("2006-01-02 15:04:05"),
-	})
-	if err != nil {
-		status = "error"
-		return sharederrorhandler.HandleError[bool](s.logger, err, method, span, zap.Int("user.id", int(res.UserID)))
-	}
-
-	s.mencache.SetResetTokenCache(ctx, random, int(res.UserID), 5*time.Minute)
-
 	htmlBody := emails.GenerateEmailHTML(map[string]string{
 		"Title":   "Reset Your Password",
 		"Message": "Click the button below to reset your password.",
@@ -95,25 +91,55 @@ func (s *passwordResetService) ForgotPassword(ctx context.Context, email string)
 		"Link":    "https://sanedge.example.com/reset-password?token=" + random,
 	})
 
-	emailPayload := map[string]any{
-		"email":   res.Email,
-		"subject": "Password Reset Request",
-		"body":    htmlBody,
-	}
-
-	payloadBytes, err := json.Marshal(emailPayload)
+	payloadBytes, err := event.MarshalEmail("auth.forgot_password", res.Email, "Password Reset Request", htmlBody)
 	if err != nil {
 		status = "error"
 		return sharederrorhandler.HandleError[bool](s.logger, err, method, span, zap.String("email", email))
 	}
 
-	if s.kafka != nil {
-		err = s.kafka.SendMessage("email-service-topic-auth-forgot-password", strconv.Itoa(int(res.UserID)), payloadBytes)
-		if err != nil {
+	if s.pool != nil {
+		tx, beginErr := s.pool.Begin(ctx)
+		if beginErr != nil {
+			status = "error"
+			return sharederrorhandler.HandleError[bool](s.logger, beginErr, method, span, zap.Int("user.id", int(res.UserID)))
+		}
+		defer func() { _ = tx.Rollback(ctx) }()
+
+		_, createErr := s.resetToken.CreateResetTokenInTx(ctx, tx, &requests.CreateResetTokenRequest{
+			UserID:     int(res.UserID),
+			ResetToken: random,
+			ExpiredAt:  time.Now().Add(24 * time.Hour).Format("2006-01-02 15:04:05"),
+		})
+		if createErr == nil && s.outbox != nil {
+			createErr = s.outbox.EnqueueInTx(ctx, tx, "email-service-topic-auth-forgot-password", strconv.Itoa(int(res.UserID)), payloadBytes)
+		}
+		if createErr != nil {
+			status = "error"
+			return sharederrorhandler.HandleError[bool](s.logger, createErr, method, span, zap.Int("user.id", int(res.UserID)))
+		}
+		if err := tx.Commit(ctx); err != nil {
 			status = "error"
 			return sharederrorhandler.HandleError[bool](s.logger, err, method, span, zap.Int("user.id", int(res.UserID)))
 		}
+	} else {
+		_, createErr := s.resetToken.CreateResetToken(ctx, &requests.CreateResetTokenRequest{
+			UserID:     int(res.UserID),
+			ResetToken: random,
+			ExpiredAt:  time.Now().Add(24 * time.Hour).Format("2006-01-02 15:04:05"),
+		})
+		if createErr != nil {
+			status = "error"
+			return sharederrorhandler.HandleError[bool](s.logger, createErr, method, span, zap.Int("user.id", int(res.UserID)))
+		}
+		if s.kafka != nil {
+			if sendErr := s.kafka.SendMessage("email-service-topic-auth-forgot-password", strconv.Itoa(int(res.UserID)), payloadBytes); sendErr != nil {
+				status = "error"
+				return sharederrorhandler.HandleError[bool](s.logger, sendErr, method, span, zap.Int("user.id", int(res.UserID)))
+			}
+		}
 	}
+
+	s.mencache.SetResetTokenCache(ctx, random, int(res.UserID), 5*time.Minute)
 
 	logSuccess("Successfully sent password reset email", zap.String("email", email))
 
@@ -194,23 +220,21 @@ func (s *passwordResetService) VerifyCode(ctx context.Context, code string) (boo
 		"Link":    "https://sanedge.example.com/card/create",
 	})
 
-	emailPayload := map[string]any{
-		"email":   res.Email,
-		"subject": "Verification Success",
-		"body":    htmlBody,
-	}
-
-	payloadBytes, err := json.Marshal(emailPayload)
+	payloadBytes, err := event.MarshalEmail("auth.verify_code_success", res.Email, "Verification Success", htmlBody)
 	if err != nil {
 		status = "error"
 		return sharederrorhandler.HandleError[bool](s.logger, err, method, span, zap.String("code", code))
 	}
 
-	if s.kafka != nil {
-		err = s.kafka.SendMessage("email-service-topic-auth-verify-code-success", strconv.Itoa(int(res.UserID)), payloadBytes)
-		if err != nil {
+	if s.outbox != nil {
+		if enqueueErr := s.outbox.Enqueue(ctx, "email-service-topic-auth-verify-code-success", strconv.Itoa(int(res.UserID)), payloadBytes); enqueueErr != nil {
 			status = "error"
-			return sharederrorhandler.HandleError[bool](s.logger, err, method, span, zap.Int("user.id", int(res.UserID)))
+			return sharederrorhandler.HandleError[bool](s.logger, enqueueErr, method, span, zap.Int("user.id", int(res.UserID)))
+		}
+	} else if s.kafka != nil {
+		if sendErr := s.kafka.SendMessage("email-service-topic-auth-verify-code-success", strconv.Itoa(int(res.UserID)), payloadBytes); sendErr != nil {
+			status = "error"
+			return sharederrorhandler.HandleError[bool](s.logger, sendErr, method, span, zap.Int("user.id", int(res.UserID)))
 		}
 	}
 

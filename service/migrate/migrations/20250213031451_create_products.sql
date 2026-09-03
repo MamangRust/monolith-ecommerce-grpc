@@ -31,15 +31,15 @@ CREATE INDEX "idx_products_created_at" ON "products" ("created_at");
 
 -- +goose Down
 -- +goose StatementBegin
-DROP INDEX IF EXISTS "idx_products_merchant_id" ON "products" ("merchant_id");
+DROP INDEX IF EXISTS "idx_products_merchant_id";
 
-DROP INDEX IF EXISTS "idx_products_category_id" ON "products" ("category_id");
+DROP INDEX IF EXISTS "idx_products_category_id";
 
-DROP INDEX IF EXISTS "idx_products_slug" ON "products" ("slug_product");
+DROP INDEX IF EXISTS "idx_products_slug";
 
-DROP INDEX IF EXISTS "idx_products_price" ON "products" ("price");
+DROP INDEX IF EXISTS "idx_products_price";
 
-DROP INDEX IF EXISTS "idx_products_created_at" ON "products" ("created_at");
+DROP INDEX IF EXISTS "idx_products_created_at";
 
 DROP TABLE IF EXISTS "products";
 -- +goose StatementEnd

@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ecommerce-root
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: ecommerce
+  source:
+    repoURL: https://github.com/MamangRust/modular-monolith-vertx-ecommerce.git
+    targetRevision: main
+    path: deployments/gitops/argocd/production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+      allowEmpty: false
+    syncOptions:
+      - ServerSideApply=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: email-smtp-egress
+  namespace: ecommerce
+spec:
+  podSelector:
+    matchLabels:
+      app: email
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - protocol: TCP
+          port: 587

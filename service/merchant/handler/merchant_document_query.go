@@ -72,7 +72,7 @@ func (s *merchantDocumentQueryHandler) FindById(ctx context.Context, req *pb.Fin
 	}, nil
 }
 
-func (s *merchantDocumentQueryHandler) FindByActive(ctx context.Context, req *pb.FindAllMerchantDocumentsRequest) (*pb.ApiResponsePaginationMerchantDocument, error) {
+func (s *merchantDocumentQueryHandler) FindAllActive(ctx context.Context, req *pb.FindAllMerchantDocumentsRequest) (*pb.ApiResponsePaginationMerchantDocument, error) {
 	page, pageSize := normalizePage(int(req.GetPage()), int(req.GetPageSize()))
 	search := req.GetSearch()
 
@@ -102,7 +102,7 @@ func (s *merchantDocumentQueryHandler) FindByActive(ctx context.Context, req *pb
 	}, nil
 }
 
-func (s *merchantDocumentQueryHandler) FindByTrashed(ctx context.Context, req *pb.FindAllMerchantDocumentsRequest) (*pb.ApiResponsePaginationMerchantDocumentAt, error) {
+func (s *merchantDocumentQueryHandler) FindAllTrashed(ctx context.Context, req *pb.FindAllMerchantDocumentsRequest) (*pb.ApiResponsePaginationMerchantDocumentAt, error) {
 	page, pageSize := normalizePage(int(req.GetPage()), int(req.GetPageSize()))
 	search := req.GetSearch()
 

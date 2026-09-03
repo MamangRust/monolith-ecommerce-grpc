@@ -3,12 +3,12 @@ package product_errors
 import (
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 
-	"google.golang.org/grpc/codes"
+	"net/http"
 )
 
 var (
-	ErrGrpcInvalidID = errors.NewGrpcError("invalid ID", int(codes.InvalidArgument))
+	ErrGrpcInvalidID = errors.NewGrpcError("invalid ID", http.StatusBadRequest)
 
-	ErrGrpcValidateCreateProduct = errors.NewGrpcError("validation failed: invalid create product request", int(codes.InvalidArgument))
-	ErrGrpcValidateUpdateProduct = errors.NewGrpcError("validation failed: invalid update product request", int(codes.InvalidArgument))
+	ErrGrpcValidateCreateProduct = errors.NewGrpcError("validation failed: invalid create product request", http.StatusBadRequest)
+	ErrGrpcValidateUpdateProduct = errors.NewGrpcError("validation failed: invalid update product request", http.StatusBadRequest)
 )

@@ -1,0 +1,42 @@
+groups:
+  - name: infrastructure-alerts
+    rules:
+      - alert: PrometheusTargetDown
+        expr: |
+          up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Monitoring target {{ $labels.job }} is down"
+          description: "Scrape target {{ $labels.job }} ({{ $labels.instance }}) has been unreachable for 2 minutes."
+
+      - alert: PrometheusSelfDown
+        expr: |
+          up{job="prometheus"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus is down"
+          description: "Prometheus self-scrape failed — alerting engine may be unavailable."
+
+      - alert: OTelCollectorScrapeDown
+        expr: |
+          up{job=~"otel.*|java-app.*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "OTel collector ({{ $labels.job }}) is down"
+          description: "The OTel collector exporting application metrics is unreachable for 2 minutes — all application dashboards go dark."
+
+      - alert: AlertmanagerDown
+        expr: |
+          up{job="alertmanager"} == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Alertmanager is down"
+          description: "Alertmanager is unreachable — notifications will not be delivered."

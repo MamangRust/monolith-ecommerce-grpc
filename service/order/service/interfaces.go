@@ -99,4 +99,14 @@ type OrderCommandService interface {
 	) (bool, error)
 	RestoreAll(ctx context.Context) (bool, error)
 	DeleteAll(ctx context.Context) (bool, error)
+
+	// ReconcileStockReservations repairs drift between reservation status and order
+	// lifecycle caused by failed compensation (e.g. released reservation on an active
+	// order, or reserved reservation on a trashed order). It returns the number of
+	// reservations repaired.
+	ReconcileStockReservations(ctx context.Context) (*ReconcileResult, error)
+
+	// CleanupIdempotencyRecords applies the retention policy to the idempotency ledger
+	// and to released reservations of trashed orders older than the retention window.
+	CleanupIdempotencyRecords(ctx context.Context, retentionDays int) (*CleanupResult, error)
 }

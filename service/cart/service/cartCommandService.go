@@ -3,11 +3,13 @@ package service
 import (
 	"context"
 
+	mencache "github.com/MamangRust/monolith-ecommerce-grpc-cart/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-cart/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
@@ -17,6 +19,7 @@ type cartCommandService struct {
 	cartCommandRepository  repository.CartCommandRepository
 	productQueryRepository repository.ProductQueryRepository
 	userQueryRepository    repository.UserQueryRepository
+	mencache               mencache.CartMencache
 	observability          observability.TraceLoggerObservability
 	logger                 logger.LoggerInterface
 }
@@ -25,6 +28,7 @@ type CartCommandServiceDeps struct {
 	CartCommandRepository  repository.CartCommandRepository
 	ProductQueryRepository repository.ProductQueryRepository
 	UserQueryRepository    repository.UserQueryRepository
+	Mencache               mencache.CartMencache
 	Observability          observability.TraceLoggerObservability
 	Logger                 logger.LoggerInterface
 }
@@ -34,6 +38,7 @@ func NewCartCommandService(deps *CartCommandServiceDeps) *cartCommandService {
 		cartCommandRepository:  deps.CartCommandRepository,
 		productQueryRepository: deps.ProductQueryRepository,
 		userQueryRepository:    deps.UserQueryRepository,
+		mencache:               deps.Mencache,
 		logger:                 deps.Logger,
 		observability:          deps.Observability,
 	}
@@ -58,6 +63,15 @@ func (s *cartCommandService) Create(ctx context.Context, req *requests.CreateCar
 			span,
 			zap.Int("product_id", req.ProductID),
 		)
+	}
+
+	if req.Quantity <= 0 {
+		status = "error"
+		return errorhandler.HandleError[*db.Cart](s.logger, errors.ErrBadRequest.WithMessage("cart quantity must be greater than zero"), method, span)
+	}
+	if product.CountInStock < int32(req.Quantity) {
+		status = "error"
+		return errorhandler.HandleError[*db.Cart](s.logger, errors.ErrBadRequest.WithMessage("Insufficient product stock"), method, span)
 	}
 
 	_, err = s.userQueryRepository.FindById(ctx, req.UserID)
@@ -104,6 +118,8 @@ func (s *cartCommandService) Create(ctx context.Context, req *requests.CreateCar
 		)
 	}
 
+	s.mencache.DeleteCartsCache(ctx, req.UserID)
+
 	logSuccess("Successfully created cart", zap.Int("cartID", int(res.CartID)))
 	return &db.Cart{
 		CartID:    res.CartID,
@@ -144,6 +160,8 @@ func (s *cartCommandService) DeletePermanent(ctx context.Context, req *requests.
 		)
 	}
 
+	s.mencache.DeleteCartsCache(ctx, req.UserID)
+
 	logSuccess("Successfully deleted cart permanently", zap.Int("cartID", req.CartID))
 	return success, nil
 }
@@ -167,6 +185,8 @@ func (s *cartCommandService) DeleteAll(ctx context.Context, req *requests.Delete
 			span,
 		)
 	}
+
+	s.mencache.DeleteCartsCache(ctx, req.UserID)
 
 	logSuccess("Successfully deleted all carts permanently")
 	return success, nil

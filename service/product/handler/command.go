@@ -192,3 +192,16 @@ func (h *productCommandHandler) UpdateProductCountStock(ctx context.Context, req
 		Data:    mapToProtoProductResponse(product),
 	}, nil
 }
+
+func (h *productCommandHandler) AdjustProductStock(ctx context.Context, request *pb.AdjustProductStockRequest) (*pb.ApiResponseProduct, error) {
+	product, err := h.productService.AdjustProductStock(ctx, int(request.ProductId), int(request.Delta), request.GetOperationId())
+	if err != nil {
+		return nil, errors.ToGrpcError(err)
+	}
+
+	return &pb.ApiResponseProduct{
+		Status:  "success",
+		Message: "Successfully adjusted product stock",
+		Data:    mapToProtoProductResponse(product),
+	}, nil
+}

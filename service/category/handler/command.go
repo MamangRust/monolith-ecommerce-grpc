@@ -6,6 +6,7 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-grpc-category/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	category_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/category_errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -128,7 +129,7 @@ func (h *categoryCommandHandler) DeleteCategoryPermanent(ctx context.Context, re
 
 	_, err := h.service.DeletePermanent(ctx, id)
 	if err != nil {
-		return nil, category_errors.ErrGrpcDeleteCategory
+		return nil, errors.ToGrpcError(err)
 	}
 
 	return &pb.ApiResponseCategoryDelete{
@@ -152,7 +153,7 @@ func (h *categoryCommandHandler) RestoreAllCategory(ctx context.Context, _ *empt
 func (h *categoryCommandHandler) DeleteAllCategoryPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseCategoryAll, error) {
 	_, err := h.service.DeleteAll(ctx)
 	if err != nil {
-		return nil, category_errors.ErrGrpcDeleteCategory
+		return nil, errors.ToGrpcError(err)
 	}
 
 	return &pb.ApiResponseCategoryAll{

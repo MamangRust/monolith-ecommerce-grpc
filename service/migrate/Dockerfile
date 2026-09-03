@@ -4,7 +4,6 @@ WORKDIR /app
 
 # Copy workspace and dependency manifests
 COPY go.work go.work.sum* ./
-COPY pb/go.mod pb/go.sum* ./pb/
 COPY pkg/go.mod pkg/go.sum* ./pkg/
 COPY shared/go.mod shared/go.sum* ./shared/
 COPY tests/go.mod tests/go.sum* ./tests/
@@ -22,7 +21,6 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 WORKDIR /app
 
 # Copy source code
-COPY pb/ ./pb/
 COPY pkg/ ./pkg/
 COPY shared/ ./shared/
 COPY service/migrate/ ./service/migrate/
@@ -46,8 +44,9 @@ WORKDIR /app
 RUN mkdir -p /var/log/app && chown -R 1000:1000 /var/log/app
 
 COPY --from=builder /app/migrate_bin ./migrate
+COPY --from=builder /app/service/migrate/migrations ./migrations
 
-RUN chown -R 1000:1000 ./migrate 
+RUN chown -R 1000:1000 ./migrate ./migrations
 
 USER appuser
 

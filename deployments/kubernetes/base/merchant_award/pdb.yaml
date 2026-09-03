@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: merchant-award-pdb
+  namespace: ecommerce
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: merchant-award

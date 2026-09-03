@@ -5,13 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/repository"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/email"
+	"github.com/MamangRust/monolith-ecommerce-pkg/event"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/transaction_errors"
@@ -22,22 +27,26 @@ import (
 )
 
 type transactionCommandService struct {
-	observability   observability.TraceLoggerObservability
-	kafka           *kafka.Kafka
-	cache           cache.TransactionCommandCache
+	observability      observability.TraceLoggerObservability
+	kafka              *kafka.Kafka
+	outbox             repository.OutboxRepository
+	pool               *pgxpool.Pool
+	cache              cache.TransactionCommandCache
 	transactionQuery   repository.TransactionQueryRepository
 	transactionCommand repository.TransactionCommandRepository
-	userQuery       repository.UserQueryRepository
-	merchantQuery   repository.MerchantQueryRepository
-	orderQuery      repository.OrderQueryRepository
-	orderItem       repository.OrderItemRepository
-	shippingAddress repository.ShippingAddressQueryRepository
-	logger          logger.LoggerInterface
+	userQuery          repository.UserQueryRepository
+	merchantQuery      repository.MerchantQueryRepository
+	orderQuery         repository.OrderQueryRepository
+	orderItem          repository.OrderItemRepository
+	shippingAddress    repository.ShippingAddressQueryRepository
+	logger             logger.LoggerInterface
 }
 
 type TransactionCommandServiceDeps struct {
 	Observability      observability.TraceLoggerObservability
 	Kafka              *kafka.Kafka
+	Outbox             repository.OutboxRepository
+	Pool               *pgxpool.Pool
 	Cache              cache.TransactionCommandCache
 	TransactionQuery   repository.TransactionQueryRepository
 	TransactionCommand repository.TransactionCommandRepository
@@ -53,6 +62,8 @@ func NewTransactionCommandService(deps *TransactionCommandServiceDeps) Transacti
 	return &transactionCommandService{
 		observability:      deps.Observability,
 		kafka:              deps.Kafka,
+		outbox:             deps.Outbox,
+		pool:               deps.Pool,
 		cache:              deps.Cache,
 		transactionQuery:   deps.TransactionQuery,
 		transactionCommand: deps.TransactionCommand,
@@ -107,36 +118,46 @@ func (s *transactionCommandService) Create(ctx context.Context, req *requests.Cr
 		return errorhandler.HandleError[*db.CreateTransactionRow](s.logger, err, method, span)
 	}
 
-	var totalAmount int
+	var merchandiseTotal int
 	for _, item := range orderItems {
-		if item.Quantity <= 0 {
+		if item.Quantity <= 0 || item.Price < 0 {
 			status = "error"
 			return errorhandler.HandleError[*db.CreateTransactionRow](s.logger, transaction_errors.ErrFailedOrderItemEmpty, method, span)
 		}
-		totalAmount += int(item.Price)*int(item.Quantity) + int(shipping.ShippingCost)
+		merchandiseTotal += int(item.Price) * int(item.Quantity)
 	}
 
+	// Shipping is charged once per order, not once per item.
+	totalAmount := merchandiseTotal + int(shipping.ShippingCost)
 	ppn := totalAmount * 11 / 100
-	totalAmountWithTax := totalAmount + ppn + int(shipping.ShippingCost)
+	totalAmountWithTax := totalAmount + ppn
 
 	span.SetAttributes(attribute.Int("calculated_amount", totalAmountWithTax))
 
+	// Validate the caller-supplied status (if any) before deriving the final
+	// status. A create may only start from a canonical non-terminal status.
+	if req.PaymentStatus != nil && *req.PaymentStatus != "" {
+		if !IsValidPaymentStatus(*req.PaymentStatus) {
+			status = "error"
+			return errorhandler.HandleError[*db.CreateTransactionRow](s.logger, transaction_errors.ErrFailedPaymentStatusInvalid, method, span)
+		}
+	}
+
 	var paymentStatus string
 	if req.Amount >= totalAmountWithTax {
-		paymentStatus = "success"
+		paymentStatus = PaymentStatusSuccess
 	} else {
 		status = "error"
 		return errorhandler.HandleError[*db.CreateTransactionRow](s.logger, transaction_errors.ErrFailedPaymentInsufficientBalance, method, span)
 	}
 
+	if req.PaymentStatus != nil && *req.PaymentStatus != "" && !CanTransitionPaymentStatus(*req.PaymentStatus, paymentStatus) {
+		status = "error"
+		return errorhandler.HandleError[*db.CreateTransactionRow](s.logger, transaction_errors.ErrFailedPaymentStatusCannotBeModified, method, span)
+	}
+
 	req.Amount = totalAmountWithTax
 	req.PaymentStatus = &paymentStatus
-
-	transaction, err := s.transactionCommand.Create(ctx, req)
-	if err != nil {
-		status = "error"
-		return errorhandler.HandleError[*db.CreateTransactionRow](s.logger, err, method, span)
-	}
 
 	htmlBody := email.GenerateEmailHTML(map[string]string{
 		"Title":   "Transaction Successful",
@@ -145,17 +166,93 @@ func (s *transactionCommandService) Create(ctx context.Context, req *requests.Cr
 		"Link":    "https://sanedge.example.com/transaction/history",
 	})
 
-	emailPayload := map[string]any{
-		"email":   user.Email,
-		"subject": "Transaction Successful - SanEdge",
-		"body":    htmlBody,
+	payloadBytes, err := event.MarshalEmail("transaction.created", user.Email, "Transaction Successful - SanEdge", htmlBody)
+	if err != nil {
+		status = "error"
+		return errorhandler.HandleError[*db.CreateTransactionRow](s.logger, err, method, span)
 	}
 
-	payloadBytes, _ := json.Marshal(emailPayload)
-	err = s.kafka.SendMessage("email-service-topic-transaction-create", strconv.Itoa(int(transaction.TransactionID)), payloadBytes)
-	if err != nil {
-		s.logger.Error("failed to send kafka message", zap.Error(err))
+	// Transactional outbox: when a pool is available, the business insert and the
+	// outbox event commit in a single database transaction, so a crash between
+	// them cannot lose the event. The relay then publishes with retry and
+	// dead-letter semantics, so a Kafka failure cannot roll back the payment.
+	//
+	// Without a pool this falls back to best-effort enqueue after commit, which
+	// is NON-ATOMIC: a crash between the commit and the enqueue loses the event
+	// silently. This path is intended for tests and local development only and
+	// must not be relied on in production; production always supplies a pool.
+	var transaction *db.CreateTransactionRow
+	var tx pgx.Tx
+	if s.pool != nil {
+		tx, err = s.pool.Begin(ctx)
+		if err != nil {
+			status = "error"
+			return errorhandler.HandleError[*db.CreateTransactionRow](s.logger, err, method, span)
+		}
+		defer func() { _ = tx.Rollback(ctx) }()
+		transaction, err = s.transactionCommand.CreateInTx(ctx, tx, req)
+	} else {
+		if s.outbox != nil {
+			s.logger.Warn("transactional outbox running in NON-ATOMIC fallback mode: no pgx pool configured; event loss is possible between commit and enqueue")
+		}
+		transaction, err = s.transactionCommand.Create(ctx, req)
 	}
+	if err != nil {
+		status = "error"
+		return errorhandler.HandleError[*db.CreateTransactionRow](s.logger, err, method, span)
+	}
+
+	if s.outbox != nil {
+		merchantPayload, marshalErr := json.Marshal(map[string]any{
+			"merchantId":    transaction.MerchantID,
+			"transactionId": transaction.TransactionID,
+			"amount":        transaction.Amount,
+			"status":        transaction.PaymentStatus,
+			"timestamp":     time.Now().UnixMilli(),
+		})
+		if marshalErr != nil {
+			status = "error"
+			return errorhandler.HandleError[*db.CreateTransactionRow](s.logger, marshalErr, method, span)
+		}
+
+		enqueue := func(topic, key string, payload []byte) error {
+			if tx != nil {
+				_, enqueueErr := s.outbox.CreateInTx(ctx, tx, topic, key, payload)
+				return enqueueErr
+			}
+			_, enqueueErr := s.outbox.Create(ctx, topic, key, payload)
+			return enqueueErr
+		}
+
+		for _, event := range []struct {
+			topic   string
+			key     string
+			payload []byte
+		}{
+			{topic: "email-service-topic-transaction-create", key: strconv.Itoa(int(transaction.TransactionID)), payload: payloadBytes},
+			{topic: "merchant-service-topic-transaction-event", key: strconv.Itoa(int(transaction.MerchantID)), payload: merchantPayload},
+		} {
+			if enqueueErr := enqueue(event.topic, event.key, event.payload); enqueueErr != nil {
+				s.logger.Error("failed to enqueue outbox event", zap.Error(enqueueErr), zap.String("topic", event.topic), zap.Int32("transaction_id", transaction.TransactionID))
+				// In the transactional path the whole unit rolls back so business data
+				// and both events stay consistent; in the fallback path the error is
+				// surfaced through structured logs for manual reconciliation.
+				if tx != nil {
+					status = "error"
+					return errorhandler.HandleError[*db.CreateTransactionRow](s.logger, enqueueErr, method, span)
+				}
+			}
+		}
+	}
+
+	if tx != nil {
+		if err := tx.Commit(ctx); err != nil {
+			status = "error"
+			return errorhandler.HandleError[*db.CreateTransactionRow](s.logger, err, method, span)
+		}
+	}
+
+	s.cache.InvalidateTransactionCache(ctx)
 
 	logSuccess("Successfully created transaction", zap.Int32("transaction_id", transaction.TransactionID))
 
@@ -178,9 +275,18 @@ func (s *transactionCommandService) Update(ctx context.Context, req *requests.Up
 		return errorhandler.HandleError[*db.UpdateTransactionRow](s.logger, err, method, span)
 	}
 
-	if (existingTx.PaymentStatus == "success" || existingTx.PaymentStatus == "refunded") && (req.PaymentStatus != nil && *req.PaymentStatus != existingTx.PaymentStatus) {
-		status = "error"
-		return errorhandler.HandleError[*db.UpdateTransactionRow](s.logger, transaction_errors.ErrFailedPaymentStatusCannotBeModified, method, span)
+	// Payment status changes must follow the canonical state machine. The
+	// requested status (if provided) must be canonical and a legal transition
+	// from the current status; terminal statuses cannot be reopened.
+	if req.PaymentStatus != nil && *req.PaymentStatus != "" {
+		if !IsValidPaymentStatus(*req.PaymentStatus) {
+			status = "error"
+			return errorhandler.HandleError[*db.UpdateTransactionRow](s.logger, transaction_errors.ErrFailedPaymentStatusInvalid, method, span)
+		}
+		if *req.PaymentStatus != existingTx.PaymentStatus && !CanTransitionPaymentStatus(existingTx.PaymentStatus, *req.PaymentStatus) {
+			status = "error"
+			return errorhandler.HandleError[*db.UpdateTransactionRow](s.logger, transaction_errors.ErrFailedPaymentStatusCannotBeModified, method, span)
+		}
 	}
 
 	if req.MerchantID == 0 {
@@ -213,10 +319,16 @@ func (s *transactionCommandService) Update(ctx context.Context, req *requests.Up
 		return errorhandler.HandleError[*db.UpdateTransactionRow](s.logger, err, method, span)
 	}
 
-	var totalAmount int
+	var merchandiseTotal int
 	for _, item := range orderItems {
-		totalAmount += int(item.Price)*int(item.Quantity) + int(shipping.ShippingCost)
+		if item.Quantity <= 0 || item.Price < 0 {
+			status = "error"
+			return errorhandler.HandleError[*db.UpdateTransactionRow](s.logger, transaction_errors.ErrFailedOrderItemEmpty, method, span)
+		}
+		merchandiseTotal += int(item.Price) * int(item.Quantity)
 	}
+
+	totalAmount := merchandiseTotal + int(shipping.ShippingCost)
 
 	if req.Amount == 0 {
 		req.Amount = int(existingTx.Amount)
@@ -227,14 +339,22 @@ func (s *transactionCommandService) Update(ctx context.Context, req *requests.Up
 	}
 
 	ppn := totalAmount * 11 / 100
-	totalAmountWithTax := totalAmount + ppn + int(shipping.ShippingCost)
+	totalAmountWithTax := totalAmount + ppn
 
-	var paymentStatus string
-	if req.Amount >= totalAmountWithTax {
-		paymentStatus = "success"
-	} else {
+	// Derive the final status from the verified amount. The derived status must
+	// itself be a legal transition from the current status (e.g. a failed
+	// transaction cannot be reopened as success by a later update).
+	paymentStatus := PaymentStatusSuccess
+	if req.Amount < totalAmountWithTax {
 		status = "error"
 		return errorhandler.HandleError[*db.UpdateTransactionRow](s.logger, transaction_errors.ErrFailedPaymentInsufficientBalance, method, span)
+	}
+	if req.PaymentStatus != nil && *req.PaymentStatus != "" && CanTransitionPaymentStatus(existingTx.PaymentStatus, *req.PaymentStatus) && *req.PaymentStatus != PaymentStatusSuccess {
+		paymentStatus = *req.PaymentStatus
+	}
+	if !CanTransitionPaymentStatus(existingTx.PaymentStatus, paymentStatus) {
+		status = "error"
+		return errorhandler.HandleError[*db.UpdateTransactionRow](s.logger, transaction_errors.ErrFailedPaymentStatusCannotBeModified, method, span)
 	}
 
 	req.Amount = totalAmountWithTax
@@ -292,6 +412,8 @@ func (s *transactionCommandService) Restore(ctx context.Context, transactionID i
 		return errorhandler.HandleError[*db.Transaction](s.logger, err, method, span)
 	}
 
+	s.cache.DeleteTransactionCache(ctx, transactionID)
+
 	logSuccess("Successfully restored transaction", zap.Int("transaction_id", transactionID))
 
 	return res, nil
@@ -312,6 +434,8 @@ func (s *transactionCommandService) DeletePermanent(ctx context.Context, transac
 		status = "error"
 		return errorhandler.HandleError[bool](s.logger, err, method, span)
 	}
+
+	s.cache.DeleteTransactionCache(ctx, transactionID)
 
 	logSuccess("Successfully permanently deleted transaction", zap.Int("transaction_id", transactionID))
 
@@ -334,6 +458,8 @@ func (s *transactionCommandService) DeleteByOrderIDPermanent(ctx context.Context
 		return errorhandler.HandleError[bool](s.logger, err, method, span)
 	}
 
+	s.cache.InvalidateTransactionCache(ctx)
+
 	logSuccess("Successfully permanently deleted transactions by order", zap.Int("order_id", orderID))
 
 	return success, nil
@@ -354,6 +480,7 @@ func (s *transactionCommandService) RestoreAll(ctx context.Context) (bool, error
 		return errorhandler.HandleError[bool](s.logger, err, method, span)
 	}
 
+	s.cache.InvalidateTransactionCache(ctx)
 	logSuccess("Successfully restored all transactions")
 
 	return success, nil
@@ -374,6 +501,7 @@ func (s *transactionCommandService) DeleteAll(ctx context.Context) (bool, error)
 		return errorhandler.HandleError[bool](s.logger, err, method, span)
 	}
 
+	s.cache.InvalidateTransactionCache(ctx)
 	logSuccess("Successfully permanently deleted all transactions")
 
 	return success, nil

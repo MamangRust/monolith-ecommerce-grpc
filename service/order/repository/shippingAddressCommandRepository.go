@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"github.com/jackc/pgx/v5"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -32,6 +34,9 @@ func (r *shippingAddressCommandRepository) Create(ctx context.Context, request *
 		ShippingCost:   int32(request.ShippingCost),
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, shippingaddress_errors.ErrShippingAddressNotFound
+		}
 		return nil, shippingaddress_errors.ErrCreateShippingAddress.WithInternal(err)
 	}
 
@@ -64,6 +69,9 @@ func (r *shippingAddressCommandRepository) Update(ctx context.Context, request *
 		ShippingCost:   int32(request.ShippingCost),
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, shippingaddress_errors.ErrShippingAddressNotFound
+		}
 		return nil, shippingaddress_errors.ErrUpdateShippingAddress.WithInternal(err)
 	}
 
@@ -84,6 +92,9 @@ func (r *shippingAddressCommandRepository) DeleteByOrderIDPermanent(ctx context.
 		Id: int32(order_id),
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, shippingaddress_errors.ErrShippingAddressNotFound
+		}
 		return false, shippingaddress_errors.ErrDeleteShippingAddressPermanent.WithInternal(err)
 	}
 
@@ -93,6 +104,9 @@ func (r *shippingAddressCommandRepository) DeleteByOrderIDPermanent(ctx context.
 func (r *shippingAddressCommandRepository) DeleteAll(ctx context.Context) (bool, error) {
 	res, err := r.client.DeleteAllShippingPermanent(ctx, &emptypb.Empty{})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, shippingaddress_errors.ErrShippingAddressNotFound
+		}
 		return false, shippingaddress_errors.ErrDeleteAllPermanentShippingAddress.WithInternal(err)
 	}
 

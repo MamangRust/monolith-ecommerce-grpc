@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"github.com/jackc/pgx/v5"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -29,6 +31,9 @@ func (r *reviewCommandRepository) Create(ctx context.Context, request *requests.
 	review, err := r.db.CreateReview(ctx, req)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, review_errors.ErrReviewNotFound
+		}
 		return nil, review_errors.ErrCreateReview.WithInternal(err)
 	}
 
@@ -46,6 +51,9 @@ func (r *reviewCommandRepository) Update(ctx context.Context, request *requests.
 	res, err := r.db.UpdateReview(ctx, req)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, review_errors.ErrReviewNotFound
+		}
 		return nil, review_errors.ErrUpdateReview.WithInternal(err)
 	}
 
@@ -56,6 +64,9 @@ func (r *reviewCommandRepository) Trash(ctx context.Context, review_id int) (*db
 	res, err := r.db.TrashReview(ctx, int32(review_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, review_errors.ErrReviewNotFound
+		}
 		return nil, review_errors.ErrTrashReview.WithInternal(err)
 	}
 
@@ -66,6 +77,9 @@ func (r *reviewCommandRepository) Restore(ctx context.Context, review_id int) (*
 	res, err := r.db.RestoreReview(ctx, int32(review_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, review_errors.ErrReviewNotFound
+		}
 		return nil, review_errors.ErrRestoreReview.WithInternal(err)
 	}
 
@@ -76,6 +90,9 @@ func (r *reviewCommandRepository) DeletePermanent(ctx context.Context, review_id
 	err := r.db.DeleteReviewPermanently(ctx, int32(review_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, review_errors.ErrReviewNotFound
+		}
 		return false, review_errors.ErrDeleteReviewPermanent.WithInternal(err)
 	}
 
@@ -86,6 +103,9 @@ func (r *reviewCommandRepository) RestoreAll(ctx context.Context) (bool, error) 
 	err := r.db.RestoreAllReviews(ctx)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, review_errors.ErrReviewNotFound
+		}
 		return false, review_errors.ErrRestoreAllReviews.WithInternal(err)
 	}
 	return true, nil
@@ -95,6 +115,9 @@ func (r *reviewCommandRepository) DeleteAll(ctx context.Context) (bool, error) {
 	err := r.db.DeleteAllPermanentReviews(ctx)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, review_errors.ErrReviewNotFound
+		}
 		return false, review_errors.ErrDeleteAllPermanentReview.WithInternal(err)
 	}
 	return true, nil

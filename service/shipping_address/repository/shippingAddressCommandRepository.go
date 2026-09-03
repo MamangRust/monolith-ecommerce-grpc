@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"github.com/jackc/pgx/v5"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -24,7 +26,7 @@ func (r *shippingAddressCommandRepository) Create(ctx context.Context, request *
 		orderID = int32(*request.OrderID)
 	}
 	req := db.CreateShippingAddressParams{
-		OrderID: orderID,
+		OrderID:        orderID,
 		Alamat:         request.Alamat,
 		Provinsi:       request.Provinsi,
 		Kota:           request.Kota,
@@ -37,6 +39,9 @@ func (r *shippingAddressCommandRepository) Create(ctx context.Context, request *
 	address, err := r.db.CreateShippingAddress(ctx, req)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, shippingaddress_errors.ErrShippingAddressNotFound
+		}
 		return nil, shippingaddress_errors.ErrCreateShippingAddress
 	}
 
@@ -57,6 +62,9 @@ func (r *shippingAddressCommandRepository) Update(ctx context.Context, request *
 
 	res, err := r.db.UpdateShippingAddress(ctx, req)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, shippingaddress_errors.ErrShippingAddressNotFound
+		}
 		return nil, shippingaddress_errors.ErrUpdateShippingAddress
 	}
 
@@ -67,6 +75,9 @@ func (r *shippingAddressCommandRepository) Trash(ctx context.Context, shipping_i
 	res, err := r.db.TrashShippingAddress(ctx, int32(shipping_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, shippingaddress_errors.ErrShippingAddressNotFound
+		}
 		return nil, shippingaddress_errors.ErrTrashShippingAddress
 	}
 
@@ -77,6 +88,9 @@ func (r *shippingAddressCommandRepository) Restore(ctx context.Context, shipping
 	res, err := r.db.RestoreShippingAddress(ctx, int32(shipping_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, shippingaddress_errors.ErrShippingAddressNotFound
+		}
 		return nil, shippingaddress_errors.ErrRestoreShippingAddress
 	}
 
@@ -87,6 +101,9 @@ func (r *shippingAddressCommandRepository) DeletePermanent(ctx context.Context, 
 	err := r.db.DeleteShippingAddressPermanently(ctx, int32(shipping_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, shippingaddress_errors.ErrShippingAddressNotFound
+		}
 		return false, shippingaddress_errors.ErrDeleteShippingAddressPermanent
 	}
 
@@ -97,6 +114,9 @@ func (r *shippingAddressCommandRepository) DeleteByOrderIDPermanent(ctx context.
 	err := r.db.DeleteShippingAddressByOrderPermanent(ctx, int32(order_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, shippingaddress_errors.ErrShippingAddressNotFound
+		}
 		return false, shippingaddress_errors.ErrDeleteShippingAddressPermanent
 	}
 
@@ -107,6 +127,9 @@ func (r *shippingAddressCommandRepository) RestoreAll(ctx context.Context) (bool
 	err := r.db.RestoreAllShippingAddress(ctx)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, shippingaddress_errors.ErrShippingAddressNotFound
+		}
 		return false, shippingaddress_errors.ErrRestoreAllShippingAddresses
 	}
 	return true, nil
@@ -116,6 +139,9 @@ func (r *shippingAddressCommandRepository) DeleteAll(ctx context.Context) (bool,
 	err := r.db.DeleteAllPermanentShippingAddress(ctx)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, shippingaddress_errors.ErrShippingAddressNotFound
+		}
 		return false, shippingaddress_errors.ErrDeleteAllPermanentShippingAddress
 	}
 	return true, nil

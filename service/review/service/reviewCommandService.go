@@ -8,18 +8,18 @@ import (
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/product_errors"
 	review_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/review"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/user_errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 )
 
 type reviewCommandService struct {
-	observability    observability.TraceLoggerObservability
-	cache            cache.ReviewCommandCache
+	observability         observability.TraceLoggerObservability
+	cache                 cache.ReviewCommandCache
 	reviewRepository      repository.ReviewCommandRepository
 	reviewQueryRepository repository.ReviewQueryRepository
 	userRepository        repository.UserQueryRepository
@@ -165,7 +165,7 @@ func (s *reviewCommandService) Trash(ctx context.Context, reviewID int) (*db.Rev
 		status = "error"
 		return errorhandler.HandleError[*db.Review](
 			s.logger,
-			review_errors.ErrFailedTrashedReview.WithInternal(err),
+			err,
 			method,
 			span,
 
@@ -196,7 +196,7 @@ func (s *reviewCommandService) Restore(ctx context.Context, reviewID int) (*db.R
 		status = "error"
 		return errorhandler.HandleError[*db.Review](
 			s.logger,
-			review_errors.ErrFailedRestoreReview.WithInternal(err),
+			err,
 			method,
 			span,
 
@@ -227,7 +227,7 @@ func (s *reviewCommandService) DeletePermanent(ctx context.Context, reviewID int
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			review_errors.ErrFailedDeletePermanentReview.WithInternal(err),
+			err,
 			method,
 			span,
 
@@ -282,7 +282,7 @@ func (s *reviewCommandService) DeleteAll(ctx context.Context) (bool, error) {
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			review_errors.ErrFailedDeleteAllPermanentReviews.WithInternal(err),
+			err,
 			method,
 			span,
 		)

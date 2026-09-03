@@ -2,16 +2,16 @@ package category_cache
 
 import (
 	"context"
+	"fmt"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
-	"fmt"
 )
 
 const (
 	categoryStatsMonthTotalPriceCacheKey = "category:stats:month:%d:year:%d"
 	categoryStatsYearTotalPriceCacheKey  = "category:stats:year:%d"
-	categoryStatsMonthPriceCacheKey      = "category:stats:month:%d"
+	categoryStatsMonthPriceCacheKey      = "category:stats:month:%d:year:%d"
 	categoryStatsYearPriceCacheKey       = "category:stats:year:%d"
 )
 
@@ -62,8 +62,8 @@ func (s *categoryStatsCache) SetCachedYearTotalPriceCache(ctx context.Context, y
 	cache.SetToCache(ctx, s.store, key, data, ttlDefault)
 }
 
-func (s *categoryStatsCache) GetCachedMonthPriceCache(ctx context.Context, year int) (*response.ApiResponseCategoryMonthPrice, bool) {
-	key := fmt.Sprintf(categoryStatsMonthPriceCacheKey, year)
+func (s *categoryStatsCache) GetCachedMonthPriceCache(ctx context.Context, month, year int) (*response.ApiResponseCategoryMonthPrice, bool) {
+	key := fmt.Sprintf(categoryStatsMonthPriceCacheKey, month, year)
 	result, found := cache.GetFromCache[response.ApiResponseCategoryMonthPrice](ctx, s.store, key)
 
 	if !found || result == nil {
@@ -73,11 +73,11 @@ func (s *categoryStatsCache) GetCachedMonthPriceCache(ctx context.Context, year 
 	return result, true
 }
 
-func (s *categoryStatsCache) SetCachedMonthPriceCache(ctx context.Context, year int, data *response.ApiResponseCategoryMonthPrice) {
+func (s *categoryStatsCache) SetCachedMonthPriceCache(ctx context.Context, month, year int, data *response.ApiResponseCategoryMonthPrice) {
 	if data == nil {
 		return
 	}
-	key := fmt.Sprintf(categoryStatsMonthPriceCacheKey, year)
+	key := fmt.Sprintf(categoryStatsMonthPriceCacheKey, month, year)
 
 	cache.SetToCache(ctx, s.store, key, data, ttlDefault)
 }

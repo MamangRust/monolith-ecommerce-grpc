@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"github.com/jackc/pgx/v5"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -30,6 +32,9 @@ func (r *merchantDetailCommandRepository) Create(ctx context.Context, request *r
 
 	merchant, err := r.db.CreateMerchantDetail(ctx, req)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, merchantdetail_errors.ErrMerchantDetailNotFound
+		}
 		return nil, merchantdetail_errors.ErrCreateMerchantDetail.WithInternal(err)
 	}
 
@@ -48,6 +53,9 @@ func (r *merchantDetailCommandRepository) Update(ctx context.Context, request *r
 
 	res, err := r.db.UpdateMerchantDetail(ctx, req)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, merchantdetail_errors.ErrMerchantDetailNotFound
+		}
 		return nil, merchantdetail_errors.ErrUpdateMerchantDetail.WithInternal(err)
 	}
 
@@ -57,6 +65,9 @@ func (r *merchantDetailCommandRepository) Update(ctx context.Context, request *r
 func (r *merchantDetailCommandRepository) Trash(ctx context.Context, merchant_detail_id int) (*db.MerchantDetail, error) {
 	res, err := r.db.TrashMerchantDetail(ctx, int32(merchant_detail_id))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, merchantdetail_errors.ErrMerchantDetailNotFound
+		}
 		return nil, merchantdetail_errors.ErrTrashMerchantDetail.WithInternal(err)
 	}
 
@@ -66,6 +77,9 @@ func (r *merchantDetailCommandRepository) Trash(ctx context.Context, merchant_de
 func (r *merchantDetailCommandRepository) Restore(ctx context.Context, merchant_detail_id int) (*db.MerchantDetail, error) {
 	res, err := r.db.RestoreMerchantDetail(ctx, int32(merchant_detail_id))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, merchantdetail_errors.ErrMerchantDetailNotFound
+		}
 		return nil, merchantdetail_errors.ErrRestoreMerchantDetail.WithInternal(err)
 	}
 
@@ -75,6 +89,9 @@ func (r *merchantDetailCommandRepository) Restore(ctx context.Context, merchant_
 func (r *merchantDetailCommandRepository) DeletePermanent(ctx context.Context, merchant_detail_id int) (bool, error) {
 	err := r.db.DeleteMerchantDetailPermanently(ctx, int32(merchant_detail_id))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, merchantdetail_errors.ErrMerchantDetailNotFound
+		}
 		return false, merchantdetail_errors.ErrDeletePermanentMerchantDetail.WithInternal(err)
 	}
 
@@ -84,6 +101,9 @@ func (r *merchantDetailCommandRepository) DeletePermanent(ctx context.Context, m
 func (r *merchantDetailCommandRepository) RestoreAll(ctx context.Context) (bool, error) {
 	err := r.db.RestoreAllMerchantDetails(ctx)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, merchantdetail_errors.ErrMerchantDetailNotFound
+		}
 		return false, merchantdetail_errors.ErrRestoreAllMerchantDetails.WithInternal(err)
 	}
 	return true, nil
@@ -92,6 +112,9 @@ func (r *merchantDetailCommandRepository) RestoreAll(ctx context.Context) (bool,
 func (r *merchantDetailCommandRepository) DeleteAll(ctx context.Context) (bool, error) {
 	err := r.db.DeleteAllPermanentMerchantDetails(ctx)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, merchantdetail_errors.ErrMerchantDetailNotFound
+		}
 		return false, merchantdetail_errors.ErrDeleteAllPermanentMerchantDetails.WithInternal(err)
 	}
 	return true, nil

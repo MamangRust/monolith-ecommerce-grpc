@@ -118,7 +118,7 @@ func (s *reviewDetailCommandService) Trash(ctx context.Context, review_id int) (
 		status = "error"
 		return errorhandler.HandleError[*db.ReviewDetail](
 			s.logger,
-			review_detail_errors.ErrFailedTrashedReviewDetail.WithInternal(err),
+			err,
 			method,
 			span,
 
@@ -149,7 +149,7 @@ func (s *reviewDetailCommandService) Restore(ctx context.Context, review_id int)
 		status = "error"
 		return errorhandler.HandleError[*db.ReviewDetail](
 			s.logger,
-			review_detail_errors.ErrFailedRestoreReviewDetail.WithInternal(err),
+			err,
 			method,
 			span,
 
@@ -180,7 +180,7 @@ func (s *reviewDetailCommandService) DeletePermanent(ctx context.Context, review
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			review_detail_errors.ErrFailedFindReviewDetail.WithInternal(err),
+			err,
 			method,
 			span,
 			zap.Int("review_id", review_id),
@@ -193,7 +193,7 @@ func (s *reviewDetailCommandService) DeletePermanent(ctx context.Context, review
 			status = "error"
 			return errorhandler.HandleError[bool](
 				s.logger,
-				review_detail_errors.ErrFailedRemoveImage,
+				err,
 				method,
 				span,
 				zap.String("upload_path", reviewDetail.Url),
@@ -206,7 +206,7 @@ func (s *reviewDetailCommandService) DeletePermanent(ctx context.Context, review
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			review_detail_errors.ErrFailedDeleteReviewDetailPermanent.WithInternal(err),
+			err,
 			method,
 			span,
 			zap.Int("review_id", review_id),
@@ -260,7 +260,7 @@ func (s *reviewDetailCommandService) DeleteAll(ctx context.Context) (bool, error
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			review_detail_errors.ErrFailedDeleteAllReviewDetails.WithInternal(err),
+			err,
 			method,
 			span,
 		)

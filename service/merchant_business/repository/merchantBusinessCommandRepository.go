@@ -2,8 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"github.com/jackc/pgx/v5"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	"github.com/MamangRust/monolith-ecommerce-shared/convert"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	merchantbusiness_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant_business"
 )
@@ -28,9 +31,9 @@ func (r *merchantBusinessCommandRepository) Create(
 	req := db.CreateMerchantBusinessInformationParams{
 		MerchantID: int32(request.MerchantID),
 
-		BusinessType: stringPtr(request.BusinessType),
-		TaxID:        stringPtr(request.TaxID),
-		WebsiteUrl:   stringPtr(request.WebsiteUrl),
+		BusinessType: convert.NullableString(request.BusinessType),
+		TaxID:        convert.NullableString(request.TaxID),
+		WebsiteUrl:   convert.NullableString(request.WebsiteUrl),
 
 		EstablishedYear:   int32Ptr(request.EstablishedYear),
 		NumberOfEmployees: int32Ptr(request.NumberOfEmployees),
@@ -38,6 +41,9 @@ func (r *merchantBusinessCommandRepository) Create(
 
 	merchant, err := r.db.CreateMerchantBusinessInformation(ctx, req)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, merchantbusiness_errors.ErrMerchantBusinessNotFound
+		}
 		return nil, merchantbusiness_errors.ErrCreateMerchantBusiness.WithInternal(err)
 	}
 
@@ -47,15 +53,18 @@ func (r *merchantBusinessCommandRepository) Create(
 func (r *merchantBusinessCommandRepository) Update(ctx context.Context, request *requests.UpdateMerchantBusinessInformationRequest) (*db.UpdateMerchantBusinessInformationRow, error) {
 	req := db.UpdateMerchantBusinessInformationParams{
 		MerchantBusinessInfoID: int32(*request.MerchantBusinessInfoID),
-		BusinessType:           stringPtr(request.BusinessType),
-		TaxID:                  stringPtr(request.TaxID),
-		WebsiteUrl:             stringPtr(request.WebsiteUrl),
+		BusinessType:           convert.NullableString(request.BusinessType),
+		TaxID:                  convert.NullableString(request.TaxID),
+		WebsiteUrl:             convert.NullableString(request.WebsiteUrl),
 		EstablishedYear:        int32Ptr(request.EstablishedYear),
 		NumberOfEmployees:      int32Ptr(request.NumberOfEmployees),
 	}
 
 	merchant, err := r.db.UpdateMerchantBusinessInformation(ctx, req)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, merchantbusiness_errors.ErrMerchantBusinessNotFound
+		}
 		return nil, merchantbusiness_errors.ErrUpdateMerchantBusiness.WithInternal(err)
 	}
 
@@ -66,6 +75,9 @@ func (r *merchantBusinessCommandRepository) Trash(ctx context.Context, merchant_
 	res, err := r.db.TrashMerchantBusinessInformation(ctx, int32(merchant_business_info_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, merchantbusiness_errors.ErrMerchantBusinessNotFound
+		}
 		return nil, merchantbusiness_errors.ErrTrashMerchantBusiness.WithInternal(err)
 	}
 
@@ -76,6 +88,9 @@ func (r *merchantBusinessCommandRepository) Restore(ctx context.Context, merchan
 	res, err := r.db.RestoreMerchantBusinessInformation(ctx, int32(merchant_business_info_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, merchantbusiness_errors.ErrMerchantBusinessNotFound
+		}
 		return nil, merchantbusiness_errors.ErrRestoreMerchantBusiness.WithInternal(err)
 	}
 
@@ -86,6 +101,9 @@ func (r *merchantBusinessCommandRepository) DeletePermanent(ctx context.Context,
 	err := r.db.DeleteMerchantBusinessInformationPermanently(ctx, int32(merchant_business_info_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, merchantbusiness_errors.ErrMerchantBusinessNotFound
+		}
 		return false, merchantbusiness_errors.ErrDeletePermanentMerchantBusiness.WithInternal(err)
 	}
 
@@ -96,6 +114,9 @@ func (r *merchantBusinessCommandRepository) RestoreAll(ctx context.Context) (boo
 	err := r.db.RestoreAllMerchantBusinessInformation(ctx)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, merchantbusiness_errors.ErrMerchantBusinessNotFound
+		}
 		return false, merchantbusiness_errors.ErrRestoreAllMerchantBusinesses.WithInternal(err)
 	}
 	return true, nil
@@ -105,6 +126,9 @@ func (r *merchantBusinessCommandRepository) DeleteAll(ctx context.Context) (bool
 	err := r.db.DeleteAllPermanentMerchantBusinessInformation(ctx)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, merchantbusiness_errors.ErrMerchantBusinessNotFound
+		}
 		return false, merchantbusiness_errors.ErrDeleteAllPermanentMerchantBusinesses.WithInternal(err)
 	}
 	return true, nil
@@ -116,11 +140,4 @@ func int32Ptr(v int) *int32 {
 	}
 	val := int32(v)
 	return &val
-}
-
-func stringPtr(v string) *string {
-	if v == "" {
-		return nil
-	}
-	return &v
 }

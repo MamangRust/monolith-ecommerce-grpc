@@ -4,7 +4,6 @@ import (
 	"context"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	merchant_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 )
 
@@ -21,7 +20,8 @@ func NewMerchantQueryRepository(client pb.MerchantQueryServiceClient) *merchantQ
 func (r *merchantQueryRepository) FindByID(ctx context.Context, merchant_id int) (*db.GetMerchantByIDRow, error) {
 	res, err := r.client.FindById(ctx, &pb.FindByIdMerchantRequest{Id: int32(merchant_id)})
 	if err != nil {
-		return nil, merchant_errors.ErrMerchantInternal.WithInternal(err)
+		// pertahankan status gRPC dari dependency service (NotFound -> 404, dst)
+		return nil, err
 	}
 
 	return &db.GetMerchantByIDRow{

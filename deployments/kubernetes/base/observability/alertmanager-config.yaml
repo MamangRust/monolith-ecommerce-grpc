@@ -1,0 +1,18 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: alertmanager-config
+  namespace: ecommerce
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: ecommerce-secrets
+    kind: ClusterSecretStore
+  target:
+    name: alertmanager-config
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: alertmanager.yml
+      remoteRef:
+        key: ecommerce/ALERTMANAGER_CONFIG

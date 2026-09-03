@@ -5,8 +5,8 @@ import (
 
 	"github.com/MamangRust/monolith-ecommerce-grpc-user/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-user/repository"
-	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
@@ -17,23 +17,23 @@ import (
 )
 
 type userCommandService struct {
-	observability       observability.TraceLoggerObservability
-	cache               cache.UserCommandCache
+	observability         observability.TraceLoggerObservability
+	cache                 cache.UserCommandCache
 	userCommandRepository repository.UserCommandRepository
 	userQueryRepository   repository.UserQueryRepository
-	roleRepository      repository.RoleRepository
-	logger              logger.LoggerInterface
-	hashing             hash.HashPassword
+	roleRepository        repository.RoleRepository
+	logger                logger.LoggerInterface
+	hashing               hash.HashPassword
 }
 
 type UserCommandServiceDeps struct {
-	Observability       observability.TraceLoggerObservability
-	Cache               cache.UserCommandCache
+	Observability         observability.TraceLoggerObservability
+	Cache                 cache.UserCommandCache
 	UserCommandRepository repository.UserCommandRepository
 	UserQueryRepository   repository.UserQueryRepository
-	RoleRepository      repository.RoleRepository
-	Logger              logger.LoggerInterface
-	Hash                hash.HashPassword
+	RoleRepository        repository.RoleRepository
+	Logger                logger.LoggerInterface
+	Hash                  hash.HashPassword
 }
 
 func NewUserCommandService(deps *UserCommandServiceDeps) UserCommandService {
@@ -190,7 +190,7 @@ func (s *userCommandService) Trash(ctx context.Context, user_id int) (*db.TrashU
 		status = "error"
 		return errorhandler.HandleError[*db.TrashUserRow](
 			s.logger,
-			user_errors.ErrFailedTrashedUser,
+			err,
 			method,
 			span,
 
@@ -220,7 +220,7 @@ func (s *userCommandService) Restore(ctx context.Context, user_id int) (*db.Rest
 		status = "error"
 		return errorhandler.HandleError[*db.RestoreUserRow](
 			s.logger,
-			user_errors.ErrFailedRestoreUser,
+			err,
 			method,
 			span,
 
@@ -250,7 +250,7 @@ func (s *userCommandService) DeletePermanent(ctx context.Context, user_id int) (
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			user_errors.ErrFailedDeletePermanent,
+			err,
 			method,
 			span,
 
@@ -306,7 +306,7 @@ func (s *userCommandService) DeleteAll(ctx context.Context) (bool, error) {
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			user_errors.ErrFailedDeleteAll,
+			err,
 			method,
 			span,
 		)

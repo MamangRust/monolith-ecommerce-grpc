@@ -15,6 +15,8 @@ import (
 	tests "github.com/MamangRust/monolith-ecommerce-test"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -154,6 +156,39 @@ func (s *ProductGapiTestSuite) TestProductGapiLifecycle() {
 	// 12. DeleteAll
 	_, err = s.commandClient.DeleteAllProductPermanent(ctx, &emptypb.Empty{})
 	s.Require().NoError(err)
+}
+
+func (s *ProductGapiTestSuite) TestProductGapiNotFound() {
+	ctx := context.Background()
+
+	// FindById with a non-existent ID must map to codes.NotFound (404), not Internal.
+	_, err := s.queryClient.FindById(ctx, &pb.FindByIdProductRequest{Id: 999999})
+	s.Require().Error(err)
+	st, ok := status.FromError(err)
+	s.Require().True(ok, "expected a gRPC status error")
+	s.Equal(codes.NotFound, st.Code(), "non-existent product must be NotFound, got %v: %s", st.Code(), st.Message())
+}
+
+func (s *ProductGapiTestSuite) TestProductGapiInvalidID() {
+	ctx := context.Background()
+
+	// Command mutations with id=0 must be rejected as InvalidArgument before any DB work.
+	_, err := s.commandClient.TrashedProduct(ctx, &pb.FindByIdProductRequest{Id: 0})
+	s.Require().Error(err)
+	st, ok := status.FromError(err)
+	s.Require().True(ok)
+	s.Equal(codes.InvalidArgument, st.Code(), "trash with id=0 must be InvalidArgument, got %v", st.Code())
+
+	_, err = s.commandClient.Update(ctx, &pb.UpdateProductRequest{
+		Name:         "Invalid",
+		Description:  "Invalid",
+		Price:        1,
+		CountInStock: 1,
+	})
+	s.Require().Error(err)
+	st, ok = status.FromError(err)
+	s.Require().True(ok)
+	s.Equal(codes.InvalidArgument, st.Code(), "update with missing id must be InvalidArgument, got %v", st.Code())
 }
 
 func TestProductGapiSuite(t *testing.T) {

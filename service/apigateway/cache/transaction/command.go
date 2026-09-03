@@ -2,8 +2,8 @@ package transaction_cache
 
 import (
 	"context"
-	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"fmt"
+	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 )
 
 type transactionCommandCache struct {
@@ -15,8 +15,9 @@ func NewTransactionCommandCache(store *cache.CacheStore) *transactionCommandCach
 }
 
 func (t *transactionCommandCache) DeleteTransactionCache(ctx context.Context, transactionID int) {
-	key := fmt.Sprintf(transactionByIdCacheKey, transactionID)
-	cache.DeleteFromCache(ctx, t.store, key)
+	if _, err := t.store.InvalidateCache(ctx, "transaction:*"); err != nil {
+		cache.DeleteFromCache(ctx, t.store, fmt.Sprintf(transactionByIdCacheKey, transactionID))
+	}
 }
 
 func (t *transactionCommandCache) InvalidateTransactionCache(ctx context.Context) {

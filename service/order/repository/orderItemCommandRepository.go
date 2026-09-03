@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"github.com/jackc/pgx/v5"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -28,6 +30,9 @@ func (r *orderItemCommandRepository) Create(ctx context.Context, req *requests.C
 		Price:     int32(req.Price),
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, order_item_errors.ErrOrderItemNotFound
+		}
 		return nil, order_item_errors.ErrCreateOrderItem.WithInternal(err)
 	}
 
@@ -47,6 +52,9 @@ func (r *orderItemCommandRepository) Update(ctx context.Context, req *requests.U
 		Price:       int32(req.Price),
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, order_item_errors.ErrOrderItemNotFound
+		}
 		return nil, order_item_errors.ErrUpdateOrderItem.WithInternal(err)
 	}
 
@@ -62,6 +70,9 @@ func (r *orderItemCommandRepository) Update(ctx context.Context, req *requests.U
 func (r *orderItemCommandRepository) Trash(ctx context.Context, order_id int) (*db.OrderItem, error) {
 	res, err := r.client.TrashOrderItem(ctx, &pb.FindByIdOrderItemRequest{Id: int32(order_id)})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, order_item_errors.ErrOrderItemNotFound
+		}
 		return nil, order_item_errors.ErrTrashedOrderItem.WithInternal(err)
 	}
 
@@ -77,6 +88,9 @@ func (r *orderItemCommandRepository) Trash(ctx context.Context, order_id int) (*
 func (r *orderItemCommandRepository) Restore(ctx context.Context, order_id int) (*db.OrderItem, error) {
 	res, err := r.client.RestoreOrderItem(ctx, &pb.FindByIdOrderItemRequest{Id: int32(order_id)})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, order_item_errors.ErrOrderItemNotFound
+		}
 		return nil, order_item_errors.ErrRestoreOrderItem.WithInternal(err)
 	}
 
@@ -92,6 +106,9 @@ func (r *orderItemCommandRepository) Restore(ctx context.Context, order_id int) 
 func (r *orderItemCommandRepository) DeletePermanent(ctx context.Context, order_id int) (bool, error) {
 	res, err := r.client.DeleteOrderItemPermanent(ctx, &pb.FindByIdOrderItemRequest{Id: int32(order_id)})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, order_item_errors.ErrOrderItemNotFound
+		}
 		return false, order_item_errors.ErrDeleteOrderItemPermanent.WithInternal(err)
 	}
 
@@ -101,6 +118,9 @@ func (r *orderItemCommandRepository) DeletePermanent(ctx context.Context, order_
 func (r *orderItemCommandRepository) DeleteByOrderIDPermanent(ctx context.Context, order_id int) (bool, error) {
 	res, err := r.client.DeleteOrderItemByOrderPermanent(ctx, &pb.FindByIdOrderItemRequest{Id: int32(order_id)})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, order_item_errors.ErrOrderItemNotFound
+		}
 		return false, order_item_errors.ErrDeleteOrderItemPermanent.WithInternal(err)
 	}
 
@@ -110,6 +130,9 @@ func (r *orderItemCommandRepository) DeleteByOrderIDPermanent(ctx context.Contex
 func (r *orderItemCommandRepository) RestoreAll(ctx context.Context) (bool, error) {
 	res, err := r.client.RestoreAllOrdersItem(ctx, &emptypb.Empty{})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, order_item_errors.ErrOrderItemNotFound
+		}
 		return false, order_item_errors.ErrRestoreAllOrderItem.WithInternal(err)
 	}
 
@@ -119,6 +142,9 @@ func (r *orderItemCommandRepository) RestoreAll(ctx context.Context) (bool, erro
 func (r *orderItemCommandRepository) DeleteAll(ctx context.Context) (bool, error) {
 	res, err := r.client.DeleteAllPermanentOrdersItem(ctx, &emptypb.Empty{})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, order_item_errors.ErrOrderItemNotFound
+		}
 		return false, order_item_errors.ErrDeleteAllOrderPermanent.WithInternal(err)
 	}
 

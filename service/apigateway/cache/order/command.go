@@ -2,8 +2,8 @@ package order_cache
 
 import (
 	"context"
-	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"fmt"
+	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 )
 
 type orderCommandCache struct {
@@ -15,5 +15,7 @@ func NewOrderCommandCache(store *cache.CacheStore) *orderCommandCache {
 }
 
 func (s *orderCommandCache) DeleteOrderCache(ctx context.Context, order_id int) {
-	cache.DeleteFromCache(ctx, s.store, fmt.Sprintf(orderByIdCacheKey, order_id))
+	if _, err := s.store.InvalidateCache(ctx, "order:*"); err != nil {
+		cache.DeleteFromCache(ctx, s.store, fmt.Sprintf(orderByIdCacheKey, order_id))
+	}
 }

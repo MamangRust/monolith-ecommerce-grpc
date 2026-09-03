@@ -4,7 +4,6 @@ import (
 	"context"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	order_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/order_errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 )
 
@@ -21,7 +20,8 @@ func NewOrderQueryRepository(client pb.OrderQueryServiceClient) *orderQueryRepos
 func (r *orderQueryRepository) FindByID(ctx context.Context, order_id int) (*db.GetOrderByIDRow, error) {
 	res, err := r.client.FindById(ctx, &pb.FindByIdOrderRequest{Id: int32(order_id)})
 	if err != nil {
-		return nil, order_errors.ErrFindById.WithInternal(err)
+		// pertahankan status gRPC dari dependency service (NotFound -> 404, dst)
+		return nil, err
 	}
 
 	return &db.GetOrderByIDRow{

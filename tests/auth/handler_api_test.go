@@ -3,45 +3,44 @@ package auth_test
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
-	authhandler "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/auth"
-	auth_cache_api "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/auth"
+	auth_cache "github.com/MamangRust/monolith-ecommerce-auth/cache"
 	"github.com/MamangRust/monolith-ecommerce-auth/handler"
 	"github.com/MamangRust/monolith-ecommerce-auth/repository"
 	"github.com/MamangRust/monolith-ecommerce-auth/service"
-	auth_cache "github.com/MamangRust/monolith-ecommerce-auth/cache"
-	user_handler "github.com/MamangRust/monolith-ecommerce-grpc-user/handler"
-	user_service "github.com/MamangRust/monolith-ecommerce-grpc-user/service"
-	user_repo "github.com/MamangRust/monolith-ecommerce-grpc-user/repository"
+	auth_cache_api "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/auth"
+	authhandler "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/auth"
+	role_cache "github.com/MamangRust/monolith-ecommerce-grpc-role/cache"
 	role_handler "github.com/MamangRust/monolith-ecommerce-grpc-role/handler"
-	role_service "github.com/MamangRust/monolith-ecommerce-grpc-role/service"
 	role_repo "github.com/MamangRust/monolith-ecommerce-grpc-role/repository"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
-	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	tests "github.com/MamangRust/monolith-ecommerce-test"
+	role_service "github.com/MamangRust/monolith-ecommerce-grpc-role/service"
+	user_cache "github.com/MamangRust/monolith-ecommerce-grpc-user/cache"
+	user_handler "github.com/MamangRust/monolith-ecommerce-grpc-user/handler"
+	user_repo "github.com/MamangRust/monolith-ecommerce-grpc-user/repository"
+	user_service "github.com/MamangRust/monolith-ecommerce-grpc-user/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/auth"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
-	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
-	user_cache "github.com/MamangRust/monolith-ecommerce-grpc-user/cache"
-	role_cache "github.com/MamangRust/monolith-ecommerce-grpc-role/cache"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
+	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	tests "github.com/MamangRust/monolith-ecommerce-test"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/suite"
-	"github.com/labstack/echo/v4"
+	sdklog "go.opentelemetry.io/otel/sdk/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	sdklog "go.opentelemetry.io/otel/sdk/log"
 )
 
 type AuthHandlerApiTestSuite struct {
@@ -71,7 +70,7 @@ func (s *AuthHandlerApiTestSuite) SetupSuite() {
 	s.redisClient.FlushAll(context.Background())
 
 	queries := db.New(pool)
-	
+
 	logger.ResetInstance()
 	lp := sdklog.NewLoggerProvider()
 	log, _ := logger.NewLogger("test", lp)
@@ -107,7 +106,7 @@ func (s *AuthHandlerApiTestSuite) SetupSuite() {
 	userSvc := user_service.NewService(&user_service.Deps{
 		Repositories:  userRepos,
 		Logger:        log,
-		Hash:         hasher,
+		Hash:          hasher,
 		Cache:         userMencache,
 		Observability: obs,
 	})
@@ -129,7 +128,7 @@ func (s *AuthHandlerApiTestSuite) SetupSuite() {
 	roleCommandClient := pb.NewRoleCommandServiceClient(roleConn)
 
 	repos := repository.NewRepositories(queries, userQueryClient, userCommandClient, roleQueryClient, roleCommandClient)
-	
+
 	tokenManager, _ := auth.NewManager("mysecret")
 	mencache := auth_cache.NewMencache(cacheStore)
 	apiAuthCache := auth_cache_api.NewMencache(cacheStore)
@@ -162,11 +161,12 @@ func (s *AuthHandlerApiTestSuite) SetupSuite() {
 	s.server = echo.New()
 	apiHandler := errors.NewApiHandler(obs, log)
 
-	// Auth bypass middleware for /api/auth/me
+	// Auth bypass middleware for /api/auth/me — must mimic middlewares/auth.go:
+	// it stores the authenticated user id as an int under "user_id".
 	s.server.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if s.userID != 0 {
-				c.Set("userId", strconv.Itoa(s.userID))
+				c.Set("user_id", s.userID)
 			}
 			return next(c)
 		}
@@ -280,11 +280,11 @@ func (s *AuthHandlerApiTestSuite) Test1_Register() {
 	s.server.ServeHTTP(rec, req)
 
 	s.Equal(http.StatusCreated, rec.Code, "Expected StatusCreated, got %d. Body: %s", rec.Code, rec.Body.String())
-	
+
 	var res map[string]interface{}
 	err := json.Unmarshal(rec.Body.Bytes(), &res)
 	s.NoError(err)
-	
+
 	data, ok := res["data"].(map[string]interface{})
 	s.True(ok, "Expected 'data' to be a map, got %T. Body: %s", res["data"], rec.Body.String())
 	s.userID = int(data["id"].(float64))
@@ -304,11 +304,11 @@ func (s *AuthHandlerApiTestSuite) Test2_Login() {
 	s.server.ServeHTTP(rec, req)
 
 	s.Equal(http.StatusOK, rec.Code, "Expected StatusOK, got %d. Body: %s", rec.Code, rec.Body.String())
-	
+
 	var res map[string]interface{}
 	err := json.Unmarshal(rec.Body.Bytes(), &res)
 	s.NoError(err)
-	
+
 	data, ok := res["data"].(map[string]interface{})
 	s.True(ok, "Expected 'data' to be a map, got %T. Body: %s", res["data"], rec.Body.String())
 	s.accessToken = data["access_token"].(string)
@@ -358,14 +358,16 @@ func (s *AuthHandlerApiTestSuite) Test4_LoginLockout() {
 
 func (s *AuthHandlerApiTestSuite) Test3_GetMe() {
 	s.Require().NotZero(s.userID)
+	s.Require().NotEmpty(s.accessToken)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/me", nil)
+	req.Header.Set(echo.HeaderAuthorization, "Bearer "+s.accessToken)
 	rec := httptest.NewRecorder()
 
 	s.server.ServeHTTP(rec, req)
 
 	s.Equal(http.StatusOK, rec.Code, "Expected StatusOK, got %d. Body: %s", rec.Code, rec.Body.String())
-	
+
 	var res map[string]interface{}
 	err := json.Unmarshal(rec.Body.Bytes(), &res)
 	s.NoError(err)

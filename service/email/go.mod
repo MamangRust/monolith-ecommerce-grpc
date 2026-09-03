@@ -5,9 +5,9 @@ go 1.25.0
 require (
 	github.com/IBM/sarama v1.46.3
 	github.com/MamangRust/monolith-ecommerce-pkg v1.0.18
-	github.com/prometheus/client_golang v1.22.0
 	github.com/spf13/viper v1.21.0
 	go.opentelemetry.io/otel v1.43.0
+	go.opentelemetry.io/otel/metric v1.43.0
 	go.opentelemetry.io/otel/trace v1.43.0
 	go.uber.org/zap v1.27.1
 )
@@ -38,9 +38,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pierrec/lz4/v4 v4.1.25 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.62.0 // indirect
-	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20250401214520-65e299d6c5c9 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
@@ -55,7 +52,6 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.40.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.40.0 // indirect
 	go.opentelemetry.io/otel/log v0.19.0 // indirect
-	go.opentelemetry.io/otel/metric v1.43.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.43.0 // indirect
 	go.opentelemetry.io/otel/sdk/log v0.19.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.43.0 // indirect

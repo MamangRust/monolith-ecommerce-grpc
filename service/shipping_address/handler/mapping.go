@@ -40,6 +40,7 @@ func mapToProtoShippingResponse(shipping interface{}) *pb.ShippingResponse {
 			ShippingCost:   int32(s.ShippingCost),
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
+			Courier:        s.Courier,
 		}
 	case *db.GetShippingAddressRow:
 		return &pb.ShippingResponse{
@@ -53,6 +54,7 @@ func mapToProtoShippingResponse(shipping interface{}) *pb.ShippingResponse {
 			ShippingCost:   int32(s.ShippingCost),
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
+			Courier:        s.Courier,
 		}
 	case *db.GetShippingByIDRow:
 		return &pb.ShippingResponse{
@@ -66,6 +68,7 @@ func mapToProtoShippingResponse(shipping interface{}) *pb.ShippingResponse {
 			ShippingCost:   int32(s.ShippingCost),
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
+			Courier:        s.Courier,
 		}
 	case *db.GetShippingAddressByOrderIDRow:
 		return &pb.ShippingResponse{
@@ -79,6 +82,7 @@ func mapToProtoShippingResponse(shipping interface{}) *pb.ShippingResponse {
 			ShippingCost:   int32(s.ShippingCost),
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
+			Courier:        s.Courier,
 		}
 	case *db.CreateShippingAddressRow:
 		return &pb.ShippingResponse{
@@ -92,6 +96,7 @@ func mapToProtoShippingResponse(shipping interface{}) *pb.ShippingResponse {
 			ShippingCost:   int32(s.ShippingCost),
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
+			Courier:        s.Courier,
 		}
 	case *db.UpdateShippingAddressRow:
 		return &pb.ShippingResponse{
@@ -105,6 +110,7 @@ func mapToProtoShippingResponse(shipping interface{}) *pb.ShippingResponse {
 			ShippingCost:   int32(s.ShippingCost),
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
+			Courier:        s.Courier,
 		}
 	default:
 		return nil
@@ -130,6 +136,7 @@ func mapToProtoShippingResponseDeleteAt(shipping interface{}) *pb.ShippingRespon
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
 			DeletedAt:      deletedAt,
+			Courier:        s.Courier,
 		}
 	case *db.GetShippingAddressActiveRow:
 		var deletedAt *wrapperspb.StringValue
@@ -148,6 +155,7 @@ func mapToProtoShippingResponseDeleteAt(shipping interface{}) *pb.ShippingRespon
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
 			DeletedAt:      deletedAt,
+			Courier:        s.Courier,
 		}
 	case *db.GetShippingAddressTrashedRow:
 		var deletedAt *wrapperspb.StringValue
@@ -166,6 +174,7 @@ func mapToProtoShippingResponseDeleteAt(shipping interface{}) *pb.ShippingRespon
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
 			DeletedAt:      deletedAt,
+			Courier:        s.Courier,
 		}
 	default:
 		return nil

@@ -5,11 +5,12 @@ import (
 	"strconv"
 	"strings"
 
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_documents"
+	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -66,7 +67,9 @@ func NewMerchantDocumentCommandHandleApi(params *merchantDocumentCommandHandleDe
 // @Router /api/merchant-document-command/create [post]
 func (h *merchantDocumentCommandHandlerApi) Create(c echo.Context) error {
 	formData, err := h.parseMerchantDocumentCreate(c)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	ctx := c.Request().Context()
 	res, err := h.client.Create(ctx, &pb.CreateMerchantDocumentRequest{
@@ -74,7 +77,9 @@ func (h *merchantDocumentCommandHandlerApi) Create(c echo.Context) error {
 		DocumentType: formData.DocumentType,
 		DocumentUrl:  formData.DocumentUrl,
 	})
-	if err != nil { return h.handleGrpcError(err, "Create") }
+	if err != nil {
+		return h.handleGrpcError(err, "Create")
+	}
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseMerchantDocument(res))
 }
@@ -99,10 +104,14 @@ func (h *merchantDocumentCommandHandlerApi) Create(c echo.Context) error {
 // @Router /api/merchant-document-command/update/{id} [post]
 func (h *merchantDocumentCommandHandlerApi) Update(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	formData, err := h.parseMerchantDocumentUpdate(c)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	ctx := c.Request().Context()
 	res, err := h.client.Update(ctx, &pb.UpdateMerchantDocumentRequest{
@@ -111,9 +120,11 @@ func (h *merchantDocumentCommandHandlerApi) Update(c echo.Context) error {
 		DocumentType: formData.DocumentType,
 		DocumentUrl:  formData.DocumentUrl,
 		Status:       formData.Status,
-		Note:       formData.Note,
+		Note:         formData.Note,
 	})
-	if err != nil { return h.handleGrpcError(err, "Update") }
+	if err != nil {
+		return h.handleGrpcError(err, "Update")
+	}
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseMerchantDocument(res))
 }
@@ -133,11 +144,17 @@ func (h *merchantDocumentCommandHandlerApi) Update(c echo.Context) error {
 // @Router /api/merchant-document-command/update-status/{id} [post]
 func (h *merchantDocumentCommandHandlerApi) UpdateStatus(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	var body requests.UpdateMerchantDocumentStatusRequest
-	if err := c.Bind(&body); err != nil { return echo.NewHTTPError(http.StatusBadRequest, "Invalid request") }
-	if err := body.Validate(); err != nil { return echo.NewHTTPError(http.StatusBadRequest, err.Error()) }
+	if err := c.Bind(&body); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
+	}
+	if err := body.Validate(); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
 	ctx := c.Request().Context()
 	res, err := h.client.UpdateStatus(ctx, &pb.UpdateMerchantDocumentStatusRequest{
@@ -146,7 +163,9 @@ func (h *merchantDocumentCommandHandlerApi) UpdateStatus(c echo.Context) error {
 		Status:     body.Status,
 		Note:       body.Note,
 	})
-	if err != nil { return h.handleGrpcError(err, "UpdateStatus") }
+	if err != nil {
+		return h.handleGrpcError(err, "UpdateStatus")
+	}
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseMerchantDocument(res))
 }
@@ -164,11 +183,15 @@ func (h *merchantDocumentCommandHandlerApi) UpdateStatus(c echo.Context) error {
 // @Router /api/merchant-document-command/trashed/{id} [post]
 func (h *merchantDocumentCommandHandlerApi) Trash(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	ctx := c.Request().Context()
 	res, err := h.client.Trashed(ctx, &pb.TrashedMerchantDocumentRequest{DocumentId: int32(id)})
-	if err != nil { return h.handleGrpcError(err, "Trash") }
+	if err != nil {
+		return h.handleGrpcError(err, "Trash")
+	}
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseMerchantDocument(res))
 }
@@ -186,11 +209,15 @@ func (h *merchantDocumentCommandHandlerApi) Trash(c echo.Context) error {
 // @Router /api/merchant-document-command/restore/{id} [post]
 func (h *merchantDocumentCommandHandlerApi) Restore(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	ctx := c.Request().Context()
 	res, err := h.client.Restore(ctx, &pb.RestoreMerchantDocumentRequest{DocumentId: int32(id)})
-	if err != nil { return h.handleGrpcError(err, "Restore") }
+	if err != nil {
+		return h.handleGrpcError(err, "Restore")
+	}
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseMerchantDocument(res))
 }
@@ -208,11 +235,15 @@ func (h *merchantDocumentCommandHandlerApi) Restore(c echo.Context) error {
 // @Router /api/merchant-document-command/permanent/{id} [delete]
 func (h *merchantDocumentCommandHandlerApi) DeletePermanent(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	ctx := c.Request().Context()
 	res, err := h.client.DeletePermanent(ctx, &pb.DeleteMerchantDocumentPermanentRequest{DocumentId: int32(id)})
-	if err != nil { return h.handleGrpcError(err, "Delete") }
+	if err != nil {
+		return h.handleGrpcError(err, "Delete")
+	}
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseMerchantDocumentDeleteAt(res))
 }
@@ -229,7 +260,9 @@ func (h *merchantDocumentCommandHandlerApi) DeletePermanent(c echo.Context) erro
 func (h *merchantDocumentCommandHandlerApi) RestoreAll(c echo.Context) error {
 	ctx := c.Request().Context()
 	res, err := h.client.RestoreAll(ctx, &emptypb.Empty{})
-	if err != nil { return h.handleGrpcError(err, "RestoreAll") }
+	if err != nil {
+		return h.handleGrpcError(err, "RestoreAll")
+	}
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseMerchantDocumentAll(res))
 }
@@ -246,7 +279,9 @@ func (h *merchantDocumentCommandHandlerApi) RestoreAll(c echo.Context) error {
 func (h *merchantDocumentCommandHandlerApi) DeleteAllPermanent(c echo.Context) error {
 	ctx := c.Request().Context()
 	res, err := h.client.DeleteAllPermanent(ctx, &emptypb.Empty{})
-	if err != nil { return h.handleGrpcError(err, "DeleteAll") }
+	if err != nil {
+		return h.handleGrpcError(err, "DeleteAll")
+	}
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseMerchantDocumentAll(res))
 }
@@ -256,16 +291,24 @@ func (h *merchantDocumentCommandHandlerApi) parseMerchantDocumentCreate(c echo.C
 	var err error
 
 	formData.MerchantID, err = strconv.Atoi(c.FormValue("merchant_id"))
-	if err != nil || formData.MerchantID <= 0 { return formData, echo.NewHTTPError(http.StatusBadRequest, "Invalid merchant ID") }
+	if err != nil || formData.MerchantID <= 0 {
+		return formData, echo.NewHTTPError(http.StatusBadRequest, "Invalid merchant ID")
+	}
 
 	formData.DocumentType = strings.TrimSpace(c.FormValue("document_type"))
-	if formData.DocumentType == "" { return formData, echo.NewHTTPError(http.StatusBadRequest, "Document type is required") }
+	if formData.DocumentType == "" {
+		return formData, echo.NewHTTPError(http.StatusBadRequest, "Document type is required")
+	}
 
 	file, err := c.FormFile("document_url")
-	if err != nil { return formData, echo.NewHTTPError(http.StatusBadRequest, "Document file is required") }
+	if err != nil {
+		return formData, echo.NewHTTPError(http.StatusBadRequest, "Document file is required")
+	}
 
 	uploadedPath, err := h.upload_image.ProcessImageUpload(c, "uploads/merchant_document", file, true)
-	if err != nil { return formData, err }
+	if err != nil {
+		return formData, err
+	}
 	formData.DocumentUrl = uploadedPath
 
 	return formData, nil
@@ -276,15 +319,21 @@ func (h *merchantDocumentCommandHandlerApi) parseMerchantDocumentUpdate(c echo.C
 	var err error
 
 	formData.MerchantID, err = strconv.Atoi(c.FormValue("merchant_id"))
-	if err != nil || formData.MerchantID <= 0 { return formData, echo.NewHTTPError(http.StatusBadRequest, "Invalid merchant ID") }
+	if err != nil || formData.MerchantID <= 0 {
+		return formData, echo.NewHTTPError(http.StatusBadRequest, "Invalid merchant ID")
+	}
 
 	formData.DocumentType = strings.TrimSpace(c.FormValue("document_type"))
-	if formData.DocumentType == "" { return formData, echo.NewHTTPError(http.StatusBadRequest, "Document type is required") }
+	if formData.DocumentType == "" {
+		return formData, echo.NewHTTPError(http.StatusBadRequest, "Document type is required")
+	}
 
 	file, err := c.FormFile("document_url")
 	if err == nil {
 		uploadedPath, err := h.upload_image.ProcessImageUpload(c, "uploads/merchant_document/files", file, true)
-		if err != nil { return formData, err }
+		if err != nil {
+			return formData, err
+		}
 		formData.DocumentUrl = uploadedPath
 	} else {
 		formData.DocumentUrl = c.FormValue("document_url_old")
@@ -298,5 +347,5 @@ func (h *merchantDocumentCommandHandlerApi) parseMerchantDocumentUpdate(c echo.C
 
 func (h *merchantDocumentCommandHandlerApi) handleGrpcError(err error, operation string) error {
 	h.logger.Error("Failed to " + operation)
-	return echo.NewHTTPError(http.StatusInternalServerError, "Failed to "+operation)
+	return sharedErrors.ParseGrpcError(err)
 }

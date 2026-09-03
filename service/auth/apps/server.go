@@ -1,6 +1,7 @@
 package apps
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/MamangRust/monolith-ecommerce-auth/cache"
@@ -10,6 +11,7 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-pkg/auth"
 	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
+	"github.com/MamangRust/monolith-ecommerce-pkg/outbox"
 	"github.com/MamangRust/monolith-ecommerce-pkg/server"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
@@ -18,12 +20,21 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// kafkaOutboxPublisher adapts the ecommerce *kafka.Kafka (whose SendMessage
+// takes no context) to the outbox.OutboxPublisher contract.
+type kafkaOutboxPublisher struct {
+	k *kafka.Kafka
+}
+
+func (p kafkaOutboxPublisher) SendMessage(_ context.Context, topic, key string, value []byte) error {
+	return p.k.SendMessage(topic, key, value)
+}
+
 func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	srv, err := server.New(cfg)
 	if err != nil {
 		return nil, err
 	}
-
 
 	tokenManager, err := auth.NewManager(viper.GetString("SECRET_KEY"))
 	if err != nil {
@@ -31,7 +42,6 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	}
 
 	roleAddr := viper.GetString("GRPC_ROLE_ADDR")
-
 
 	userAddr := viper.GetString("GRPC_USER_ADDR")
 
@@ -64,6 +74,8 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 
 	cache := cache.NewMencache(srv.CacheStore)
 
+	outboxService := outbox.NewOutboxService(srv.DB, kafkaOutboxPublisher{k: myKafka}, srv.Logger)
+
 	services := service.NewService(&service.Deps{
 		Mencache:      cache,
 		Repositories:  repositories,
@@ -71,6 +83,8 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 		Hash:          hasher,
 		Logger:        srv.Logger,
 		Kafka:         myKafka,
+		Pool:          srv.Pool,
+		Outbox:        outboxService,
 		Observability: observability,
 	})
 
@@ -79,6 +93,10 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	srv.RegisterServices = func(gs *grpc.Server) {
 		pb.RegisterAuthServiceServer(gs, handlers.Auth)
 	}
+
+	// Start the outbox relay so enqueued events are published to Kafka with
+	// durable retry and dead-letter semantics.
+	go outboxService.Start(srv.Ctx, outbox.OutboxRelayInterval, outbox.OutboxRelayBatchSize)
 
 	return srv, nil
 }

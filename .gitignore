@@ -1,2 +1,18 @@
+# Local runtime/build artifacts
 deployments/local/uploads
 bin/
+deployments/local/logs/
+
+# Local environment files (keep *.example templates tracked)
+.env
+.env.*
+!.env.example
+deployments/local/docker.env
+deployments/kubernetes/docker.env
+service/seeder/.env
+!deployments/local/docker.env.example
+!deployments/kubernetes/docker.env.example
+!service/seeder/.env.example
+
+# Kubernetes local secrets (see secrets.example.yaml)
+deployments/kubernetes/secrets.yaml

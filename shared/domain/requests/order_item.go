@@ -11,16 +11,16 @@ type FindAllOrderItems struct {
 type CreateOrderItemRecordRequest struct {
 	OrderID   int `json:"order_id" validate:"required"`
 	ProductID int `json:"product_id" validate:"required"`
-	Quantity  int `json:"quantity" validate:"required"`
-	Price     int `json:"price" validate:"required"`
+	Quantity  int `json:"quantity" validate:"required,gt=0"`
+	Price     int `json:"price" validate:"required,gte=0"`
 }
 
 type UpdateOrderItemRecordRequest struct {
 	OrderItemID int `json:"order_item_id" validate:"required"`
 	OrderID     int `json:"order_id"`
 	ProductID   int `json:"product_id"`
-	Quantity    int `json:"quantity" validate:"required"`
-	Price       int `json:"price" validate:"required"`
+	Quantity    int `json:"quantity" validate:"required,gt=0"`
+	Price       int `json:"price" validate:"required,gte=0"`
 }
 
 func (r *CreateOrderItemRecordRequest) Validate() error {

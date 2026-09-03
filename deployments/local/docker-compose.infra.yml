@@ -1,0 +1,222 @@
+# docker-compose.infra.yml — Infra-only stack for running Go services locally.
+#
+# Runs ONLY the infrastructure + observability tools:
+#   postgres, redis, kafka (KRaft), kafka-exporter, otel-collector, jaeger,
+#   prometheus, grafana, loki, promtail, alertmanager, node-exporter
+#
+# The Go services are NOT part of this compose file — they are started
+# locally via `go run service/<name>/cmd/main.go` (see `just services-local-start`).
+#
+# Kafka uses a dual-listener setup so both Docker clients (kafka-exporter,
+# INTERNAL listener kafka:19092) and host clients (local Go services,
+# EXTERNAL listener localhost:9092) can connect.
+#
+# Usage:
+#   docker compose -f deployments/local/docker-compose.infra.yml up -d
+#   docker compose -f deployments/local/docker-compose.infra.yml down
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres_ecommerce
+    command: ["postgres", "-c", "max_connections=400", "-c", "shared_buffers=256MB"]
+    environment:
+      POSTGRES_USER: DRAGON
+      POSTGRES_PASSWORD: DRAGON
+      POSTGRES_DB: ECOMMERCE
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_ecommerce_data:/var/lib/postgresql/data
+    networks:
+      - app_ecommerce_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U DRAGON -d ECOMMERCE"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.4
+    container_name: redis_ecommerce
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_ecommerce_data:/data
+      - ../../redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    restart: unless-stopped
+    networks:
+      - app_ecommerce_network
+    healthcheck:
+      # redis/redis.conf sets requirepass; plain `redis-cli ping` would fail
+      # with NOAUTH. Authenticate explicitly so the healthcheck is meaningful.
+      test: ["CMD-SHELL", "redis-cli -a dragon_knight ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Kafka in KRaft mode (broker+controller), no zookeeper needed.
+  # Dual listeners:
+  #   INTERNAL kafka:19092  -> for Docker clients (kafka-exporter)
+  #   EXTERNAL localhost:9092 -> for host clients (local Go services)
+  kafka:
+    image: apache/kafka:latest
+    container_name: my-kafka-ecommerce
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_NODE_ID=1
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@localhost:9093
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_LISTENERS=CONTROLLER://0.0.0.0:9093,INTERNAL://0.0.0.0:19092,EXTERNAL://0.0.0.0:9092
+      - KAFKA_ADVERTISED_LISTENERS=INTERNAL://kafka:19092,EXTERNAL://localhost:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL
+      - KAFKA_KRAFT_CLUSTER_ID=kraft-cluster-01
+      - KAFKA_LOG_DIRS=/opt/kafka/data
+    volumes:
+      - kafka_ecommerce_data:/opt/kafka/data
+    networks:
+      - app_ecommerce_network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:v1.9.0
+    container_name: kafka-exporter
+    ports:
+      - "9308:9308"
+    networks:
+      - app_ecommerce_network
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command:
+      - "--kafka.server=kafka:19092"
+      - "--web.listen-address=0.0.0.0:9308"
+      - "--log.level=debug"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:9308/metrics || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector-ecommerce
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ../../observability/otel-collector.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "13133:13133"
+      - "8889:8889"
+    networks:
+      - app_ecommerce_network
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    container_name: jaeger-ecommerce
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686"
+    networks:
+      - app_ecommerce_network
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../../observability/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - ../../observability/rules:/etc/prometheus/rules
+    networks:
+      - app_ecommerce_network
+    depends_on:
+      - otel-collector
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana_ecommerce
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_ecommerce-storage:/var/lib/grafana
+    networks:
+      - app_ecommerce_network
+    depends_on:
+      - prometheus
+      - jaeger
+      - alertmanager
+      - loki
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: alertmanager_ecommerce
+    volumes:
+      - ../../observability/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+    ports:
+      - "9093:9093"
+    networks:
+      - app_ecommerce_network
+
+  loki:
+    container_name: loki_ecommerce
+    image: grafana/loki:2.9.0
+    ports:
+      - "3100:3100"
+    volumes:
+      - ../../observability/loki-config.yaml:/etc/loki/local-config.yaml
+      - loki_ecommerce_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - app_ecommerce_network
+
+  promtail:
+    container_name: promtail_ecommerce
+    image: grafana/promtail:2.9.0
+    volumes:
+      - ../../observability/promtail-config.yaml:/etc/promtail/config.yaml
+      - ./logs:/var/log/app
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - app_ecommerce_network
+
+  node-exporter:
+    image: quay.io/prometheus/node-exporter
+    container_name: node-exporter_ecommerce
+    pid: "host"
+    networks:
+      - app_ecommerce_network
+    volumes:
+      - "/:/host:ro,rslave"
+    command:
+      - '--path.rootfs=/host'
+
+volumes:
+  loki_ecommerce_data:
+  grafana_ecommerce-storage:
+  postgres_ecommerce_data:
+  kafka_ecommerce_data:
+  redis_ecommerce_data:
+
+networks:
+  app_ecommerce_network:
+    driver: bridge

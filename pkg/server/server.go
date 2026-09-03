@@ -20,6 +20,7 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"github.com/grafana/pyroscope-go"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -31,8 +32,11 @@ import (
 )
 
 type GRPCServer struct {
-	Logger           logger.LoggerInterface
-	DB               *db.Queries
+	Logger logger.LoggerInterface
+	DB     *db.Queries
+	// Pool is the underlying pgx pool used by DB. It is exposed for callers that
+	// need to begin explicit transactions (e.g. the transactional outbox).
+	Pool             *pgxpool.Pool
 	Ctx              context.Context
 	Cancel           context.CancelFunc
 	CacheStore       *cache.CacheStore
@@ -40,6 +44,7 @@ type GRPCServer struct {
 	Telemetry        *otel_pkg.Telemetry
 	Config           *Config
 	RegisterServices func(*grpc.Server)
+	PoolMetrics      *PoolMetrics
 }
 
 func New(cfg *Config) (*GRPCServer, error) {
@@ -82,15 +87,22 @@ func New(cfg *Config) (*GRPCServer, error) {
 
 	cacheStore := cache.NewCacheStore(redisClient, l, cacheMetrics)
 
+	poolMetrics, err := NewPoolMetrics(cfg.ServiceName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize pool metrics: %w", err)
+	}
+
 	return &GRPCServer{
-		Logger:     l,
-		DB:         queries,
-		Ctx:        ctx,
-		Cancel:     cancel,
-		CacheStore: cacheStore,
-		Redis:      redisClient,
-		Telemetry:  telemetry,
-		Config:     cfg,
+		Logger:      l,
+		DB:          queries,
+		Pool:        dbConn,
+		Ctx:         ctx,
+		Cancel:      cancel,
+		CacheStore:  cacheStore,
+		Redis:       redisClient,
+		Telemetry:   telemetry,
+		Config:      cfg,
+		PoolMetrics: poolMetrics,
 	}, nil
 }
 
@@ -107,6 +119,11 @@ func (s *GRPCServer) Run() error {
 	requestLimiter := resilience.NewRequestLimiter(800, s.Logger)
 	resilienceHandler := middleware.NewResilienceInterceptor(loadMonitor, circuitBreaker, requestLimiter)
 
+	metricsInterceptor, err := middleware.NewMetricsInterceptor(s.Config.ServiceName)
+	if err != nil {
+		return fmt.Errorf("failed to initialize metrics interceptor: %w", err)
+	}
+
 	grpcServer := grpc.NewServer(
 		grpc.MaxConcurrentStreams(DefaultMaxConcurrentConn),
 		grpc.InitialConnWindowSize(DefaultWindowSize),
@@ -121,6 +138,8 @@ func (s *GRPCServer) Run() error {
 		}),
 		grpc.ChainUnaryInterceptor(
 			middleware.ContextMiddleware(30*time.Second, s.Logger),
+			middleware.TraceUnaryServerInterceptor(s.Config.ServiceName),
+			metricsInterceptor.UnaryInterceptor(),
 			middleware.RecoveryMiddleware(s.Logger),
 			middleware.PyroscopeUnaryInterceptor(),
 			resilienceHandler.UnaryInterceptor(),
@@ -274,7 +293,6 @@ func initTelemetry(cfg *Config) *otel_pkg.Telemetry {
 	})
 }
 
-
 func initRedisServer(ctx context.Context, logger logger.LoggerInterface, serviceName string) (*redis.Client, error) {
 	// Dynamically resolve Redis host/port from env based on service name if needed,
 	// but for now we follow the existing pattern in server.go which often uses specific env keys.
@@ -318,10 +336,40 @@ func (s *GRPCServer) spawnMonitoringTask() <-chan struct{} {
 				return
 			case <-ticker.C:
 				s.monitorCache()
+				s.monitorPoolMetrics()
 			}
 		}
 	}()
 	return done
+}
+
+func (s *GRPCServer) monitorPoolMetrics() {
+	if s.PoolMetrics == nil {
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), MonitoringInterval)
+	defer cancel()
+
+	if s.Pool != nil {
+		stats := s.Pool.Stat()
+		s.PoolMetrics.RecordPGStats(ctx,
+			int64(stats.TotalConns()),
+			int64(stats.IdleConns()),
+			int64(stats.AcquiredConns()),
+			int64(stats.MaxConns()),
+		)
+	}
+
+	if s.Redis != nil {
+		poolStats := s.Redis.PoolStats()
+		s.PoolMetrics.RecordRedisStats(ctx,
+			int64(poolStats.TotalConns),
+			int64(poolStats.IdleConns),
+			int64(poolStats.Hits),
+			int64(poolStats.Misses),
+		)
+	}
 }
 
 func (s *GRPCServer) monitorCache() {

@@ -3,17 +3,16 @@ package rolehandler
 import (
 	"net/http"
 	"strconv"
-	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache"
 	role_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/role"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/role"
+	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 )
 
@@ -47,16 +46,15 @@ func NewRoleQueryHandleApi(params *roleQueryHandleDeps) *roleQueryHandlerApi {
 		apiHandler: params.apiHandler,
 	}
 
-	roleMiddleware := middlewares.NewRoleValidator(params.kafka, "request-role", "response-role", 5*time.Second, params.logger, params.cache_role)
+	roleMiddleware := middlewares.RoleValidatorGRPC(params.client, params.logger, params.cache_role)
 	routerRole := params.router.Group("/api/role-query")
-	roleMiddlewareChain := roleMiddleware.Middleware()
-	requireAdmin := middlewares.RequireRoles("Admin_Role_10")
+	requireAdmin := middlewares.RequireRoles("Admin", "ROLE_ADMIN", "Admin_Role_10")
 
-	routerRole.GET("", roleMiddlewareChain(requireAdmin(handler.FindAll)))
-	routerRole.GET("/:id", roleMiddlewareChain(requireAdmin(handler.FindById)))
-	routerRole.GET("/active", roleMiddlewareChain(requireAdmin(handler.FindByActive)))
-	routerRole.GET("/trashed", roleMiddlewareChain(requireAdmin(handler.FindByTrashed)))
-	routerRole.GET("/user/:user_id", roleMiddlewareChain(requireAdmin(handler.FindByUserId)))
+	routerRole.GET("", roleMiddleware(requireAdmin(handler.FindAll)))
+	routerRole.GET("/:id", roleMiddleware(requireAdmin(handler.FindById)))
+	routerRole.GET("/active", roleMiddleware(requireAdmin(handler.FindByActive)))
+	routerRole.GET("/trashed", roleMiddleware(requireAdmin(handler.FindByTrashed)))
+	routerRole.GET("/user/:user_id", roleMiddleware(requireAdmin(handler.FindByUserId)))
 
 	return handler
 }
@@ -75,9 +73,13 @@ func NewRoleQueryHandleApi(params *roleQueryHandleDeps) *roleQueryHandlerApi {
 // @Router /api/role-query [get]
 func (h *roleQueryHandlerApi) FindAll(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -90,8 +92,9 @@ func (h *roleQueryHandlerApi) FindAll(c echo.Context) error {
 	res, err := h.role.FindAllRole(ctx, &pb.FindAllRoleRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
-	if err != nil { return errors.ParseGrpcError(err) }
-
+	if err != nil {
+		return errors.ParseGrpcError(err)
+	}
 
 	apiResponse := h.mapper.ToApiResponsePaginationRole(res)
 	h.cache.SetCachedRoles(ctx, req, apiResponse)
@@ -112,7 +115,9 @@ func (h *roleQueryHandlerApi) FindAll(c echo.Context) error {
 // @Router /api/role-query/{id} [get]
 func (h *roleQueryHandlerApi) FindById(c echo.Context) error {
 	roleID, err := strconv.Atoi(c.Param("id"))
-	if err != nil || roleID <= 0 { return errors.NewBadRequestError("id is required") }
+	if err != nil || roleID <= 0 {
+		return errors.NewBadRequestError("id is required")
+	}
 
 	ctx := c.Request().Context()
 	if cachedData, found := h.cache.GetCachedRoleById(ctx, roleID); found {
@@ -120,8 +125,9 @@ func (h *roleQueryHandlerApi) FindById(c echo.Context) error {
 	}
 
 	res, err := h.role.FindByIdRole(ctx, &pb.FindByIdRoleRequest{RoleId: int32(roleID)})
-	if err != nil { return errors.ParseGrpcError(err) }
-
+	if err != nil {
+		return errors.ParseGrpcError(err)
+	}
 
 	apiResponse := h.mapper.ToApiResponseRole(res)
 	h.cache.SetCachedRoleById(ctx, roleID, apiResponse)
@@ -143,9 +149,13 @@ func (h *roleQueryHandlerApi) FindById(c echo.Context) error {
 // @Router /api/role-query/active [get]
 func (h *roleQueryHandlerApi) FindByActive(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -158,8 +168,9 @@ func (h *roleQueryHandlerApi) FindByActive(c echo.Context) error {
 	res, err := h.role.FindByActive(ctx, &pb.FindAllRoleRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
-	if err != nil { return errors.ParseGrpcError(err) }
-
+	if err != nil {
+		return errors.ParseGrpcError(err)
+	}
 
 	apiResponse := h.mapper.ToApiResponsePaginationRoleDeleteAt(res)
 	h.cache.SetCachedRoleActive(ctx, req, apiResponse)
@@ -181,9 +192,13 @@ func (h *roleQueryHandlerApi) FindByActive(c echo.Context) error {
 // @Router /api/role-query/trashed [get]
 func (h *roleQueryHandlerApi) FindByTrashed(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -196,8 +211,9 @@ func (h *roleQueryHandlerApi) FindByTrashed(c echo.Context) error {
 	res, err := h.role.FindByTrashed(ctx, &pb.FindAllRoleRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
-	if err != nil { return errors.ParseGrpcError(err) }
-
+	if err != nil {
+		return errors.ParseGrpcError(err)
+	}
 
 	apiResponse := h.mapper.ToApiResponsePaginationRoleDeleteAt(res)
 	h.cache.SetCachedRoleTrashed(ctx, req, apiResponse)
@@ -218,7 +234,9 @@ func (h *roleQueryHandlerApi) FindByTrashed(c echo.Context) error {
 // @Router /api/role-query/user/{user_id} [get]
 func (h *roleQueryHandlerApi) FindByUserId(c echo.Context) error {
 	userID, err := strconv.Atoi(c.Param("user_id"))
-	if err != nil || userID <= 0 { return errors.NewBadRequestError("user_id is required") }
+	if err != nil || userID <= 0 {
+		return errors.NewBadRequestError("user_id is required")
+	}
 
 	ctx := c.Request().Context()
 	if cachedData, found := h.cache.GetCachedRoleByUserId(ctx, userID); found {
@@ -226,13 +244,12 @@ func (h *roleQueryHandlerApi) FindByUserId(c echo.Context) error {
 	}
 
 	res, err := h.role.FindByUserId(ctx, &pb.FindByIdUserRoleRequest{UserId: int32(userID)})
-	if err != nil { return errors.ParseGrpcError(err) }
-
+	if err != nil {
+		return errors.ParseGrpcError(err)
+	}
 
 	apiResponse := h.mapper.ToApiResponsesRole(res)
 	h.cache.SetCachedRoleByUserId(ctx, userID, apiResponse)
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
-
-

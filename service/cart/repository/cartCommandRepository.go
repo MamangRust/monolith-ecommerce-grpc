@@ -67,4 +67,3 @@ func (r *cartCommandRepository) DeleteAllPermanently(ctx context.Context, req *r
 
 	return true, nil
 }
-

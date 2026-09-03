@@ -29,6 +29,7 @@ func NewService(deps *Deps) *Service {
 		}),
 		CartCommand: NewCartCommandService(&CartCommandServiceDeps{
 			Observability:          deps.Observability,
+			Mencache:               deps.Cache,
 			CartCommandRepository:  deps.Repositories.CartCommand,
 			ProductQueryRepository: deps.Repositories.ProductQuery,
 			UserQueryRepository:    deps.Repositories.UserQuery,

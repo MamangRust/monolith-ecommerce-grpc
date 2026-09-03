@@ -2,12 +2,12 @@ package carthandler
 
 import (
 	cart_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/cart"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/cart"
+	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc"
-	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 )
 
 type DepsCart struct {
@@ -34,5 +34,6 @@ func RegisterCartHandler(deps *DepsCart) {
 		router: deps.E,
 		logger: deps.Logger,
 		mapper: mapper.CommandMapper(),
+		cache:  cache,
 	})
 }

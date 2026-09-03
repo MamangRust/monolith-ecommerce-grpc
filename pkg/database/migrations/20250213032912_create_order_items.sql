@@ -4,8 +4,8 @@ CREATE TABLE "order_items" (
     "order_item_id" SERIAL PRIMARY KEY,
     "order_id" INT NOT NULL REFERENCES "orders" ("order_id"),
     "product_id" INT NOT NULL REFERENCES "products" ("product_id"),
-    "quantity" INT NOT NULL,
-    "price" INT NOT NULL,
+    "quantity" INT NOT NULL CHECK ("quantity" > 0),
+    "price" INT NOT NULL CHECK ("price" >= 0),
     "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "deleted_at" TIMESTAMP DEFAULT NULL

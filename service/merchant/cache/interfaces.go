@@ -23,6 +23,7 @@ type MerchantQueryCache interface {
 
 type MerchantCommandCache interface {
 	DeleteCachedMerchant(ctx context.Context, id int)
+	InvalidateMerchantCache(ctx context.Context)
 }
 
 type MerchantDocumentQueryCache interface {

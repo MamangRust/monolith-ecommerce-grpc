@@ -7,7 +7,9 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-pkg/outbox"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Service aggregates authentication and identity-related services.
@@ -26,6 +28,8 @@ type Deps struct {
 	Hash          hash.HashPassword
 	Logger        logger.LoggerInterface
 	Kafka         *kafka.Kafka
+	Pool          *pgxpool.Pool
+	Outbox        *outbox.OutboxService
 	Observability observability.TraceLoggerObservability
 }
 
@@ -70,6 +74,8 @@ func newRegister(deps *Deps, observability observability.TraceLoggerObservabilit
 		UserRole:      deps.Repositories.UserRole,
 		Hash:          deps.Hash,
 		Kafka:         deps.Kafka,
+		Pool:          deps.Pool,
+		Outbox:        deps.Outbox,
 		Logger:        deps.Logger,
 		Observability: observability,
 	})
@@ -80,6 +86,8 @@ func newPasswordReset(deps *Deps, observability observability.TraceLoggerObserva
 	return NewPasswordResetService(&PasswordResetServiceDeps{
 		Cache:         cache,
 		Kafka:         deps.Kafka,
+		Pool:          deps.Pool,
+		Outbox:        deps.Outbox,
 		Logger:        deps.Logger,
 		User:          deps.Repositories.User,
 		ResetToken:    deps.Repositories.ResetToken,

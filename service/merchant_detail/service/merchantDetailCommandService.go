@@ -17,28 +17,28 @@ import (
 )
 
 type merchantDetailCommandService struct {
-	observability             observability.TraceLoggerObservability
-	cache                     cache.MerchantDetailCommandCache
-	merchantDetailRepository  repository.MerchantDetailCommandRepository
-	merchantQueryRepository   repository.MerchantQueryRepository
-	logger                    logger.LoggerInterface
+	observability            observability.TraceLoggerObservability
+	cache                    cache.MerchantDetailCommandCache
+	merchantDetailRepository repository.MerchantDetailCommandRepository
+	merchantQueryRepository  repository.MerchantQueryRepository
+	logger                   logger.LoggerInterface
 }
 
 type MerchantDetailCommandServiceDeps struct {
-	Observability             observability.TraceLoggerObservability
-	Cache                     cache.MerchantDetailCommandCache
-	MerchantDetailRepository  repository.MerchantDetailCommandRepository
-	MerchantQueryRepository   repository.MerchantQueryRepository
-	Logger                    logger.LoggerInterface
+	Observability            observability.TraceLoggerObservability
+	Cache                    cache.MerchantDetailCommandCache
+	MerchantDetailRepository repository.MerchantDetailCommandRepository
+	MerchantQueryRepository  repository.MerchantQueryRepository
+	Logger                   logger.LoggerInterface
 }
 
 func NewMerchantDetailCommandService(deps *MerchantDetailCommandServiceDeps) *merchantDetailCommandService {
 	return &merchantDetailCommandService{
-		observability:             deps.Observability,
-		cache:                     deps.Cache,
-		merchantDetailRepository:  deps.MerchantDetailRepository,
-		merchantQueryRepository:   deps.MerchantQueryRepository,
-		logger:                    deps.Logger,
+		observability:            deps.Observability,
+		cache:                    deps.Cache,
+		merchantDetailRepository: deps.MerchantDetailRepository,
+		merchantQueryRepository:  deps.MerchantQueryRepository,
+		logger:                   deps.Logger,
 	}
 }
 
@@ -124,7 +124,7 @@ func (s *merchantDetailCommandService) Trash(ctx context.Context, merchantID int
 		status = "error"
 		return errorhandler.HandleError[*db.MerchantDetail](
 			s.logger,
-			merchantdetail_errors.ErrTrashMerchantDetail,
+			err,
 			method,
 			span,
 			zap.Int("merchantDetailID", merchantID),
@@ -152,7 +152,7 @@ func (s *merchantDetailCommandService) Restore(ctx context.Context, merchantID i
 		status = "error"
 		return errorhandler.HandleError[*db.MerchantDetail](
 			s.logger,
-			merchantdetail_errors.ErrRestoreMerchantDetail,
+			err,
 			method,
 			span,
 			zap.Int("merchantDetailID", merchantID),
@@ -185,7 +185,7 @@ func (s *merchantDetailCommandService) DeletePermanent(ctx context.Context, merc
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			merchantdetail_errors.ErrDeletePermanentMerchantDetail,
+			err,
 			method,
 			span,
 			zap.Int("merchantDetailID", merchantID),
@@ -246,7 +246,7 @@ func (s *merchantDetailCommandService) DeleteAll(ctx context.Context) (bool, err
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			merchantdetail_errors.ErrDeleteAllPermanentMerchantDetails,
+			err,
 			method,
 			span,
 		)

@@ -78,13 +78,19 @@ func (h *categoryCommandHandlerApi) Create(c echo.Context) error {
 	var req requests.CreateCategoryRequest
 	if err := c.Bind(&req); err != nil { return errors.NewBadRequestError("invalid request").WithInternal(err) }
 
-	if err := req.Validate(); err != nil { return errors.NewValidationError(nil) } // Simplified validation error
-
+	// Process the optional image upload first so ImageCategory is populated
+	// before validation (ImageCategory is a required field).
 	file, err := c.FormFile("image")
 	var imageURL string
 	if err == nil {
 		imageURL, err = h.upload_image.ProcessImageUpload(c, "uploads/category", file, false)
+		if err != nil {
+			return err
+		}
 	}
+	req.ImageCategory = imageURL
+
+	if err := req.Validate(); err != nil { return errors.NewValidationError(nil) } // Simplified validation error
 
 	slugCategory := ""
 	if req.SlugCategory != nil { slugCategory = *req.SlugCategory }

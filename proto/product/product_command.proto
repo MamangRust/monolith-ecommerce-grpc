@@ -43,10 +43,17 @@ message UpdateProductCountStockRequest {
     int32 stock = 2;
 }
 
+message AdjustProductStockRequest {
+    int32 product_id = 1;
+    int32 delta = 2;
+    string operation_id = 3;
+}
+
 service ProductCommandService {
     rpc Create(CreateProductRequest) returns (ApiResponseProduct);
     rpc Update(UpdateProductRequest) returns (ApiResponseProduct);
     rpc UpdateProductCountStock(UpdateProductCountStockRequest) returns (ApiResponseProduct);
+    rpc AdjustProductStock(AdjustProductStockRequest) returns (ApiResponseProduct);
     rpc TrashedProduct(FindByIdProductRequest) returns (ApiResponseProductDeleteAt);
     rpc RestoreProduct(FindByIdProductRequest) returns (ApiResponseProductDeleteAt);
     rpc DeleteProductPermanent(FindByIdProductRequest) returns (ApiResponseProductDelete);

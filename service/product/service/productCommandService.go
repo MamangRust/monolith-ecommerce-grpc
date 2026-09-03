@@ -73,7 +73,6 @@ func (s *productCommandService) Create(ctx context.Context, req *requests.Create
 		)
 	}
 
-
 	_, err = s.merchantRepository.FindByID(ctx, req.MerchantID)
 	if err != nil {
 		status = "error"
@@ -85,7 +84,6 @@ func (s *productCommandService) Create(ctx context.Context, req *requests.Create
 			zap.Int("merchantID", req.MerchantID),
 		)
 	}
-
 
 	slug := utils.GenerateSlug(req.Name)
 	req.SlugProduct = &slug
@@ -100,7 +98,6 @@ func (s *productCommandService) Create(ctx context.Context, req *requests.Create
 			span,
 		)
 	}
-
 
 	s.cache.DeleteCachedProduct(ctx, int(product.ProductID))
 
@@ -136,7 +133,6 @@ func (s *productCommandService) Update(ctx context.Context, req *requests.Update
 		)
 	}
 
-
 	_, err = s.merchantRepository.FindByID(ctx, req.MerchantID)
 	if err != nil {
 		status = "error"
@@ -148,7 +144,6 @@ func (s *productCommandService) Update(ctx context.Context, req *requests.Update
 			zap.Int("merchantID", req.MerchantID),
 		)
 	}
-
 
 	slug := utils.GenerateSlug(req.Name)
 	req.SlugProduct = &slug
@@ -163,7 +158,6 @@ func (s *productCommandService) Update(ctx context.Context, req *requests.Update
 			span,
 		)
 	}
-
 
 	s.cache.DeleteCachedProduct(ctx, int(product.ProductID))
 
@@ -185,6 +179,16 @@ func (s *productCommandService) UpdateProductCountStock(ctx context.Context, pro
 		end(status)
 	}()
 
+	if productID <= 0 || stock < 0 {
+		status = "error"
+		return errorhandler.HandleError[*db.UpdateProductCountStockRow](
+			s.logger,
+			product_errors.ErrFailedCountStock,
+			method,
+			span,
+		)
+	}
+
 	product, err := s.productRepository.UpdateProductCountStock(ctx, productID, stock)
 	if err != nil {
 		status = "error"
@@ -198,13 +202,40 @@ func (s *productCommandService) UpdateProductCountStock(ctx context.Context, pro
 		)
 	}
 
-
 	s.cache.DeleteCachedProduct(ctx, productID)
 
 	logSuccess("Successfully updated product stock",
 		zap.Int("product_id", productID),
 		zap.Int("new_stock", stock))
 
+	return product, nil
+}
+
+func (s *productCommandService) AdjustProductStock(ctx context.Context, productID int, delta int, operationID string) (*db.AdjustProductStockRow, error) {
+	const method = "AdjustProductStock"
+
+	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
+		attribute.Int("product_id", productID),
+		attribute.Int("delta", delta),
+		attribute.String("operation_id", operationID))
+
+	defer func() {
+		end(status)
+	}()
+
+	if productID <= 0 || delta == 0 || operationID == "" {
+		status = "error"
+		return errorhandler.HandleError[*db.AdjustProductStockRow](s.logger, product_errors.ErrFailedCountStock, method, span)
+	}
+
+	product, err := s.productRepository.AdjustProductStock(ctx, productID, delta, operationID)
+	if err != nil {
+		status = "error"
+		return errorhandler.HandleError[*db.AdjustProductStockRow](s.logger, err, method, span)
+	}
+
+	s.cache.DeleteCachedProduct(ctx, productID)
+	logSuccess("Successfully adjusted product stock", zap.Int("product_id", productID), zap.Int("delta", delta))
 	return product, nil
 }
 
@@ -229,7 +260,6 @@ func (s *productCommandService) Trash(ctx context.Context, productID int) (inter
 			zap.Int("product_id", productID),
 		)
 	}
-
 
 	s.cache.DeleteCachedProduct(ctx, productID)
 
@@ -261,7 +291,6 @@ func (s *productCommandService) Restore(ctx context.Context, productID int) (int
 		)
 	}
 
-
 	s.cache.DeleteCachedProduct(ctx, productID)
 
 	logSuccess("Successfully restored product",
@@ -292,7 +321,6 @@ func (s *productCommandService) DeletePermanent(ctx context.Context, productID i
 		)
 	}
 
-
 	if product.ImageProduct != nil && *product.ImageProduct != "" {
 		if err := os.Remove(*product.ImageProduct); err != nil {
 			if !os.IsNotExist(err) {
@@ -319,7 +347,6 @@ func (s *productCommandService) DeletePermanent(ctx context.Context, productID i
 			zap.Int("product_id", productID),
 		)
 	}
-
 
 	s.cache.DeleteCachedProduct(ctx, productID)
 
@@ -348,7 +375,6 @@ func (s *productCommandService) RestoreAll(ctx context.Context) (bool, error) {
 		)
 	}
 
-
 	logSuccess("Successfully restored all trashed products")
 
 	return success, nil
@@ -368,7 +394,7 @@ func (s *productCommandService) DeleteAll(ctx context.Context) (bool, error) {
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			product_errors.ErrFailedDeleteAllProductsPermanent,
+			err,
 			method,
 			span,
 		)

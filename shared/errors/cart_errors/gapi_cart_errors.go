@@ -3,15 +3,15 @@ package cart_errors
 import (
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 
-	"google.golang.org/grpc/codes"
+	"net/http"
 )
 
 var (
-	ErrGrpcCartNotFound  = errors.NewGrpcError("Cart not found", int(codes.NotFound))
-	ErrGrpcCartInvalidId = errors.NewGrpcError("Invalid cart ID", int(codes.InvalidArgument))
+	ErrGrpcCartNotFound  = errors.NewGrpcError("Cart not found", http.StatusNotFound)
+	ErrGrpcCartInvalidId = errors.NewGrpcError("Invalid cart ID", http.StatusBadRequest)
 
-	ErrGrpcFailedCreateCart   = errors.NewGrpcError("Failed to create cart", int(codes.Internal))
-	ErrGrpcValidateCreateCart = errors.NewGrpcError("Validation failed: invalid create cart request", int(codes.InvalidArgument))
-	ErrGrpcValidateDeleteCart = errors.NewGrpcError("Validation failed: invalid delete cart request", int(codes.InvalidArgument))
-	ErrGrpcValidateDeleteAllCart = errors.NewGrpcError("Validation failed: invalid delete all cart request", int(codes.InvalidArgument))
+	ErrGrpcFailedCreateCart      = errors.NewGrpcError("Failed to create cart", http.StatusInternalServerError)
+	ErrGrpcValidateCreateCart    = errors.NewGrpcError("Validation failed: invalid create cart request", http.StatusBadRequest)
+	ErrGrpcValidateDeleteCart    = errors.NewGrpcError("Validation failed: invalid delete cart request", http.StatusBadRequest)
+	ErrGrpcValidateDeleteAllCart = errors.NewGrpcError("Validation failed: invalid delete all cart request", http.StatusBadRequest)
 )

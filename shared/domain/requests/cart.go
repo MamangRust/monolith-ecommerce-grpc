@@ -15,7 +15,7 @@ type CartCreateRecord struct {
 	Name         string `json:"name"`
 	Price        int    `json:"price"`
 	ImageProduct string `json:"image_product"`
-	Quantity     int    `json:"quantity"`
+	Quantity     int    `json:"quantity" validate:"required,gt=0"`
 	Weight       int    `json:"weight"`
 }
 

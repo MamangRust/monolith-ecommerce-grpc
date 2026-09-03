@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/service"
-// Removed unused db import
+	// Removed unused db import
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 )
 
@@ -32,7 +33,7 @@ func (h *transactionStatsByMerchantHandler) GetMonthlyAmountSuccessByMerchant(ct
 
 	data, err := h.service.FindMonthlyAmountSuccessByMerchant(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	var stats []*pb.TransactionMonthlyAmountSuccess
@@ -60,7 +61,7 @@ func (h *transactionStatsByMerchantHandler) GetYearlyAmountSuccessByMerchant(ctx
 
 	data, err := h.service.FindYearlyAmountSuccessByMerchant(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	var stats []*pb.TransactionYearlyAmountSuccess
@@ -88,7 +89,7 @@ func (h *transactionStatsByMerchantHandler) GetMonthlyAmountFailedByMerchant(ctx
 
 	data, err := h.service.FindMonthlyAmountFailedByMerchant(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	var stats []*pb.TransactionMonthlyAmountFailed
@@ -116,7 +117,7 @@ func (h *transactionStatsByMerchantHandler) GetYearlyAmountFailedByMerchant(ctx 
 
 	data, err := h.service.FindYearlyAmountFailedByMerchant(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	var stats []*pb.TransactionYearlyAmountFailed
@@ -144,7 +145,7 @@ func (h *transactionStatsByMerchantHandler) GetMonthlyTransactionMethodByMerchan
 
 	data, err := h.service.FindMonthlyMethodByMerchantSuccess(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	var stats []*pb.TransactionMonthlyMethod
@@ -172,7 +173,7 @@ func (h *transactionStatsByMerchantHandler) GetYearlyTransactionMethodByMerchant
 
 	data, err := h.service.FindYearlyMethodByMerchantSuccess(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	var stats []*pb.TransactionYearlyMethod
@@ -201,7 +202,7 @@ func (h *transactionStatsByMerchantHandler) GetMonthlyTransactionMethodByMerchan
 
 	data, err := h.service.FindMonthlyMethodByMerchantFailed(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	var stats []*pb.TransactionMonthlyMethod
@@ -229,7 +230,7 @@ func (h *transactionStatsByMerchantHandler) GetYearlyTransactionMethodByMerchant
 
 	data, err := h.service.FindYearlyMethodByMerchantFailed(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	var stats []*pb.TransactionYearlyMethod

@@ -2,9 +2,14 @@ package repository
 
 import (
 	"context"
+	"errors"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	shared_errors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/category_errors"
 )
 
@@ -28,9 +33,11 @@ func (r *categoryCommandRepository) Create(ctx context.Context, request *request
 
 	category, err := r.db.CreateCategory(ctx, req)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, category_errors.ErrCategoryNotFound
+		}
 		return nil, category_errors.ErrCreateCategory.WithInternal(err)
 	}
-
 
 	return category, nil
 }
@@ -47,9 +54,11 @@ func (r *categoryCommandRepository) Update(ctx context.Context, request *request
 	res, err := r.db.UpdateCategory(ctx, req)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, category_errors.ErrCategoryNotFound
+		}
 		return nil, category_errors.ErrUpdateCategory.WithInternal(err)
 	}
-
 
 	return res, nil
 }
@@ -58,9 +67,11 @@ func (r *categoryCommandRepository) Trash(ctx context.Context, category_id int) 
 	res, err := r.db.TrashCategory(ctx, int32(category_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, category_errors.ErrCategoryNotFound
+		}
 		return nil, category_errors.ErrTrashedCategory.WithInternal(err)
 	}
-
 
 	return res, nil
 }
@@ -69,9 +80,11 @@ func (r *categoryCommandRepository) Restore(ctx context.Context, category_id int
 	res, err := r.db.RestoreCategory(ctx, int32(category_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, category_errors.ErrCategoryNotFound
+		}
 		return nil, category_errors.ErrRestoreCategory.WithInternal(err)
 	}
-
 
 	return res, nil
 }
@@ -80,9 +93,15 @@ func (r *categoryCommandRepository) DeletePermanent(ctx context.Context, categor
 	err := r.db.DeleteCategoryPermanently(ctx, int32(category_id))
 
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			return false, shared_errors.NewConflictError("cannot permanently delete category while related products exist").WithInternal(err)
+		}
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, category_errors.ErrCategoryNotFound
+		}
 		return false, category_errors.ErrDeleteCategoryPermanently.WithInternal(err)
 	}
-
 
 	return true, nil
 }
@@ -91,6 +110,9 @@ func (r *categoryCommandRepository) RestoreAll(ctx context.Context) (bool, error
 	err := r.db.RestoreAllCategories(ctx)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, category_errors.ErrCategoryNotFound
+		}
 		return false, category_errors.ErrRestoreAllCategories.WithInternal(err)
 	}
 
@@ -101,6 +123,13 @@ func (r *categoryCommandRepository) DeleteAll(ctx context.Context) (bool, error)
 	err := r.db.DeleteAllPermanentCategories(ctx)
 
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			return false, shared_errors.NewConflictError("cannot permanently delete categories while related products exist").WithInternal(err)
+		}
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, category_errors.ErrCategoryNotFound
+		}
 		return false, category_errors.ErrDeleteAllPermanentCategories.WithInternal(err)
 	}
 

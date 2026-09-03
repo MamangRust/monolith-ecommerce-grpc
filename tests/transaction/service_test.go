@@ -52,6 +52,7 @@ func (s *TransactionServiceTestSuite) SetupSuite() {
 
 	s.svc = service.NewService(&service.Deps{
 		Kafka:         nil,
+		Pool:          s.DBPool(), // exercises the transactional outbox path (single commit)
 		Cache:         mencache,
 		Repositories:  repos,
 		Logger:        s.Log,
@@ -82,10 +83,10 @@ func (s *TransactionServiceTestSuite) TestTransactionLifecycle() {
 
 	// 2. Create Transaction
 	req := &requests.CreateTransactionRequest{
-		UserID:     userID,
-		MerchantID: merchantID,
-		OrderID:    orderID,
-		Amount:     1000000, // Sufficient amount
+		UserID:        userID,
+		MerchantID:    merchantID,
+		OrderID:       orderID,
+		Amount:        1000000, // Sufficient amount
 		PaymentMethod: "Transfer Bank",
 	}
 	created, err := s.svc.TransactionCommand.Create(ctx, req)
@@ -142,7 +143,7 @@ func (s *TransactionServiceTestSuite) TestTransactionLifecycle() {
 	success, err := s.svc.TransactionCommand.DeletePermanent(ctx, transactionID)
 	s.Require().NoError(err)
 	s.True(success)
-	
+
 	// Test DeleteByOrderIDPermanent
 	oExp := s.SeedOrder(ctx, userID, merchantID, productID)
 	s.SeedOrderItem(ctx, oExp, productID)
@@ -158,12 +159,12 @@ func (s *TransactionServiceTestSuite) TestTransactionLifecycle() {
 	s.SeedOrderItem(ctx, o1, productID)
 	s.SeedShippingAddress(ctx, o1)
 	t1, _ := s.svc.TransactionCommand.Create(ctx, &requests.CreateTransactionRequest{UserID: userID, MerchantID: merchantID, OrderID: o1, Amount: 1000000, PaymentMethod: "P1"})
-	
+
 	o2 := s.SeedOrder(ctx, userID, merchantID, productID)
 	s.SeedOrderItem(ctx, o2, productID)
 	s.SeedShippingAddress(ctx, o2)
 	t2, _ := s.svc.TransactionCommand.Create(ctx, &requests.CreateTransactionRequest{UserID: userID, MerchantID: merchantID, OrderID: o2, Amount: 1000000, PaymentMethod: "P2"})
-	
+
 	s.svc.TransactionCommand.Trash(ctx, int(t1.TransactionID))
 	s.svc.TransactionCommand.Trash(ctx, int(t2.TransactionID))
 

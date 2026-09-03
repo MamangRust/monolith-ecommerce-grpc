@@ -109,7 +109,7 @@ func (s *merchantAwardCommandService) Trash(ctx context.Context, merchantID int)
 		status = "error"
 		return errorhandler.HandleError[*db.MerchantCertificationsAndAward](
 			s.logger,
-			merchantaward_errors.ErrFailedTrashedMerchantAward,
+			err,
 			method,
 			span,
 			zap.Error(err),
@@ -138,7 +138,7 @@ func (s *merchantAwardCommandService) Restore(ctx context.Context, merchantID in
 		status = "error"
 		return errorhandler.HandleError[*db.MerchantCertificationsAndAward](
 			s.logger,
-			merchantaward_errors.ErrFailedRestoreMerchantAward,
+			err,
 			method,
 			span,
 			zap.Error(err),
@@ -165,7 +165,7 @@ func (s *merchantAwardCommandService) DeletePermanent(ctx context.Context, merch
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			merchantaward_errors.ErrFailedDeleteMerchantAwardPermanent,
+			err,
 			method,
 			span,
 			zap.Error(err),
@@ -221,7 +221,7 @@ func (s *merchantAwardCommandService) DeleteAll(ctx context.Context) (bool, erro
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			merchantaward_errors.ErrFailedDeleteAllMerchantAwardsPermanent,
+			err,
 			method,
 			span,
 			zap.Error(err),

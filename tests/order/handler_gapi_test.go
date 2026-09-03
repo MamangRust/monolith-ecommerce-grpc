@@ -26,7 +26,7 @@ type OrderGapiTestSuite struct {
 
 func (s *OrderGapiTestSuite) SetupSuite() {
 	s.BaseTestSuite.SetupSuite()
-	
+
 	// Setup dependencies
 	s.SetupUserService()
 	s.SetupCategoryService()
@@ -44,15 +44,15 @@ func (s *OrderGapiTestSuite) SetupSuite() {
 	// Order dependencies
 	mencache := order_cache.NewMencache(cacheStore)
 	repos := order_repo.NewRepositories(&order_repo.Deps{
-		DB:               queries,
-		MerchantQuery:    pb.NewMerchantQueryServiceClient(s.Conns["merchant"]),
-		ProductQuery:     pb.NewProductQueryServiceClient(s.Conns["product"]),
-		ProductCommand:   pb.NewProductCommandServiceClient(s.Conns["product"]),
-		OrderItemQuery:   pb.NewOrderItemQueryServiceClient(s.Conns["order-item"]),
-		OrderItemCommand: pb.NewOrderItemCommandServiceClient(s.Conns["order-item"]),
-		UserQuery:        pb.NewUserQueryServiceClient(s.Conns["user"]),
-		ShippingCommand:  pb.NewShippingCommandServiceClient(s.Conns["shipping-address"]),
-		ShippingQuery:    pb.NewShippingQueryServiceClient(s.Conns["shipping-address"]),
+		DB:                 queries,
+		MerchantQuery:      pb.NewMerchantQueryServiceClient(s.Conns["merchant"]),
+		ProductQuery:       pb.NewProductQueryServiceClient(s.Conns["product"]),
+		ProductCommand:     pb.NewProductCommandServiceClient(s.Conns["product"]),
+		OrderItemQuery:     pb.NewOrderItemQueryServiceClient(s.Conns["order-item"]),
+		OrderItemCommand:   pb.NewOrderItemCommandServiceClient(s.Conns["order-item"]),
+		UserQuery:          pb.NewUserQueryServiceClient(s.Conns["user"]),
+		ShippingCommand:    pb.NewShippingCommandServiceClient(s.Conns["shipping-address"]),
+		ShippingQuery:      pb.NewShippingQueryServiceClient(s.Conns["shipping-address"]),
 		TransactionCommand: pb.NewTransactionCommandServiceClient(s.Conns["transaction"]),
 	})
 	svc := order_service.NewService(&order_service.Deps{
@@ -72,7 +72,7 @@ func (s *OrderGapiTestSuite) SetupSuite() {
 	server := grpc.NewServer()
 	pb.RegisterOrderQueryServiceServer(server, handler.OrderQuery)
 	pb.RegisterOrderCommandServiceServer(server, handler.OrderCommand)
-	
+
 	addr := s.RegisterServer(server)
 	conn := s.GetConnection(addr)
 
@@ -93,22 +93,22 @@ func (s *OrderGapiTestSuite) TestOrderGapiLifecycle() {
 	createRes, err := s.commandClient.Create(ctx, &pb.CreateOrderRequest{
 		UserId:     int32(userID),
 		MerchantId: int32(merchID),
-		TotalPrice: 10000,
-		Items: []*pb.CreateOrderItemRequest{
+		TotalPrice: 10000, Items: []*pb.CreateOrderItemRequest{
 			{
 				ProductId: int32(prodID),
 				Quantity:  1,
-				Price:     10000,
+				// The service must use the server-side product price.
+				Price: 1,
 			},
 		},
 		Shipping: &pb.CreateShippingAddressRequest{
-			Alamat:          "Test Address",
-			Provinsi:        "Test Province",
-			Kota:            "Test City",
-			Negara:          "Test Country",
-			Courier:         "Test Courier",
-			ShippingMethod:  "Test Method",
-			ShippingCost:    1000,
+			Alamat:         "Test Address",
+			Provinsi:       "Test Province",
+			Kota:           "Test City",
+			Negara:         "Test Country",
+			Courier:        "Test Courier",
+			ShippingMethod: "Test Method",
+			ShippingCost:   1000,
 		},
 	})
 	s.Require().NoError(err)
@@ -119,6 +119,17 @@ func (s *OrderGapiTestSuite) TestOrderGapiLifecycle() {
 	getRes, err := s.queryClient.FindById(ctx, &pb.FindByIdOrderRequest{Id: orderID})
 	s.Require().NoError(err)
 	s.Equal(int32(userID), getRes.Data.UserId)
+	s.Equal(int32(11000), getRes.Data.TotalPrice)
+
+	productRes, err := pb.NewProductQueryServiceClient(s.Conns["product"]).FindById(ctx, &pb.FindByIdProductRequest{Id: int32(prodID)})
+	s.Require().NoError(err)
+	s.Equal(int32(99), productRes.Data.CountInStock)
+
+	itemClient := pb.NewOrderItemQueryServiceClient(s.Conns["order-item"])
+	itemsRes, err := itemClient.FindOrderItemByOrder(ctx, &pb.FindByIdOrderItemRequest{Id: orderID})
+	s.Require().NoError(err)
+	s.Require().Len(itemsRes.Data, 1)
+	s.Equal(int32(10000), itemsRes.Data[0].Price)
 
 	// 4. FindAll
 	allRes, err := s.queryClient.FindAll(ctx, &pb.FindAllOrderRequest{Page: 1, PageSize: 10})
@@ -132,10 +143,7 @@ func (s *OrderGapiTestSuite) TestOrderGapiLifecycle() {
 
 	// 6. Update
 	// Fetch terms first
-	itemClient := pb.NewOrderItemQueryServiceClient(s.Conns["order-item"])
-	itemsRes, err := itemClient.FindOrderItemByOrder(ctx, &pb.FindByIdOrderItemRequest{Id: orderID})
-	s.Require().NoError(err)
-	s.NotEmpty(itemsRes.Data)
+	s.Require().NotEmpty(itemsRes.Data)
 	orderItemID := itemsRes.Data[0].Id
 
 	_, err = s.commandClient.Update(ctx, &pb.UpdateOrderRequest{
@@ -146,45 +154,91 @@ func (s *OrderGapiTestSuite) TestOrderGapiLifecycle() {
 			{
 				OrderItemId: orderItemID,
 				ProductId:   int32(prodID),
-				Quantity:    1,
-				Price:       15000,
+				Quantity:    2,
+				// The service must continue using the server-side product price.
+				Price: 1,
 			},
 		},
 		Shipping: &pb.UpdateShippingAddressRequest{
-			Alamat:          "Updated Address",
-			Provinsi:        "Updated Province",
-			Kota:            "Updated City",
-			Negara:          "Updated Country",
-			Courier:         "Updated Courier",
-			ShippingMethod:  "Updated Method",
-			ShippingCost:    1500,
+			Alamat:         "Updated Address",
+			Provinsi:       "Updated Province",
+			Kota:           "Updated City",
+			Negara:         "Updated Country",
+			Courier:        "Updated Courier",
+			ShippingMethod: "Updated Method",
+			ShippingCost:   1500,
 		},
 	})
 	s.Require().NoError(err)
 
-	// 7. Trash
+	updatedRes, err := s.queryClient.FindById(ctx, &pb.FindByIdOrderRequest{Id: orderID})
+	s.Require().NoError(err)
+	s.Equal(int32(21500), updatedRes.Data.TotalPrice)
+	productRes, err = pb.NewProductQueryServiceClient(s.Conns["product"]).FindById(ctx, &pb.FindByIdProductRequest{Id: int32(prodID)})
+	s.Require().NoError(err)
+	s.Equal(int32(98), productRes.Data.CountInStock)
+	itemsRes, err = itemClient.FindOrderItemByOrder(ctx, &pb.FindByIdOrderItemRequest{Id: orderID})
+	s.Require().NoError(err)
+	s.Require().Len(itemsRes.Data, 1)
+	s.Equal(int32(10000), itemsRes.Data[0].Price)
+
+	// 7. Update items without shipping: persisted shipping and its cost must remain unchanged.
+	_, err = s.commandClient.Update(ctx, &pb.UpdateOrderRequest{
+		OrderId:    orderID,
+		UserId:     int32(userID),
+		TotalPrice: 1,
+		Items: []*pb.UpdateOrderItemRequest{
+			{OrderItemId: orderItemID, ProductId: int32(prodID), Quantity: 2, Price: 1},
+		},
+	})
+	s.Require().NoError(err)
+	unchangedRes, err := s.queryClient.FindById(ctx, &pb.FindByIdOrderRequest{Id: orderID})
+	s.Require().NoError(err)
+	s.Equal(int32(21500), unchangedRes.Data.TotalPrice)
+
+	// 8. Trash
 	_, err = s.commandClient.TrashedOrder(ctx, &pb.FindByIdOrderRequest{Id: orderID})
 	s.Require().NoError(err)
+	productRes, err = pb.NewProductQueryServiceClient(s.Conns["product"]).FindById(ctx, &pb.FindByIdProductRequest{Id: int32(prodID)})
+	s.Require().NoError(err)
+	s.Equal(int32(100), productRes.Data.CountInStock)
 
-	// 8. FindByTrashed
+	// Repeating trash is rejected and must not change stock again.
+	_, err = s.commandClient.TrashedOrder(ctx, &pb.FindByIdOrderRequest{Id: orderID})
+	s.Require().Error(err)
+	productRes, err = pb.NewProductQueryServiceClient(s.Conns["product"]).FindById(ctx, &pb.FindByIdProductRequest{Id: int32(prodID)})
+	s.Require().NoError(err)
+	s.Equal(int32(100), productRes.Data.CountInStock)
+
+	// 9. FindByTrashed
 	trashedRes, err := s.queryClient.FindByTrashed(ctx, &pb.FindAllOrderRequest{Page: 1, PageSize: 10})
 	s.Require().NoError(err)
 	s.NotEmpty(trashedRes.Data)
 
-	// 9. Restore
+	// 10. Restore
 	_, err = s.commandClient.RestoreOrder(ctx, &pb.FindByIdOrderRequest{Id: orderID})
 	s.Require().NoError(err)
+	productRes, err = pb.NewProductQueryServiceClient(s.Conns["product"]).FindById(ctx, &pb.FindByIdProductRequest{Id: int32(prodID)})
+	s.Require().NoError(err)
+	s.Equal(int32(98), productRes.Data.CountInStock)
 
-	// 10. DeletePermanent
+	// Repeating restore is rejected and must not reserve stock again.
+	_, err = s.commandClient.RestoreOrder(ctx, &pb.FindByIdOrderRequest{Id: orderID})
+	s.Require().Error(err)
+	productRes, err = pb.NewProductQueryServiceClient(s.Conns["product"]).FindById(ctx, &pb.FindByIdProductRequest{Id: int32(prodID)})
+	s.Require().NoError(err)
+	s.Equal(int32(98), productRes.Data.CountInStock)
+
+	// 11. DeletePermanent
 	_, _ = s.commandClient.TrashedOrder(ctx, &pb.FindByIdOrderRequest{Id: orderID})
 	_, err = s.commandClient.DeleteOrderPermanent(ctx, &pb.FindByIdOrderRequest{Id: orderID})
 	s.Require().NoError(err)
 
-	// 11. RestoreAll
+	// 12. RestoreAll
 	_, err = s.commandClient.RestoreAllOrder(ctx, &emptypb.Empty{})
 	s.Require().NoError(err)
 
-	// 12. DeleteAll
+	// 13. DeleteAll
 	_, err = s.commandClient.DeleteAllOrderPermanent(ctx, &emptypb.Empty{})
 	s.Require().NoError(err)
 }

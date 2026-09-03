@@ -4,19 +4,18 @@ import (
 	"net/http"
 	"strconv"
 
+	"fmt"
+	auth_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/auth"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	authapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/auth"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
-	"github.com/go-playground/validator/v10"
-	"fmt"
 	"google.golang.org/grpc"
-	auth_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/auth"
 )
-
 
 type authHandleParams struct {
 	client     pb.AuthServiceClient
@@ -45,9 +44,8 @@ type DepsAuth struct {
 }
 
 func RegisterAuthHandler(deps *DepsAuth) {
-	fmt.Println("Registering Auth Handler...")
 	mapper := authapimapper.NewAuthResponseMapper()
-	
+
 	NewHandlerAuth(&authHandleParams{
 		client:     pb.NewAuthServiceClient(deps.Client),
 		router:     deps.E,
@@ -59,7 +57,6 @@ func RegisterAuthHandler(deps *DepsAuth) {
 }
 
 func NewHandlerAuth(params *authHandleParams) *authHandleApi {
-	fmt.Println("Initializing NewHandlerAuth...")
 	authHandler := &authHandleApi{
 		client:        params.client,
 		logger:        params.logger,
@@ -69,18 +66,22 @@ func NewHandlerAuth(params *authHandleParams) *authHandleApi {
 		cache:         params.cache,
 	}
 	routerAuth := params.router.Group("/api/auth")
-	fmt.Println("Created group /api/auth")
 
 	routerAuth.GET("/hello", authHandler.HandleHello)
 	routerAuth.POST("/register", params.apiHandler.Handle("register", authHandler.Register))
 	routerAuth.POST("/login", params.apiHandler.Handle("login", authHandler.Login))
 	routerAuth.POST("/refresh-token", params.apiHandler.Handle("refresh-token", authHandler.RefreshToken))
 	routerAuth.GET("/me", params.apiHandler.Handle("GetMe", authHandler.GetMe))
-	fmt.Println("Registered routes under /api/auth")
 
 	return authHandler
 }
 
+// @Summary Auth endpoint liveness check
+// @Tags Auth
+// @Description Simple liveness probe for the auth endpoint
+// @Produce plain
+// @Success 200 {string} string "Hello"
+// @Router /api/auth/hello [get]
 func (h *authHandleApi) HandleHello(c echo.Context) error {
 	return c.String(http.StatusOK, "Hello")
 }
@@ -96,11 +97,9 @@ func (h *authHandleApi) HandleHello(c echo.Context) error {
 // @Failure 500 {object} errors.ErrorResponse "Internal server error"
 // @Router /api/auth/register [post]
 func (h *authHandleApi) Register(c echo.Context) error {
-	fmt.Println("DEBUG: authHandleApi.Register called")
 	var body requests.CreateUserRequest
 
 	if err := c.Bind(&body); err != nil {
-		fmt.Printf("DEBUG: Register Bind error: %v\n", err)
 		return sharedErrors.NewBadRequestError("Invalid request format").WithInternal(err)
 	}
 
@@ -124,7 +123,6 @@ func (h *authHandleApi) Register(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, h.commandMapper.ToResponseRegister(res))
 }
-
 
 // @Summary Login user
 // @Tags Auth
@@ -163,7 +161,6 @@ func (h *authHandleApi) Login(c echo.Context) error {
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
-
 
 	mappedResponse := h.commandMapper.ToResponseLogin(res)
 	h.cache.SetCachedLogin(ctx, body.Email, mappedResponse)
@@ -207,7 +204,6 @@ func (h *authHandleApi) RefreshToken(c echo.Context) error {
 		return sharedErrors.ParseGrpcError(err)
 	}
 
-
 	mappedResponse := h.commandMapper.ToResponseRefreshToken(res)
 	h.cache.SetRefreshToken(ctx, body.RefreshToken, mappedResponse)
 
@@ -225,19 +221,16 @@ func (h *authHandleApi) RefreshToken(c echo.Context) error {
 // @Failure 500 {object} errors.ErrorResponse "Internal server error"
 // @Router /api/auth/me [get]
 func (h *authHandleApi) GetMe(c echo.Context) error {
-	userIdStr, ok := c.Get("userId").(string)
-	if !ok {
+	// The JWT middleware stores the authenticated user id as an int under
+	// "user_id" (see middlewares/auth.go). Reading any other key here would
+	// make /me always fail authentication.
+	userID, ok := c.Get("user_id").(int)
+	if !ok || userID <= 0 {
 		return sharedErrors.NewBadRequestError("user not authenticated")
 	}
 
-	uid, err := strconv.ParseInt(userIdStr, 10, 32)
-	if err != nil {
-		return sharedErrors.NewBadRequestError("invalid user ID format")
-	}
-	userID := int(uid)
-
 	ctx := c.Request().Context()
-	if cached, found := h.cache.GetCachedUserInfo(ctx, userIdStr); found {
+	if cached, found := h.cache.GetCachedUserInfo(ctx, strconv.Itoa(userID)); found {
 		return c.JSON(http.StatusOK, cached)
 	}
 
@@ -246,14 +239,11 @@ func (h *authHandleApi) GetMe(c echo.Context) error {
 		return sharedErrors.ParseGrpcError(err)
 	}
 
-
 	response := h.queryMapper.ToResponseGetMe(res)
-	h.cache.SetCachedUserInfo(ctx, userIdStr, response)
+	h.cache.SetCachedUserInfo(ctx, strconv.Itoa(userID), response)
 
 	return c.JSON(http.StatusOK, response)
 }
-
-
 
 func (h *authHandleApi) parseValidationErrors(err error) []sharedErrors.ValidationError {
 	var validationErrs []sharedErrors.ValidationError

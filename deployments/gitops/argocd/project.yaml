@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ecommerce
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  description: E-Commerce modular monolith project
+  sourceRepos:
+  - '*'
+  destinations:
+  - namespace: ecommerce
+    server: https://kubernetes.default.svc
+  - namespace: argocd
+    server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'

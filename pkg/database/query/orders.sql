@@ -814,6 +814,19 @@ WHERE
     order_id = $1
     AND deleted_at IS NULL;
 
+-- GetTrashedOrder: Retrieves one soft-deleted order for guarded permanent deletion.
+-- name: GetTrashedOrder :one
+SELECT
+    order_id,
+    user_id,
+    merchant_id,
+    total_price,
+    created_at,
+    updated_at,
+    deleted_at
+FROM orders
+WHERE order_id = $1 AND deleted_at IS NOT NULL;
+
 -- UpdateOrder: Modifies order information
 -- Purpose: Update order details (primarily total price)
 -- Parameters:
@@ -892,6 +905,20 @@ RETURNING
     updated_at,
     deleted_at;
 
+-- GetTrashedOrders: Retrieves all soft-deleted orders for per-order restoration.
+-- name: GetTrashedOrders :many
+SELECT
+    order_id,
+    user_id,
+    merchant_id,
+    total_price,
+    created_at,
+    updated_at,
+    deleted_at
+FROM orders
+WHERE deleted_at IS NOT NULL
+ORDER BY order_id;
+
 -- DeleteOrderPermanently: Hard-deletes an order
 -- Purpose: Completely remove order from database
 -- Parameters:
@@ -903,6 +930,33 @@ RETURNING
 --   - Should trigger deletion of related order_items
 -- name: DeleteOrderPermanently :exec
 DELETE FROM orders WHERE order_id = $1 AND deleted_at IS NOT NULL;
+
+-- DeleteOrderPermanentlyWithChildren: Atomically purges a trashed order and all
+-- of its child rows (stock reservations, order items, transactions, shipping
+-- addresses) in a single statement so a mid-way failure cannot orphan children.
+-- The trashed guard lives in a leading CTE that gates EVERY child delete, so a
+-- call on a non-trashed order deletes nothing and returns no row (the caller
+-- surfaces ErrOrderNotFound) instead of wiping children of an active order.
+-- name: DeleteOrderPermanentlyWithChildren :one
+WITH
+    trashed AS (
+        SELECT order_id FROM orders WHERE order_id = $1 AND deleted_at IS NOT NULL
+    ),
+    deleted_reservations AS (
+        DELETE FROM order_stock_reservations WHERE order_id IN (SELECT order_id FROM trashed)
+    ),
+    deleted_items AS (
+        DELETE FROM order_items WHERE order_id IN (SELECT order_id FROM trashed)
+    ),
+    deleted_transactions AS (
+        DELETE FROM transactions WHERE order_id IN (SELECT order_id FROM trashed)
+    ),
+    deleted_addresses AS (
+        DELETE FROM shipping_addresses WHERE order_id IN (SELECT order_id FROM trashed)
+    )
+DELETE FROM orders o
+WHERE o.order_id = $1 AND o.deleted_at IS NOT NULL
+RETURNING o.order_id;
 
 -- RestoreAllOrders: Mass restoration of cancelled orders
 -- Purpose: Recover all trashed orders at once

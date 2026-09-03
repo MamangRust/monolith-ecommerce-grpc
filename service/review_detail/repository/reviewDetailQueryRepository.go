@@ -3,7 +3,8 @@ package repository
 import (
 	"context"
 
-	"database/sql"
+	"errors"
+	"github.com/jackc/pgx/v5"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -78,7 +79,7 @@ func (r *reviewDetailQueryRepository) FindByID(ctx context.Context, user_id int)
 	res, err := r.db.GetReviewDetail(ctx, int32(user_id))
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, review_detail_errors.ErrReviewDetailNotFound
 		}
 		return nil, review_detail_errors.ErrFindByIdReviewDetail.WithInternal(err)
@@ -91,7 +92,7 @@ func (r *reviewDetailQueryRepository) FindByIDTrashed(ctx context.Context, user_
 	res, err := r.db.GetReviewDetailTrashed(ctx, int32(user_id))
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, review_detail_errors.ErrReviewDetailNotFound
 		}
 		return nil, review_detail_errors.ErrFindByIdTrashedReviewDetail.WithInternal(err)

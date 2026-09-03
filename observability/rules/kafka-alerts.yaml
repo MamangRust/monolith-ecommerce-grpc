@@ -1,0 +1,43 @@
+groups:
+  - name: kafka-alerts
+    rules:
+      - alert: KafkaConsumerGroupHighLag
+        expr: |
+          max by (consumergroup, topic) (kafka_consumergroup_lag) > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High consumer lag on {{ $labels.consumergroup }} ({{ $value }})"
+          description: "Consumer group {{ $labels.consumergroup }} is {{ $value }} messages behind on topic {{ $labels.topic }}."
+          runbook: "Check the consuming service (saldo/email workers) is healthy; inspect Kafka consumer group offsets."
+
+      - alert: KafkaConsumerGroupCriticalLag
+        expr: |
+          max by (consumergroup, topic) (kafka_consumergroup_lag) > 10000
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical consumer lag on {{ $labels.consumergroup }} ({{ $value }})"
+          description: "Consumer group {{ $labels.consumergroup }} is {{ $value }} messages behind — events are being delayed."
+
+      - alert: KafkaUnderReplicatedPartitions
+        expr: |
+          sum(kafka_topic_partition_under_replicated_partition) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kafka has under-replicated partitions"
+          description: "One or more partitions are under-replicated for 2 minutes — potential data loss risk."
+
+      - alert: KafkaExporterDown
+        expr: |
+          up{job="kafka-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kafka exporter is down"
+          description: "kafka-exporter target is not reachable for 1 minute — Kafka metrics and alerts are unavailable."

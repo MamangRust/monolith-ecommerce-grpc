@@ -6,13 +6,17 @@ import (
 	"time"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
+	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	"go.uber.org/zap"
 )
 
+// cartSvcAllCacheKey is namespaced separately from the API gateway cart cache
+// ("cart:all:...") because both layers share the same Redis but store different
+// payload schemas on these keys.
 const (
-	cartAllCacheKey = "cart:all:page:%d:pageSize:%d:search:%s"
-	ttlDefault      = 5 * time.Minute
+	cartSvcAllCacheKey = "cart:svc:all:user:%d:page:%d:pageSize:%d:search:%s"
+	ttlDefault         = 5 * time.Minute
 )
 
 type cartCacheResponse struct {
@@ -29,7 +33,7 @@ func NewCartQueryCache(store *cache.CacheStore) *cartQueryCache {
 }
 
 func (c *cartQueryCache) GetCachedCartsCache(ctx context.Context, request *requests.FindAllCarts) ([]*db.GetCartsRow, *int, bool) {
-	key := fmt.Sprintf(cartAllCacheKey, request.Page, request.PageSize, request.Search)
+	key := fmt.Sprintf(cartSvcAllCacheKey, request.UserID, request.Page, request.PageSize, request.Search)
 
 	result, found := cache.GetFromCache[cartCacheResponse](ctx, c.store, key)
 
@@ -46,7 +50,14 @@ func (c *cartQueryCache) SetCartsCache(ctx context.Context, request *requests.Fi
 		total = &zero
 	}
 
-	key := fmt.Sprintf(cartAllCacheKey, request.Page, request.PageSize, request.Search)
+	key := fmt.Sprintf(cartSvcAllCacheKey, request.UserID, request.Page, request.PageSize, request.Search)
 	payload := &cartCacheResponse{Data: response, Total: total}
 	cache.SetToCache(ctx, c.store, key, payload, ttlDefault)
+}
+
+func (c *cartQueryCache) DeleteCartsCache(ctx context.Context, userID int) {
+	pattern := fmt.Sprintf("cart:svc:all:user:%d:*", userID)
+	if _, err := c.store.InvalidateCache(ctx, pattern); err != nil {
+		c.store.Logger.Error("Failed to invalidate cart service cache", zap.Error(err))
+	}
 }

@@ -2,11 +2,14 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	errorsstd "errors"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/utils"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/banner_errors"
+	"github.com/jackc/pgx/v5"
 )
 
 type bannerCommandRepository struct {
@@ -100,6 +103,9 @@ func (r *bannerCommandRepository) Trash(ctx context.Context, bannerID int) (*db.
 	res, err := r.db.TrashBanner(ctx, int32(bannerID))
 
 	if err != nil {
+		if errorsstd.Is(err, pgx.ErrNoRows) || errorsstd.Is(err, sql.ErrNoRows) {
+			return nil, banner_errors.ErrBannerNotFound
+		}
 		return nil, banner_errors.ErrTrashedBanner.WithInternal(err)
 	}
 
@@ -110,6 +116,9 @@ func (r *bannerCommandRepository) Restore(ctx context.Context, bannerID int) (*d
 	res, err := r.db.RestoreBanner(ctx, int32(bannerID))
 
 	if err != nil {
+		if errorsstd.Is(err, pgx.ErrNoRows) || errorsstd.Is(err, sql.ErrNoRows) {
+			return nil, banner_errors.ErrBannerNotFound
+		}
 		return nil, banner_errors.ErrRestoreBanner.WithInternal(err)
 	}
 
@@ -143,4 +152,3 @@ func (r *bannerCommandRepository) DeleteAll(ctx context.Context) (bool, error) {
 	}
 	return true, nil
 }
-

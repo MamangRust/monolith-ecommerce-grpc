@@ -3,12 +3,12 @@ package review_errors
 import (
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 
-	"google.golang.org/grpc/codes"
+	"net/http"
 )
 
 var (
-	ErrGrpcInvalidID = errors.NewGrpcError("invalid ID", int(codes.InvalidArgument))
+	ErrGrpcInvalidID = errors.NewGrpcError("invalid ID", http.StatusBadRequest)
 
-	ErrGrpcValidateCreateReview = errors.NewGrpcError("validation failed: invalid create review request", int(codes.InvalidArgument))
-	ErrGrpcValidateUpdateReview = errors.NewGrpcError("validation failed: invalid update review request", int(codes.InvalidArgument))
+	ErrGrpcValidateCreateReview = errors.NewGrpcError("validation failed: invalid create review request", http.StatusBadRequest)
+	ErrGrpcValidateUpdateReview = errors.NewGrpcError("validation failed: invalid update review request", http.StatusBadRequest)
 )

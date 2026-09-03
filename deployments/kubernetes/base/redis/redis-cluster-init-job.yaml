@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: redis-cluster-init
+  namespace: ecommerce
+spec:
+  template:
+    spec:
+      containers:
+        - name: init
+          image: redis:7.4
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for all 6 redis cluster pods to accept connections..."
+              for i in 0 1 2 3 4 5; do
+                until redis-cli -h redis-cluster-$i.redis-cluster-headless.ecommerce.svc.cluster.local -a dragon_knight ping | grep PONG; do
+                  echo "redis-cluster-$i is not ready yet. Retrying in 5 seconds..."
+                  sleep 5
+                done
+              done
+              echo "All pods are accepting connections. Checking cluster status..."
+              if redis-cli -h redis-cluster-0.redis-cluster-headless.ecommerce.svc.cluster.local -a dragon_knight cluster info | grep "cluster_state:ok"; then
+                echo "Cluster is already initialized and OK!"
+                exit 0
+              fi
+
+              echo "Initializing cluster..."
+              redis-cli -a dragon_knight --cluster create \
+                redis-cluster-0.redis-cluster-headless.ecommerce.svc.cluster.local:6379 \
+                redis-cluster-1.redis-cluster-headless.ecommerce.svc.cluster.local:6379 \
+                redis-cluster-2.redis-cluster-headless.ecommerce.svc.cluster.local:6379 \
+                redis-cluster-3.redis-cluster-headless.ecommerce.svc.cluster.local:6379 \
+                redis-cluster-4.redis-cluster-headless.ecommerce.svc.cluster.local:6379 \
+                redis-cluster-5.redis-cluster-headless.ecommerce.svc.cluster.local:6379 \
+                --cluster-replicas 1 --cluster-yes
+              echo "Cluster initialized successfully!"
+      restartPolicy: OnFailure
+  backoffLimit: 4

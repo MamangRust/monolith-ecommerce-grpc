@@ -1,6 +1,8 @@
 package service
 
 import (
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-transaction/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
@@ -13,10 +15,12 @@ type Service struct {
 	TransactionCommand         TransactionCommandService
 	TransactionStats           TransactionStatsService
 	TransactionStatsByMerchant TransactionStatsByMerchantService
+	Outbox                     OutboxService
 }
 
 type Deps struct {
 	Kafka         *kafka.Kafka
+	Pool          *pgxpool.Pool
 	Cache         *mencache.Mencache
 	Repositories  *repository.Repositories
 	Logger        logger.LoggerInterface
@@ -34,6 +38,7 @@ func NewService(deps *Deps) *Service {
 		TransactionCommand: NewTransactionCommandService(&TransactionCommandServiceDeps{
 			Observability:      deps.Observability,
 			Kafka:              deps.Kafka,
+			Pool:               deps.Pool,
 			Cache:              deps.Cache.TransactionCommandCache,
 			TransactionQuery:   deps.Repositories.TransactionQuery,
 			TransactionCommand: deps.Repositories.TransactionCommand,
@@ -42,8 +47,10 @@ func NewService(deps *Deps) *Service {
 			OrderQuery:         deps.Repositories.OrderQuery,
 			OrderItem:          deps.Repositories.OrderItem,
 			ShippingAddress:    deps.Repositories.ShippingAddress,
+			Outbox:             deps.Repositories.Outbox,
 			Logger:             deps.Logger,
 		}),
+		Outbox: NewOutboxService(deps.Repositories.Outbox, deps.Kafka, deps.Logger),
 		TransactionStats: NewTransactionStatsService(&TransactionStatsServiceDeps{
 			Observability: deps.Observability,
 			Cache:         deps.Cache.TransactionStatsCache,

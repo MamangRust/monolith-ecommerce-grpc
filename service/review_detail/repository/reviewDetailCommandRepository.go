@@ -2,8 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"github.com/jackc/pgx/v5"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	"github.com/MamangRust/monolith-ecommerce-shared/convert"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	review_detail_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/review_detail"
 )
@@ -23,11 +26,14 @@ func (r *reviewDetailCommandRepository) Create(ctx context.Context, request *req
 		ReviewID: int32(request.ReviewID),
 		Type:     request.Type,
 		Url:      request.Url,
-		Caption:  stringPtr(request.Caption),
+		Caption:  convert.StringPtr(request.Caption),
 	}
 
 	reviewDetail, err := r.db.CreateReviewDetail(ctx, req)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, review_detail_errors.ErrReviewDetailNotFound
+		}
 		return nil, review_detail_errors.ErrCreateReviewDetail.WithInternal(err)
 	}
 
@@ -39,11 +45,14 @@ func (r *reviewDetailCommandRepository) Update(ctx context.Context, request *req
 		ReviewDetailID: int32(*request.ReviewDetailID),
 		Type:           request.Type,
 		Url:            request.Url,
-		Caption:        stringPtr(request.Caption),
+		Caption:        convert.StringPtr(request.Caption),
 	}
 
 	res, err := r.db.UpdateReviewDetail(ctx, req)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, review_detail_errors.ErrReviewDetailNotFound
+		}
 		return nil, review_detail_errors.ErrUpdateReviewDetail.WithInternal(err)
 	}
 
@@ -54,6 +63,9 @@ func (r *reviewDetailCommandRepository) Trash(ctx context.Context, ReviewDetail_
 	res, err := r.db.TrashReviewDetail(ctx, int32(ReviewDetail_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, review_detail_errors.ErrReviewDetailNotFound
+		}
 		return nil, review_detail_errors.ErrTrashedReviewDetail.WithInternal(err)
 	}
 
@@ -64,6 +76,9 @@ func (r *reviewDetailCommandRepository) Restore(ctx context.Context, ReviewDetai
 	res, err := r.db.RestoreReviewDetail(ctx, int32(ReviewDetail_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, review_detail_errors.ErrReviewDetailNotFound
+		}
 		return nil, review_detail_errors.ErrRestoreReviewDetail.WithInternal(err)
 	}
 
@@ -74,6 +89,9 @@ func (r *reviewDetailCommandRepository) DeletePermanent(ctx context.Context, Rev
 	err := r.db.DeletePermanentReviewDetail(ctx, int32(ReviewDetail_id))
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, review_detail_errors.ErrReviewDetailNotFound
+		}
 		return false, review_detail_errors.ErrDeleteReviewDetailPermanent.WithInternal(err)
 	}
 
@@ -84,6 +102,9 @@ func (r *reviewDetailCommandRepository) RestoreAll(ctx context.Context) (bool, e
 	err := r.db.RestoreAllReviewDetails(ctx)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, review_detail_errors.ErrReviewDetailNotFound
+		}
 		return false, review_detail_errors.ErrRestoreAllReviewDetails.WithInternal(err)
 	}
 	return true, nil
@@ -93,11 +114,10 @@ func (r *reviewDetailCommandRepository) DeleteAll(ctx context.Context) (bool, er
 	err := r.db.DeleteAllPermanentReviewDetails(ctx)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, review_detail_errors.ErrReviewDetailNotFound
+		}
 		return false, review_detail_errors.ErrDeleteAllReviewDetails.WithInternal(err)
 	}
 	return true, nil
-}
-
-func stringPtr(s string) *string {
-	return &s
 }

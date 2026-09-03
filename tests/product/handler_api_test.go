@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	producthandler "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/product"
+	apigatewaymiddlewares "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
 	"github.com/labstack/echo/v4"
@@ -173,6 +174,26 @@ func (s *ProductApiTestSuite) TestProductApiLifecycle() {
 	rec = httptest.NewRecorder()
 	s.echo.ServeHTTP(rec, req)
 	s.Equal(http.StatusOK, rec.Code)
+}
+
+func (s *ProductApiTestSuite) TestProductApiNotFound() {
+	// GET a non-existent product must map to 404, not 500.
+	apigatewaymiddlewares.RegisterErrorHandler(s.echo)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/product-query/999999", nil)
+	rec := httptest.NewRecorder()
+	s.echo.ServeHTTP(rec, req)
+	s.Equal(http.StatusNotFound, rec.Code, "non-existent product must be 404, got %d: %s", rec.Code, rec.Body.String())
+}
+
+func (s *ProductApiTestSuite) TestProductApiInvalidID() {
+	// Non-numeric path ID must be rejected as 400.
+	apigatewaymiddlewares.RegisterErrorHandler(s.echo)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/product-query/abc", nil)
+	rec := httptest.NewRecorder()
+	s.echo.ServeHTTP(rec, req)
+	s.Equal(http.StatusBadRequest, rec.Code, "invalid ID must be 400, got %d: %s", rec.Code, rec.Body.String())
 }
 
 func TestProductApiSuite(t *testing.T) {

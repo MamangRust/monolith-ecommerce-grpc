@@ -6,6 +6,7 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -35,7 +36,7 @@ func (h *merchantPolicyCommandHandler) Create(ctx context.Context, req *pb.Creat
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	return mapToSingleResponse(policy), nil
@@ -51,7 +52,7 @@ func (h *merchantPolicyCommandHandler) Update(ctx context.Context, req *pb.Updat
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	return mapToSingleResponse(policy), nil
@@ -61,7 +62,7 @@ func (h *merchantPolicyCommandHandler) TrashedMerchantPolicies(ctx context.Conte
 	policy, err := h.merchantPolicyService.Trash(ctx, int(req.GetId()))
 
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	return mapToSingleDeleteAtResponse(policy), nil
@@ -71,7 +72,7 @@ func (h *merchantPolicyCommandHandler) RestoreMerchantPolicies(ctx context.Conte
 	policy, err := h.merchantPolicyService.Restore(ctx, int(req.GetId()))
 
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	return mapToSingleDeleteAtResponse(policy), nil
@@ -81,7 +82,7 @@ func (h *merchantPolicyCommandHandler) DeleteMerchantPoliciesPermanent(ctx conte
 	_, err := h.merchantPolicyService.DeletePermanent(ctx, int(req.GetId()))
 
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	return &pb.ApiResponseMerchantDelete{
@@ -94,7 +95,7 @@ func (h *merchantPolicyCommandHandler) RestoreAllMerchantPolicies(ctx context.Co
 	_, err := h.merchantPolicyService.RestoreAll(ctx)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	return &pb.ApiResponseMerchantAll{
@@ -107,7 +108,7 @@ func (h *merchantPolicyCommandHandler) DeleteAllMerchantPoliciesPermanent(ctx co
 	_, err := h.merchantPolicyService.DeleteAll(ctx)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	return &pb.ApiResponseMerchantAll{

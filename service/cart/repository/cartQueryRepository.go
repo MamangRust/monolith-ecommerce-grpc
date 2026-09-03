@@ -36,4 +36,3 @@ func (r *cartQueryRepository) FindCarts(ctx context.Context, req *requests.FindA
 
 	return res, nil
 }
-

@@ -1,0 +1,101 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ecommerce
+
+resources:
+  - ../../base
+  - dns-egress.yaml
+  - email-smtp-egress.yaml
+
+images:
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/apigateway
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/auth
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/banner
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/cart
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/category
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/db-migration
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/email
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/merchant
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/merchant_award
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/merchant_business
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/merchant_detail
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/merchant_policy
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/order
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/order_item
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/product
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/review
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/review_detail
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/role
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/shipping_address
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/slider
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/transaction
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+  - name: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/user
+    newTag: c5cc38c7e4e0f230684e94cce1d351ddf6f6225e
+
+# GHCR image owner templating.
+#
+# The base manifests reference images as ghcr.io/__GHCR_OWNER__/vertx-ecommerce/<svc>.
+# The `images` block above matches that placeholder (so newTag is pinned here),
+# and this `replacements` block substitutes the real owner (from the app-config
+# ConfigMap key GHCR_OWNER) into the <owner> segment of each image field.
+# GHCR_OWNER must match github.repository_owner (lowercase) of the repository
+# whose CI pushes to ghcr.io/<owner>/vertx-ecommerce/... — on a fork, only this
+# ConfigMap value needs to change.
+replacements:
+  - source:
+      kind: ConfigMap
+      name: app-config
+      fieldPath: data.GHCR_OWNER
+    targets:
+      - select:
+          kind: Deployment
+          name: "^(apigateway|auth|banner|cart|category|email|merchant|merchant-award|merchant-business|merchant-detail|merchant-policy|order|order-item|product|review|review-detail|role|shipping-address|slider|transaction|user)$"
+        fieldPaths:
+          - spec.template.spec.containers.0.image
+        options:
+          delimiter: "/"
+          index: 1
+      - select:
+          kind: Job
+          name: migrate
+        fieldPaths:
+          - spec.template.spec.containers.0.image
+        options:
+          delimiter: "/"
+          index: 1
+
+patches:
+  - path: migration-hook.yaml
+    target:
+      group: batch
+      version: v1
+      kind: Job
+      name: migrate
+  - path: workload-wave.yaml
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: "^(apigateway|auth|banner|cart|category|email|merchant|merchant-award|merchant-business|merchant-detail|merchant-policy|order|order-item|product|review|review-detail|role|shipping-address|slider|transaction|user)$"

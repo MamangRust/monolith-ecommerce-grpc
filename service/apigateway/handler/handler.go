@@ -1,10 +1,8 @@
 package handler
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
-	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
-	"github.com/MamangRust/monolith-ecommerce-pkg/auth"
+	apicache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache"
+	auth_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/auth"
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/auth"
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/banner"
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/cart"
@@ -19,13 +17,17 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/order"
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/order_item"
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/product"
-	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/role"
-	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/transaction"
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/review"
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/review_detail"
+	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/role"
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/shipping_address"
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/slider"
+	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/transaction"
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/user"
+	"github.com/MamangRust/monolith-ecommerce-pkg/auth"
+	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
+	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
@@ -80,15 +82,16 @@ func NewHandler(deps *Deps) {
 		Client:     deps.ServiceConnections.Auth,
 		E:          deps.E,
 		Logger:     deps.Logger,
-		Cache:      nil, // TODO: Initialize AuthMencache if needed
+		Cache:      auth_cache.NewMencache(deps.Cache),
 		ApiHandler: apiHandler,
 	})
 
 	bannerhandler.RegisterBannerHandler(&bannerhandler.DepsBanner{
-		Client:      deps.ServiceConnections.Banner,
-		E:           deps.E,
-		Logger:      deps.Logger,
-		CacheStore:  deps.Cache,
+		Client:        deps.ServiceConnections.Banner,
+		E:             deps.E,
+		Logger:        deps.Logger,
+		CacheStore:    deps.Cache,
+		Observability: observability,
 	})
 
 	carthandler.RegisterCartHandler(&carthandler.DepsCart{
@@ -136,12 +139,13 @@ func NewHandler(deps *Deps) {
 		Logger:      deps.Logger,
 		UploadImage: deps.Image,
 	})
-	
+
 	merchantpolicyhandler.RegisterMerchantPolicyHandler(&merchantpolicyhandler.DepsMerchantPolicy{
-		Client:     deps.ServiceConnections.MerchantPolicy,
-		E:          deps.E,
-		Logger:     deps.Logger,
-		CacheStore: deps.Cache,
+		Client:        deps.ServiceConnections.MerchantPolicy,
+		E:             deps.E,
+		Logger:        deps.Logger,
+		CacheStore:    deps.Cache,
+		Observability: observability,
 	})
 
 	merchantsociallinkhandler.RegisterMerchantSocialLinkHandler(&merchantsociallinkhandler.DepsMerchantSocialLink{
@@ -173,12 +177,12 @@ func NewHandler(deps *Deps) {
 		ApiHandler: apiHandler,
 	})
 
-
 	transactionhandler.RegisterTransactionHandler(&transactionhandler.DepsTransaction{
 		Client:     deps.ServiceConnections.Transaction,
 		E:          deps.E,
 		Logger:     deps.Logger,
 		CacheStore: deps.Cache,
+		ApiHandler: apiHandler,
 	})
 
 	merchantdetailhandler.RegisterMerchantDetailHandler(&merchantdetailhandler.DepsMerchantDetail{
@@ -195,6 +199,7 @@ func NewHandler(deps *Deps) {
 		E:          deps.E,
 		Logger:     deps.Logger,
 		CacheStore: deps.Cache,
+		Cache:      apicache.NewRoleCache(deps.Cache),
 		ApiHandler: apiHandler,
 	})
 
@@ -207,18 +212,20 @@ func NewHandler(deps *Deps) {
 	})
 
 	reviewhandler.RegisterReviewHandler(&reviewhandler.DepsReview{
-		Client: deps.ServiceConnections.Review,
-		E:      deps.E,
-		Logger: deps.Logger,
-		Cache:  deps.Cache,
+		Client:        deps.ServiceConnections.Review,
+		E:             deps.E,
+		Logger:        deps.Logger,
+		Cache:         deps.Cache,
+		Observability: observability,
 	})
 
 	reviewdetailhandler.RegisterReviewDetailHandler(&reviewdetailhandler.DepsReviewDetail{
-		Client: deps.ServiceConnections.ReviewDetail,
-		E:      deps.E,
-		Logger: deps.Logger,
-		Cache:  deps.Cache,
-		Upload: deps.Image,
+		Client:        deps.ServiceConnections.ReviewDetail,
+		E:             deps.E,
+		Logger:        deps.Logger,
+		Cache:         deps.Cache,
+		Upload:        deps.Image,
+		Observability: observability,
 	})
 
 	shippingaddresshandler.RegisterShippingAddressHandler(&shippingaddresshandler.DepsShippingAddress{

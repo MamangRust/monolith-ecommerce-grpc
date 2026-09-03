@@ -25,7 +25,7 @@ func (r *productQueryRepository) FindById(ctx context.Context, id int) (*db.GetP
 	}
 
 	rating := float64(res.Data.Rating)
-	
+
 	return &db.GetProductByIDRow{
 		ProductID:    res.Data.Id,
 		MerchantID:   res.Data.MerchantId,

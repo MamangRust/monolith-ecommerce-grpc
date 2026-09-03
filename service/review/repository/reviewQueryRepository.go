@@ -3,7 +3,8 @@ package repository
 import (
 	"context"
 
-	"database/sql"
+	"errors"
+	"github.com/jackc/pgx/v5"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -116,7 +117,7 @@ func (r *reviewQueryRepository) FindByID(ctx context.Context, id int) (*db.GetRe
 	res, err := r.db.GetReviewByID(ctx, int32(id))
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, review_errors.ErrReviewNotFound
 		}
 		return nil, review_errors.ErrFindReviewByID.WithInternal(err)

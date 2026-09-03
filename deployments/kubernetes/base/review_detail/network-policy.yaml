@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: review-detail-netpol
+  namespace: ecommerce
+spec:
+  podSelector:
+    matchLabels:
+      app: review-detail
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ecommerce
+
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ecommerce
+

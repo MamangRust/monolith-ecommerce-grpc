@@ -1,0 +1,145 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: ecommerce
+data:
+  infrastructure-alerts.yaml: |
+    groups:
+      - name: infrastructure-alerts
+        rules:
+          - alert: PrometheusTargetDown
+            expr: up == 0
+            for: 2m
+            labels: {severity: critical}
+            annotations:
+              summary: "Monitoring target {{ $labels.job }} is down"
+              description: "Scrape target {{ $labels.job }} is unreachable."
+          - alert: PrometheusSelfDown
+            expr: up{job="prometheus"} == 0
+            for: 1m
+            labels: {severity: critical}
+            annotations:
+              summary: "Prometheus is down"
+              description: "Prometheus self-scrape failed."
+          - alert: AlertmanagerDown
+            expr: up{job="alertmanager"} == 0
+            for: 1m
+            labels: {severity: warning}
+            annotations:
+              summary: "Alertmanager is down"
+              description: "Alertmanager is unreachable."
+  application-alerts.yaml: |
+    groups:
+      - name: application-alerts
+        rules:
+          - alert: HighErrorRate
+            expr: |
+              sum by (service_name) (rate(java_app_requests_total{status="ERROR"}[5m]))
+              / clamp_min(sum by (service_name) (rate(java_app_requests_total[5m])), 0.001) > 0.05
+            for: 5m
+            labels: {severity: critical}
+            annotations:
+              summary: "High error rate on {{ $labels.service_name }}"
+              description: "More than 5% of requests are failing for 5 minutes."
+          - alert: HighLatency
+            expr: |
+              histogram_quantile(0.95, sum by (le, service_name) (rate(java_app_request_duration_seconds_bucket[5m]))) > 1
+            for: 5m
+            labels: {severity: warning}
+            annotations:
+              summary: "High latency on {{ $labels.service_name }}"
+              description: "P95 latency exceeded one second for 5 minutes."
+  jvm-alerts.yaml: |
+    groups:
+      - name: jvm-alerts
+        rules:
+          - alert: HighHeapUsage
+            expr: sum by (service_name) (java_app_jvm_memory_used_bytes{jvm_memory_type="heap"}) > 1073741824
+            for: 5m
+            labels: {severity: warning}
+            annotations:
+              summary: "High heap usage on {{ $labels.service_name }}"
+              description: "Heap usage exceeded 1 GiB for 5 minutes."
+          - alert: HighThreadCount
+            expr: java_app_jvm_thread_count > 500
+            for: 5m
+            labels: {severity: warning}
+            annotations:
+              summary: "High thread count on {{ $labels.service_name }}"
+              description: "Thread count exceeded 500."
+  postgres-alerts.yaml: |
+    groups:
+      - name: postgres-alerts
+        rules:
+          - alert: PostgresDown
+            expr: pg_up == 0
+            for: 1m
+            labels: {severity: critical}
+            annotations:
+              summary: "PostgreSQL is down"
+              description: "PostgreSQL is unreachable."
+          - alert: PostgresHighConnections
+            expr: pg_stat_database_numbackends{datname="ECOMMERCE"} > 200
+            for: 5m
+            labels: {severity: warning}
+            annotations:
+              summary: "High PostgreSQL connection count"
+              description: "ECOMMERCE exceeds 200 active backends."
+          - alert: PostgresExporterScrapeError
+            expr: pg_exporter_last_scrape_error > 0
+            for: 5m
+            labels: {severity: warning}
+            annotations:
+              summary: "Postgres exporter scrape error"
+              description: "Postgres exporter cannot scrape database metrics."
+  kafka-alerts.yaml: |
+    groups:
+      - name: kafka-alerts
+        rules:
+          - alert: KafkaConsumerGroupHighLag
+            expr: max by (consumergroup, topic) (kafka_consumergroup_lag) > 1000
+            for: 5m
+            labels: {severity: warning}
+            annotations:
+              summary: "High Kafka consumer lag"
+              description: "A Kafka consumer group is more than 1000 messages behind."
+          - alert: KafkaConsumerGroupCriticalLag
+            expr: max by (consumergroup, topic) (kafka_consumergroup_lag) > 10000
+            for: 5m
+            labels: {severity: critical}
+            annotations:
+              summary: "Critical Kafka consumer lag"
+              description: "A Kafka consumer group is more than 10000 messages behind."
+          - alert: KafkaExporterDown
+            expr: up{job="kafka-exporter"} == 0
+            for: 1m
+            labels: {severity: critical}
+            annotations:
+              summary: "Kafka exporter is down"
+              description: "Kafka metrics are unavailable."
+  node-exporter-alerts.yaml: |
+    groups:
+      - name: node-exporter-alerts
+        rules:
+          - alert: HighCpuUsage
+            expr: 100 - (avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+            for: 2m
+            labels: {severity: warning}
+            annotations:
+              summary: "High CPU usage on {{ $labels.instance }}"
+              description: "CPU usage is above 90%."
+          - alert: HighMemoryUsage
+            expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+            for: 2m
+            labels: {severity: warning}
+            annotations:
+              summary: "High memory usage on {{ $labels.instance }}"
+              description: "Memory usage is above 90%."
+          - alert: NodeDown
+            expr: up{job="node-exporter"} == 0
+            for: 1m
+            labels: {severity: critical}
+            annotations:
+              summary: "Node exporter is down"
+              description: "Node exporter is unreachable."

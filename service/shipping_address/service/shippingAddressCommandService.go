@@ -7,9 +7,9 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
 	shipping_address_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/shipping_address_errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
@@ -114,7 +114,7 @@ func (s *shippingAddressCommandService) Trash(ctx context.Context, shipping_id i
 		status = "error"
 		return errorhandler.HandleError[*db.ShippingAddress](
 			s.logger,
-			shipping_address_errors.ErrFailedTrashShippingAddress,
+			err,
 			method,
 			span,
 
@@ -145,7 +145,7 @@ func (s *shippingAddressCommandService) Restore(ctx context.Context, shipping_id
 		status = "error"
 		return errorhandler.HandleError[*db.ShippingAddress](
 			s.logger,
-			shipping_address_errors.ErrFailedRestoreShippingAddress,
+			err,
 			method,
 			span,
 
@@ -176,7 +176,7 @@ func (s *shippingAddressCommandService) DeletePermanent(ctx context.Context, shi
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			shipping_address_errors.ErrFailedDeleteShippingAddressPermanent,
+			err,
 			method,
 			span,
 
@@ -262,7 +262,7 @@ func (s *shippingAddressCommandService) DeleteAll(ctx context.Context) (bool, er
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			shipping_address_errors.ErrFailedDeleteAllShippingAddressesPermanent,
+			err,
 			method,
 			span,
 		)

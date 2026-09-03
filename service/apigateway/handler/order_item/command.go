@@ -5,9 +5,10 @@ import (
 	"strconv"
 
 	orderitem_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/order_item"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/order_item"
+	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -58,14 +59,18 @@ func NewOrderItemCommandHandleApi(params *orderItemCommandHandleDeps) *orderItem
 // @Router /api/order-item/trash/{id} [post]
 func (h *orderItemCommandHandlerApi) Trash(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	ctx := c.Request().Context()
 	res, err := h.client.TrashOrderItem(ctx, &pb.FindByIdOrderItemRequest{Id: int32(id)})
-	if err != nil { return h.handleGrpcError(err, "Trash") }
+	if err != nil {
+		return h.handleGrpcError(err, "Trash")
+	}
 
 	// We don't have the order_id here, so we might need to invalidate all or just use the ID if cache supports it
-	h.cache.DeleteCachedOrderItemByOrderId(ctx, 0) 
+	h.cache.DeleteCachedOrderItemByOrderId(ctx, 0)
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseOrderItem(res))
 }
@@ -83,11 +88,15 @@ func (h *orderItemCommandHandlerApi) Trash(c echo.Context) error {
 // @Router /api/order-item/restore/{id} [post]
 func (h *orderItemCommandHandlerApi) Restore(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	ctx := c.Request().Context()
 	res, err := h.client.RestoreOrderItem(ctx, &pb.FindByIdOrderItemRequest{Id: int32(id)})
-	if err != nil { return h.handleGrpcError(err, "Restore") }
+	if err != nil {
+		return h.handleGrpcError(err, "Restore")
+	}
 
 	h.cache.DeleteCachedOrderItemByOrderId(ctx, 0)
 
@@ -107,11 +116,15 @@ func (h *orderItemCommandHandlerApi) Restore(c echo.Context) error {
 // @Router /api/order-item/permanent/{id} [delete]
 func (h *orderItemCommandHandlerApi) DeletePermanent(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	ctx := c.Request().Context()
 	res, err := h.client.DeleteOrderItemPermanent(ctx, &pb.FindByIdOrderItemRequest{Id: int32(id)})
-	if err != nil { return h.handleGrpcError(err, "Delete") }
+	if err != nil {
+		return h.handleGrpcError(err, "Delete")
+	}
 
 	h.cache.DeleteCachedOrderItemByOrderId(ctx, 0)
 
@@ -130,7 +143,9 @@ func (h *orderItemCommandHandlerApi) DeletePermanent(c echo.Context) error {
 func (h *orderItemCommandHandlerApi) RestoreAll(c echo.Context) error {
 	ctx := c.Request().Context()
 	res, err := h.client.RestoreAllOrdersItem(ctx, &emptypb.Empty{})
-	if err != nil { return h.handleGrpcError(err, "RestoreAll") }
+	if err != nil {
+		return h.handleGrpcError(err, "RestoreAll")
+	}
 
 	h.cache.DeleteCachedOrderItemByOrderId(ctx, 0)
 
@@ -149,7 +164,9 @@ func (h *orderItemCommandHandlerApi) RestoreAll(c echo.Context) error {
 func (h *orderItemCommandHandlerApi) DeleteAllPermanent(c echo.Context) error {
 	ctx := c.Request().Context()
 	res, err := h.client.DeleteAllPermanentOrdersItem(ctx, &emptypb.Empty{})
-	if err != nil { return h.handleGrpcError(err, "DeleteAll") }
+	if err != nil {
+		return h.handleGrpcError(err, "DeleteAll")
+	}
 
 	h.cache.DeleteCachedOrderItemByOrderId(ctx, 0)
 
@@ -158,5 +175,5 @@ func (h *orderItemCommandHandlerApi) DeleteAllPermanent(c echo.Context) error {
 
 func (h *orderItemCommandHandlerApi) handleGrpcError(err error, operation string) error {
 	h.logger.Error("Failed to " + operation)
-	return echo.NewHTTPError(http.StatusInternalServerError, "Failed to "+operation)
+	return sharedErrors.ParseGrpcError(err)
 }

@@ -15,6 +15,26 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/auth/hello": {
+            "get": {
+                "description": "Simple liveness probe for the auth endpoint",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Auth endpoint liveness check",
+                "responses": {
+                    "200": {
+                        "description": "Hello",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/auth/login": {
             "post": {
                 "description": "Authenticate user and return tokens",
@@ -200,7 +220,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Create a new banner with the provided details",
+                "description": "Create a new banner",
                 "consumes": [
                     "application/json"
                 ],
@@ -213,7 +233,7 @@ const docTemplate = `{
                 "summary": "Create a new banner",
                 "parameters": [
                     {
-                        "description": "Create banner request",
+                        "description": "Banner details",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -224,13 +244,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully created banner",
+                        "description": "Banner created",
                         "schema": {
                             "$ref": "#/definitions/response.ApiResponseBanner"
                         }
                     },
                     "400": {
-                        "description": "Invalid request body or validation error",
+                        "description": "Invalid request",
                         "schema": {
                             "$ref": "#/definitions/errors.ErrorResponse"
                         }
@@ -251,7 +271,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Permanently delete all trashed banner records",
+                "description": "Permanently delete all banners",
                 "consumes": [
                     "application/json"
                 ],
@@ -261,16 +281,16 @@ const docTemplate = `{
                 "tags": [
                     "Banner Command"
                 ],
-                "summary": "Permanently delete all trashed banners",
+                "summary": "Delete all banners permanently",
                 "responses": {
                     "200": {
-                        "description": "Successfully deleted all banners permanently",
+                        "description": "All banners deleted",
                         "schema": {
                             "$ref": "#/definitions/response.ApiResponseBannerAll"
                         }
                     },
                     "500": {
-                        "description": "Failed to delete banners permanently",
+                        "description": "Failed to delete banners",
                         "schema": {
                             "$ref": "#/definitions/errors.ErrorResponse"
                         }
@@ -285,7 +305,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Permanently delete a banner record by its ID",
+                "description": "Permanently delete a banner",
                 "consumes": [
                     "application/json"
                 ],
@@ -295,7 +315,7 @@ const docTemplate = `{
                 "tags": [
                     "Banner Command"
                 ],
-                "summary": "Permanently delete a banner",
+                "summary": "Delete a banner permanently",
                 "parameters": [
                     {
                         "type": "integer",
@@ -307,19 +327,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully deleted banner record permanently",
+                        "description": "Banner deleted",
                         "schema": {
                             "$ref": "#/definitions/response.ApiResponseBannerDelete"
                         }
                     },
                     "400": {
-                        "description": "Invalid banner ID",
+                        "description": "Invalid ID",
                         "schema": {
                             "$ref": "#/definitions/errors.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Failed to delete banner permanently",
+                        "description": "Failed to delete banner",
                         "schema": {
                             "$ref": "#/definitions/errors.ErrorResponse"
                         }
@@ -334,7 +354,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Restore all trashed banner records",
+                "description": "Restore all trashed banners",
                 "consumes": [
                     "application/json"
                 ],
@@ -344,10 +364,10 @@ const docTemplate = `{
                 "tags": [
                     "Banner Command"
                 ],
-                "summary": "Restore all trashed banners",
+                "summary": "Restore all banners",
                 "responses": {
                     "200": {
-                        "description": "Successfully restored all banners",
+                        "description": "All banners restored",
                         "schema": {
                             "$ref": "#/definitions/response.ApiResponseBannerAll"
                         }
@@ -368,7 +388,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Restore a trashed banner record by its ID",
+                "description": "Restore a trashed banner",
                 "consumes": [
                     "application/json"
                 ],
@@ -378,7 +398,7 @@ const docTemplate = `{
                 "tags": [
                     "Banner Command"
                 ],
-                "summary": "Restore a trashed banner",
+                "summary": "Restore a banner",
                 "parameters": [
                     {
                         "type": "integer",
@@ -390,13 +410,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully restored banner",
+                        "description": "Banner restored",
                         "schema": {
                             "$ref": "#/definitions/response.ApiResponseBannerDeleteAt"
                         }
                     },
                     "400": {
-                        "description": "Invalid banner ID",
+                        "description": "Invalid ID",
                         "schema": {
                             "$ref": "#/definitions/errors.ErrorResponse"
                         }
@@ -417,7 +437,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Move a banner record to trash by its ID",
+                "description": "Move a banner to trash",
                 "consumes": [
                     "application/json"
                 ],
@@ -427,7 +447,7 @@ const docTemplate = `{
                 "tags": [
                     "Banner Command"
                 ],
-                "summary": "Move banner to trash",
+                "summary": "Trash a banner",
                 "parameters": [
                     {
                         "type": "integer",
@@ -439,19 +459,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully moved banner to trash",
+                        "description": "Banner trashed",
                         "schema": {
                             "$ref": "#/definitions/response.ApiResponseBannerDeleteAt"
                         }
                     },
                     "400": {
-                        "description": "Invalid banner ID",
+                        "description": "Invalid ID",
                         "schema": {
                             "$ref": "#/definitions/errors.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Failed to move banner to trash",
+                        "description": "Failed to trash banner",
                         "schema": {
                             "$ref": "#/definitions/errors.ErrorResponse"
                         }
@@ -466,7 +486,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Update an existing banner record with the provided details",
+                "description": "Update an existing banner",
                 "consumes": [
                     "application/json"
                 ],
@@ -476,7 +496,7 @@ const docTemplate = `{
                 "tags": [
                     "Banner Command"
                 ],
-                "summary": "Update an existing banner",
+                "summary": "Update a banner",
                 "parameters": [
                     {
                         "type": "integer",
@@ -486,8 +506,8 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Update banner request",
-                        "name": "UpdateBannerRequest",
+                        "description": "Banner details",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -497,13 +517,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully updated banner",
+                        "description": "Banner updated",
                         "schema": {
                             "$ref": "#/definitions/response.ApiResponseBanner"
                         }
                     },
                     "400": {
-                        "description": "Invalid request body or validation error",
+                        "description": "Invalid request",
                         "schema": {
                             "$ref": "#/definitions/errors.ErrorResponse"
                         }
@@ -590,7 +610,7 @@ const docTemplate = `{
                 "tags": [
                     "Banner Query"
                 ],
-                "summary": "Retrieve active banners",
+                "summary": "Find active banners",
                 "parameters": [
                     {
                         "type": "integer",
@@ -636,7 +656,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Retrieve a list of trashed banner records",
+                "description": "Retrieve a list of trashed banners",
                 "consumes": [
                     "application/json"
                 ],
@@ -646,7 +666,7 @@ const docTemplate = `{
                 "tags": [
                     "Banner Query"
                 ],
-                "summary": "Retrieve trashed banners",
+                "summary": "Find trashed banners",
                 "parameters": [
                     {
                         "type": "integer",
@@ -671,7 +691,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "List of trashed banner data",
+                        "description": "List of trashed banners",
                         "schema": {
                             "$ref": "#/definitions/response.ApiResponsePaginationBannerDeleteAt"
                         }
@@ -692,7 +712,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Retrieve a banner by ID",
+                "description": "Retrieve a single banner by its ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -702,7 +722,7 @@ const docTemplate = `{
                 "tags": [
                     "Banner Query"
                 ],
-                "summary": "Find banner by ID",
+                "summary": "Find a banner by ID",
                 "parameters": [
                     {
                         "type": "integer",
@@ -720,7 +740,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid banner ID",
+                        "description": "Invalid ID",
                         "schema": {
                             "$ref": "#/definitions/errors.ErrorResponse"
                         }
@@ -734,69 +754,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/cart-command": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Retrieve all items in the current user's cart",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Cart Query"
-                ],
-                "summary": "Find all cart items",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "default": 1,
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Number of items per page",
-                        "name": "page_size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Search query",
-                        "name": "search",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "List of cart items",
-                        "schema": {
-                            "$ref": "#/definitions/response.ApiResponseCartPagination"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to retrieve cart data",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/cart-query/create": {
+        "/api/cart-command/create": {
             "post": {
                 "security": [
                     {
@@ -853,7 +811,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/cart-query/delete": {
+        "/api/cart-command/delete": {
             "delete": {
                 "security": [
                     {
@@ -904,7 +862,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/cart-query/delete-all": {
+        "/api/cart-command/delete-all": {
             "post": {
                 "security": [
                     {
@@ -948,6 +906,68 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to remove items from cart",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cart-query": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve all items in the current user's cart",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart Query"
+                ],
+                "summary": "Find all cart items",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of cart items",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseCartPagination"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve cart data",
                         "schema": {
                             "$ref": "#/definitions/errors.ErrorResponse"
                         }
@@ -3611,6 +3631,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/merchant-detail-command/permanent/all": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Permanently delete all trashed merchant detail records",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Merchant Detail Command"
+                ],
+                "summary": "Permanently delete all trashed merchant details",
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted all merchant details permanently",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseMerchantAll"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete merchant details permanently",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/merchant-detail-command/permanent/{id}": {
             "delete": {
                 "security": [
@@ -3650,6 +3704,40 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to delete merchant detail permanently",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/merchant-detail-command/restore/all": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Restore all trashed merchant detail records",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Merchant Detail Command"
+                ],
+                "summary": "Restore all trashed merchant details",
+                "responses": {
+                    "200": {
+                        "description": "Successfully restored all merchant details",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseMerchantAll"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to restore merchant details",
                         "schema": {
                             "$ref": "#/definitions/errors.ErrorResponse"
                         }
@@ -8136,6 +8224,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/review-detail-command/permanent/all": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Permanently delete all trashed review detail records",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Review Detail Command"
+                ],
+                "summary": "Permanently delete all review details",
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted all review details permanently",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseReviewAll"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete review details permanently",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/review-detail-command/permanent/{id}": {
             "delete": {
                 "security": [
@@ -9131,6 +9253,55 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to restore role",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/role-command/trashed/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Move a role record to trash by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Role Command"
+                ],
+                "summary": "Move role to trash",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Role ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully moved role to trash",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseRole"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid role ID",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to move role to trash",
                         "schema": {
                             "$ref": "#/definitions/errors.ErrorResponse"
                         }
@@ -10461,6 +10632,422 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/slider-query/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieve a slider by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Slider Query"
+                ],
+                "summary": "Find slider by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Slider ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Slider data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseSlider"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid slider ID",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve slider data",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction-command/create": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Create a new transaction with the provided details",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction Command"
+                ],
+                "summary": "Create a new transaction",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Order ID",
+                        "name": "order_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Merchant ID",
+                        "name": "merchant_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Amount",
+                        "name": "amount",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Payment Status",
+                        "name": "status",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Payment Method",
+                        "name": "method",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created transaction",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseTransaction"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create transaction",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction-command/permanent/all": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Permanently delete all trashed transaction records",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction Command"
+                ],
+                "summary": "Permanently delete all trashed transactions",
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted all transactions permanently",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseTransactionAll"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete transactions permanently",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction-command/permanent/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Permanently delete a transaction record by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction Command"
+                ],
+                "summary": "Permanently delete a transaction",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Transaction ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted transaction record permanently",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseTransactionDelete"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid transaction ID",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete transaction permanently",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction-command/restore/all": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Restore all trashed transaction records",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction Command"
+                ],
+                "summary": "Restore all trashed transactions",
+                "responses": {
+                    "200": {
+                        "description": "Successfully restored all transactions",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseTransactionAll"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to restore transactions",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction-command/restore/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Restore a trashed transaction record by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction Command"
+                ],
+                "summary": "Restore a trashed transaction",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Transaction ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully restored transaction",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseTransactionDeleteAt"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid transaction ID",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to restore transaction",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction-command/trashed/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Move a transaction record to trash by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction Command"
+                ],
+                "summary": "Move transaction to trash",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Transaction ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully moved transaction to trash",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseTransactionDeleteAt"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid transaction ID",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to move transaction to trash",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction-command/update/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Update the payment status of a transaction",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction Command"
+                ],
+                "summary": "Update transaction status",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Transaction ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Payment Status",
+                        "name": "status",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated transaction",
+                        "schema": {
+                            "$ref": "#/definitions/response.ApiResponseTransaction"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update transaction",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/transaction-query": {
             "get": {
                 "security": [
@@ -11523,373 +12110,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/transaction/create": {
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Create a new transaction with the provided details",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Transaction Command"
-                ],
-                "summary": "Create a new transaction",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Order ID",
-                        "name": "order_id",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Merchant ID",
-                        "name": "merchant_id",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Amount",
-                        "name": "amount",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "user_id",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Payment Status",
-                        "name": "status",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Payment Method",
-                        "name": "method",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Successfully created transaction",
-                        "schema": {
-                            "$ref": "#/definitions/response.ApiResponseTransaction"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request parameters",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to create transaction",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/transaction/permanent/all": {
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Permanently delete all trashed transaction records",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Transaction Command"
-                ],
-                "summary": "Permanently delete all trashed transactions",
-                "responses": {
-                    "200": {
-                        "description": "Successfully deleted all transactions permanently",
-                        "schema": {
-                            "$ref": "#/definitions/response.ApiResponseTransactionAll"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to delete transactions permanently",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/transaction/permanent/{id}": {
-            "delete": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Permanently delete a transaction record by its ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Transaction Command"
-                ],
-                "summary": "Permanently delete a transaction",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Transaction ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully deleted transaction record permanently",
-                        "schema": {
-                            "$ref": "#/definitions/response.ApiResponseTransactionDelete"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid transaction ID",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to delete transaction permanently",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/transaction/restore/all": {
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Restore all trashed transaction records",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Transaction Command"
-                ],
-                "summary": "Restore all trashed transactions",
-                "responses": {
-                    "200": {
-                        "description": "Successfully restored all transactions",
-                        "schema": {
-                            "$ref": "#/definitions/response.ApiResponseTransactionAll"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to restore transactions",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/transaction/restore/{id}": {
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Restore a trashed transaction record by its ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Transaction Command"
-                ],
-                "summary": "Restore a trashed transaction",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Transaction ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully restored transaction",
-                        "schema": {
-                            "$ref": "#/definitions/response.ApiResponseTransactionDeleteAt"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid transaction ID",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to restore transaction",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/transaction/trashed/{id}": {
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Move a transaction record to trash by its ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Transaction Command"
-                ],
-                "summary": "Move transaction to trash",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Transaction ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully moved transaction to trash",
-                        "schema": {
-                            "$ref": "#/definitions/response.ApiResponseTransactionDeleteAt"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid transaction ID",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to move transaction to trash",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/transaction/update/{id}": {
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Update the payment status of a transaction",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Transaction Command"
-                ],
-                "summary": "Update transaction status",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Transaction ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Payment Status",
-                        "name": "status",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully updated transaction",
-                        "schema": {
-                            "$ref": "#/definitions/response.ApiResponseTransaction"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request parameters",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to update transaction",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/user-command/create": {
             "post": {
                 "security": [
@@ -12444,6 +12664,9 @@ const docTemplate = `{
                 "trace_id": {
                     "type": "string"
                 },
+                "type": {
+                    "$ref": "#/definitions/errors.ErrorType"
+                },
                 "validations": {
                     "type": "array",
                     "items": {
@@ -12451,6 +12674,29 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "errors.ErrorType": {
+            "type": "string",
+            "enum": [
+                "INTERNAL",
+                "NOT_FOUND",
+                "BAD_REQUEST",
+                "CONFLICT",
+                "UNAUTHORIZED",
+                "FORBIDDEN",
+                "TIMEOUT",
+                "UNAVAILABLE"
+            ],
+            "x-enum-varnames": [
+                "ErrorTypeInternal",
+                "ErrorTypeNotFound",
+                "ErrorTypeBadRequest",
+                "ErrorTypeConflict",
+                "ErrorTypeUnauthorized",
+                "ErrorTypeForbidden",
+                "ErrorTypeTimeout",
+                "ErrorTypeUnavailable"
+            ]
         },
         "errors.ValidationError": {
             "type": "object",
@@ -12706,7 +12952,8 @@ const docTemplate = `{
             ],
             "properties": {
                 "price": {
-                    "type": "integer"
+                    "type": "integer",
+                    "minimum": 0
                 },
                 "product_id": {
                     "type": "integer"
@@ -13121,7 +13368,6 @@ const docTemplate = `{
         "requests.UpdateOrderItemRequest": {
             "type": "object",
             "required": [
-                "order_item_id",
                 "price",
                 "product_id",
                 "quantity"
@@ -13131,7 +13377,8 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "price": {
-                    "type": "integer"
+                    "type": "integer",
+                    "minimum": 0
                 },
                 "product_id": {
                     "type": "integer"
@@ -13173,9 +13420,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "comment",
-                "name",
-                "rating",
-                "review_id"
+                "rating"
             ],
             "properties": {
                 "comment": {
@@ -13208,11 +13453,6 @@ const docTemplate = `{
         },
         "requests.UpdateShippingAddressRequest": {
             "type": "object",
-            "required": [
-                "courier",
-                "shipping_cost",
-                "shipping_method"
-            ],
             "properties": {
                 "alamat": {
                     "type": "string",
@@ -16204,6 +16444,9 @@ const docTemplate = `{
         "response.ReviewDetailsResponse": {
             "type": "object",
             "properties": {
+                "caption": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -16212,9 +16455,6 @@ const docTemplate = `{
                 },
                 "review_id": {
                     "type": "integer"
-                },
-                "string": {
-                    "type": "string"
                 },
                 "type": {
                     "type": "string"
@@ -16230,6 +16470,9 @@ const docTemplate = `{
         "response.ReviewDetailsResponseDeleteAt": {
             "type": "object",
             "properties": {
+                "caption": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -16241,9 +16484,6 @@ const docTemplate = `{
                 },
                 "review_id": {
                     "type": "integer"
-                },
-                "string": {
-                    "type": "string"
                 },
                 "type": {
                     "type": "string"
@@ -16722,24 +16962,17 @@ const docTemplate = `{
                 }
             }
         }
-    },
-    "securityDefinitions": {
-        "BearerAuth": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "Header"
-        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
-	Host:             "localhost:5000",
-	BasePath:         "/api/",
+	Version:          "",
+	Host:             "",
+	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "PaymentGateway gRPC",
-	Description:      "gRPC based Payment Gateway service",
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

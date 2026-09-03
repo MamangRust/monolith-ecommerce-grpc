@@ -15,15 +15,16 @@ type Repositories struct {
 	TransactionStats   TransactionStatsRepository
 	StatsByMerchant    TransactionStatsByMerchantRepository
 	UserQuery          UserQueryRepository
+	Outbox             OutboxRepository
 }
 
 type Deps struct {
-	DB              *db.Queries
-	UserQuery       pb.UserQueryServiceClient
-	MerchantQuery   pb.MerchantQueryServiceClient
-	OrderQuery      pb.OrderQueryServiceClient
-	OrderItemQuery  pb.OrderItemQueryServiceClient
-	ShippingQuery   pb.ShippingQueryServiceClient
+	DB             *db.Queries
+	UserQuery      pb.UserQueryServiceClient
+	MerchantQuery  pb.MerchantQueryServiceClient
+	OrderQuery     pb.OrderQueryServiceClient
+	OrderItemQuery pb.OrderItemQueryServiceClient
+	ShippingQuery  pb.ShippingQueryServiceClient
 }
 
 func NewRepositories(deps *Deps) *Repositories {
@@ -37,5 +38,6 @@ func NewRepositories(deps *Deps) *Repositories {
 		TransactionStats:   NewTransactionStatsRepository(deps.DB),
 		StatsByMerchant:    NewTransactionStatsByMerchantRepository(deps.DB),
 		UserQuery:          NewUserQueryRepository(deps.UserQuery),
+		Outbox:             NewOutboxRepository(deps.DB),
 	}
 }

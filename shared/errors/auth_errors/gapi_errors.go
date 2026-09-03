@@ -3,20 +3,20 @@ package auth_errors
 import (
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 
-	"google.golang.org/grpc/codes"
+	"net/http"
 )
 
 var ErrGrpcLogin = errors.NewGrpcError(
 	"login failed: invalid argument provided",
-	int(codes.InvalidArgument),
+	http.StatusBadRequest,
 )
 
 var ErrGrpcGetMe = errors.NewGrpcError(
 	"get user info failed: unauthenticated",
-	int(codes.Unauthenticated),
+	http.StatusUnauthorized,
 )
 
 var ErrGrpcRegisterToken = errors.NewGrpcError(
 	"register failed: invalid argument",
-	int(codes.InvalidArgument),
+	http.StatusBadRequest,
 )

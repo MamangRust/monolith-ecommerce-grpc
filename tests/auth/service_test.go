@@ -213,6 +213,24 @@ func (s *AuthServiceTestSuite) Test3_ForgotPassword() {
 	s.True(success)
 }
 
+// Backlog item 12: duplicate registration must surface ErrUserEmailAlready,
+// not a generic Internal error.
+func (s *AuthServiceTestSuite) Test5_DuplicateRegister() {
+	ctx := context.Background()
+	duplicateReq := &requests.RegisterRequest{
+		FirstName:       "Auth",
+		LastName:        "Service",
+		Email:           s.email,
+		Password:        s.password,
+		ConfirmPassword: s.password,
+	}
+
+	res, err := s.service.Register.Register(ctx, duplicateReq)
+	s.Error(err)
+	s.Nil(res)
+	s.Contains(err.Error(), "already exists")
+}
+
 func TestAuthServiceSuite(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")

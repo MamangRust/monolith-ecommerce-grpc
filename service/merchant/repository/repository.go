@@ -22,9 +22,3 @@ func NewRepositories(DB *db.Queries, userQuery pb.UserQueryServiceClient) *Repos
 		UserQuery:               NewUserQueryRepository(userQuery),
 	}
 }
-func stringPtr(s string) *string {
-	if s == "" {
-		return nil
-	}
-	return &s
-}

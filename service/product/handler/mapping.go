@@ -236,6 +236,11 @@ func mapToProtoProductResponse(item interface{}) *pb.ProductResponse {
 			Id:           int32(v.ProductID),
 			CountInStock: int32(v.CountInStock),
 		}
+	case *db.AdjustProductStockRow:
+		return &pb.ProductResponse{
+			Id:           int32(v.ProductID),
+			CountInStock: int32(v.CountInStock),
+		}
 	default:
 		return nil
 	}

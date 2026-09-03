@@ -67,7 +67,7 @@ func NewTransactionCommandHandleApi(params *transactionCommandHandleDeps) *trans
 // @Failure 401 {object} errors.ErrorResponse "Unauthorized"
 // @Failure 400 {object} errors.ErrorResponse "Invalid request parameters"
 // @Failure 500 {object} errors.ErrorResponse "Failed to create transaction"
-// @Router /api/transaction/create [post]
+// @Router /api/transaction-command/create [post]
 func (h *transactionCommandHandlerApi) Create(c echo.Context) error {
 	req := new(pb.CreateTransactionRequest)
 	if err := c.Bind(req); err != nil {
@@ -97,7 +97,7 @@ func (h *transactionCommandHandlerApi) Create(c echo.Context) error {
 // @Failure 401 {object} errors.ErrorResponse "Unauthorized"
 // @Failure 400 {object} errors.ErrorResponse "Invalid request parameters"
 // @Failure 500 {object} errors.ErrorResponse "Failed to update transaction"
-// @Router /api/transaction/update/{id} [post]
+// @Router /api/transaction-command/update/{id} [post]
 func (h *transactionCommandHandlerApi) Update(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
@@ -128,7 +128,7 @@ func (h *transactionCommandHandlerApi) Update(c echo.Context) error {
 // @Success 200 {object} response.ApiResponseTransactionDeleteAt "Successfully moved transaction to trash"
 // @Failure 400 {object} errors.ErrorResponse "Invalid transaction ID"
 // @Failure 500 {object} errors.ErrorResponse "Failed to move transaction to trash"
-// @Router /api/transaction/trashed/{id} [post]
+// @Router /api/transaction-command/trashed/{id} [post]
 func (h *transactionCommandHandlerApi) Trashed(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
@@ -154,7 +154,7 @@ func (h *transactionCommandHandlerApi) Trashed(c echo.Context) error {
 // @Success 200 {object} response.ApiResponseTransactionDeleteAt "Successfully restored transaction"
 // @Failure 400 {object} errors.ErrorResponse "Invalid transaction ID"
 // @Failure 500 {object} errors.ErrorResponse "Failed to restore transaction"
-// @Router /api/transaction/restore/{id} [post]
+// @Router /api/transaction-command/restore/{id} [post]
 func (h *transactionCommandHandlerApi) Restore(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
@@ -180,7 +180,7 @@ func (h *transactionCommandHandlerApi) Restore(c echo.Context) error {
 // @Success 200 {object} response.ApiResponseTransactionDelete "Successfully deleted transaction record permanently"
 // @Failure 400 {object} errors.ErrorResponse "Invalid transaction ID"
 // @Failure 500 {object} errors.ErrorResponse "Failed to delete transaction permanently"
-// @Router /api/transaction/permanent/{id} [delete]
+// @Router /api/transaction-command/permanent/{id} [delete]
 func (h *transactionCommandHandlerApi) DeletePermanent(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
@@ -204,7 +204,7 @@ func (h *transactionCommandHandlerApi) DeletePermanent(c echo.Context) error {
 // @Produce json
 // @Success 200 {object} response.ApiResponseTransactionAll "Successfully restored all transactions"
 // @Failure 500 {object} errors.ErrorResponse "Failed to restore transactions"
-// @Router /api/transaction/restore/all [post]
+// @Router /api/transaction-command/restore/all [post]
 func (h *transactionCommandHandlerApi) RestoreAll(c echo.Context) error {
 	ctx := c.Request().Context()
 	res, err := h.client.RestoreAllTransaction(ctx, &emptypb.Empty{})
@@ -225,7 +225,7 @@ func (h *transactionCommandHandlerApi) RestoreAll(c echo.Context) error {
 // @Produce json
 // @Success 200 {object} response.ApiResponseTransactionAll "Successfully deleted all transactions permanently"
 // @Failure 500 {object} errors.ErrorResponse "Failed to delete transactions permanently"
-// @Router /api/transaction/permanent/all [post]
+// @Router /api/transaction-command/permanent/all [post]
 func (h *transactionCommandHandlerApi) DeleteAllPermanent(c echo.Context) error {
 	ctx := c.Request().Context()
 	res, err := h.client.DeleteAllTransactionPermanent(ctx, &emptypb.Empty{})

@@ -2,6 +2,10 @@ package repository
 
 import (
 	"context"
+	"errors"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -23,6 +27,10 @@ func (r *roleCommandRepository) Create(ctx context.Context, req *requests.Create
 	res, err := r.db.CreateRole(ctx, req.Name)
 
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, role_errors.ErrRoleConflict
+		}
 		return nil, role_errors.ErrCreateRole.WithInternal(err)
 	}
 
@@ -37,6 +45,10 @@ func (r *roleCommandRepository) Update(ctx context.Context, req *requests.Update
 	})
 
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, role_errors.ErrRoleConflict
+		}
 		return nil, role_errors.ErrUpdateRole.WithInternal(err)
 	}
 
@@ -47,6 +59,9 @@ func (r *roleCommandRepository) Update(ctx context.Context, req *requests.Update
 func (r *roleCommandRepository) Trash(ctx context.Context, id int) (*db.Role, error) {
 	res, err := r.db.TrashRole(ctx, int32(id))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, role_errors.ErrRoleNotFound
+		}
 		return nil, role_errors.ErrTrashedRole.WithInternal(err)
 	}
 	return res, nil
@@ -56,6 +71,9 @@ func (r *roleCommandRepository) Trash(ctx context.Context, id int) (*db.Role, er
 func (r *roleCommandRepository) Restore(ctx context.Context, id int) (*db.Role, error) {
 	res, err := r.db.RestoreRole(ctx, int32(id))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, role_errors.ErrRoleNotFound
+		}
 		return nil, role_errors.ErrRestoreRole.WithInternal(err)
 	}
 	return res, nil

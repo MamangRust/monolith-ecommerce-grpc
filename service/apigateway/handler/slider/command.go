@@ -5,10 +5,11 @@ import (
 	"strconv"
 	"strings"
 
+	slider_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/slider"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
-	slider_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/slider"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/slider"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
@@ -276,5 +277,5 @@ func (h *sliderCommandHandleApi) parseSliderForm(c echo.Context, requireImage bo
 
 func (h *sliderCommandHandleApi) handleGrpcError(err error, operation string) error {
 	h.logger.Error("Failed to "+operation, zap.Error(err))
-	return echo.NewHTTPError(http.StatusInternalServerError, "Failed to "+operation)
+	return sharedErrors.ParseGrpcError(err)
 }

@@ -5,11 +5,11 @@ import (
 	"strconv"
 
 	category_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/category"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/category"
+	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 )
 
@@ -22,8 +22,6 @@ type categoryStatsHandlerApi struct {
 	cache                 category_cache.CategoryMencache
 	errors                errors.ApiHandler
 }
-
-
 
 type categoryStatsHandleDeps struct {
 	statsClient           pb.CategoryStatsServiceClient
@@ -46,7 +44,6 @@ func NewCategoryStatsHandleApi(params *categoryStatsHandleDeps) *categoryStatsHa
 		cache:                 params.cache,
 		errors:                params.apiHandler,
 	}
-
 
 	routerCategory := params.router.Group("/api/category-stats")
 
@@ -95,7 +92,6 @@ func (h *categoryStatsHandlerApi) FindMonthTotalPrice(c echo.Context) error {
 		return errors.ParseGrpcError(err)
 	}
 
-
 	response := h.mapper.ToApiResponseCategoryMonthlyTotalPrice(res)
 	h.cache.SetCachedMonthTotalPriceCache(ctx, req, response)
 
@@ -124,7 +120,6 @@ func (h *categoryStatsHandlerApi) FindYearTotalPrice(c echo.Context) error {
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	response := h.mapper.ToApiResponseCategoryYearlyTotalPrice(res)
 	h.cache.SetCachedYearTotalPriceCache(ctx, year, response)
@@ -163,8 +158,6 @@ func (h *categoryStatsHandlerApi) FindMonthTotalPriceByMerchant(c echo.Context) 
 		return errors.ParseGrpcError(err)
 	}
 
-
-
 	response := h.mapper.ToApiResponseCategoryMonthlyTotalPrice(res)
 	h.cache.SetCachedMonthTotalPriceByMerchantCache(ctx, req, response)
 
@@ -199,8 +192,6 @@ func (h *categoryStatsHandlerApi) FindYearTotalPriceByMerchant(c echo.Context) e
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
-
 
 	response := h.mapper.ToApiResponseCategoryYearlyTotalPrice(res)
 	h.cache.SetCachedYearTotalPriceByMerchantCache(ctx, req, response)
@@ -239,8 +230,6 @@ func (h *categoryStatsHandlerApi) FindMonthTotalPriceById(c echo.Context) error 
 		return errors.ParseGrpcError(err)
 	}
 
-
-
 	response := h.mapper.ToApiResponseCategoryMonthlyTotalPrice(res)
 	h.cache.SetCachedMonthTotalPriceByIdCache(ctx, req, response)
 
@@ -276,8 +265,6 @@ func (h *categoryStatsHandlerApi) FindYearTotalPriceById(c echo.Context) error {
 		return errors.ParseGrpcError(err)
 	}
 
-
-
 	response := h.mapper.ToApiResponseCategoryYearlyTotalPrice(res)
 	h.cache.SetCachedYearTotalPriceByIdCache(ctx, req, response)
 
@@ -300,7 +287,7 @@ func (h *categoryStatsHandlerApi) FindMonthPrice(c echo.Context) error {
 	month, _ := strconv.Atoi(c.QueryParam("month"))
 
 	ctx := c.Request().Context()
-	if cached, found := h.cache.GetCachedMonthPriceCache(ctx, month); found {
+	if cached, found := h.cache.GetCachedMonthPriceCache(ctx, month, year); found {
 		return c.JSON(http.StatusOK, cached)
 	}
 
@@ -309,9 +296,8 @@ func (h *categoryStatsHandlerApi) FindMonthPrice(c echo.Context) error {
 		return errors.ParseGrpcError(err)
 	}
 
-
 	response := h.mapper.ToApiResponseCategoryMonthPrice(res)
-	h.cache.SetCachedMonthPriceCache(ctx, month, response)
+	h.cache.SetCachedMonthPriceCache(ctx, month, year, response)
 
 	return c.JSON(http.StatusOK, response)
 }
@@ -338,7 +324,6 @@ func (h *categoryStatsHandlerApi) FindYearPrice(c echo.Context) error {
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	response := h.mapper.ToApiResponseCategoryYearPrice(res)
 	h.cache.SetCachedYearPriceCache(ctx, year, response)
@@ -375,8 +360,6 @@ func (h *categoryStatsHandlerApi) FindMonthPriceByMerchant(c echo.Context) error
 		return errors.ParseGrpcError(err)
 	}
 
-
-
 	response := h.mapper.ToApiResponseCategoryMonthPrice(res)
 	h.cache.SetCachedMonthPriceByMerchantCache(ctx, req, response)
 
@@ -411,8 +394,6 @@ func (h *categoryStatsHandlerApi) FindYearPriceByMerchant(c echo.Context) error 
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
-
 
 	response := h.mapper.ToApiResponseCategoryYearPrice(res)
 	h.cache.SetCachedYearPriceByMerchantCache(ctx, req, response)
@@ -449,8 +430,6 @@ func (h *categoryStatsHandlerApi) FindMonthPriceById(c echo.Context) error {
 		return errors.ParseGrpcError(err)
 	}
 
-
-
 	response := h.mapper.ToApiResponseCategoryMonthPrice(res)
 	h.cache.SetCachedMonthPriceByIdCache(ctx, req, response)
 
@@ -486,12 +465,8 @@ func (h *categoryStatsHandlerApi) FindYearPriceById(c echo.Context) error {
 		return errors.ParseGrpcError(err)
 	}
 
-
-
 	response := h.mapper.ToApiResponseCategoryYearPrice(res)
 	h.cache.SetCachedYearPriceByIdCache(ctx, req, response)
 
 	return c.JSON(http.StatusOK, response)
 }
-
-

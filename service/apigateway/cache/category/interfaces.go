@@ -28,8 +28,8 @@ type CategoryStatsCache interface {
 	GetCachedYearTotalPriceCache(ctx context.Context, year int) (*response.ApiResponseCategoryYearlyTotalPrice, bool)
 	SetCachedYearTotalPriceCache(ctx context.Context, year int, data *response.ApiResponseCategoryYearlyTotalPrice)
 
-	GetCachedMonthPriceCache(ctx context.Context, year int) (*response.ApiResponseCategoryMonthPrice, bool)
-	SetCachedMonthPriceCache(ctx context.Context, year int, data *response.ApiResponseCategoryMonthPrice)
+	GetCachedMonthPriceCache(ctx context.Context, month, year int) (*response.ApiResponseCategoryMonthPrice, bool)
+	SetCachedMonthPriceCache(ctx context.Context, month, year int, data *response.ApiResponseCategoryMonthPrice)
 
 	GetCachedYearPriceCache(ctx context.Context, year int) (*response.ApiResponseCategoryYearPrice, bool)
 	SetCachedYearPriceCache(ctx context.Context, year int, data *response.ApiResponseCategoryYearPrice)

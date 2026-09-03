@@ -74,40 +74,32 @@ type CreateOrderRequest struct {
 }
 
 type UpdateOrderRequest struct {
-	OrderID         *int                         `json:"order_id"`
-	UserID          int                          `json:"user_id" validate:"required"`
-	TotalPrice      int                          `json:"total_price" validate:"required"`
-	Items           []UpdateOrderItemRequest     `json:"items" validate:"required"`
-	ShippingAddress UpdateShippingAddressRequest `json:"shipping_address"`
+	OrderID         *int                          `json:"order_id"`
+	UserID          int                           `json:"user_id" validate:"required"`
+	TotalPrice      int                           `json:"total_price" validate:"required"`
+	Items           []UpdateOrderItemRequest      `json:"items" validate:"required"`
+	ShippingAddress *UpdateShippingAddressRequest `json:"shipping_address,omitempty"`
 }
 
 type CreateOrderItemRequest struct {
 	ProductID int `json:"product_id" validate:"required"`
-	Quantity  int `json:"quantity" validate:"required"`
-	Price     int `json:"price" validate:"required"`
+	Quantity  int `json:"quantity" validate:"required,gt=0"`
+	Price     int `json:"price" validate:"required,gte=0"`
 }
 
 type UpdateOrderItemRequest struct {
 	OrderItemID int `json:"order_item_id"`
 	ProductID   int `json:"product_id" validate:"required"`
-	Quantity    int `json:"quantity" validate:"required"`
-	Price       int `json:"price" validate:"required"`
+	Quantity    int `json:"quantity" validate:"required,gt=0"`
+	Price       int `json:"price" validate:"required,gte=0"`
 }
 
 func (r *CreateOrderRequest) Validate() error {
 	validate := validator.New()
-	err := validate.Struct(r)
-	if err != nil {
-		return err
-	}
-	return nil
+	return validate.Struct(r)
 }
 
 func (r *UpdateOrderRequest) Validate() error {
 	validate := validator.New()
-	err := validate.Struct(r)
-	if err != nil {
-		return err
-	}
-	return nil
+	return validate.Struct(r)
 }

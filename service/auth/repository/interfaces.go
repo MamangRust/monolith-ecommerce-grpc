@@ -5,6 +5,7 @@ import (
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	"github.com/jackc/pgx/v5"
 )
 
 // UserRepository defines the data access layer for user-related operations.
@@ -30,6 +31,8 @@ type ResetTokenRepository interface {
 	FindByToken(ctx context.Context, code string) (*db.ResetToken, error)
 
 	CreateResetToken(ctx context.Context, req *requests.CreateResetTokenRequest) (*db.ResetToken, error)
+
+	CreateResetTokenInTx(ctx context.Context, tx pgx.Tx, req *requests.CreateResetTokenRequest) (*db.ResetToken, error)
 
 	DeleteResetToken(ctx context.Context, user_id int) error
 }

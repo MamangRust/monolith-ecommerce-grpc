@@ -422,16 +422,6 @@ RETURNING
     updated_at;
 
 -- UpdateProductCountStock: Adjusts product inventory count
--- Purpose: Update stock levels after purchases/restocking
--- Parameters:
---   $1: product_id - ID of product to update
---   $2: count_in_stock - New inventory quantity
--- Returns:
---   The updated product record
--- Business Logic:
---   - Only modifies stock count
---   - Verifies product is active
---   - Used during order processing
 -- name: UpdateProductCountStock :one
 UPDATE products
 SET
@@ -439,9 +429,50 @@ SET
 WHERE
     product_id = $1
     AND deleted_at IS NULL
+    AND $2 >= 0
 RETURNING
     product_id,
     count_in_stock;
+
+-- AdjustProductStock: Atomically applies an idempotent stock delta.
+-- A negative delta reserves stock and is rejected when it would make stock negative.
+-- operation_id must be stable across retries of the same business operation.
+-- name: AdjustProductStock :one
+WITH existing_adjustment AS (
+    SELECT product_id, delta
+    FROM product_stock_adjustments psa
+    WHERE psa.operation_id = $1
+      AND psa.product_id = $2
+      AND psa.delta = $3
+), new_adjustment AS (
+    INSERT INTO product_stock_adjustments (operation_id, product_id, delta)
+    SELECT $1, $2, $3
+    WHERE NOT EXISTS (SELECT 1 FROM existing_adjustment)
+      AND EXISTS (
+          SELECT 1
+          FROM products
+          WHERE product_id = $2
+            AND deleted_at IS NULL
+            AND count_in_stock + $3 >= 0
+      )
+    ON CONFLICT (operation_id) DO NOTHING
+    RETURNING product_id, delta
+), applied AS (
+    UPDATE products p
+    SET count_in_stock = p.count_in_stock + a.delta,
+        updated_at = CURRENT_TIMESTAMP
+    FROM new_adjustment a
+    WHERE p.product_id = a.product_id
+      AND p.deleted_at IS NULL
+    RETURNING p.product_id, p.count_in_stock
+)
+SELECT a.product_id, a.count_in_stock
+FROM applied a
+UNION ALL
+SELECT p.product_id, p.count_in_stock
+FROM products p
+JOIN existing_adjustment e ON e.product_id = p.product_id
+WHERE p.deleted_at IS NULL;
 
 -- TrashProduct: Soft-deletes a product
 -- Purpose: Remove product from storefront while preserving data

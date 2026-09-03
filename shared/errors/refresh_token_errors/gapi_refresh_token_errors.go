@@ -3,7 +3,7 @@ package refreshtoken_errors
 import (
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 
-	"google.golang.org/grpc/codes"
+	"net/http"
 )
 
-var ErrGrpcRefreshToken = errors.NewGrpcError("refresh token failed", int(codes.Unauthenticated))
+var ErrGrpcRefreshToken = errors.NewGrpcError("refresh token failed", http.StatusUnauthorized)

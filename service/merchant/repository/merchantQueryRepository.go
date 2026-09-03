@@ -3,13 +3,13 @@ package repository
 import (
 	"context"
 
-	"database/sql"
- 
+	"errors"
+	"github.com/jackc/pgx/v5"
+
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	merchant_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant"
 )
-
 
 type merchantQueryRepository struct {
 	db *db.Queries
@@ -36,7 +36,6 @@ func (r *merchantQueryRepository) FindAll(ctx context.Context, req *requests.Fin
 		return nil, merchant_errors.ErrFindAllMerchants.WithInternal(err)
 	}
 
-
 	return res, nil
 }
 
@@ -54,7 +53,6 @@ func (r *merchantQueryRepository) FindActive(ctx context.Context, req *requests.
 	if err != nil {
 		return nil, merchant_errors.ErrFindActiveMerchants.WithInternal(err)
 	}
-
 
 	return res, nil
 }
@@ -74,7 +72,6 @@ func (r *merchantQueryRepository) FindTrashed(ctx context.Context, req *requests
 		return nil, merchant_errors.ErrFindTrashedMerchants.WithInternal(err)
 	}
 
-
 	return res, nil
 }
 
@@ -82,12 +79,11 @@ func (r *merchantQueryRepository) FindByID(ctx context.Context, user_id int) (*d
 	res, err := r.db.GetMerchantByID(ctx, int32(user_id))
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, merchant_errors.ErrMerchantNotFound.WithInternal(err)
 		}
 		return nil, merchant_errors.ErrMerchantInternal.WithInternal(err)
 	}
-
 
 	return res, nil
 }

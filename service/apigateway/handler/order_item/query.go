@@ -5,10 +5,11 @@ import (
 	"strconv"
 
 	orderitem_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/order_item"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/order_item"
+	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 )
 
@@ -58,9 +59,13 @@ func NewOrderItemQueryHandleApi(params *orderItemQueryHandleDeps) *orderItemQuer
 // @Router /api/order-item [get]
 func (h *orderItemQueryHandlerApi) FindAll(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -73,7 +78,9 @@ func (h *orderItemQueryHandlerApi) FindAll(c echo.Context) error {
 	res, err := h.client.FindAll(ctx, &pb.FindAllOrderItemRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
-	if err != nil { return h.handleGrpcError(err, "FindAll") }
+	if err != nil {
+		return h.handleGrpcError(err, "FindAll")
+	}
 
 	apiResponse := h.mapper.ToApiResponsePaginationOrderItem(res)
 	h.cache.SetCachedOrderItemsAll(ctx, req, apiResponse)
@@ -95,9 +102,13 @@ func (h *orderItemQueryHandlerApi) FindAll(c echo.Context) error {
 // @Router /api/order-item/active [get]
 func (h *orderItemQueryHandlerApi) FindByActive(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -110,7 +121,9 @@ func (h *orderItemQueryHandlerApi) FindByActive(c echo.Context) error {
 	res, err := h.client.FindByActive(ctx, &pb.FindAllOrderItemRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
-	if err != nil { return h.handleGrpcError(err, "FindByActive") }
+	if err != nil {
+		return h.handleGrpcError(err, "FindByActive")
+	}
 
 	apiResponse := h.mapper.ToApiResponsePaginationOrderItemDeleteAt(res)
 	h.cache.SetCachedOrderItemActive(ctx, req, apiResponse)
@@ -132,9 +145,13 @@ func (h *orderItemQueryHandlerApi) FindByActive(c echo.Context) error {
 // @Router /api/order-item/trashed [get]
 func (h *orderItemQueryHandlerApi) FindByTrashed(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -147,7 +164,9 @@ func (h *orderItemQueryHandlerApi) FindByTrashed(c echo.Context) error {
 	res, err := h.client.FindByTrashed(ctx, &pb.FindAllOrderItemRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
-	if err != nil { return h.handleGrpcError(err, "FindByTrashed") }
+	if err != nil {
+		return h.handleGrpcError(err, "FindByTrashed")
+	}
 
 	apiResponse := h.mapper.ToApiResponsePaginationOrderItemDeleteAt(res)
 	h.cache.SetCachedOrderItemTrashed(ctx, req, apiResponse)
@@ -168,7 +187,9 @@ func (h *orderItemQueryHandlerApi) FindByTrashed(c echo.Context) error {
 // @Router /api/order-item/order/{order_id} [get]
 func (h *orderItemQueryHandlerApi) FindOrderItemByOrder(c echo.Context) error {
 	orderId, err := strconv.Atoi(c.Param("order_id"))
-	if err != nil || orderId <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid Order ID") }
+	if err != nil || orderId <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Order ID")
+	}
 
 	ctx := c.Request().Context()
 	if cachedData, found := h.cache.GetCachedOrderItems(ctx, orderId); found {
@@ -176,7 +197,9 @@ func (h *orderItemQueryHandlerApi) FindOrderItemByOrder(c echo.Context) error {
 	}
 
 	res, err := h.client.FindOrderItemByOrder(ctx, &pb.FindByIdOrderItemRequest{Id: int32(orderId)})
-	if err != nil { return h.handleGrpcError(err, "FindOrderItemByOrder") }
+	if err != nil {
+		return h.handleGrpcError(err, "FindOrderItemByOrder")
+	}
 
 	apiResponse := h.mapper.ToApiResponsesOrderItem(res)
 	h.cache.SetCachedOrderItems(ctx, apiResponse)
@@ -186,5 +209,5 @@ func (h *orderItemQueryHandlerApi) FindOrderItemByOrder(c echo.Context) error {
 
 func (h *orderItemQueryHandlerApi) handleGrpcError(err error, operation string) error {
 	h.logger.Error("Failed to " + operation)
-	return echo.NewHTTPError(http.StatusInternalServerError, "Failed to "+operation)
+	return sharedErrors.ParseGrpcError(err)
 }

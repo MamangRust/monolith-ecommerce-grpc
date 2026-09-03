@@ -3,9 +3,9 @@ package shippingaddress_errors
 import (
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 
-	"google.golang.org/grpc/codes"
+	"net/http"
 )
 
 var (
-	ErrGrpcInvalidID = errors.NewGrpcError("invalid ID", int(codes.InvalidArgument))
+	ErrGrpcInvalidID = errors.NewGrpcError("invalid ID", http.StatusBadRequest)
 )

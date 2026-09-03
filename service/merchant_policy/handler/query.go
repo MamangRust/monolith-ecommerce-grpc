@@ -6,6 +6,7 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 )
 
@@ -33,7 +34,7 @@ func (h *merchantPolicyQueryHandler) FindAll(ctx context.Context, req *pb.FindAl
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	return mapToPaginationResponse(merchants, total), nil
@@ -43,7 +44,7 @@ func (h *merchantPolicyQueryHandler) FindById(ctx context.Context, req *pb.FindB
 	merchant, err := h.merchantPolicyService.FindByID(ctx, int(req.GetId()))
 
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	return mapToSingleResponse(merchant), nil
@@ -57,7 +58,7 @@ func (h *merchantPolicyQueryHandler) FindByActive(ctx context.Context, req *pb.F
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	return mapToPaginationDeleteAtResponse(merchants, total), nil
@@ -71,7 +72,7 @@ func (h *merchantPolicyQueryHandler) FindByTrashed(ctx context.Context, req *pb.
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	return mapToPaginationDeleteAtResponse(merchants, total), nil

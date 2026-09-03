@@ -5,6 +5,7 @@ import (
 
 	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/cache"
 	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/handler"
+	transactionKafka "github.com/MamangRust/monolith-ecommerce-grpc-transaction/kafka"
 	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/repository"
 	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
@@ -49,9 +50,9 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 
 	orderItemAddr := viper.GetString("GRPC_ORDER_ITEM_ADDR")
 	if orderItemAddr == "" {
-		orderItemAddr = "50056"
+		orderItemAddr = "order-item:50056"
 	}
-	orderItemConn, err := grpc.NewClient("localhost:"+orderItemAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	orderItemConn, err := grpc.NewClient(orderItemAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to order_item service: %w", err)
 	}
@@ -59,9 +60,9 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 
 	shippingAddr := viper.GetString("GRPC_SHIPPING_ADDRESS_ADDR")
 	if shippingAddr == "" {
-		shippingAddr = "50063"
+		shippingAddr = "shipping_address:50063"
 	}
-	shippingConn, err := grpc.NewClient("localhost:"+shippingAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	shippingConn, err := grpc.NewClient(shippingAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to shipping_address service: %w", err)
 	}
@@ -81,6 +82,7 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 
 	svc := service.NewService(&service.Deps{
 		Kafka:         myKafka,
+		Pool:          srv.Pool,
 		Cache:         cache,
 		Logger:        srv.Logger,
 		Repositories:  repos,
@@ -88,6 +90,14 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	})
 
 	h := handler.NewHandler(&handler.Deps{Service: svc, Logger: srv.Logger})
+
+	// Start the outbox relay so events committed after the transaction insert are
+	// published to Kafka with durable retry and dead-letter semantics.
+	go svc.Outbox.Start(srv.Ctx, service.OutboxRelayInterval, service.OutboxRelayBatchSize)
+
+	if err := myKafka.StartConsumersWithContext(srv.Ctx, []string{"transaction-service-topic-merchant-status-event"}, "transaction-service-group", transactionKafka.NewMerchantStatusConsumer(srv.Ctx, cache.TransactionCommandCache, srv.Logger)); err != nil {
+		return nil, fmt.Errorf("failed to start merchant status consumer: %w", err)
+	}
 
 	srv.RegisterServices = func(gs *grpc.Server) {
 		pb.RegisterTransactionQueryServiceServer(gs, h.TransactionQuery)

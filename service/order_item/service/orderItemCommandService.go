@@ -110,7 +110,7 @@ func (s *orderItemCommandService) Trash(ctx context.Context, orderItemID int) (*
 		status = "error"
 		return errorhandler.HandleError[*db.OrderItem](
 			s.logger,
-			orderitem_errors.ErrFailedTrashedOrderItem,
+			err,
 			method,
 			span,
 		)
@@ -138,7 +138,7 @@ func (s *orderItemCommandService) Restore(ctx context.Context, orderItemID int) 
 		status = "error"
 		return errorhandler.HandleError[*db.OrderItem](
 			s.logger,
-			orderitem_errors.ErrFailedRestoreOrderItem,
+			err,
 			method,
 			span,
 		)
@@ -166,7 +166,7 @@ func (s *orderItemCommandService) DeletePermanent(ctx context.Context, orderItem
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			orderitem_errors.ErrFailedDeleteOrderItem,
+			err,
 			method,
 			span,
 		)
@@ -194,7 +194,7 @@ func (s *orderItemCommandService) DeleteByOrderPermanent(ctx context.Context, or
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			orderitem_errors.ErrFailedDeleteOrderItem,
+			err,
 			method,
 			span,
 		)
@@ -248,7 +248,7 @@ func (s *orderItemCommandService) DeleteAll(ctx context.Context) (bool, error) {
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			orderitem_errors.ErrFailedDeleteAllOrderItem,
+			err,
 			method,
 			span,
 		)

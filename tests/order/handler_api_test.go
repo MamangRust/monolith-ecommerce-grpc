@@ -1,8 +1,8 @@
 package order_test
 
 import (
-	"context"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -115,7 +115,7 @@ func (s *OrderApiTestSuite) TestOrderApiLifecycle() {
 		Items: []requests.UpdateOrderItemRequest{
 			{ProductID: s.prodID, Quantity: 1, Price: 1500},
 		},
-		ShippingAddress: requests.UpdateShippingAddressRequest{
+		ShippingAddress: &requests.UpdateShippingAddressRequest{
 			Alamat:         "Updated Alamat",
 			Provinsi:       "Updated Provinsi",
 			Kota:           "Updated Kota",

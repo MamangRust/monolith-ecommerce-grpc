@@ -3,13 +3,14 @@ package repository
 import (
 	"context"
 
-	"database/sql"
- 
+	"errors"
+	"github.com/jackc/pgx/v5"
+
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	"github.com/MamangRust/monolith-ecommerce-shared/convert"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/product_errors"
 )
-
 
 type productQueryRepository struct {
 	db *db.Queries
@@ -35,7 +36,6 @@ func (r *productQueryRepository) FindAll(ctx context.Context, req *requests.Find
 		return nil, product_errors.ErrFindAllProducts.WithInternal(err)
 	}
 
-
 	return res, nil
 }
 
@@ -52,7 +52,6 @@ func (r *productQueryRepository) FindActive(ctx context.Context, req *requests.F
 	if err != nil {
 		return nil, product_errors.ErrFindActiveProducts.WithInternal(err)
 	}
-
 
 	return res, nil
 }
@@ -71,7 +70,6 @@ func (r *productQueryRepository) FindTrashed(ctx context.Context, req *requests.
 		return nil, product_errors.ErrFindTrashedProducts.WithInternal(err)
 	}
 
-
 	return res, nil
 }
 
@@ -80,7 +78,7 @@ func (r *productQueryRepository) FindByMerchant(ctx context.Context, req *reques
 
 	reqDb := db.GetProductsByMerchantParams{
 		MerchantID: int32(req.MerchantID),
-		Column2:    stringPtr(req.Search),
+		Column2:    convert.StringPtr(req.Search),
 		Column3:    int32(req.CategoryID),
 		Column4:    int32(IntPtrToInt(req.MinPrice)),
 		Column5:    int32(IntPtrToInt(req.MaxPrice)),
@@ -92,7 +90,6 @@ func (r *productQueryRepository) FindByMerchant(ctx context.Context, req *reques
 	if err != nil {
 		return nil, product_errors.ErrFindProductsByMerchant.WithInternal(err)
 	}
-
 
 	return res, nil
 }
@@ -114,19 +111,17 @@ func (r *productQueryRepository) FindByCategory(ctx context.Context, req *reques
 		return nil, product_errors.ErrFindProductsByCategory.WithInternal(err)
 	}
 
-
 	return res, nil
 }
 
 func (r *productQueryRepository) FindByID(ctx context.Context, product_id int) (*db.GetProductByIDRow, error) {
 	res, err := r.db.GetProductByID(ctx, int32(product_id))
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, product_errors.ErrProductNotFound.WithInternal(err)
 		}
 		return nil, product_errors.ErrProductInternal.WithInternal(err)
 	}
-
 
 	return res, nil
 }
@@ -134,12 +129,11 @@ func (r *productQueryRepository) FindByID(ctx context.Context, product_id int) (
 func (r *productQueryRepository) FindByIDTrashed(ctx context.Context, product_id int) (*db.Product, error) {
 	res, err := r.db.GetProductByIdTrashed(ctx, int32(product_id))
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, product_errors.ErrProductNotFound.WithInternal(err)
 		}
 		return nil, product_errors.ErrProductInternal.WithInternal(err)
 	}
-
 
 	return res, nil
 }

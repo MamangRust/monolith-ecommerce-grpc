@@ -3,15 +3,15 @@ package transaction_errors
 import (
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 
-	"google.golang.org/grpc/codes"
+	"net/http"
 )
 
 var (
-	ErrGrpcInvalidID         = errors.NewGrpcError("invalid ID", int(codes.InvalidArgument))
-	ErrGrpcInvalidMonth      = errors.NewGrpcError("invalid month", int(codes.InvalidArgument))
-	ErrGrpcInvalidYear       = errors.NewGrpcError("invalid year", int(codes.InvalidArgument))
-	ErrGrpcInvalidMerchantId = errors.NewGrpcError("invalid merchant ID", int(codes.InvalidArgument))
+	ErrGrpcInvalidID         = errors.NewGrpcError("invalid ID", http.StatusBadRequest)
+	ErrGrpcInvalidMonth      = errors.NewGrpcError("invalid month", http.StatusBadRequest)
+	ErrGrpcInvalidYear       = errors.NewGrpcError("invalid year", http.StatusBadRequest)
+	ErrGrpcInvalidMerchantId = errors.NewGrpcError("invalid merchant ID", http.StatusBadRequest)
 
-	ErrGrpcValidateCreateTransaction = errors.NewGrpcError("validation failed: invalid create transaction request", int(codes.InvalidArgument))
-	ErrGrpcValidateUpdateTransaction = errors.NewGrpcError("validation failed: invalid update transaction request", int(codes.InvalidArgument))
+	ErrGrpcValidateCreateTransaction = errors.NewGrpcError("validation failed: invalid create transaction request", http.StatusBadRequest)
+	ErrGrpcValidateUpdateTransaction = errors.NewGrpcError("validation failed: invalid update transaction request", http.StatusBadRequest)
 )

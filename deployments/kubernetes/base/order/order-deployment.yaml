@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order
+  namespace: ecommerce
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order
+  template:
+    metadata:
+      labels:
+        app: order
+    spec:
+      initContainers:
+        - name: init-log-permission
+          image: busybox:1.35
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "[INIT] Setting ownership for /var/log/app"
+              chown -R 1000:1000 /var/log/app
+          volumeMounts:
+            - name: app-logs
+              mountPath: /var/log/app
+          securityContext:
+            runAsUser: 0
+      containers:
+        - name: order
+          image: ghcr.io/__GHCR_OWNER__/vertx-ecommerce/order:latest
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+          ports:
+            - containerPort: 8087
+            - containerPort: 50057
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8087
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8087
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: 8087
+            failureThreshold: 30
+            periodSeconds: 10
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          imagePullPolicy: IfNotPresent

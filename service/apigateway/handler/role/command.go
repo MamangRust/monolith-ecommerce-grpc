@@ -3,17 +3,16 @@ package rolehandler
 import (
 	"net/http"
 	"strconv"
-	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache"
 	role_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/role"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/role"
+	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -28,14 +27,15 @@ type roleCommandHandlerApi struct {
 }
 
 type roleCommandHandleDeps struct {
-	client     pb.RoleCommandServiceClient
-	router     *echo.Echo
-	logger     logger.LoggerInterface
-	mapper     apimapper.RoleCommandResponseMapper
-	kafka      *kafka.Kafka
-	cache_role mencache.RoleCache
-	cache      role_cache.RoleCommandCache
-	apiHandler errors.ApiHandler
+	client      pb.RoleCommandServiceClient
+	queryClient pb.RoleQueryServiceClient
+	router      *echo.Echo
+	logger      logger.LoggerInterface
+	mapper      apimapper.RoleCommandResponseMapper
+	kafka       *kafka.Kafka
+	cache_role  mencache.RoleCache
+	cache       role_cache.RoleCommandCache
+	apiHandler  errors.ApiHandler
 }
 
 func NewRoleCommandHandleApi(params *roleCommandHandleDeps) *roleCommandHandlerApi {
@@ -48,18 +48,17 @@ func NewRoleCommandHandleApi(params *roleCommandHandleDeps) *roleCommandHandlerA
 		kafka:      params.kafka,
 	}
 
-	roleMiddleware := middlewares.NewRoleValidator(params.kafka, "request-role", "response-role", 5*time.Second, params.logger, params.cache_role)
+	roleMiddleware := middlewares.RoleValidatorGRPC(params.queryClient, params.logger, params.cache_role)
 	routerRole := params.router.Group("/api/role-command")
-	roleMiddlewareChain := roleMiddleware.Middleware()
-	requireAdmin := middlewares.RequireRoles("Admin_Admin_14")
+	requireAdmin := middlewares.RequireRoles("Admin", "ROLE_ADMIN", "Admin_Admin_14")
 
-	routerRole.POST("/create", roleMiddlewareChain(requireAdmin(handler.Create)))
-	routerRole.POST("/update/:id", roleMiddlewareChain(requireAdmin(handler.Update)))
-	routerRole.POST("/trashed/:id", roleMiddlewareChain(requireAdmin(handler.Trash)))
-	routerRole.POST("/restore/:id", roleMiddlewareChain(requireAdmin(handler.Restore)))
-	routerRole.DELETE("/permanent/:id", roleMiddlewareChain(requireAdmin(handler.DeletePermanent)))
-	routerRole.POST("/restore/all", roleMiddlewareChain(requireAdmin(handler.RestoreAll)))
-	routerRole.POST("/permanent/all", roleMiddlewareChain(requireAdmin(handler.DeleteAllPermanent)))
+	routerRole.POST("/create", roleMiddleware(requireAdmin(handler.Create)))
+	routerRole.POST("/update/:id", roleMiddleware(requireAdmin(handler.Update)))
+	routerRole.POST("/trashed/:id", roleMiddleware(requireAdmin(handler.Trash)))
+	routerRole.POST("/restore/:id", roleMiddleware(requireAdmin(handler.Restore)))
+	routerRole.DELETE("/permanent/:id", roleMiddleware(requireAdmin(handler.DeletePermanent)))
+	routerRole.POST("/restore/all", roleMiddleware(requireAdmin(handler.RestoreAll)))
+	routerRole.POST("/permanent/all", roleMiddleware(requireAdmin(handler.DeleteAllPermanent)))
 
 	return handler
 }
@@ -78,12 +77,15 @@ func NewRoleCommandHandleApi(params *roleCommandHandleDeps) *roleCommandHandlerA
 // @Router /api/role-command/create [post]
 func (h *roleCommandHandlerApi) Create(c echo.Context) error {
 	var body requests.CreateRoleRequest
-	if err := c.Bind(&body); err != nil { return errors.NewBadRequestError("Invalid request").WithInternal(err) }
+	if err := c.Bind(&body); err != nil {
+		return errors.NewBadRequestError("Invalid request").WithInternal(err)
+	}
 
 	ctx := c.Request().Context()
 	res, err := h.role.CreateRole(ctx, &pb.CreateRoleRequest{Name: body.Name})
-	if err != nil { return errors.ParseGrpcError(err) }
-
+	if err != nil {
+		return errors.ParseGrpcError(err)
+	}
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseRole(res))
 }
@@ -103,15 +105,20 @@ func (h *roleCommandHandlerApi) Create(c echo.Context) error {
 // @Router /api/role-command/update/{id} [post]
 func (h *roleCommandHandlerApi) Update(c echo.Context) error {
 	roleID, err := strconv.Atoi(c.Param("id"))
-	if err != nil || roleID <= 0 { return errors.NewBadRequestError("id is required") }
+	if err != nil || roleID <= 0 {
+		return errors.NewBadRequestError("id is required")
+	}
 
 	var body requests.UpdateRoleRequest
-	if err := c.Bind(&body); err != nil { return errors.NewBadRequestError("Invalid request").WithInternal(err) }
+	if err := c.Bind(&body); err != nil {
+		return errors.NewBadRequestError("Invalid request").WithInternal(err)
+	}
 
 	ctx := c.Request().Context()
 	res, err := h.role.UpdateRole(ctx, &pb.UpdateRoleRequest{Id: int32(roleID), Name: body.Name})
-	if err != nil { return errors.ParseGrpcError(err) }
-
+	if err != nil {
+		return errors.ParseGrpcError(err)
+	}
 
 	h.cache.DeleteCachedRole(ctx, roleID)
 
@@ -131,11 +138,15 @@ func (h *roleCommandHandlerApi) Update(c echo.Context) error {
 // @Router /api/role-command/trashed/{id} [post]
 func (h *roleCommandHandlerApi) Trash(c echo.Context) error {
 	roleID, err := strconv.Atoi(c.Param("id"))
-	if err != nil || roleID <= 0 { return errors.NewBadRequestError("id is required") }
+	if err != nil || roleID <= 0 {
+		return errors.NewBadRequestError("id is required")
+	}
 
 	ctx := c.Request().Context()
 	res, err := h.role.TrashedRole(ctx, &pb.FindByIdRoleRequest{RoleId: int32(roleID)})
-	if err != nil { return errors.ParseGrpcError(err) }
+	if err != nil {
+		return errors.ParseGrpcError(err)
+	}
 
 	h.cache.DeleteCachedRole(ctx, roleID)
 
@@ -155,12 +166,15 @@ func (h *roleCommandHandlerApi) Trash(c echo.Context) error {
 // @Router /api/role-command/restore/{id} [put]
 func (h *roleCommandHandlerApi) Restore(c echo.Context) error {
 	roleID, err := strconv.Atoi(c.Param("id"))
-	if err != nil || roleID <= 0 { return errors.NewBadRequestError("id is required") }
+	if err != nil || roleID <= 0 {
+		return errors.NewBadRequestError("id is required")
+	}
 
 	ctx := c.Request().Context()
 	res, err := h.role.RestoreRole(ctx, &pb.FindByIdRoleRequest{RoleId: int32(roleID)})
-	if err != nil { return errors.ParseGrpcError(err) }
-
+	if err != nil {
+		return errors.ParseGrpcError(err)
+	}
 
 	h.cache.DeleteCachedRole(ctx, roleID)
 
@@ -180,12 +194,15 @@ func (h *roleCommandHandlerApi) Restore(c echo.Context) error {
 // @Router /api/role-command/permanent/{id} [delete]
 func (h *roleCommandHandlerApi) DeletePermanent(c echo.Context) error {
 	roleID, err := strconv.Atoi(c.Param("id"))
-	if err != nil || roleID <= 0 { return errors.NewBadRequestError("id is required") }
+	if err != nil || roleID <= 0 {
+		return errors.NewBadRequestError("id is required")
+	}
 
 	ctx := c.Request().Context()
 	res, err := h.role.DeleteRolePermanent(ctx, &pb.FindByIdRoleRequest{RoleId: int32(roleID)})
-	if err != nil { return errors.ParseGrpcError(err) }
-
+	if err != nil {
+		return errors.ParseGrpcError(err)
+	}
 
 	h.cache.DeleteCachedRole(ctx, roleID)
 
@@ -204,8 +221,9 @@ func (h *roleCommandHandlerApi) DeletePermanent(c echo.Context) error {
 func (h *roleCommandHandlerApi) RestoreAll(c echo.Context) error {
 	ctx := c.Request().Context()
 	res, err := h.role.RestoreAllRole(ctx, &emptypb.Empty{})
-	if err != nil { return errors.ParseGrpcError(err) }
-
+	if err != nil {
+		return errors.ParseGrpcError(err)
+	}
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseRoleAll(res))
 }
@@ -222,10 +240,9 @@ func (h *roleCommandHandlerApi) RestoreAll(c echo.Context) error {
 func (h *roleCommandHandlerApi) DeleteAllPermanent(c echo.Context) error {
 	ctx := c.Request().Context()
 	res, err := h.role.DeleteAllRolePermanent(ctx, &emptypb.Empty{})
-	if err != nil { return errors.ParseGrpcError(err) }
-
+	if err != nil {
+		return errors.ParseGrpcError(err)
+	}
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseRoleAll(res))
 }
-
-

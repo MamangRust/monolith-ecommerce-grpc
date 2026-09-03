@@ -55,12 +55,19 @@ func NewLogger(service string, loggerProvider *log.LoggerProvider) (LoggerInterf
 			zapcore.DebugLevel,
 		)
 
-		otelCore := otelzap.NewCore(
-			service,
-			otelzap.WithLoggerProvider(loggerProvider),
-		)
+		cores := []zapcore.Core{stdoutCore}
 
-		core := zapcore.NewTee(stdoutCore, otelCore)
+		// Only attach the OTLP log bridge when a LoggerProvider is available;
+		// callers that have not initialized telemetry (e.g. the seeder) pass nil.
+		if loggerProvider != nil {
+			otelCore := otelzap.NewCore(
+				service,
+				otelzap.WithLoggerProvider(loggerProvider),
+			)
+			cores = append(cores, otelCore)
+		}
+
+		core := zapcore.NewTee(cores...)
 
 		logger := zap.New(core,
 			zap.AddCaller(),

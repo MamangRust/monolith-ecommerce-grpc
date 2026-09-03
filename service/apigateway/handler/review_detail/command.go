@@ -291,6 +291,15 @@ func (h *reviewDetailCommandHandleApi) RestoreAllReviewDetail(c echo.Context) er
 	return c.JSON(http.StatusOK, h.reviewMapper.ToApiResponseReviewAll(res))
 }
 
+// @Security Bearer
+// @Summary Permanently delete all review details
+// @Tags Review Detail Command
+// @Description Permanently delete all trashed review detail records
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.ApiResponseReviewAll "Successfully deleted all review details permanently"
+// @Failure 500 {object} errors.ErrorResponse "Failed to delete review details permanently"
+// @Router /api/review-detail-command/permanent/all [post]
 func (h *reviewDetailCommandHandleApi) DeleteAllReviewDetailPermanent(c echo.Context) error {
 	ctx := c.Request().Context()
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(ctx, "DeleteAllReviewDetailPermanent")

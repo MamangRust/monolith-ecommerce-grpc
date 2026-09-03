@@ -1,0 +1,148 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-config
+  namespace: ecommerce
+data:
+  otel-collector.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: "0.0.0.0:4317"
+          http:
+            endpoint: "0.0.0.0:4318"
+
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: "kafka-exporter"
+              scrape_interval: 5s
+              static_configs:
+                - targets: ["kafka-exporter.ecommerce.svc.cluster.local:9308"]
+            - job_name: "apigateway-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["apigateway.ecommerce.svc.cluster.local:8100"]
+            - job_name: "auth-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["auth.ecommerce.svc.cluster.local:8081"]
+            - job_name: "role-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["role.ecommerce.svc.cluster.local:8082"]
+            - job_name: "user-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["user.ecommerce.svc.cluster.local:8083"]
+            - job_name: "category-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["category.ecommerce.svc.cluster.local:8084"]
+            - job_name: "merchant-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["merchant.ecommerce.svc.cluster.local:8085"]
+            - job_name: "order-item-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["order-item.ecommerce.svc.cluster.local:8086"]
+            - job_name: "order-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["order.ecommerce.svc.cluster.local:8087"]
+            - job_name: "product-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["product.ecommerce.svc.cluster.local:8088"]
+            - job_name: "transaction-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["transaction.ecommerce.svc.cluster.local:8089"]
+            - job_name: "cart-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["cart.ecommerce.svc.cluster.local:8090"]
+            - job_name: "review-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["review.ecommerce.svc.cluster.local:8091"]
+            - job_name: "slider-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["slider.ecommerce.svc.cluster.local:8092"]
+            - job_name: "shipping-address-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["shipping-address.ecommerce.svc.cluster.local:8093"]
+            - job_name: "banner-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["banner.ecommerce.svc.cluster.local:8094"]
+            - job_name: "merchant-award-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["merchant-award.ecommerce.svc.cluster.local:8095"]
+            - job_name: "merchant-business-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["merchant-business.ecommerce.svc.cluster.local:8096"]
+            - job_name: "merchant-detail-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["merchant-detail.ecommerce.svc.cluster.local:8097"]
+            - job_name: "merchant-policy-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["merchant-policy.ecommerce.svc.cluster.local:8098"]
+            - job_name: "review-detail-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["review-detail.ecommerce.svc.cluster.local:8099"]
+            - job_name: "email-service"
+              metrics_path: "/metrics"
+              static_configs:
+                - targets: ["email.ecommerce.svc.cluster.local:8080"]
+
+    processors:
+      batch:
+
+    exporters:
+      otlp:
+        endpoint: "jaeger.ecommerce.svc.cluster.local:4317"
+        tls:
+          insecure: true
+      prometheus:
+        endpoint: "0.0.0.0:8889"
+        namespace: "java_app"
+        resource_to_telemetry_conversion:
+          enabled: true
+      otlphttp/loki:
+        endpoint: "http://loki.ecommerce.svc.cluster.local:3100/otlp"
+        tls:
+          insecure: true
+        timeout: 10s
+
+    extensions:
+      health_check:
+      pprof:
+      zpages:
+
+    service:
+      extensions: [health_check, pprof, zpages]
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp]
+
+        metrics:
+          receivers: [otlp, prometheus]
+          processors: [batch]
+          exporters: [prometheus]
+
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlphttp/loki]

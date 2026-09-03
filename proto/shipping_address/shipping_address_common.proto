@@ -22,6 +22,7 @@ message ShippingResponse {
     int32 shippingCost = 8;
     string created_at = 9;
     string updated_at = 10;
+    string courier = 11;
 }
 
 message ShippingResponseDeleteAt {
@@ -36,6 +37,7 @@ message ShippingResponseDeleteAt {
     string created_at = 9;
     string updated_at = 10;
     google.protobuf.StringValue deleted_at = 11;
+    string courier = 12;
 }
 
 message ApiResponseShipping {

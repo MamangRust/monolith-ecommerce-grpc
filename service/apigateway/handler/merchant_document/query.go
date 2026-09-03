@@ -4,9 +4,10 @@ import (
 	"net/http"
 	"strconv"
 
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_documents"
+	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 )
 
@@ -53,16 +54,22 @@ func NewMerchantDocumentQueryHandleApi(params *merchantDocumentQueryHandleDeps) 
 // @Router /api/merchant-document-query [get]
 func (h *merchantDocumentQueryHandlerApi) FindAll(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
 	res, err := h.client.FindAll(ctx, &pb.FindAllMerchantDocumentsRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
-	if err != nil { return h.handleGrpcError(err, "FindAll") }
+	if err != nil {
+		return h.handleGrpcError(err, "FindAll")
+	}
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponsePaginationMerchantDocument(res))
 }
@@ -80,11 +87,15 @@ func (h *merchantDocumentQueryHandlerApi) FindAll(c echo.Context) error {
 // @Router /api/merchant-document-query/{id} [get]
 func (h *merchantDocumentQueryHandlerApi) FindById(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	ctx := c.Request().Context()
 	res, err := h.client.FindById(ctx, &pb.FindMerchantDocumentByIdRequest{DocumentId: int32(id)})
-	if err != nil { return h.handleGrpcError(err, "FindById") }
+	if err != nil {
+		return h.handleGrpcError(err, "FindById")
+	}
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseMerchantDocument(res))
 }
@@ -103,16 +114,22 @@ func (h *merchantDocumentQueryHandlerApi) FindById(c echo.Context) error {
 // @Router /api/merchant-document-query/active [get]
 func (h *merchantDocumentQueryHandlerApi) FindByActive(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
 	res, err := h.client.FindAllActive(ctx, &pb.FindAllMerchantDocumentsRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
-	if err != nil { return h.handleGrpcError(err, "FindByActive") }
+	if err != nil {
+		return h.handleGrpcError(err, "FindByActive")
+	}
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponsePaginationMerchantDocument(res))
 }
@@ -131,21 +148,27 @@ func (h *merchantDocumentQueryHandlerApi) FindByActive(c echo.Context) error {
 // @Router /api/merchant-document-query/trashed [get]
 func (h *merchantDocumentQueryHandlerApi) FindByTrashed(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
 	res, err := h.client.FindAllTrashed(ctx, &pb.FindAllMerchantDocumentsRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
-	if err != nil { return h.handleGrpcError(err, "FindByTrashed") }
+	if err != nil {
+		return h.handleGrpcError(err, "FindByTrashed")
+	}
 
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponsePaginationMerchantDocumentDeleteAt(res))
 }
 
 func (h *merchantDocumentQueryHandlerApi) handleGrpcError(err error, operation string) error {
 	h.logger.Error("Failed to " + operation)
-	return echo.NewHTTPError(http.StatusInternalServerError, "Failed to "+operation)
+	return sharedErrors.ParseGrpcError(err)
 }

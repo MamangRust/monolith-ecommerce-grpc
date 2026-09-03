@@ -7,6 +7,7 @@ import (
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 )
 
@@ -32,7 +33,7 @@ func (h *transactionQueryHandler) FindAllTransactions(ctx context.Context, req *
 
 	data, total, err := h.service.FindAll(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	var transactions []*pb.TransactionResponse
@@ -57,7 +58,7 @@ func (h *transactionQueryHandler) FindByActive(ctx context.Context, req *pb.Find
 
 	data, total, err := h.service.FindActive(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	var transactions []*pb.TransactionResponse
@@ -82,7 +83,7 @@ func (h *transactionQueryHandler) FindByTrashed(ctx context.Context, req *pb.Fin
 
 	data, total, err := h.service.FindTrashed(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	var transactions []*pb.TransactionResponseDeleteAt
@@ -101,7 +102,7 @@ func (h *transactionQueryHandler) FindByTrashed(ctx context.Context, req *pb.Fin
 func (h *transactionQueryHandler) FindById(ctx context.Context, req *pb.FindByIdTransactionRequest) (*pb.ApiResponseTransaction, error) {
 	data, err := h.service.FindByID(ctx, int(req.GetId()))
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	return &pb.ApiResponseTransaction{
@@ -114,7 +115,7 @@ func (h *transactionQueryHandler) FindById(ctx context.Context, req *pb.FindById
 func (h *transactionQueryHandler) FindByOrderId(ctx context.Context, req *pb.FindByOrderIdTransactionRequest) (*pb.ApiResponseTransaction, error) {
 	data, err := h.service.FindByOrderID(ctx, int(req.GetOrderId()))
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	return &pb.ApiResponseTransaction{
@@ -134,7 +135,7 @@ func (h *transactionQueryHandler) FindByMerchant(ctx context.Context, req *pb.Fi
 
 	data, total, err := h.service.FindByMerchant(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, errors.ToGrpcError(err)
 	}
 
 	var transactions []*pb.TransactionResponse

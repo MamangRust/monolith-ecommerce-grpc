@@ -1,4 +1,3 @@
-basePath: /api/
 definitions:
   errors.ErrorResponse:
     properties:
@@ -12,11 +11,33 @@ definitions:
         type: string
       trace_id:
         type: string
+      type:
+        $ref: '#/definitions/errors.ErrorType'
       validations:
         items:
           $ref: '#/definitions/errors.ValidationError'
         type: array
     type: object
+  errors.ErrorType:
+    enum:
+    - INTERNAL
+    - NOT_FOUND
+    - BAD_REQUEST
+    - CONFLICT
+    - UNAUTHORIZED
+    - FORBIDDEN
+    - TIMEOUT
+    - UNAVAILABLE
+    type: string
+    x-enum-varnames:
+    - ErrorTypeInternal
+    - ErrorTypeNotFound
+    - ErrorTypeBadRequest
+    - ErrorTypeConflict
+    - ErrorTypeUnauthorized
+    - ErrorTypeForbidden
+    - ErrorTypeTimeout
+    - ErrorTypeUnavailable
   errors.ValidationError:
     properties:
       field:
@@ -190,6 +211,7 @@ definitions:
   requests.CreateOrderItemRequest:
     properties:
       price:
+        minimum: 0
         type: integer
       product_id:
         type: integer
@@ -484,13 +506,13 @@ definitions:
       order_item_id:
         type: integer
       price:
+        minimum: 0
         type: integer
       product_id:
         type: integer
       quantity:
         type: integer
     required:
-    - order_item_id
     - price
     - product_id
     - quantity
@@ -526,9 +548,7 @@ definitions:
         type: integer
     required:
     - comment
-    - name
     - rating
-    - review_id
     type: object
   requests.UpdateRoleRequest:
     properties:
@@ -560,10 +580,6 @@ definitions:
         type: integer
       shipping_method:
         type: string
-    required:
-    - courier
-    - shipping_cost
-    - shipping_method
     type: object
   requests.UpdateUserRequest:
     properties:
@@ -2487,14 +2503,14 @@ definitions:
     type: object
   response.ReviewDetailsResponse:
     properties:
+      caption:
+        type: string
       created_at:
         type: string
       id:
         type: integer
       review_id:
         type: integer
-      string:
-        type: string
       type:
         type: string
       updated_at:
@@ -2504,6 +2520,8 @@ definitions:
     type: object
   response.ReviewDetailsResponseDeleteAt:
     properties:
+      caption:
+        type: string
       created_at:
         type: string
       deleted_at:
@@ -2512,8 +2530,6 @@ definitions:
         type: integer
       review_id:
         type: integer
-      string:
-        type: string
       type:
         type: string
       updated_at:
@@ -2825,13 +2841,22 @@ definitions:
       updated_at:
         type: string
     type: object
-host: localhost:5000
 info:
   contact: {}
-  description: gRPC based Payment Gateway service
-  title: PaymentGateway gRPC
-  version: "1.0"
 paths:
+  /api/auth/hello:
+    get:
+      description: Simple liveness probe for the auth endpoint
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Hello
+          schema:
+            type: string
+      summary: Auth endpoint liveness check
+      tags:
+      - Auth
   /api/auth/login:
     post:
       consumes:
@@ -2951,9 +2976,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new banner with the provided details
+      description: Create a new banner
       parameters:
-      - description: Create banner request
+      - description: Banner details
         in: body
         name: request
         required: true
@@ -2963,11 +2988,11 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully created banner
+          description: Banner created
           schema:
             $ref: '#/definitions/response.ApiResponseBanner'
         "400":
-          description: Invalid request body or validation error
+          description: Invalid request
           schema:
             $ref: '#/definitions/errors.ErrorResponse'
         "500":
@@ -2983,7 +3008,7 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Permanently delete a banner record by its ID
+      description: Permanently delete a banner
       parameters:
       - description: Banner ID
         in: path
@@ -2994,48 +3019,48 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully deleted banner record permanently
+          description: Banner deleted
           schema:
             $ref: '#/definitions/response.ApiResponseBannerDelete'
         "400":
-          description: Invalid banner ID
+          description: Invalid ID
           schema:
             $ref: '#/definitions/errors.ErrorResponse'
         "500":
-          description: Failed to delete banner permanently
+          description: Failed to delete banner
           schema:
             $ref: '#/definitions/errors.ErrorResponse'
       security:
       - Bearer: []
-      summary: Permanently delete a banner
+      summary: Delete a banner permanently
       tags:
       - Banner Command
   /api/banner-command/permanent/all:
     post:
       consumes:
       - application/json
-      description: Permanently delete all trashed banner records
+      description: Permanently delete all banners
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully deleted all banners permanently
+          description: All banners deleted
           schema:
             $ref: '#/definitions/response.ApiResponseBannerAll'
         "500":
-          description: Failed to delete banners permanently
+          description: Failed to delete banners
           schema:
             $ref: '#/definitions/errors.ErrorResponse'
       security:
       - Bearer: []
-      summary: Permanently delete all trashed banners
+      summary: Delete all banners permanently
       tags:
       - Banner Command
   /api/banner-command/restore/{id}:
     post:
       consumes:
       - application/json
-      description: Restore a trashed banner record by its ID
+      description: Restore a trashed banner
       parameters:
       - description: Banner ID
         in: path
@@ -3046,11 +3071,11 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully restored banner
+          description: Banner restored
           schema:
             $ref: '#/definitions/response.ApiResponseBannerDeleteAt'
         "400":
-          description: Invalid banner ID
+          description: Invalid ID
           schema:
             $ref: '#/definitions/errors.ErrorResponse'
         "500":
@@ -3059,19 +3084,19 @@ paths:
             $ref: '#/definitions/errors.ErrorResponse'
       security:
       - Bearer: []
-      summary: Restore a trashed banner
+      summary: Restore a banner
       tags:
       - Banner Command
   /api/banner-command/restore/all:
     post:
       consumes:
       - application/json
-      description: Restore all trashed banner records
+      description: Restore all trashed banners
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully restored all banners
+          description: All banners restored
           schema:
             $ref: '#/definitions/response.ApiResponseBannerAll'
         "500":
@@ -3080,14 +3105,14 @@ paths:
             $ref: '#/definitions/errors.ErrorResponse'
       security:
       - Bearer: []
-      summary: Restore all trashed banners
+      summary: Restore all banners
       tags:
       - Banner Command
   /api/banner-command/trashed/{id}:
     post:
       consumes:
       - application/json
-      description: Move a banner record to trash by its ID
+      description: Move a banner to trash
       parameters:
       - description: Banner ID
         in: path
@@ -3098,36 +3123,36 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully moved banner to trash
+          description: Banner trashed
           schema:
             $ref: '#/definitions/response.ApiResponseBannerDeleteAt'
         "400":
-          description: Invalid banner ID
+          description: Invalid ID
           schema:
             $ref: '#/definitions/errors.ErrorResponse'
         "500":
-          description: Failed to move banner to trash
+          description: Failed to trash banner
           schema:
             $ref: '#/definitions/errors.ErrorResponse'
       security:
       - Bearer: []
-      summary: Move banner to trash
+      summary: Trash a banner
       tags:
       - Banner Command
   /api/banner-command/update/{id}:
     post:
       consumes:
       - application/json
-      description: Update an existing banner record with the provided details
+      description: Update an existing banner
       parameters:
       - description: Banner ID
         in: path
         name: id
         required: true
         type: integer
-      - description: Update banner request
+      - description: Banner details
         in: body
-        name: UpdateBannerRequest
+        name: request
         required: true
         schema:
           $ref: '#/definitions/requests.UpdateBannerRequest'
@@ -3135,11 +3160,11 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully updated banner
+          description: Banner updated
           schema:
             $ref: '#/definitions/response.ApiResponseBanner'
         "400":
-          description: Invalid request body or validation error
+          description: Invalid request
           schema:
             $ref: '#/definitions/errors.ErrorResponse'
         "500":
@@ -3148,7 +3173,7 @@ paths:
             $ref: '#/definitions/errors.ErrorResponse'
       security:
       - Bearer: []
-      summary: Update an existing banner
+      summary: Update a banner
       tags:
       - Banner Command
   /api/banner-query:
@@ -3191,7 +3216,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve a banner by ID
+      description: Retrieve a single banner by its ID
       parameters:
       - description: Banner ID
         in: path
@@ -3206,7 +3231,7 @@ paths:
           schema:
             $ref: '#/definitions/response.ApiResponseBanner'
         "400":
-          description: Invalid banner ID
+          description: Invalid ID
           schema:
             $ref: '#/definitions/errors.ErrorResponse'
         "500":
@@ -3215,7 +3240,7 @@ paths:
             $ref: '#/definitions/errors.ErrorResponse'
       security:
       - Bearer: []
-      summary: Find banner by ID
+      summary: Find a banner by ID
       tags:
       - Banner Query
   /api/banner-query/active:
@@ -3251,14 +3276,14 @@ paths:
             $ref: '#/definitions/errors.ErrorResponse'
       security:
       - Bearer: []
-      summary: Retrieve active banners
+      summary: Find active banners
       tags:
       - Banner Query
   /api/banner-query/trashed:
     get:
       consumes:
       - application/json
-      description: Retrieve a list of trashed banner records
+      description: Retrieve a list of trashed banners
       parameters:
       - default: 1
         description: Page number
@@ -3278,7 +3303,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: List of trashed banner data
+          description: List of trashed banners
           schema:
             $ref: '#/definitions/response.ApiResponsePaginationBannerDeleteAt'
         "500":
@@ -3287,10 +3312,110 @@ paths:
             $ref: '#/definitions/errors.ErrorResponse'
       security:
       - Bearer: []
-      summary: Retrieve trashed banners
+      summary: Find trashed banners
       tags:
       - Banner Query
-  /api/cart-command:
+  /api/cart-command/create:
+    post:
+      consumes:
+      - application/json
+      description: Add a product to the user's cart
+      parameters:
+      - description: Cart item details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.CreateCartRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully added to cart
+          schema:
+            $ref: '#/definitions/response.ApiResponseCart'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Failed to add to cart
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Add item to cart
+      tags:
+      - Cart Command
+  /api/cart-command/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a specific item from the user's cart
+      parameters:
+      - description: Cart ID to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.DeleteCartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully removed from cart
+          schema:
+            $ref: '#/definitions/response.ApiResponseCartDelete'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Failed to remove from cart
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Remove item from cart
+      tags:
+      - Cart Command
+  /api/cart-command/delete-all:
+    post:
+      consumes:
+      - application/json
+      description: Remove multiple specific items from the user's cart
+      parameters:
+      - description: Cart IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.DeleteAllCartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully removed all items from cart
+          schema:
+            $ref: '#/definitions/response.ApiResponseCartAll'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Failed to remove items from cart
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Remove multiple items from cart
+      tags:
+      - Cart Command
+  /api/cart-query:
     get:
       consumes:
       - application/json
@@ -3330,106 +3455,6 @@ paths:
       summary: Find all cart items
       tags:
       - Cart Query
-  /api/cart-query/create:
-    post:
-      consumes:
-      - application/json
-      description: Add a product to the user's cart
-      parameters:
-      - description: Cart item details
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/requests.CreateCartRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Successfully added to cart
-          schema:
-            $ref: '#/definitions/response.ApiResponseCart'
-        "400":
-          description: Invalid request body
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-        "500":
-          description: Failed to add to cart
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: Add item to cart
-      tags:
-      - Cart Command
-  /api/cart-query/delete:
-    delete:
-      consumes:
-      - application/json
-      description: Remove a specific item from the user's cart
-      parameters:
-      - description: Cart ID to delete
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/requests.DeleteCartRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully removed from cart
-          schema:
-            $ref: '#/definitions/response.ApiResponseCartDelete'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-        "500":
-          description: Failed to remove from cart
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: Remove item from cart
-      tags:
-      - Cart Command
-  /api/cart-query/delete-all:
-    post:
-      consumes:
-      - application/json
-      description: Remove multiple specific items from the user's cart
-      parameters:
-      - description: Cart IDs to delete
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/requests.DeleteAllCartRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully removed all items from cart
-          schema:
-            $ref: '#/definitions/response.ApiResponseCartAll'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-        "500":
-          description: Failed to remove items from cart
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: Remove multiple items from cart
-      tags:
-      - Cart Command
   /api/category-command/create:
     post:
       consumes:
@@ -5142,6 +5167,27 @@ paths:
       summary: Permanently delete merchant detail
       tags:
       - Merchant Detail Command
+  /api/merchant-detail-command/permanent/all:
+    post:
+      consumes:
+      - application/json
+      description: Permanently delete all trashed merchant detail records
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted all merchant details permanently
+          schema:
+            $ref: '#/definitions/response.ApiResponseMerchantAll'
+        "500":
+          description: Failed to delete merchant details permanently
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Permanently delete all trashed merchant details
+      tags:
+      - Merchant Detail Command
   /api/merchant-detail-command/restore/{id}:
     post:
       consumes:
@@ -5171,6 +5217,27 @@ paths:
       security:
       - Bearer: []
       summary: Restore trashed merchant detail
+      tags:
+      - Merchant Detail Command
+  /api/merchant-detail-command/restore/all:
+    post:
+      consumes:
+      - application/json
+      description: Restore all trashed merchant detail records
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully restored all merchant details
+          schema:
+            $ref: '#/definitions/response.ApiResponseMerchantAll'
+        "500":
+          description: Failed to restore merchant details
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Restore all trashed merchant details
       tags:
       - Merchant Detail Command
   /api/merchant-detail-command/trashed/{id}:
@@ -8028,6 +8095,27 @@ paths:
       summary: Permanently delete a review detail
       tags:
       - Review Detail Command
+  /api/review-detail-command/permanent/all:
+    post:
+      consumes:
+      - application/json
+      description: Permanently delete all trashed review detail records
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted all review details permanently
+          schema:
+            $ref: '#/definitions/response.ApiResponseReviewAll'
+        "500":
+          description: Failed to delete review details permanently
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Permanently delete all review details
+      tags:
+      - Review Detail Command
   /api/review-detail-command/restore/{id}:
     post:
       consumes:
@@ -8635,6 +8723,37 @@ paths:
       security:
       - Bearer: []
       summary: Restore all trashed roles
+      tags:
+      - Role Command
+  /api/role-command/trashed/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Move a role record to trash by its ID
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully moved role to trash
+          schema:
+            $ref: '#/definitions/response.ApiResponseRole'
+        "400":
+          description: Invalid role ID
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Failed to move role to trash
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Move role to trash
       tags:
       - Role Command
   /api/role-command/update/{id}:
@@ -9407,6 +9526,37 @@ paths:
       summary: Find all sliders
       tags:
       - Slider Query
+  /api/slider-query/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a slider by ID
+      parameters:
+      - description: Slider ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Slider data
+          schema:
+            $ref: '#/definitions/response.ApiResponseSlider'
+        "400":
+          description: Invalid slider ID
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Failed to retrieve slider data
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Find slider by ID
+      tags:
+      - Slider Query
   /api/slider-query/active:
     get:
       consumes:
@@ -9479,6 +9629,241 @@ paths:
       summary: Retrieve trashed sliders
       tags:
       - Slider Query
+  /api/transaction-command/create:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a new transaction with the provided details
+      parameters:
+      - description: Order ID
+        in: formData
+        name: order_id
+        required: true
+        type: integer
+      - description: Merchant ID
+        in: formData
+        name: merchant_id
+        required: true
+        type: integer
+      - description: Amount
+        in: formData
+        name: amount
+        required: true
+        type: integer
+      - description: User ID
+        in: formData
+        name: user_id
+        required: true
+        type: integer
+      - description: Payment Status
+        in: formData
+        name: status
+        required: true
+        type: string
+      - description: Payment Method
+        in: formData
+        name: method
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created transaction
+          schema:
+            $ref: '#/definitions/response.ApiResponseTransaction'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Failed to create transaction
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Create a new transaction
+      tags:
+      - Transaction Command
+  /api/transaction-command/permanent/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Permanently delete a transaction record by its ID
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted transaction record permanently
+          schema:
+            $ref: '#/definitions/response.ApiResponseTransactionDelete'
+        "400":
+          description: Invalid transaction ID
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Failed to delete transaction permanently
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Permanently delete a transaction
+      tags:
+      - Transaction Command
+  /api/transaction-command/permanent/all:
+    post:
+      consumes:
+      - application/json
+      description: Permanently delete all trashed transaction records
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted all transactions permanently
+          schema:
+            $ref: '#/definitions/response.ApiResponseTransactionAll'
+        "500":
+          description: Failed to delete transactions permanently
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Permanently delete all trashed transactions
+      tags:
+      - Transaction Command
+  /api/transaction-command/restore/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Restore a trashed transaction record by its ID
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully restored transaction
+          schema:
+            $ref: '#/definitions/response.ApiResponseTransactionDeleteAt'
+        "400":
+          description: Invalid transaction ID
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Failed to restore transaction
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Restore a trashed transaction
+      tags:
+      - Transaction Command
+  /api/transaction-command/restore/all:
+    post:
+      consumes:
+      - application/json
+      description: Restore all trashed transaction records
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully restored all transactions
+          schema:
+            $ref: '#/definitions/response.ApiResponseTransactionAll'
+        "500":
+          description: Failed to restore transactions
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Restore all trashed transactions
+      tags:
+      - Transaction Command
+  /api/transaction-command/trashed/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Move a transaction record to trash by its ID
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully moved transaction to trash
+          schema:
+            $ref: '#/definitions/response.ApiResponseTransactionDeleteAt'
+        "400":
+          description: Invalid transaction ID
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Failed to move transaction to trash
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Move transaction to trash
+      tags:
+      - Transaction Command
+  /api/transaction-command/update/{id}:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Update the payment status of a transaction
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Payment Status
+        in: formData
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated transaction
+          schema:
+            $ref: '#/definitions/response.ApiResponseTransaction'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Failed to update transaction
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Update transaction status
+      tags:
+      - Transaction Command
   /api/transaction-query:
     get:
       consumes:
@@ -10155,241 +10540,6 @@ paths:
       summary: Get yearly successful transaction amount
       tags:
       - Transaction Stats
-  /api/transaction/create:
-    post:
-      consumes:
-      - multipart/form-data
-      description: Create a new transaction with the provided details
-      parameters:
-      - description: Order ID
-        in: formData
-        name: order_id
-        required: true
-        type: integer
-      - description: Merchant ID
-        in: formData
-        name: merchant_id
-        required: true
-        type: integer
-      - description: Amount
-        in: formData
-        name: amount
-        required: true
-        type: integer
-      - description: User ID
-        in: formData
-        name: user_id
-        required: true
-        type: integer
-      - description: Payment Status
-        in: formData
-        name: status
-        required: true
-        type: string
-      - description: Payment Method
-        in: formData
-        name: method
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Successfully created transaction
-          schema:
-            $ref: '#/definitions/response.ApiResponseTransaction'
-        "400":
-          description: Invalid request parameters
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-        "500":
-          description: Failed to create transaction
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: Create a new transaction
-      tags:
-      - Transaction Command
-  /api/transaction/permanent/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Permanently delete a transaction record by its ID
-      parameters:
-      - description: Transaction ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully deleted transaction record permanently
-          schema:
-            $ref: '#/definitions/response.ApiResponseTransactionDelete'
-        "400":
-          description: Invalid transaction ID
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-        "500":
-          description: Failed to delete transaction permanently
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: Permanently delete a transaction
-      tags:
-      - Transaction Command
-  /api/transaction/permanent/all:
-    post:
-      consumes:
-      - application/json
-      description: Permanently delete all trashed transaction records
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully deleted all transactions permanently
-          schema:
-            $ref: '#/definitions/response.ApiResponseTransactionAll'
-        "500":
-          description: Failed to delete transactions permanently
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: Permanently delete all trashed transactions
-      tags:
-      - Transaction Command
-  /api/transaction/restore/{id}:
-    post:
-      consumes:
-      - application/json
-      description: Restore a trashed transaction record by its ID
-      parameters:
-      - description: Transaction ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully restored transaction
-          schema:
-            $ref: '#/definitions/response.ApiResponseTransactionDeleteAt'
-        "400":
-          description: Invalid transaction ID
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-        "500":
-          description: Failed to restore transaction
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: Restore a trashed transaction
-      tags:
-      - Transaction Command
-  /api/transaction/restore/all:
-    post:
-      consumes:
-      - application/json
-      description: Restore all trashed transaction records
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully restored all transactions
-          schema:
-            $ref: '#/definitions/response.ApiResponseTransactionAll'
-        "500":
-          description: Failed to restore transactions
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: Restore all trashed transactions
-      tags:
-      - Transaction Command
-  /api/transaction/trashed/{id}:
-    post:
-      consumes:
-      - application/json
-      description: Move a transaction record to trash by its ID
-      parameters:
-      - description: Transaction ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully moved transaction to trash
-          schema:
-            $ref: '#/definitions/response.ApiResponseTransactionDeleteAt'
-        "400":
-          description: Invalid transaction ID
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-        "500":
-          description: Failed to move transaction to trash
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: Move transaction to trash
-      tags:
-      - Transaction Command
-  /api/transaction/update/{id}:
-    post:
-      consumes:
-      - multipart/form-data
-      description: Update the payment status of a transaction
-      parameters:
-      - description: Transaction ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Payment Status
-        in: formData
-        name: status
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully updated transaction
-          schema:
-            $ref: '#/definitions/response.ApiResponseTransaction'
-        "400":
-          description: Invalid request parameters
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-        "500":
-          description: Failed to update transaction
-          schema:
-            $ref: '#/definitions/errors.ErrorResponse'
-      security:
-      - Bearer: []
-      summary: Update transaction status
-      tags:
-      - Transaction Command
   /api/user-command/create:
     post:
       consumes:
@@ -10728,9 +10878,4 @@ paths:
       summary: Retrieve trashed users
       tags:
       - User Query
-securityDefinitions:
-  BearerAuth:
-    in: Header
-    name: Authorization
-    type: apiKey
 swagger: "2.0"

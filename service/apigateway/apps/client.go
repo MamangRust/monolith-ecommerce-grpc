@@ -6,18 +6,19 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
+	_ "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/docs"
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler"
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
 	"github.com/MamangRust/monolith-ecommerce-pkg/auth"
 	"github.com/MamangRust/monolith-ecommerce-pkg/dotenv"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	pkgmiddleware "github.com/MamangRust/monolith-ecommerce-pkg/middleware"
 	otel_pkg "github.com/MamangRust/monolith-ecommerce-pkg/otel"
+	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"github.com/grafana/pyroscope-go"
@@ -31,6 +32,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 )
+
+// readinessRedis holds the gateway Redis client for the /ready endpoint.
+// It is set once Redis is initialised during client bootstrap.
+var readinessRedis *redis.Client
 
 const (
 	defaultServerPort             = ":5000"
@@ -48,6 +53,10 @@ const (
 	redisWriteTimeout = 3 * time.Second
 	redisPoolSize     = 10
 	redisMinIdleConns = 5
+
+	// authRateLimitRPS/Burst guard the credential endpoints against brute force.
+	authRateLimitRPS   = 10
+	authRateLimitBurst = 10
 )
 
 // @title Ecommerce gRPC
@@ -73,12 +82,12 @@ type Client struct {
 }
 
 type ClientConfig struct {
-	ServiceName    string   `mapstructure:"service_name"`
-	ServiceVersion string   `mapstructure:"service_version"`
-	Environment    string   `mapstructure:"environment"`
-	OtelEndpoint         string   `mapstructure:"otel_endpoint"`
-	OtelSamplingFraction float64  `mapstructure:"otel_sampling_fraction"`
-	ServerPort           string   `mapstructure:"server_port"`
+	ServiceName          string  `mapstructure:"service_name"`
+	ServiceVersion       string  `mapstructure:"service_version"`
+	Environment          string  `mapstructure:"environment"`
+	OtelEndpoint         string  `mapstructure:"otel_endpoint"`
+	OtelSamplingFraction float64 `mapstructure:"otel_sampling_fraction"`
+	ServerPort           string  `mapstructure:"server_port"`
 
 	AllowedOrigins []string `mapstructure:"allowed_origins"`
 }
@@ -88,6 +97,14 @@ type CacheManager struct {
 	logger logger.LoggerInterface
 }
 
+// ServiceAddresses maps gRPC service endpoints.
+//
+// Note on configuration: loadServiceAddresses reads these from the
+// GRPC_<NAME>_ADDR environment variables (e.g. GRPC_PRODUCT_ADDR) with
+// fallbacks to the defaults below. It deliberately does NOT rely on
+// viper.SetEnvPrefix: dotenv.Viper() already called AutomaticEnv() without a
+// prefix during bootstrap, so a later SetEnvPrefix has no effect on env
+// lookups. Reading each variable explicitly avoids that pitfall.
 type ServiceAddresses struct {
 	Auth             string `mapstructure:"auth"`
 	Role             string `mapstructure:"role"`
@@ -290,6 +307,7 @@ func NewClient(cfg *ClientConfig) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Redis: %w", err)
 	}
+	readinessRedis = redisClient
 
 	myKafka := kafka.NewKafka(logger, []string{viper.GetString("KAFKA_BROKERS")})
 
@@ -310,6 +328,7 @@ func NewClient(cfg *ClientConfig) (*Client, error) {
 		E:                  echoServer,
 		Logger:             logger,
 		Cache:              cacheStore,
+		Image:              upload_image.NewImageUpload(logger),
 	}
 	handler.NewHandler(handlerDeps)
 
@@ -331,34 +350,6 @@ func NewClient(cfg *ClientConfig) (*Client, error) {
 	)
 
 	return client, nil
-}
-
-func (c *Client) Run() error {
-	defer c.Cleanup()
-
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
-
-	errChan := make(chan error, 1)
-	go func() {
-		c.Logger.Info("HTTP server starting",
-			zap.String("port", c.Config.ServerPort),
-			zap.String("swagger", "http://localhost"+c.Config.ServerPort+"/swagger/index.html"),
-		)
-		if err := c.Echo.Start(c.Config.ServerPort); err != nil && err != http.ErrServerClosed {
-			errChan <- fmt.Errorf("failed to start server: %w", err)
-		}
-	}()
-
-	select {
-	case sig := <-quit:
-		c.Logger.Info("Received shutdown signal", zap.String("signal", sig.String()))
-	case err := <-errChan:
-		c.Logger.Error("Server error", zap.Error(err))
-		return err
-	}
-
-	return c.gracefulShutdown()
 }
 
 func (c *Client) gracefulShutdown() error {
@@ -453,7 +444,6 @@ func initTelemetry(cfg *ClientConfig) (*otel_pkg.Telemetry, error) {
 		SamplingFraction:       cfg.OtelSamplingFraction,
 	})
 
-
 	if err := telemetry.Init(context.Background()); err != nil {
 		return nil, err
 	}
@@ -494,6 +484,19 @@ func createEchoServer(cfg *ClientConfig) *echo.Echo {
 	e.HideBanner = true
 	e.HidePort = true
 
+	middlewares.RegisterErrorHandler(e)
+
+	httpMetrics, err := middlewares.NewHTTPMetrics(cfg.ServiceName)
+	if err != nil {
+		e.Logger.Warn("Failed to initialize HTTP metrics middleware")
+	}
+
+	// Trace must be the outermost middleware so metrics and handlers record
+	// within the traced request context (end-to-end trace linkage).
+	e.Use(middlewares.TraceMiddleware(cfg.ServiceName))
+	if httpMetrics != nil {
+		e.Use(httpMetrics.Middleware())
+	}
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
 	e.Use(createLoggerMiddleware())
@@ -502,10 +505,23 @@ func createEchoServer(cfg *ClientConfig) *echo.Echo {
 	e.Use(middleware.Gzip())
 	e.Use(createSecureMiddleware())
 
+	// Rate limit credential endpoints (login/register) before authentication so
+	// brute-force attempts receive 429 instead of reaching the auth service.
+	authRateLimiter := middlewares.NewRateLimiter(authRateLimitRPS, authRateLimitBurst)
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if strings.HasPrefix(c.Path(), "/api/auth/") {
+				return authRateLimiter.Limit(next)(c)
+			}
+			return next(c)
+		}
+	})
+
 	middlewares.WebSecurityConfig(e)
 
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 	e.GET("/health", createHealthHandler(cfg))
+	e.GET("/ready", createReadinessHandler(cfg))
 
 	return e
 }
@@ -517,6 +533,45 @@ func createHealthHandler(cfg *ClientConfig) echo.HandlerFunc {
 			"service": cfg.ServiceName,
 			"version": cfg.ServiceVersion,
 			"time":    time.Now().UTC(),
+		})
+	}
+}
+
+// createReadinessHandler reports whether the gateway is ready to serve traffic.
+// Unlike the liveness /health endpoint, it performs lightweight dependency
+// checks (Redis ping) so load balancers/orchestrators can distinguish a running
+// process from one that is actually able to serve requests.
+func createReadinessHandler(cfg *ClientConfig) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		if readinessRedis == nil {
+			return c.JSON(http.StatusServiceUnavailable, map[string]interface{}{
+				"status": "not_ready",
+				"deps": map[string]string{
+					"redis": "not_configured",
+				},
+			})
+		}
+
+		ctx, cancel := context.WithTimeout(c.Request().Context(), 2*time.Second)
+		defer cancel()
+
+		if err := readinessRedis.Ping(ctx).Err(); err != nil {
+			return c.JSON(http.StatusServiceUnavailable, map[string]interface{}{
+				"status": "not_ready",
+				"deps": map[string]string{
+					"redis": "down",
+				},
+			})
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"status":  "ready",
+			"service": cfg.ServiceName,
+			"version": cfg.ServiceVersion,
+			"deps": map[string]string{
+				"redis": "up",
+			},
+			"time": time.Now().UTC(),
 		})
 	}
 }
@@ -556,10 +611,10 @@ func createCORSMiddleware(allowedOrigins []string) echo.MiddlewareFunc {
 
 func createSecureMiddleware() echo.MiddlewareFunc {
 	return middleware.SecureWithConfig(middleware.SecureConfig{
-		XSSProtection:      "1; mode=block",
-		ContentTypeNosniff: "nosniff",
-		XFrameOptions:      "SAMEORIGIN",
-		HSTSMaxAge:         31536000,
+		XSSProtection:         "1; mode=block",
+		ContentTypeNosniff:    "nosniff",
+		XFrameOptions:         "SAMEORIGIN",
+		HSTSMaxAge:            31536000,
 		HSTSExcludeSubdomains: false,
 		HSTSPreloadEnabled:    true,
 		ReferrerPolicy:        "strict-origin-when-cross-origin",
@@ -598,36 +653,39 @@ func loadClientConfig() (*ClientConfig, error) {
 func loadServiceAddresses() (*ServiceAddresses, error) {
 	v := viper.GetViper()
 
-	v.SetEnvPrefix("grpc")
-	v.AutomaticEnv()
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-
-	v.SetDefault("auth", "auth:50051")
-	v.SetDefault("role", "role:50052")
-	v.SetDefault("user", "user:50055")
-	v.SetDefault("category", "category:50061")
-	v.SetDefault("merchant", "merchant:50054")
-	v.SetDefault("order_item", "order_item:50062")
-	v.SetDefault("order", "order:50063")
-	v.SetDefault("product", "product:50064")
-	v.SetDefault("transaction", "transaction:50058")
-	v.SetDefault("cart", "cart:50065")
-	v.SetDefault("review", "review:50066")
-	v.SetDefault("slider", "slider:50067")
-	v.SetDefault("shipping", "shipping:50068")
-	v.SetDefault("banner", "banner:50069")
-	v.SetDefault("merchant_award", "merchant_award:50070")
-	v.SetDefault("merchant_business", "merchant_business:50071")
-	v.SetDefault("merchant_detail", "merchant_detail:50072")
-	v.SetDefault("merchant_policy", "merchant_policy:50073")
-	v.SetDefault("review_detail", "review_detail:50074")
-
-	var cfg ServiceAddresses
-	if err := v.Unmarshal(&cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal grpc service addresses: %w", err)
+	// Read GRPC_<NAME>_ADDR explicitly. dotenv.Viper() already enabled
+	// AutomaticEnv() without a prefix, so SetEnvPrefix here would be a no-op;
+	// reading each env var directly is the reliable approach.
+	getAddr := func(name, fallback string) string {
+		if addr := v.GetString("GRPC_" + name + "_ADDR"); addr != "" {
+			return addr
+		}
+		return fallback
 	}
 
-	return &cfg, nil
+	cfg := &ServiceAddresses{
+		Auth:             getAddr("AUTH", "auth:50051"),
+		Role:             getAddr("ROLE", "role:50052"),
+		User:             getAddr("USER", "user:50053"),
+		Category:         getAddr("CATEGORY", "category:50054"),
+		Merchant:         getAddr("MERCHANT", "merchant:50055"),
+		OrderItem:        getAddr("ORDER_ITEM", "order-item:50056"),
+		Order:            getAddr("ORDER", "order:50057"),
+		Product:          getAddr("PRODUCT", "product:50058"),
+		Transaction:      getAddr("TRANSACTION", "transaction:50059"),
+		Cart:             getAddr("CART", "cart:50060"),
+		Review:           getAddr("REVIEW", "review:50061"),
+		Slider:           getAddr("SLIDER", "slider:50062"),
+		Shipping:         getAddr("SHIPPING", "shipping_address:50063"),
+		Banner:           getAddr("BANNER", "banner:50064"),
+		MerchantAward:    getAddr("MERCHANT_AWARD", "merchant_award:50065"),
+		MerchantBusiness: getAddr("MERCHANT_BUSINESS", "merchant_business:50066"),
+		MerchantDetail:   getAddr("MERCHANT_DETAIL", "merchant_detail:50067"),
+		MerchantPolicy:   getAddr("MERCHANT_POLICY", "merchant_policy:50068"),
+		ReviewDetail:     getAddr("REVIEW_DETAIL", "review_detail:50069"),
+	}
+
+	return cfg, nil
 }
 
 func createServiceConnections(addresses *ServiceAddresses, logger logger.LoggerInterface) (*handler.ServiceConnections, error) {
@@ -667,6 +725,12 @@ func createServiceConnections(addresses *ServiceAddresses, logger logger.LoggerI
 		*svc.conn = conn
 	}
 
+	// merchant service meng-host gRPC merchant_document pada listener yang sama.
+	// Tanpa alias ini ServiceConnections.MerchantDocument nil dan handler panic.
+	if connections.Merchant != nil {
+		connections.MerchantDocument = connections.Merchant
+	}
+
 	return connections, nil
 }
 
@@ -685,6 +749,9 @@ func createConnection(address, serviceName string, logger logger.LoggerInterface
 			Timeout:             defaultKeepaliveTimeoutClient,
 			PermitWithoutStream: true,
 		}),
+		// Propagate the current trace context to downstream gRPC services so a
+		// single request can be traced end-to-end from the gateway to the domain.
+		grpc.WithChainUnaryInterceptor(pkgmiddleware.TraceUnaryClientInterceptor()),
 	)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to %s service", serviceName), zap.Error(err))
@@ -726,7 +793,24 @@ func RunClient() (*Client, func(), error) {
 		return nil, nil, err
 	}
 
+	// Start the HTTP server. Previously RunClient never started the server, so
+	// the process sat idle in main() waiting for a signal while nothing bound
+	// ServerPort. Keep signal handling and cleanup in main() (via shutdown) to
+	// avoid double-Cleanup races with Run()'s own signal handlers.
+	go func() {
+		client.Logger.Info("HTTP server starting",
+			zap.String("port", client.Config.ServerPort),
+			zap.String("swagger", "http://localhost"+client.Config.ServerPort+"/swagger/index.html"),
+		)
+		if err := client.Echo.Start(client.Config.ServerPort); err != nil && err != http.ErrServerClosed {
+			client.Logger.Error("Failed to start HTTP server", zap.Error(err))
+		}
+	}()
+
 	shutdown := func() {
+		if err := client.gracefulShutdown(); err != nil {
+			client.Logger.Error("Graceful shutdown failed", zap.Error(err))
+		}
 		client.Cleanup()
 	}
 

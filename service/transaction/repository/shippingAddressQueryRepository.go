@@ -4,7 +4,6 @@ import (
 	"context"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	shippingaddress_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/shipping_address_errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 )
 
@@ -21,7 +20,8 @@ func NewShippingAddressQueryRepository(client pb.ShippingQueryServiceClient) *sh
 func (r *shippingAddressQueryRepository) FindByID(ctx context.Context, order_id int) (*db.GetShippingAddressByOrderIDRow, error) {
 	res, err := r.client.FindByOrder(ctx, &pb.FindByIdShippingRequest{Id: int32(order_id)})
 	if err != nil {
-		return nil, shippingaddress_errors.ErrFindShippingAddressByOrder.WithInternal(err)
+		// pertahankan status gRPC dari dependency service (NotFound -> 404, dst)
+		return nil, err
 	}
 
 	return &db.GetShippingAddressByOrderIDRow{

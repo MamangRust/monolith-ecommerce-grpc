@@ -10,6 +10,7 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	resettoken_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/reset_token_errors"
+	"github.com/jackc/pgx/v5"
 )
 
 
@@ -62,6 +63,25 @@ func (r *resetTokenRepository) FindByToken(ctx context.Context, code string) (*d
 //
 // Returns:
 //   - The created ResetTokenRecord, or an error if the operation fails.
+// CreateResetTokenInTx persists the reset token inside the given database
+// transaction so the caller can commit the token write and its outbox event
+// atomically (Phase 6 — transactional outbox).
+func (r *resetTokenRepository) CreateResetTokenInTx(ctx context.Context, tx pgx.Tx, req *requests.CreateResetTokenRequest) (*db.ResetToken, error) {
+	expiryDate, err := time.Parse("2006-01-02 15:04:05", req.ExpiredAt)
+	if err != nil {
+		return nil, err
+	}
+	res, err := r.db.WithTx(tx).CreateResetToken(ctx, db.CreateResetTokenParams{
+		UserID:     int64(req.UserID),
+		Token:      req.ResetToken,
+		ExpiryDate: expiryDate,
+	})
+	if err != nil {
+		return nil, resettoken_errors.ErrCreateResetToken.WithInternal(err)
+	}
+	return res, nil
+}
+
 func (r *resetTokenRepository) CreateResetToken(ctx context.Context, req *requests.CreateResetTokenRequest) (*db.ResetToken, error) {
 	expiryDate, err := time.Parse("2006-01-02 15:04:05", req.ExpiredAt)
 	if err != nil {

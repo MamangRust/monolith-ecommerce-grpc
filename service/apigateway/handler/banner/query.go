@@ -19,7 +19,6 @@ import (
 	"go.uber.org/zap"
 )
 
-
 type bannerQueryHandlerApi struct {
 	client        pb.BannerQueryServiceClient
 	logger        logger.LoggerInterface
@@ -55,7 +54,6 @@ func NewBannerQueryHandleApi(params *bannerQueryHandleDeps) *bannerQueryHandlerA
 	return handler
 }
 
-
 // @Security Bearer
 // @Summary Find all banners
 // @Tags Banner Query
@@ -79,9 +77,13 @@ func (h *bannerQueryHandlerApi) FindAll(c echo.Context) error {
 	c.SetRequest(c.Request().WithContext(ctx))
 
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	req := &requests.FindAllBanner{Page: page, PageSize: pageSize, Search: search}
@@ -106,6 +108,17 @@ func (h *bannerQueryHandlerApi) FindAll(c echo.Context) error {
 	return c.JSON(http.StatusOK, apiResponse)
 }
 
+// @Security Bearer
+// @Summary Find a banner by ID
+// @Tags Banner Query
+// @Description Retrieve a single banner by its ID
+// @Accept json
+// @Produce json
+// @Param id path int true "Banner ID"
+// @Success 200 {object} response.ApiResponseBanner "Banner data"
+// @Failure 400 {object} errors.ErrorResponse "Invalid ID"
+// @Failure 500 {object} errors.ErrorResponse "Failed to retrieve banner data"
+// @Router /api/banner-query/{id} [get]
 func (h *bannerQueryHandlerApi) FindById(c echo.Context) error {
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(
 		c.Request().Context(),
@@ -119,7 +132,7 @@ func (h *bannerQueryHandlerApi) FindById(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil || id <= 0 {
 		status = "error"
-		return h.handleError(c, errors.NewBadRequestError("Invalid ID"), span, "FindById")
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
 	}
 
 	if cachedData, found := h.cache.GetCachedBanner(ctx, id); found {
@@ -140,6 +153,18 @@ func (h *bannerQueryHandlerApi) FindById(c echo.Context) error {
 	return c.JSON(http.StatusOK, apiResponse)
 }
 
+// @Security Bearer
+// @Summary Find active banners
+// @Tags Banner Query
+// @Description Retrieve a list of active banners
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
+// @Success 200 {object} response.ApiResponsePaginationBannerDeleteAt "List of active banners"
+// @Failure 500 {object} errors.ErrorResponse "Failed to retrieve banner data"
+// @Router /api/banner-query/active [get]
 func (h *bannerQueryHandlerApi) FindByActive(c echo.Context) error {
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(
 		c.Request().Context(),
@@ -151,9 +176,13 @@ func (h *bannerQueryHandlerApi) FindByActive(c echo.Context) error {
 	c.SetRequest(c.Request().WithContext(ctx))
 
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	req := &requests.FindAllBanner{Page: page, PageSize: pageSize, Search: search}
@@ -178,6 +207,18 @@ func (h *bannerQueryHandlerApi) FindByActive(c echo.Context) error {
 	return c.JSON(http.StatusOK, apiResponse)
 }
 
+// @Security Bearer
+// @Summary Find trashed banners
+// @Tags Banner Query
+// @Description Retrieve a list of trashed banners
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param search query string false "Search query"
+// @Success 200 {object} response.ApiResponsePaginationBannerDeleteAt "List of trashed banners"
+// @Failure 500 {object} errors.ErrorResponse "Failed to retrieve banner data"
+// @Router /api/banner-query/trashed [get]
 func (h *bannerQueryHandlerApi) FindByTrashed(c echo.Context) error {
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(
 		c.Request().Context(),
@@ -189,9 +230,13 @@ func (h *bannerQueryHandlerApi) FindByTrashed(c echo.Context) error {
 	c.SetRequest(c.Request().WithContext(ctx))
 
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	req := &requests.FindAllBanner{Page: page, PageSize: pageSize, Search: search}
@@ -228,4 +273,3 @@ func (h *bannerQueryHandlerApi) handleError(c echo.Context, err error, span trac
 
 	return errors.HandleApiError(c, appErr, traceID)
 }
-

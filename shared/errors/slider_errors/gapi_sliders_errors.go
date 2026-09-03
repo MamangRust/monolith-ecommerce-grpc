@@ -3,12 +3,12 @@ package slider_errors
 import (
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 
-	"google.golang.org/grpc/codes"
+	"net/http"
 )
 
 var (
-	ErrGrpcInvalidID = errors.NewGrpcError("invalid ID", int(codes.InvalidArgument))
+	ErrGrpcInvalidID = errors.NewGrpcError("invalid ID", http.StatusBadRequest)
 
-	ErrGrpcValidateCreateSlider = errors.NewGrpcError("validation failed: invalid create slider request", int(codes.InvalidArgument))
-	ErrGrpcValidateUpdateSlider = errors.NewGrpcError("validation failed: invalid update slider request", int(codes.InvalidArgument))
+	ErrGrpcValidateCreateSlider = errors.NewGrpcError("validation failed: invalid create slider request", http.StatusBadRequest)
+	ErrGrpcValidateUpdateSlider = errors.NewGrpcError("validation failed: invalid update slider request", http.StatusBadRequest)
 )
