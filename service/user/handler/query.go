@@ -3,16 +3,17 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-user/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/user_errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/MamangRust/monolith-ecommerce-user/service"
+
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 )
 
 type userQueryHandler struct {
-	pb.UnimplementedUserQueryServiceServer
+	pbuser.UnimplementedUserQueryServiceServer
 	UserQuery service.UserQueryService
 	logger    logger.LoggerInterface
 }
@@ -24,7 +25,7 @@ func NewUserQueryHandler(svc service.UserQueryService, logger logger.LoggerInter
 	}
 }
 
-func (s *userQueryHandler) FindAll(ctx context.Context, request *pb.FindAllUserRequest) (*pb.ApiResponsePaginationUser, error) {
+func (s *userQueryHandler) FindAll(ctx context.Context, request *pbuser.FindAllUserRequest) (*pbuser.ApiResponsePaginationUser, error) {
 	page, pageSize := normalizePage(int(request.GetPage()), int(request.GetPageSize()))
 	search := request.GetSearch()
 
@@ -39,14 +40,14 @@ func (s *userQueryHandler) FindAll(ctx context.Context, request *pb.FindAllUserR
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoUsers := make([]*pb.UserResponse, len(users))
+	protoUsers := make([]*pbuser.UserResponse, len(users))
 	for i, user := range users {
 		protoUsers[i] = mapToProtoUserResponse(user)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationUser{
+	return &pbuser.ApiResponsePaginationUser{
 		Status:     "success",
 		Message:    "Successfully fetched users",
 		Data:       protoUsers,
@@ -54,7 +55,7 @@ func (s *userQueryHandler) FindAll(ctx context.Context, request *pb.FindAllUserR
 	}, nil
 }
 
-func (s *userQueryHandler) FindById(ctx context.Context, request *pb.FindByIdUserRequest) (*pb.ApiResponseUser, error) {
+func (s *userQueryHandler) FindById(ctx context.Context, request *pbuser.FindByIdUserRequest) (*pbuser.ApiResponseUser, error) {
 	id := int(request.GetId())
 	if id == 0 {
 		return nil, user_errors.ErrGrpcUserInvalidId
@@ -65,14 +66,14 @@ func (s *userQueryHandler) FindById(ctx context.Context, request *pb.FindByIdUse
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseUser{
+	return &pbuser.ApiResponseUser{
 		Status:  "success",
 		Message: "Successfully fetched user",
 		Data:    mapToProtoUserResponse(user),
 	}, nil
 }
 
-func (s *userQueryHandler) FindByActive(ctx context.Context, request *pb.FindAllUserRequest) (*pb.ApiResponsePaginationUserDeleteAt, error) {
+func (s *userQueryHandler) FindByActive(ctx context.Context, request *pbuser.FindAllUserRequest) (*pbuser.ApiResponsePaginationUserDeleteAt, error) {
 	page, pageSize := normalizePage(int(request.GetPage()), int(request.GetPageSize()))
 	search := request.GetSearch()
 
@@ -87,14 +88,14 @@ func (s *userQueryHandler) FindByActive(ctx context.Context, request *pb.FindAll
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoUsers := make([]*pb.UserResponseDeleteAt, len(users))
+	protoUsers := make([]*pbuser.UserResponseDeleteAt, len(users))
 	for i, user := range users {
 		protoUsers[i] = mapToProtoUserResponseDeleteAt(user)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationUserDeleteAt{
+	return &pbuser.ApiResponsePaginationUserDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched active users",
 		Data:       protoUsers,
@@ -102,7 +103,7 @@ func (s *userQueryHandler) FindByActive(ctx context.Context, request *pb.FindAll
 	}, nil
 }
 
-func (s *userQueryHandler) FindByTrashed(ctx context.Context, request *pb.FindAllUserRequest) (*pb.ApiResponsePaginationUserDeleteAt, error) {
+func (s *userQueryHandler) FindByTrashed(ctx context.Context, request *pbuser.FindAllUserRequest) (*pbuser.ApiResponsePaginationUserDeleteAt, error) {
 	page, pageSize := normalizePage(int(request.GetPage()), int(request.GetPageSize()))
 	search := request.GetSearch()
 
@@ -117,21 +118,21 @@ func (s *userQueryHandler) FindByTrashed(ctx context.Context, request *pb.FindAl
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoUsers := make([]*pb.UserResponseDeleteAt, len(users))
+	protoUsers := make([]*pbuser.UserResponseDeleteAt, len(users))
 	for i, user := range users {
 		protoUsers[i] = mapToProtoUserResponseDeleteAt(user)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationUserDeleteAt{
+	return &pbuser.ApiResponsePaginationUserDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched trashed users",
 		Data:       protoUsers,
 		Pagination: paginationMeta,
 	}, nil
 }
-func (s *userQueryHandler) FindByEmail(ctx context.Context, request *pb.FindByEmailRequest) (*pb.ApiResponseUserWithPassword, error) {
+func (s *userQueryHandler) FindByEmail(ctx context.Context, request *pbuser.FindByEmailRequest) (*pbuser.ApiResponseUserWithPassword, error) {
 	email := request.GetEmail()
 	if email == "" {
 		return nil, user_errors.ErrGrpcUserInvalidEmail
@@ -142,14 +143,14 @@ func (s *userQueryHandler) FindByEmail(ctx context.Context, request *pb.FindByEm
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseUserWithPassword{
+	return &pbuser.ApiResponseUserWithPassword{
 		Status:  "success",
 		Message: "Successfully fetched user by email",
 		Data:    mapToProtoUserResponseWithPassword(user),
 	}, nil
 }
 
-func (s *userQueryHandler) FindByVerificationCode(ctx context.Context, request *pb.FindByVerificationCodeRequest) (*pb.ApiResponseUser, error) {
+func (s *userQueryHandler) FindByVerificationCode(ctx context.Context, request *pbuser.FindByVerificationCodeRequest) (*pbuser.ApiResponseUser, error) {
 	code := request.GetVerificationCode()
 	if code == "" {
 		return nil, user_errors.ErrGrpcUserInvalidVerificationCode
@@ -160,7 +161,7 @@ func (s *userQueryHandler) FindByVerificationCode(ctx context.Context, request *
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseUser{
+	return &pbuser.ApiResponseUser{
 		Status:  "success",
 		Message: "Successfully fetched user by verification code",
 		Data:    mapToProtoUserResponse(user),

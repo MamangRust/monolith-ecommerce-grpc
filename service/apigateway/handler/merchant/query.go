@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	merchant_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/merchant"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
@@ -13,19 +13,16 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-
-
-
 type merchantQueryHandlerApi struct {
-	client pb.MerchantQueryServiceClient
-	logger logger.LoggerInterface
-	mapper apimapper.MerchantQueryResponseMapper
-	cache  merchant_cache.MerchantQueryCache
+	client     pbmerchant.MerchantQueryServiceClient
+	logger     logger.LoggerInterface
+	mapper     apimapper.MerchantQueryResponseMapper
+	cache      merchant_cache.MerchantQueryCache
 	apiHandler errors.ApiHandler
 }
 
 type merchantQueryHandleDeps struct {
-	client     pb.MerchantQueryServiceClient
+	client     pbmerchant.MerchantQueryServiceClient
 	router     *echo.Echo
 	logger     logger.LoggerInterface
 	mapper     apimapper.MerchantQueryResponseMapper
@@ -66,9 +63,13 @@ func NewMerchantQueryHandleApi(params *merchantQueryHandleDeps) *merchantQueryHa
 // @Router /api/merchant-query [get]
 func (h *merchantQueryHandlerApi) FindAll(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -78,13 +79,12 @@ func (h *merchantQueryHandlerApi) FindAll(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindAll(ctx, &pb.FindAllMerchantRequest{
+	res, err := h.client.FindAll(ctx, &pbmerchant.FindAllMerchantRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	apiResponse := h.mapper.ToApiResponsePaginationMerchant(res)
 	h.cache.SetCachedMerchants(ctx, req, apiResponse)
@@ -105,18 +105,19 @@ func (h *merchantQueryHandlerApi) FindAll(c echo.Context) error {
 // @Router /api/merchant-query/{id} [get]
 func (h *merchantQueryHandlerApi) FindById(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil { return errors.NewBadRequestError("id is required") }
+	if err != nil {
+		return errors.NewBadRequestError("id is required")
+	}
 
 	ctx := c.Request().Context()
 	if cachedData, found := h.cache.GetCachedMerchant(ctx, id); found {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindById(ctx, &pb.FindByIdMerchantRequest{Id: int32(id)})
+	res, err := h.client.FindById(ctx, &pbmerchant.FindByIdMerchantRequest{Id: int32(id)})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	apiResponse := h.mapper.ToApiResponseMerchant(res)
 	h.cache.SetCachedMerchant(ctx, apiResponse)
@@ -138,9 +139,13 @@ func (h *merchantQueryHandlerApi) FindById(c echo.Context) error {
 // @Router /api/merchant-query/active [get]
 func (h *merchantQueryHandlerApi) FindByActive(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -150,13 +155,12 @@ func (h *merchantQueryHandlerApi) FindByActive(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindByActive(ctx, &pb.FindAllMerchantRequest{
+	res, err := h.client.FindByActive(ctx, &pbmerchant.FindAllMerchantRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	// Note: MerchantQueryResponseMapper might need ToApiResponsePaginationMerchantDeleteAt
 	// consolidated into it, similar to Category.
@@ -180,9 +184,13 @@ func (h *merchantQueryHandlerApi) FindByActive(c echo.Context) error {
 // @Router /api/merchant-query/trashed [get]
 func (h *merchantQueryHandlerApi) FindByTrashed(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -192,18 +200,15 @@ func (h *merchantQueryHandlerApi) FindByTrashed(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindByTrashed(ctx, &pb.FindAllMerchantRequest{
+	res, err := h.client.FindByTrashed(ctx, &pbmerchant.FindAllMerchantRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
 
-
 	apiResponse := h.mapper.ToApiResponsePaginationMerchantDeleteAt(res)
 	h.cache.SetCachedMerchantTrashed(ctx, req, apiResponse)
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
-
-

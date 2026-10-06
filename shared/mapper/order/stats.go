@@ -1,7 +1,7 @@
 package orderapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pborder "github.com/MamangRust/monolith-ecommerce-pb/order"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
@@ -11,7 +11,7 @@ func NewOrderStatsResponseMapper() OrderStatsResponseMapper {
 	return &orderStatsResponseMapper{}
 }
 
-func (m *orderStatsResponseMapper) ToOrderMonthlyPrice(category *pb.OrderMonthlyResponse) *response.OrderMonthlyResponse {
+func (m *orderStatsResponseMapper) ToOrderMonthlyPrice(category *pborder.OrderMonthlyResponse) *response.OrderMonthlyResponse {
 	return &response.OrderMonthlyResponse{
 		Month:          category.Month,
 		OrderCount:     int(category.OrderCount),
@@ -20,7 +20,7 @@ func (m *orderStatsResponseMapper) ToOrderMonthlyPrice(category *pb.OrderMonthly
 	}
 }
 
-func (m *orderStatsResponseMapper) ToOrderMonthlyPrices(c []*pb.OrderMonthlyResponse) []*response.OrderMonthlyResponse {
+func (m *orderStatsResponseMapper) ToOrderMonthlyPrices(c []*pborder.OrderMonthlyResponse) []*response.OrderMonthlyResponse {
 	var mapped []*response.OrderMonthlyResponse
 	for _, item := range c {
 		mapped = append(mapped, m.ToOrderMonthlyPrice(item))
@@ -28,7 +28,7 @@ func (m *orderStatsResponseMapper) ToOrderMonthlyPrices(c []*pb.OrderMonthlyResp
 	return mapped
 }
 
-func (m *orderStatsResponseMapper) ToOrderYearlyPrice(category *pb.OrderYearlyResponse) *response.OrderYearlyResponse {
+func (m *orderStatsResponseMapper) ToOrderYearlyPrice(category *pborder.OrderYearlyResponse) *response.OrderYearlyResponse {
 	return &response.OrderYearlyResponse{
 		Year:               category.Year,
 		OrderCount:         int(category.OrderCount),
@@ -39,7 +39,7 @@ func (m *orderStatsResponseMapper) ToOrderYearlyPrice(category *pb.OrderYearlyRe
 	}
 }
 
-func (m *orderStatsResponseMapper) ToOrderYearlyPrices(c []*pb.OrderYearlyResponse) []*response.OrderYearlyResponse {
+func (m *orderStatsResponseMapper) ToOrderYearlyPrices(c []*pborder.OrderYearlyResponse) []*response.OrderYearlyResponse {
 	var mapped []*response.OrderYearlyResponse
 	for _, item := range c {
 		mapped = append(mapped, m.ToOrderYearlyPrice(item))
@@ -47,7 +47,7 @@ func (m *orderStatsResponseMapper) ToOrderYearlyPrices(c []*pb.OrderYearlyRespon
 	return mapped
 }
 
-func (m *orderStatsResponseMapper) ToResponseOrderMonthlyTotalRevenue(c *pb.OrderMonthlyTotalRevenueResponse) *response.OrderMonthlyTotalRevenueResponse {
+func (m *orderStatsResponseMapper) ToResponseOrderMonthlyTotalRevenue(c *pborder.OrderMonthlyTotalRevenueResponse) *response.OrderMonthlyTotalRevenueResponse {
 	return &response.OrderMonthlyTotalRevenueResponse{
 		Year:           c.Year,
 		Month:          c.Month,
@@ -57,7 +57,7 @@ func (m *orderStatsResponseMapper) ToResponseOrderMonthlyTotalRevenue(c *pb.Orde
 	}
 }
 
-func (m *orderStatsResponseMapper) ToResponseOrderMonthlyTotalRevenues(c []*pb.OrderMonthlyTotalRevenueResponse) []*response.OrderMonthlyTotalRevenueResponse {
+func (m *orderStatsResponseMapper) ToResponseOrderMonthlyTotalRevenues(c []*pborder.OrderMonthlyTotalRevenueResponse) []*response.OrderMonthlyTotalRevenueResponse {
 	var mapped []*response.OrderMonthlyTotalRevenueResponse
 	for _, item := range c {
 		mapped = append(mapped, m.ToResponseOrderMonthlyTotalRevenue(item))
@@ -65,14 +65,14 @@ func (m *orderStatsResponseMapper) ToResponseOrderMonthlyTotalRevenues(c []*pb.O
 	return mapped
 }
 
-func (m *orderStatsResponseMapper) ToResponseOrderYearlyTotalRevenue(c *pb.OrderYearlyTotalRevenueResponse) *response.OrderYearlyTotalRevenueResponse {
+func (m *orderStatsResponseMapper) ToResponseOrderYearlyTotalRevenue(c *pborder.OrderYearlyTotalRevenueResponse) *response.OrderYearlyTotalRevenueResponse {
 	return &response.OrderYearlyTotalRevenueResponse{
 		Year:         c.Year,
 		TotalRevenue: int(c.TotalRevenue),
 	}
 }
 
-func (m *orderStatsResponseMapper) ToResponseOrderYearlyTotalRevenues(c []*pb.OrderYearlyTotalRevenueResponse) []*response.OrderYearlyTotalRevenueResponse {
+func (m *orderStatsResponseMapper) ToResponseOrderYearlyTotalRevenues(c []*pborder.OrderYearlyTotalRevenueResponse) []*response.OrderYearlyTotalRevenueResponse {
 	var mapped []*response.OrderYearlyTotalRevenueResponse
 	for _, item := range c {
 		mapped = append(mapped, m.ToResponseOrderYearlyTotalRevenue(item))
@@ -80,7 +80,7 @@ func (m *orderStatsResponseMapper) ToResponseOrderYearlyTotalRevenues(c []*pb.Or
 	return mapped
 }
 
-func (m *orderStatsResponseMapper) ToApiResponseMonthlyOrder(pbResponse *pb.ApiResponseOrderMonthly) *response.ApiResponseOrderMonthly {
+func (m *orderStatsResponseMapper) ToApiResponseMonthlyOrder(pbResponse *pborder.ApiResponseOrderMonthly) *response.ApiResponseOrderMonthly {
 	return &response.ApiResponseOrderMonthly{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -88,7 +88,7 @@ func (m *orderStatsResponseMapper) ToApiResponseMonthlyOrder(pbResponse *pb.ApiR
 	}
 }
 
-func (m *orderStatsResponseMapper) ToApiResponseYearlyOrder(pbResponse *pb.ApiResponseOrderYearly) *response.ApiResponseOrderYearly {
+func (m *orderStatsResponseMapper) ToApiResponseYearlyOrder(pbResponse *pborder.ApiResponseOrderYearly) *response.ApiResponseOrderYearly {
 	return &response.ApiResponseOrderYearly{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -96,7 +96,7 @@ func (m *orderStatsResponseMapper) ToApiResponseYearlyOrder(pbResponse *pb.ApiRe
 	}
 }
 
-func (m *orderStatsResponseMapper) ToApiResponseMonthlyTotalRevenue(pbResponse *pb.ApiResponseOrderMonthlyTotalRevenue) *response.ApiResponseOrderMonthlyTotalRevenue {
+func (m *orderStatsResponseMapper) ToApiResponseMonthlyTotalRevenue(pbResponse *pborder.ApiResponseOrderMonthlyTotalRevenue) *response.ApiResponseOrderMonthlyTotalRevenue {
 	return &response.ApiResponseOrderMonthlyTotalRevenue{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -104,7 +104,7 @@ func (m *orderStatsResponseMapper) ToApiResponseMonthlyTotalRevenue(pbResponse *
 	}
 }
 
-func (m *orderStatsResponseMapper) ToApiResponseYearlyTotalRevenue(pbResponse *pb.ApiResponseOrderYearlyTotalRevenue) *response.ApiResponseOrderYearlyTotalRevenue {
+func (m *orderStatsResponseMapper) ToApiResponseYearlyTotalRevenue(pbResponse *pborder.ApiResponseOrderYearlyTotalRevenue) *response.ApiResponseOrderYearlyTotalRevenue {
 	return &response.ApiResponseOrderYearlyTotalRevenue{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,

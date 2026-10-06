@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package pb;
+package pb.order_item;
 
 import "google/protobuf/empty.proto";
 import "order_item/order_item_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/order_item";
 
 message CreateOrderItemRecordRequest {
     int32 order_id = 1;

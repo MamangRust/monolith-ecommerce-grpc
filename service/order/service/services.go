@@ -1,8 +1,8 @@
 package service
 
 import (
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-order/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-order/repository"
+	mencache "github.com/MamangRust/monolith-ecommerce-order/cache"
+	"github.com/MamangRust/monolith-ecommerce-order/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 )
@@ -43,7 +43,6 @@ func NewService(deps *Deps) *Service {
 			ShippingAddressRepository:    deps.Repositories.ShippingAddress,
 			TransactionCommandRepository: deps.Repositories.TransactionCommand,
 			ShippingQueryRepository:      deps.Repositories.ShippingQuery,
-			StockReservationRepository:   deps.Repositories.StockReservation,
 			Logger:                       deps.Logger,
 		}),
 		OrderStats: NewOrderStatsService(&OrderStatsServiceDeps{

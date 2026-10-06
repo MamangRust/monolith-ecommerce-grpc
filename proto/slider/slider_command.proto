@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package pb;
+package pb.slider;
 
 import "google/protobuf/empty.proto";
 import "slider/slider_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/slider";
 
 message CreateSliderRequest {
     string name = 1;

@@ -1,14 +1,15 @@
 package apps
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-slider/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-slider/handler"
-	"github.com/MamangRust/monolith-ecommerce-grpc-slider/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-slider/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/server"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/MamangRust/monolith-ecommerce-slider/cache"
+	"github.com/MamangRust/monolith-ecommerce-slider/handler"
+	"github.com/MamangRust/monolith-ecommerce-slider/repository"
+	"github.com/MamangRust/monolith-ecommerce-slider/service"
 	"google.golang.org/grpc"
+
+	pbslider "github.com/MamangRust/monolith-ecommerce-pb/slider"
 )
 
 func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
@@ -34,8 +35,8 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	})
 
 	srv.RegisterServices = func(gs *grpc.Server) {
-		pb.RegisterSliderQueryServiceServer(gs, h.SliderQuery)
-		pb.RegisterSliderCommandServiceServer(gs, h.SliderCommand)
+		pbslider.RegisterSliderQueryServiceServer(gs, h.SliderQuery)
+		pbslider.RegisterSliderCommandServiceServer(gs, h.SliderCommand)
 	}
 
 	return srv, nil

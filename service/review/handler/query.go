@@ -4,27 +4,29 @@ import (
 	"context"
 	"math"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-review/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-review/service"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
+	pbreview "github.com/MamangRust/monolith-ecommerce-pb/review"
 )
 
 type reviewQueryHandler struct {
-	pb.UnimplementedReviewQueryServiceServer
+	pbreview.UnimplementedReviewQueryServiceServer
 	reviewService service.ReviewQueryService
 	logger        logger.LoggerInterface
 }
 
-func NewReviewQueryHandler(reviewService service.ReviewQueryService, logger logger.LoggerInterface) pb.ReviewQueryServiceServer {
+func NewReviewQueryHandler(reviewService service.ReviewQueryService, logger logger.LoggerInterface) pbreview.ReviewQueryServiceServer {
 	return &reviewQueryHandler{
 		reviewService: reviewService,
 		logger:        logger,
 	}
 }
 
-func (h *reviewQueryHandler) FindAll(ctx context.Context, request *pb.FindAllReviewRequest) (*pb.ApiResponsePaginationReview, error) {
+func (h *reviewQueryHandler) FindAll(ctx context.Context, request *pbreview.FindAllReviewRequest) (*pbreview.ApiResponsePaginationReview, error) {
 	page := int(request.GetPage())
 	pageSize := int(request.GetPageSize())
 	search := request.GetSearch()
@@ -48,18 +50,18 @@ func (h *reviewQueryHandler) FindAll(ctx context.Context, request *pb.FindAllRev
 	}
 
 	var hMapping reviewHandleGrpc
-	protoReviews := hMapping.mapResponse(reviews).([]*pb.ReviewResponse)
+	protoReviews := hMapping.mapResponse(reviews).([]*pbreview.ReviewResponse)
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
-	paginationMeta := &pb.PaginationMeta{
+	paginationMeta := &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
 		TotalRecords: int32(*totalRecords),
 	}
 
-	return &pb.ApiResponsePaginationReview{
+	return &pbreview.ApiResponsePaginationReview{
 		Status:     "success",
 		Message:    "Successfully fetched reviews",
 		Data:       protoReviews,
@@ -67,7 +69,7 @@ func (h *reviewQueryHandler) FindAll(ctx context.Context, request *pb.FindAllRev
 	}, nil
 }
 
-func (h *reviewQueryHandler) FindByProduct(ctx context.Context, request *pb.FindAllReviewProductRequest) (*pb.ApiResponsePaginationReviewDetail, error) {
+func (h *reviewQueryHandler) FindByProduct(ctx context.Context, request *pbreview.FindAllReviewProductRequest) (*pbreview.ApiResponsePaginationReviewDetail, error) {
 	product_id := int(request.GetProductId())
 	page := int(request.GetPage())
 	pageSize := int(request.GetPageSize())
@@ -93,17 +95,17 @@ func (h *reviewQueryHandler) FindByProduct(ctx context.Context, request *pb.Find
 	}
 
 	var hMapping reviewHandleGrpc
-	protoReviews := hMapping.mapResponse(reviews).([]*pb.ReviewsDetailResponse)
+	protoReviews := hMapping.mapResponse(reviews).([]*pbreview.ReviewsDetailResponse)
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
-	paginationMeta := &pb.PaginationMeta{
+	paginationMeta := &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
 		TotalRecords: int32(*totalRecords),
 	}
 
-	return &pb.ApiResponsePaginationReviewDetail{
+	return &pbreview.ApiResponsePaginationReviewDetail{
 		Status:     "success",
 		Message:    "Successfully fetched product reviews",
 		Data:       protoReviews,
@@ -111,7 +113,7 @@ func (h *reviewQueryHandler) FindByProduct(ctx context.Context, request *pb.Find
 	}, nil
 }
 
-func (h *reviewQueryHandler) FindByMerchant(ctx context.Context, request *pb.FindAllReviewMerchantRequest) (*pb.ApiResponsePaginationReviewDetail, error) {
+func (h *reviewQueryHandler) FindByMerchant(ctx context.Context, request *pbreview.FindAllReviewMerchantRequest) (*pbreview.ApiResponsePaginationReviewDetail, error) {
 	merchant_id := int(request.GetMerchantId())
 	page := int(request.GetPage())
 	pageSize := int(request.GetPageSize())
@@ -137,17 +139,17 @@ func (h *reviewQueryHandler) FindByMerchant(ctx context.Context, request *pb.Fin
 	}
 
 	var hMapping reviewHandleGrpc
-	protoReviews := hMapping.mapResponse(reviews).([]*pb.ReviewsDetailResponse)
+	protoReviews := hMapping.mapResponse(reviews).([]*pbreview.ReviewsDetailResponse)
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
-	paginationMeta := &pb.PaginationMeta{
+	paginationMeta := &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
 		TotalRecords: int32(*totalRecords),
 	}
 
-	return &pb.ApiResponsePaginationReviewDetail{
+	return &pbreview.ApiResponsePaginationReviewDetail{
 		Status:     "success",
 		Message:    "Successfully fetched merchant reviews",
 		Data:       protoReviews,
@@ -155,7 +157,7 @@ func (h *reviewQueryHandler) FindByMerchant(ctx context.Context, request *pb.Fin
 	}, nil
 }
 
-func (h *reviewQueryHandler) FindByActive(ctx context.Context, request *pb.FindAllReviewRequest) (*pb.ApiResponsePaginationReviewDeleteAt, error) {
+func (h *reviewQueryHandler) FindByActive(ctx context.Context, request *pbreview.FindAllReviewRequest) (*pbreview.ApiResponsePaginationReviewDeleteAt, error) {
 	page := int(request.GetPage())
 	pageSize := int(request.GetPageSize())
 	search := request.GetSearch()
@@ -179,18 +181,18 @@ func (h *reviewQueryHandler) FindByActive(ctx context.Context, request *pb.FindA
 	}
 
 	var hMapping reviewHandleGrpc
-	protoReviews := hMapping.mapResponse(reviews).([]*pb.ReviewResponseDeleteAt)
+	protoReviews := hMapping.mapResponse(reviews).([]*pbreview.ReviewResponseDeleteAt)
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
-	paginationMeta := &pb.PaginationMeta{
+	paginationMeta := &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
 		TotalRecords: int32(*totalRecords),
 	}
 
-	return &pb.ApiResponsePaginationReviewDeleteAt{
+	return &pbreview.ApiResponsePaginationReviewDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched active reviews",
 		Data:       protoReviews,
@@ -198,7 +200,7 @@ func (h *reviewQueryHandler) FindByActive(ctx context.Context, request *pb.FindA
 	}, nil
 }
 
-func (h *reviewQueryHandler) FindByTrashed(ctx context.Context, request *pb.FindAllReviewRequest) (*pb.ApiResponsePaginationReviewDeleteAt, error) {
+func (h *reviewQueryHandler) FindByTrashed(ctx context.Context, request *pbreview.FindAllReviewRequest) (*pbreview.ApiResponsePaginationReviewDeleteAt, error) {
 	page := int(request.GetPage())
 	pageSize := int(request.GetPageSize())
 	search := request.GetSearch()
@@ -222,18 +224,18 @@ func (h *reviewQueryHandler) FindByTrashed(ctx context.Context, request *pb.Find
 	}
 
 	var hMapping reviewHandleGrpc
-	protoReviews := hMapping.mapResponse(reviews).([]*pb.ReviewResponseDeleteAt)
+	protoReviews := hMapping.mapResponse(reviews).([]*pbreview.ReviewResponseDeleteAt)
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
-	paginationMeta := &pb.PaginationMeta{
+	paginationMeta := &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
 		TotalRecords: int32(*totalRecords),
 	}
 
-	return &pb.ApiResponsePaginationReviewDeleteAt{
+	return &pbreview.ApiResponsePaginationReviewDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched trashed reviews",
 		Data:       protoReviews,

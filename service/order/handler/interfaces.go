@@ -3,50 +3,51 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	pborder "github.com/MamangRust/monolith-ecommerce-pb/order"
 )
 
 type OrderQueryHandler interface {
-	pb.OrderQueryServiceServer
+	pborder.OrderQueryServiceServer
 }
 
 type OrderCommandHandler interface {
-	pb.OrderCommandServiceServer
+	pborder.OrderCommandServiceServer
 }
 
 type OrderStatsHandler interface {
-	pb.OrderStatsServiceServer
+	pborder.OrderStatsServiceServer
 }
 
 type OrderStatsByMerchantHandler interface {
-	pb.OrderStatsServiceServer
+	pborder.OrderStatsByMerchantServiceServer
 }
 
 type OrderHandleGrpc interface {
-	FindMonthlyTotalRevenue(ctx context.Context, request *pb.FindYearMonthTotalRevenue) (*pb.ApiResponseOrderMonthlyTotalRevenue, error)
-	FindYearlyTotalRevenue(ctx context.Context, request *pb.FindYearTotalRevenue) (*pb.ApiResponseOrderYearlyTotalRevenue, error)
+	FindMonthlyTotalRevenue(ctx context.Context, request *pborder.FindYearMonthTotalRevenue) (*pborder.ApiResponseOrderMonthlyTotalRevenue, error)
+	FindYearlyTotalRevenue(ctx context.Context, request *pborder.FindYearTotalRevenue) (*pborder.ApiResponseOrderYearlyTotalRevenue, error)
 
-	FindMonthlyTotalRevenueByMerchant(ctx context.Context, request *pb.FindYearMonthTotalRevenueByMerchant) (*pb.ApiResponseOrderMonthlyTotalRevenue, error)
-	FindYearlyTotalRevenueByMerchant(ctx context.Context, request *pb.FindYearTotalRevenueByMerchant) (*pb.ApiResponseOrderYearlyTotalRevenue, error)
+	FindMonthlyTotalRevenueByMerchant(ctx context.Context, request *pborder.FindYearMonthTotalRevenueByMerchant) (*pborder.ApiResponseOrderMonthlyTotalRevenue, error)
+	FindYearlyTotalRevenueByMerchant(ctx context.Context, request *pborder.FindYearTotalRevenueByMerchant) (*pborder.ApiResponseOrderYearlyTotalRevenue, error)
 
-	FindMonthlyRevenue(ctx context.Context, request *pb.FindYearOrder) (*pb.ApiResponseOrderMonthly, error)
-	FindYearlyRevenue(ctx context.Context, request *pb.FindYearOrder) (*pb.ApiResponseOrderYearly, error)
+	FindMonthlyRevenue(ctx context.Context, request *pborder.FindYearOrder) (*pborder.ApiResponseOrderMonthly, error)
+	FindYearlyRevenue(ctx context.Context, request *pborder.FindYearOrder) (*pborder.ApiResponseOrderYearly, error)
 
-	FindMonthlyRevenueByMerchant(ctx context.Context, request *pb.FindYearOrderByMerchant) (*pb.ApiResponseOrderMonthly, error)
-	FindYearlyRevenueByMerchant(ctx context.Context, request *pb.FindYearOrderByMerchant) (*pb.ApiResponseOrderYearly, error)
+	FindMonthlyRevenueByMerchant(ctx context.Context, request *pborder.FindYearOrderByMerchant) (*pborder.ApiResponseOrderMonthly, error)
+	FindYearlyRevenueByMerchant(ctx context.Context, request *pborder.FindYearOrderByMerchant) (*pborder.ApiResponseOrderYearly, error)
 
-	FindAll(ctx context.Context, request *pb.FindAllOrderRequest) (*pb.ApiResponsePaginationOrder, error)
-	FindById(ctx context.Context, request *pb.FindByIdOrderRequest) (*pb.ApiResponseOrder, error)
+	FindAll(ctx context.Context, request *pborder.FindAllOrderRequest) (*pborder.ApiResponsePaginationOrder, error)
+	FindById(ctx context.Context, request *pborder.FindByIdOrderRequest) (*pborder.ApiResponseOrder, error)
 
-	FindByActive(ctx context.Context, request *pb.FindAllOrderRequest) (*pb.ApiResponsePaginationOrderDeleteAt, error)
-	FindByTrashed(ctx context.Context, request *pb.FindAllOrderRequest) (*pb.ApiResponsePaginationOrderDeleteAt, error)
+	FindByActive(ctx context.Context, request *pborder.FindAllOrderRequest) (*pborder.ApiResponsePaginationOrderDeleteAt, error)
+	FindByTrashed(ctx context.Context, request *pborder.FindAllOrderRequest) (*pborder.ApiResponsePaginationOrderDeleteAt, error)
 
-	Create(ctx context.Context, request *pb.CreateOrderRequest) (*pb.ApiResponseOrder, error)
-	Update(ctx context.Context, request *pb.UpdateOrderRequest) (*pb.ApiResponseOrder, error)
-	TrashedOrder(ctx context.Context, request *pb.FindByIdOrderRequest) (*pb.ApiResponseOrderDeleteAt, error)
-	RestoreOrder(ctx context.Context, request *pb.FindByIdOrderRequest) (*pb.ApiResponseOrderDeleteAt, error)
-	DeleteOrderPermanent(ctx context.Context, request *pb.FindByIdOrderRequest) (*pb.ApiResponseOrderDelete, error)
-	RestoreAllOrder(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseOrderAll, error)
-	DeleteAllOrderPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseOrderAll, error)
+	Create(ctx context.Context, request *pborder.CreateOrderRequest) (*pborder.ApiResponseOrder, error)
+	Update(ctx context.Context, request *pborder.UpdateOrderRequest) (*pborder.ApiResponseOrder, error)
+	TrashedOrder(ctx context.Context, request *pborder.FindByIdOrderRequest) (*pborder.ApiResponseOrderDeleteAt, error)
+	RestoreOrder(ctx context.Context, request *pborder.FindByIdOrderRequest) (*pborder.ApiResponseOrderDeleteAt, error)
+	DeleteOrderPermanent(ctx context.Context, request *pborder.FindByIdOrderRequest) (*pborder.ApiResponseOrderDelete, error)
+	RestoreAllOrder(ctx context.Context, _ *emptypb.Empty) (*pborder.ApiResponseOrderAll, error)
+	DeleteAllOrderPermanent(ctx context.Context, _ *emptypb.Empty) (*pborder.ApiResponseOrderAll, error)
 }

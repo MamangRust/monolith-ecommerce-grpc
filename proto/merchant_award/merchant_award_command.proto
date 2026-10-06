@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package pb;
+package pb.merchant_award;
 
 import "google/protobuf/empty.proto";
 import "merchant_award/merchant_award_common.proto";
 import "merchant/merchant_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/merchant_award";
 
 message CreateMerchantAwardRequest {
     int32 merchant_id = 1;
@@ -33,8 +33,8 @@ service MerchantAwardCommandService {
     rpc Update(UpdateMerchantAwardRequest) returns (ApiResponseMerchantAward);
     rpc TrashedMerchantAward(FindByIdMerchantAwardRequest) returns (ApiResponseMerchantAwardDeleteAt);
     rpc RestoreMerchantAward(FindByIdMerchantAwardRequest) returns (ApiResponseMerchantAwardDeleteAt);
-    rpc DeleteMerchantAwardPermanent(FindByIdMerchantAwardRequest) returns (ApiResponseMerchantDelete);
+    rpc DeleteMerchantAwardPermanent(FindByIdMerchantAwardRequest) returns (pb.merchant.ApiResponseMerchantDelete);
 
-    rpc RestoreAllMerchantAward(google.protobuf.Empty) returns (ApiResponseMerchantAll);
-    rpc DeleteAllMerchantAwardPermanent(google.protobuf.Empty) returns (ApiResponseMerchantAll);
+    rpc RestoreAllMerchantAward(google.protobuf.Empty) returns (pb.merchant.ApiResponseMerchantAll);
+    rpc DeleteAllMerchantAwardPermanent(google.protobuf.Empty) returns (pb.merchant.ApiResponseMerchantAll);
 }

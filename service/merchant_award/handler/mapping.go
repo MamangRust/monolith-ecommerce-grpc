@@ -4,9 +4,11 @@ import (
 	"math"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
+	pbmerchant_award "github.com/MamangRust/monolith-ecommerce-pb/merchant_award"
 )
 
 func normalizePage(page, pageSize int) (int, int) {
@@ -19,9 +21,9 @@ func normalizePage(page, pageSize int) (int, int) {
 	return page, pageSize
 }
 
-func createPaginationMeta(page, pageSize, totalRecords int) *pb.PaginationMeta {
+func createPaginationMeta(page, pageSize, totalRecords int) *pbcommon.PaginationMeta {
 	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
-	return &pb.PaginationMeta{
+	return &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
@@ -54,10 +56,10 @@ func formatTimestamp(v interface{}) string {
 	return ""
 }
 
-func mapToProtoMerchantAwardResponse(m interface{}) *pb.MerchantAwardResponse {
+func mapToProtoMerchantAwardResponse(m interface{}) *pbmerchant_award.MerchantAwardResponse {
 	switch v := m.(type) {
 	case *db.MerchantCertificationsAndAward:
-		return &pb.MerchantAwardResponse{
+		return &pbmerchant_award.MerchantAwardResponse{
 			Id:             v.MerchantCertificationID,
 			MerchantId:     v.MerchantID,
 			Title:          v.Title,
@@ -70,7 +72,7 @@ func mapToProtoMerchantAwardResponse(m interface{}) *pb.MerchantAwardResponse {
 			UpdatedAt:      formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetMerchantCertificationsAndAwardsRow:
-		return &pb.MerchantAwardResponse{
+		return &pbmerchant_award.MerchantAwardResponse{
 			Id:             v.MerchantCertificationID,
 			MerchantId:     v.MerchantID,
 			Title:          v.Title,
@@ -83,7 +85,7 @@ func mapToProtoMerchantAwardResponse(m interface{}) *pb.MerchantAwardResponse {
 			UpdatedAt:      formatTimestamp(v.UpdatedAt),
 		}
 	case *db.CreateMerchantCertificationOrAwardRow:
-		return &pb.MerchantAwardResponse{
+		return &pbmerchant_award.MerchantAwardResponse{
 			Id:             v.MerchantCertificationID,
 			MerchantId:     v.MerchantID,
 			Title:          v.Title,
@@ -96,7 +98,7 @@ func mapToProtoMerchantAwardResponse(m interface{}) *pb.MerchantAwardResponse {
 			UpdatedAt:      formatTimestamp(v.UpdatedAt),
 		}
 	case *db.UpdateMerchantCertificationOrAwardRow:
-		return &pb.MerchantAwardResponse{
+		return &pbmerchant_award.MerchantAwardResponse{
 			Id:             v.MerchantCertificationID,
 			MerchantId:     v.MerchantID,
 			Title:          v.Title,
@@ -109,7 +111,7 @@ func mapToProtoMerchantAwardResponse(m interface{}) *pb.MerchantAwardResponse {
 			UpdatedAt:      formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetMerchantCertificationOrAwardRow:
-		return &pb.MerchantAwardResponse{
+		return &pbmerchant_award.MerchantAwardResponse{
 			Id:             v.MerchantCertificationID,
 			MerchantId:     v.MerchantID,
 			Title:          v.Title,
@@ -126,13 +128,13 @@ func mapToProtoMerchantAwardResponse(m interface{}) *pb.MerchantAwardResponse {
 	}
 }
 
-func mapToProtoMerchantAwardResponseDeleteAt(m interface{}) *pb.MerchantAwardResponseDeleteAt {
-	var res *pb.MerchantAwardResponseDeleteAt
+func mapToProtoMerchantAwardResponseDeleteAt(m interface{}) *pbmerchant_award.MerchantAwardResponseDeleteAt {
+	var res *pbmerchant_award.MerchantAwardResponseDeleteAt
 	var deletedAt interface{}
 
 	switch v := m.(type) {
 	case *db.MerchantCertificationsAndAward:
-		res = &pb.MerchantAwardResponseDeleteAt{
+		res = &pbmerchant_award.MerchantAwardResponseDeleteAt{
 			Id:             v.MerchantCertificationID,
 			MerchantId:     v.MerchantID,
 			Title:          v.Title,
@@ -146,7 +148,7 @@ func mapToProtoMerchantAwardResponseDeleteAt(m interface{}) *pb.MerchantAwardRes
 		}
 		deletedAt = v.DeletedAt
 	case *db.GetMerchantCertificationsAndAwardsActiveRow:
-		res = &pb.MerchantAwardResponseDeleteAt{
+		res = &pbmerchant_award.MerchantAwardResponseDeleteAt{
 			Id:             v.MerchantCertificationID,
 			MerchantId:     v.MerchantID,
 			Title:          v.Title,
@@ -160,7 +162,7 @@ func mapToProtoMerchantAwardResponseDeleteAt(m interface{}) *pb.MerchantAwardRes
 		}
 		deletedAt = v.DeletedAt
 	case *db.GetMerchantCertificationsAndAwardsTrashedRow:
-		res = &pb.MerchantAwardResponseDeleteAt{
+		res = &pbmerchant_award.MerchantAwardResponseDeleteAt{
 			Id:             v.MerchantCertificationID,
 			MerchantId:     v.MerchantID,
 			Title:          v.Title,

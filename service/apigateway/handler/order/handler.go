@@ -2,12 +2,12 @@ package orderhandler
 
 import (
 	order_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/order"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pborder "github.com/MamangRust/monolith-ecommerce-pb/order"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/order"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc"
-	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 )
 
 type DepsOrder struct {
@@ -21,8 +21,9 @@ func RegisterOrderHandler(deps *DepsOrder) {
 	mapper := apimapper.NewOrderResponseMapper()
 	cache := order_cache.OrderNewMencache(deps.CacheStore)
 
-	queryClient := pb.NewOrderQueryServiceClient(deps.Client)
-	statsClient := pb.NewOrderStatsServiceClient(deps.Client)
+	queryClient := pborder.NewOrderQueryServiceClient(deps.Client)
+	statsClient := pborder.NewOrderStatsServiceClient(deps.Client)
+	statsByMerchantClient := pborder.NewOrderStatsByMerchantServiceClient(deps.Client)
 
 	NewOrderQueryHandleApi(&orderQueryHandleDeps{
 		client: queryClient,
@@ -33,7 +34,7 @@ func RegisterOrderHandler(deps *DepsOrder) {
 	})
 
 	NewOrderCommandHandleApi(&orderCommandHandleDeps{
-		client: pb.NewOrderCommandServiceClient(deps.Client),
+		client: pborder.NewOrderCommandServiceClient(deps.Client),
 		router: deps.E,
 		logger: deps.Logger,
 		mapper: mapper.CommandMapper(),
@@ -41,11 +42,12 @@ func RegisterOrderHandler(deps *DepsOrder) {
 	})
 
 	NewOrderStatsHandleApi(&orderStatsHandleDeps{
-		client:            statsClient,
-		router:            deps.E,
-		logger:            deps.Logger,
-		mapper:            mapper.StatsMapper(),
-		cache:             cache,
-		merchantStatsCache: cache,
+		statsClient:           statsClient,
+		statsByMerchantClient: statsByMerchantClient,
+		router:                deps.E,
+		logger:                deps.Logger,
+		mapper:                mapper.StatsMapper(),
+		cache:                 cache,
+		merchantStatsCache:    cache,
 	})
 }

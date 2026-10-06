@@ -3,30 +3,32 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-review-detail/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-review-detail/service"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	reviewdetail_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/review_detail"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	pbreview "github.com/MamangRust/monolith-ecommerce-pb/review"
+	pbreview_detail "github.com/MamangRust/monolith-ecommerce-pb/review_detail"
 )
 
 type reviewDetailCommandHandler struct {
-	pb.UnimplementedReviewDetailCommandServiceServer
+	pbreview_detail.UnimplementedReviewDetailCommandServiceServer
 	service service.ReviewDetailCommandService
 	logger  logger.LoggerInterface
 }
 
-func NewReviewDetailCommandHandler(service service.ReviewDetailCommandService, logger logger.LoggerInterface) pb.ReviewDetailCommandServiceServer {
+func NewReviewDetailCommandHandler(service service.ReviewDetailCommandService, logger logger.LoggerInterface) pbreview_detail.ReviewDetailCommandServiceServer {
 	return &reviewDetailCommandHandler{
 		service: service,
 		logger:  logger,
 	}
 }
 
-func (s *reviewDetailCommandHandler) Create(ctx context.Context, request *pb.CreateReviewDetailRequest) (*pb.ApiResponseReviewDetail, error) {
+func (s *reviewDetailCommandHandler) Create(ctx context.Context, request *pbreview_detail.CreateReviewDetailRequest) (*pbreview_detail.ApiResponseReviewDetail, error) {
 	req := &requests.CreateReviewDetailRequest{
 		ReviewID: int(request.GetReviewId()),
 		Type:     request.GetType(),
@@ -43,7 +45,7 @@ func (s *reviewDetailCommandHandler) Create(ctx context.Context, request *pb.Cre
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoReviewDetail := &pb.ReviewDetailsResponse{
+	protoReviewDetail := &pbreview_detail.ReviewDetailsResponse{
 		Id:        int32(reviewDetail.ReviewDetailID),
 		ReviewId:  int32(reviewDetail.ReviewID),
 		Type:      reviewDetail.Type,
@@ -53,14 +55,14 @@ func (s *reviewDetailCommandHandler) Create(ctx context.Context, request *pb.Cre
 		UpdatedAt: reviewDetail.UpdatedAt.Time.Format("2006-01-02"),
 	}
 
-	return &pb.ApiResponseReviewDetail{
+	return &pbreview_detail.ApiResponseReviewDetail{
 		Status:  "success",
 		Message: "Successfully created review detail",
 		Data:    protoReviewDetail,
 	}, nil
 }
 
-func (s *reviewDetailCommandHandler) Update(ctx context.Context, request *pb.UpdateReviewDetailRequest) (*pb.ApiResponseReviewDetail, error) {
+func (s *reviewDetailCommandHandler) Update(ctx context.Context, request *pbreview_detail.UpdateReviewDetailRequest) (*pbreview_detail.ApiResponseReviewDetail, error) {
 	id := int(request.GetReviewDetailId())
 
 	if id == 0 {
@@ -83,7 +85,7 @@ func (s *reviewDetailCommandHandler) Update(ctx context.Context, request *pb.Upd
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoReviewDetail := &pb.ReviewDetailsResponse{
+	protoReviewDetail := &pbreview_detail.ReviewDetailsResponse{
 		Id:        int32(reviewDetail.ReviewDetailID),
 		ReviewId:  int32(reviewDetail.ReviewID),
 		Type:      reviewDetail.Type,
@@ -93,14 +95,14 @@ func (s *reviewDetailCommandHandler) Update(ctx context.Context, request *pb.Upd
 		UpdatedAt: reviewDetail.UpdatedAt.Time.Format("2006-01-02"),
 	}
 
-	return &pb.ApiResponseReviewDetail{
+	return &pbreview_detail.ApiResponseReviewDetail{
 		Status:  "success",
 		Message: "Successfully updated review detail",
 		Data:    protoReviewDetail,
 	}, nil
 }
 
-func (s *reviewDetailCommandHandler) TrashedReviewDetail(ctx context.Context, request *pb.FindByIdReviewDetailRequest) (*pb.ApiResponseReviewDetailDeleteAt, error) {
+func (s *reviewDetailCommandHandler) TrashedReviewDetail(ctx context.Context, request *pbreview_detail.FindByIdReviewDetailRequest) (*pbreview_detail.ApiResponseReviewDetailDeleteAt, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -117,7 +119,7 @@ func (s *reviewDetailCommandHandler) TrashedReviewDetail(ctx context.Context, re
 		deletedAt = reviewDetail.DeletedAt.Time.Format("2006-01-02")
 	}
 
-	protoReviewDetail := &pb.ReviewDetailsResponseDeleteAt{
+	protoReviewDetail := &pbreview_detail.ReviewDetailsResponseDeleteAt{
 		Id:        int32(reviewDetail.ReviewDetailID),
 		ReviewId:  int32(reviewDetail.ReviewID),
 		Type:      reviewDetail.Type,
@@ -128,14 +130,14 @@ func (s *reviewDetailCommandHandler) TrashedReviewDetail(ctx context.Context, re
 		DeletedAt: &wrapperspb.StringValue{Value: deletedAt},
 	}
 
-	return &pb.ApiResponseReviewDetailDeleteAt{
+	return &pbreview_detail.ApiResponseReviewDetailDeleteAt{
 		Status:  "success",
 		Message: "Successfully trashed review detail",
 		Data:    protoReviewDetail,
 	}, nil
 }
 
-func (s *reviewDetailCommandHandler) RestoreReviewDetail(ctx context.Context, request *pb.FindByIdReviewDetailRequest) (*pb.ApiResponseReviewDetailDeleteAt, error) {
+func (s *reviewDetailCommandHandler) RestoreReviewDetail(ctx context.Context, request *pbreview_detail.FindByIdReviewDetailRequest) (*pbreview_detail.ApiResponseReviewDetailDeleteAt, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -152,7 +154,7 @@ func (s *reviewDetailCommandHandler) RestoreReviewDetail(ctx context.Context, re
 		deletedAt = reviewDetail.DeletedAt.Time.Format("2006-01-02")
 	}
 
-	protoReviewDetail := &pb.ReviewDetailsResponseDeleteAt{
+	protoReviewDetail := &pbreview_detail.ReviewDetailsResponseDeleteAt{
 		Id:        int32(reviewDetail.ReviewDetailID),
 		ReviewId:  int32(reviewDetail.ReviewID),
 		Type:      reviewDetail.Type,
@@ -163,14 +165,14 @@ func (s *reviewDetailCommandHandler) RestoreReviewDetail(ctx context.Context, re
 		DeletedAt: &wrapperspb.StringValue{Value: deletedAt},
 	}
 
-	return &pb.ApiResponseReviewDetailDeleteAt{
+	return &pbreview_detail.ApiResponseReviewDetailDeleteAt{
 		Status:  "success",
 		Message: "Successfully restored review detail",
 		Data:    protoReviewDetail,
 	}, nil
 }
 
-func (s *reviewDetailCommandHandler) DeleteReviewDetailPermanent(ctx context.Context, request *pb.FindByIdReviewDetailRequest) (*pb.ApiResponseReviewDelete, error) {
+func (s *reviewDetailCommandHandler) DeleteReviewDetailPermanent(ctx context.Context, request *pbreview_detail.FindByIdReviewDetailRequest) (*pbreview.ApiResponseReviewDelete, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -182,31 +184,31 @@ func (s *reviewDetailCommandHandler) DeleteReviewDetailPermanent(ctx context.Con
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseReviewDelete{
+	return &pbreview.ApiResponseReviewDelete{
 		Status:  "success",
 		Message: "Successfully deleted review detail permanently",
 	}, nil
 }
 
-func (s *reviewDetailCommandHandler) RestoreAllReviewDetail(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseReviewAll, error) {
+func (s *reviewDetailCommandHandler) RestoreAllReviewDetail(ctx context.Context, _ *emptypb.Empty) (*pbreview.ApiResponseReviewAll, error) {
 	_, err := s.service.RestoreAll(ctx)
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseReviewAll{
+	return &pbreview.ApiResponseReviewAll{
 		Status:  "success",
 		Message: "Successfully restored all review details",
 	}, nil
 }
 
-func (s *reviewDetailCommandHandler) DeleteAllReviewDetailPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseReviewAll, error) {
+func (s *reviewDetailCommandHandler) DeleteAllReviewDetailPermanent(ctx context.Context, _ *emptypb.Empty) (*pbreview.ApiResponseReviewAll, error) {
 	_, err := s.service.DeleteAll(ctx)
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseReviewAll{
+	return &pbreview.ApiResponseReviewAll{
 		Status:  "success",
 		Message: "Successfully deleted all review details permanently",
 	}, nil

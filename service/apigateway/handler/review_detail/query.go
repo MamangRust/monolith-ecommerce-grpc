@@ -4,12 +4,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	reviewdetail_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/review_detail"
+	pbreview "github.com/MamangRust/monolith-ecommerce-pb/review"
+	pbreview_detail "github.com/MamangRust/monolith-ecommerce-pb/review_detail"
+	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/review_detail"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
+	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/review_detail"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"github.com/labstack/echo/v4"
 	"go.opentelemetry.io/otel/trace"
@@ -17,7 +18,7 @@ import (
 )
 
 type reviewDetailQueryHandleApi struct {
-	client        pb.ReviewDetailQueryServiceClient
+	client        pbreview_detail.ReviewDetailQueryServiceClient
 	logger        logger.LoggerInterface
 	mapper        apimapper.ReviewDetailQueryResponseMapper
 	cache         reviewdetail_cache.ReviewDetailQueryCache
@@ -25,7 +26,7 @@ type reviewDetailQueryHandleApi struct {
 }
 
 type reviewDetailQueryHandleDeps struct {
-	client        pb.ReviewDetailQueryServiceClient
+	client        pbreview_detail.ReviewDetailQueryServiceClient
 	router        *echo.Echo
 	logger        logger.LoggerInterface
 	mapper        apimapper.ReviewDetailQueryResponseMapper
@@ -83,7 +84,7 @@ func (h *reviewDetailQueryHandleApi) FindAll(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	grpcReq := &pb.FindAllReviewRequest{
+	grpcReq := &pbreview.FindAllReviewRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,
@@ -134,7 +135,7 @@ func (h *reviewDetailQueryHandleApi) FindById(c echo.Context) error {
 		end(status)
 	}()
 
-	res, err := h.client.FindById(ctx, &pb.FindByIdReviewDetailRequest{Id: int32(id)})
+	res, err := h.client.FindById(ctx, &pbreview_detail.FindByIdReviewDetailRequest{Id: int32(id)})
 	if err != nil {
 		status = "error"
 		return h.handleError(c, err, span, "FindById")
@@ -181,7 +182,7 @@ func (h *reviewDetailQueryHandleApi) FindByActive(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	grpcReq := &pb.FindAllReviewRequest{
+	grpcReq := &pbreview.FindAllReviewRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,
@@ -239,7 +240,7 @@ func (h *reviewDetailQueryHandleApi) FindByTrashed(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	grpcReq := &pb.FindAllReviewRequest{
+	grpcReq := &pbreview.FindAllReviewRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,

@@ -6,19 +6,18 @@ import (
 	"strconv"
 
 	user_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/user"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/user"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-
 type userCommandHandleApi struct {
-	client pb.UserCommandServiceClient
+	client pbuser.UserCommandServiceClient
 
 	logger logger.LoggerInterface
 
@@ -30,7 +29,7 @@ type userCommandHandleApi struct {
 }
 
 type userCommandHandleDeps struct {
-	client pb.UserCommandServiceClient
+	client pbuser.UserCommandServiceClient
 
 	router *echo.Echo
 
@@ -94,7 +93,7 @@ func (h *userCommandHandleApi) Create(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	req := &pb.CreateUserRequest{
+	req := &pbuser.CreateUserRequest{
 		Firstname:       body.FirstName,
 		Lastname:        body.LastName,
 		Email:           body.Email,
@@ -107,7 +106,6 @@ func (h *userCommandHandleApi) Create(c echo.Context) error {
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	so := h.mapper.ToApiResponseUser(res)
 
@@ -150,7 +148,7 @@ func (h *userCommandHandleApi) Update(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	req := &pb.UpdateUserRequest{
+	req := &pbuser.UpdateUserRequest{
 		Id:              int32(idInt),
 		Firstname:       body.FirstName,
 		Lastname:        body.LastName,
@@ -164,7 +162,6 @@ func (h *userCommandHandleApi) Update(c echo.Context) error {
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	so := h.mapper.ToApiResponseUser(res)
 
@@ -194,7 +191,7 @@ func (h *userCommandHandleApi) TrashedUser(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	req := &pb.FindByIdUserRequest{
+	req := &pbuser.FindByIdUserRequest{
 		Id: int32(id),
 	}
 
@@ -203,7 +200,6 @@ func (h *userCommandHandleApi) TrashedUser(c echo.Context) error {
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	so := h.mapper.ToApiResponseUserDeleteAt(user)
 
@@ -232,7 +228,7 @@ func (h *userCommandHandleApi) RestoreUser(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	req := &pb.FindByIdUserRequest{
+	req := &pbuser.FindByIdUserRequest{
 		Id: int32(id),
 	}
 
@@ -241,7 +237,6 @@ func (h *userCommandHandleApi) RestoreUser(c echo.Context) error {
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	so := h.mapper.ToApiResponseUserDeleteAt(user)
 
@@ -270,7 +265,7 @@ func (h *userCommandHandleApi) DeleteUserPermanent(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	req := &pb.FindByIdUserRequest{
+	req := &pbuser.FindByIdUserRequest{
 		Id: int32(id),
 	}
 
@@ -279,7 +274,6 @@ func (h *userCommandHandleApi) DeleteUserPermanent(c echo.Context) error {
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	so := h.mapper.ToApiResponseUserDelete(user)
 
@@ -306,7 +300,6 @@ func (h *userCommandHandleApi) RestoreAllUser(c echo.Context) error {
 		return errors.ParseGrpcError(err)
 	}
 
-
 	so := h.mapper.ToApiResponseUserAll(res)
 
 	h.logger.Debug("Successfully restored all user")
@@ -332,15 +325,12 @@ func (h *userCommandHandleApi) DeleteAllUserPermanent(c echo.Context) error {
 		return errors.ParseGrpcError(err)
 	}
 
-
 	so := h.mapper.ToApiResponseUserAll(res)
 
 	h.logger.Debug("Successfully deleted all user permanently")
 
 	return c.JSON(http.StatusOK, so)
 }
-
-
 
 func (h *userCommandHandleApi) parseValidationErrors(err error) []errors.ValidationError {
 	var validationErrs []errors.ValidationError

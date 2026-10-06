@@ -3,12 +3,9 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"errors"
-	"github.com/jackc/pgx/v5"
 	"time"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/convert"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	merchantaward_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant_award"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -33,9 +30,9 @@ func (r *merchantAwardCommandRepository) Create(
 		MerchantID: int32(request.MerchantID),
 		Title:      request.Title,
 
-		Description:    convert.NullableString(request.Description),
-		IssuedBy:       convert.NullableString(request.IssuedBy),
-		CertificateUrl: convert.NullableString(request.CertificateUrl),
+		Description:    stringPtr(request.Description),
+		IssuedBy:       stringPtr(request.IssuedBy),
+		CertificateUrl: stringPtr(request.CertificateUrl),
 
 		IssueDate:  parseDateToPgDate(request.IssueDate),
 		ExpiryDate: parseDateToPgDate(request.ExpiryDate),
@@ -43,9 +40,6 @@ func (r *merchantAwardCommandRepository) Create(
 
 	award, err := r.db.CreateMerchantCertificationOrAward(ctx, req)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, merchantaward_errors.ErrMerchantAwardNotFound
-		}
 		return nil, merchantaward_errors.ErrCreateMerchantAward.WithInternal(err)
 	}
 
@@ -56,18 +50,15 @@ func (r *merchantAwardCommandRepository) Update(ctx context.Context, request *re
 	req := db.UpdateMerchantCertificationOrAwardParams{
 		MerchantCertificationID: int32(*request.MerchantCertificationID),
 		Title:                   request.Title,
-		Description:             convert.NullableString(request.Description),
-		IssuedBy:                convert.NullableString(request.IssuedBy),
-		CertificateUrl:          convert.NullableString(request.CertificateUrl),
+		Description:             stringPtr(request.Description),
+		IssuedBy:                stringPtr(request.IssuedBy),
+		CertificateUrl:          stringPtr(request.CertificateUrl),
 		IssueDate:               parseDateToPgDate(request.IssueDate),
 		ExpiryDate:              parseDateToPgDate(request.ExpiryDate),
 	}
 
 	res, err := r.db.UpdateMerchantCertificationOrAward(ctx, req)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, merchantaward_errors.ErrMerchantAwardNotFound
-		}
 		return nil, merchantaward_errors.ErrUpdateMerchantAward.WithInternal(err)
 	}
 
@@ -78,9 +69,6 @@ func (r *merchantAwardCommandRepository) Trash(ctx context.Context, award_id int
 	res, err := r.db.TrashMerchantCertificationOrAward(ctx, int32(award_id))
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, merchantaward_errors.ErrMerchantAwardNotFound
-		}
 		return nil, merchantaward_errors.ErrTrashedMerchantAward.WithInternal(err)
 	}
 
@@ -91,9 +79,6 @@ func (r *merchantAwardCommandRepository) Restore(ctx context.Context, award_id i
 	res, err := r.db.RestoreMerchantCertificationOrAward(ctx, int32(award_id))
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, merchantaward_errors.ErrMerchantAwardNotFound
-		}
 		return nil, merchantaward_errors.ErrRestoreMerchantAward.WithInternal(err)
 	}
 
@@ -104,9 +89,6 @@ func (r *merchantAwardCommandRepository) DeletePermanent(ctx context.Context, aw
 	err := r.db.DeleteMerchantCertificationOrAwardPermanently(ctx, int32(award_id))
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return false, merchantaward_errors.ErrMerchantAwardNotFound
-		}
 		return false, merchantaward_errors.ErrDeleteMerchantAwardPermanent.WithInternal(err)
 	}
 
@@ -117,9 +99,6 @@ func (r *merchantAwardCommandRepository) RestoreAll(ctx context.Context) (bool, 
 	err := r.db.RestoreAllMerchantCertificationsAndAwards(ctx)
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return false, merchantaward_errors.ErrMerchantAwardNotFound
-		}
 		return false, merchantaward_errors.ErrRestoreAllMerchantAwards.WithInternal(err)
 	}
 	return true, nil
@@ -129,9 +108,6 @@ func (r *merchantAwardCommandRepository) DeleteAll(ctx context.Context) (bool, e
 	err := r.db.DeleteAllPermanentMerchantCertificationsAndAwards(ctx)
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return false, merchantaward_errors.ErrMerchantAwardNotFound
-		}
 		return false, merchantaward_errors.ErrDeleteAllMerchantAwardsPermanent.WithInternal(err)
 	}
 	return true, nil
@@ -148,6 +124,13 @@ func parseDateToNullTime(dateStr string) sql.NullTime {
 	}
 
 	return sql.NullTime{Time: t, Valid: true}
+}
+
+func stringPtr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }
 
 func parseDateToPgDate(dateStr string) pgtype.Date {

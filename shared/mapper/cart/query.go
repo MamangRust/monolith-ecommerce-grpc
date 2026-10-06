@@ -1,7 +1,7 @@
 package cartapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbcart "github.com/MamangRust/monolith-ecommerce-pb/cart"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	paginationapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/pagination"
 )
@@ -12,7 +12,7 @@ func NewCartQueryResponseMapper() CartQueryResponseMapper {
 	return &cartQueryResponseMapper{}
 }
 
-func (t *cartQueryResponseMapper) ToResponseCart(pbResponse *pb.CartResponse) *response.CartResponse {
+func (t *cartQueryResponseMapper) ToResponseCart(pbResponse *pbcart.CartResponse) *response.CartResponse {
 	return &response.CartResponse{
 		ID:        int(pbResponse.Id),
 		UserID:    int(pbResponse.UserId),
@@ -27,7 +27,7 @@ func (t *cartQueryResponseMapper) ToResponseCart(pbResponse *pb.CartResponse) *r
 	}
 }
 
-func (t *cartQueryResponseMapper) ToResponseCarts(pbResponse []*pb.CartResponse) []*response.CartResponse {
+func (t *cartQueryResponseMapper) ToResponseCarts(pbResponse []*pbcart.CartResponse) []*response.CartResponse {
 	var carts []*response.CartResponse
 	for _, cart := range pbResponse {
 		carts = append(carts, t.ToResponseCart(cart))
@@ -35,7 +35,7 @@ func (t *cartQueryResponseMapper) ToResponseCarts(pbResponse []*pb.CartResponse)
 	return carts
 }
 
-func (t *cartQueryResponseMapper) ToApiResponseCart(pbResponse *pb.ApiResponseCart) *response.ApiResponseCart {
+func (t *cartQueryResponseMapper) ToApiResponseCart(pbResponse *pbcart.ApiResponseCart) *response.ApiResponseCart {
 	return &response.ApiResponseCart{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -43,7 +43,7 @@ func (t *cartQueryResponseMapper) ToApiResponseCart(pbResponse *pb.ApiResponseCa
 	}
 }
 
-func (t *cartQueryResponseMapper) ToApiResponseCartPagination(pbResponse *pb.ApiResponsePaginationCart) *response.ApiResponseCartPagination {
+func (t *cartQueryResponseMapper) ToApiResponseCartPagination(pbResponse *pbcart.ApiResponsePaginationCart) *response.ApiResponseCartPagination {
 	return &response.ApiResponseCartPagination{
 		Status:     pbResponse.Status,
 		Message:    pbResponse.Message,

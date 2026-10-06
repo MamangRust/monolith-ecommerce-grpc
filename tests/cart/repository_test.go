@@ -4,12 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-cart/repository"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/MamangRust/monolith-ecommerce-cart/repository"
+	pbproduct "github.com/MamangRust/monolith-ecommerce-pb/product"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type CartRepositoryTestSuite struct {
@@ -29,8 +31,8 @@ func (s *CartRepositoryTestSuite) SetupSuite() {
 	queries := db.New(s.DBPool())
 	s.repo = repository.NewRepositories(
 		queries,
-		pb.NewUserQueryServiceClient(s.Conns["user"]),
-		pb.NewProductQueryServiceClient(s.Conns["product"]),
+		pbuser.NewUserQueryServiceClient(s.Conns["user"]),
+		pbproduct.NewProductQueryServiceClient(s.Conns["product"]),
 	)
 }
 
@@ -50,7 +52,7 @@ func (s *CartRepositoryTestSuite) TestCartLifecycle() {
 	prodID2 := s.SeedProduct(ctx, childMerchantID, childCategoryID)
 
 	// Fetch product details for the cart record
-	prodRes, err := pb.NewProductQueryServiceClient(s.Conns["product"]).FindById(ctx, &pb.FindByIdProductRequest{Id: int32(prodID)})
+	prodRes, err := pbproduct.NewProductQueryServiceClient(s.Conns["product"]).FindById(ctx, &pbproduct.FindByIdProductRequest{Id: int32(prodID)})
 	s.Require().NoError(err)
 	s.Require().NotNil(prodRes)
 	s.Require().NotNil(prodRes.Data)
@@ -72,7 +74,7 @@ func (s *CartRepositoryTestSuite) TestCartLifecycle() {
 	cart1ID := int(created.CartID)
 
 	// 2. Create second cart item
-	prodRes2, err := pb.NewProductQueryServiceClient(s.Conns["product"]).FindById(ctx, &pb.FindByIdProductRequest{Id: int32(prodID2)})
+	prodRes2, err := pbproduct.NewProductQueryServiceClient(s.Conns["product"]).FindById(ctx, &pbproduct.FindByIdProductRequest{Id: int32(prodID2)})
 	s.Require().NoError(err)
 
 	req2 := &requests.CartCreateRecord{

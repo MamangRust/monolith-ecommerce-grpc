@@ -6,12 +6,12 @@ import (
 	"strconv"
 
 	banner_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/banner"
+	pbbanner "github.com/MamangRust/monolith-ecommerce-pb/banner"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/banner"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -20,7 +20,7 @@ import (
 )
 
 type bannerCommandHandlerApi struct {
-	client        pb.BannerCommandServiceClient
+	client        pbbanner.BannerCommandServiceClient
 	logger        logger.LoggerInterface
 	mapper        apimapper.BannerCommandResponseMapper
 	cache         banner_cache.BannerCommandCache
@@ -28,7 +28,7 @@ type bannerCommandHandlerApi struct {
 }
 
 type bannerCommandHandleDeps struct {
-	client        pb.BannerCommandServiceClient
+	client        pbbanner.BannerCommandServiceClient
 	router        *echo.Echo
 	logger        logger.LoggerInterface
 	mapper        apimapper.BannerCommandResponseMapper
@@ -88,7 +88,7 @@ func (h *bannerCommandHandlerApi) Create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	res, err := h.client.Create(ctx, &pb.CreateBannerRequest{
+	res, err := h.client.Create(ctx, &pbbanner.CreateBannerRequest{
 		Name:      body.Name,
 		StartDate: body.StartDate,
 		EndDate:   body.EndDate,
@@ -143,7 +143,7 @@ func (h *bannerCommandHandlerApi) Update(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	res, err := h.client.Update(ctx, &pb.UpdateBannerRequest{
+	res, err := h.client.Update(ctx, &pbbanner.UpdateBannerRequest{
 		BannerId:  int32(id),
 		Name:      body.Name,
 		StartDate: body.StartDate,
@@ -190,7 +190,7 @@ func (h *bannerCommandHandlerApi) Trash(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
 	}
 
-	res, err := h.client.Trash(ctx, &pb.FindByIdBannerRequest{Id: int32(id)})
+	res, err := h.client.Trash(ctx, &pbbanner.FindByIdBannerRequest{Id: int32(id)})
 	if err != nil {
 		status = "error"
 		return h.handleError(c, err, span, "Trash")
@@ -229,7 +229,7 @@ func (h *bannerCommandHandlerApi) Restore(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
 	}
 
-	res, err := h.client.Restore(ctx, &pb.FindByIdBannerRequest{Id: int32(id)})
+	res, err := h.client.Restore(ctx, &pbbanner.FindByIdBannerRequest{Id: int32(id)})
 	if err != nil {
 		status = "error"
 		return h.handleError(c, err, span, "Restore")
@@ -268,7 +268,7 @@ func (h *bannerCommandHandlerApi) DeletePermanent(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
 	}
 
-	res, err := h.client.DeletePermanent(ctx, &pb.FindByIdBannerRequest{Id: int32(id)})
+	res, err := h.client.DeletePermanent(ctx, &pbbanner.FindByIdBannerRequest{Id: int32(id)})
 	if err != nil {
 		status = "error"
 		return h.handleError(c, err, span, "Delete")

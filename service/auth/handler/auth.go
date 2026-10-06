@@ -7,8 +7,10 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"go.uber.org/zap"
+
+	pb "github.com/MamangRust/monolith-ecommerce-pb"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 )
 
 type authHandleGrpc struct {
@@ -146,7 +148,7 @@ func (s *authHandleGrpc) GetMe(ctx context.Context, req *pb.GetMeRequest) (*pb.A
 	return &pb.ApiResponseGetMe{
 		Status:  "success",
 		Message: "Get me successfully",
-		Data: &pb.UserResponse{
+		Data: &pbuser.UserResponse{
 			Id:        res.UserID,
 			Firstname: res.Firstname,
 			Lastname:  res.Lastname,
@@ -178,7 +180,7 @@ func (s *authHandleGrpc) RegisterUser(ctx context.Context, req *pb.RegisterReque
 	return &pb.ApiResponseRegister{
 		Status:  "success",
 		Message: "RegisterUser successful",
-		Data: &pb.UserResponse{
+		Data: &pbuser.UserResponse{
 			Id:        res.UserID,
 			Firstname: res.Firstname,
 			Lastname:  res.Lastname,

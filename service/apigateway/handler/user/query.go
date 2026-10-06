@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	user_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/user"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
@@ -13,9 +13,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-
 type userQueryHandleApi struct {
-	client pb.UserQueryServiceClient
+	client pbuser.UserQueryServiceClient
 
 	logger logger.LoggerInterface
 
@@ -27,7 +26,7 @@ type userQueryHandleApi struct {
 }
 
 type userQueryHandleDeps struct {
-	client pb.UserQueryServiceClient
+	client pbuser.UserQueryServiceClient
 
 	router *echo.Echo
 
@@ -98,7 +97,7 @@ func (h *userQueryHandleApi) FindAllUser(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	grpcReq := &pb.FindAllUserRequest{
+	grpcReq := &pbuser.FindAllUserRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,
@@ -108,7 +107,6 @@ func (h *userQueryHandleApi) FindAllUser(c echo.Context) error {
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	apiResponse := h.mapper.ToApiResponsePaginationUser(res)
 
@@ -141,7 +139,7 @@ func (h *userQueryHandleApi) FindById(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	req := &pb.FindByIdUserRequest{
+	req := &pbuser.FindByIdUserRequest{
 		Id: int32(id),
 	}
 
@@ -149,7 +147,6 @@ func (h *userQueryHandleApi) FindById(c echo.Context) error {
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	apiResponse := h.mapper.ToApiResponseUser(user)
 
@@ -196,7 +193,7 @@ func (h *userQueryHandleApi) FindByActive(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	grpcReq := &pb.FindAllUserRequest{
+	grpcReq := &pbuser.FindAllUserRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,
@@ -206,7 +203,6 @@ func (h *userQueryHandleApi) FindByActive(c echo.Context) error {
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	apiResponse := h.mapper.ToApiResponsePaginationUserDeleteAt(res)
 
@@ -253,7 +249,7 @@ func (h *userQueryHandleApi) FindByTrashed(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	grpcReq := &pb.FindAllUserRequest{
+	grpcReq := &pbuser.FindAllUserRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,
@@ -264,12 +260,9 @@ func (h *userQueryHandleApi) FindByTrashed(c echo.Context) error {
 		return errors.ParseGrpcError(err)
 	}
 
-
 	apiResponse := h.mapper.ToApiResponsePaginationUserDeleteAt(res)
 
 	h.cache.SetCachedUserTrashedCache(ctx, req, apiResponse)
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
-
-

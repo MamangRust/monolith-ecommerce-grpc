@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-slider/repository"
+	"github.com/stretchr/testify/suite"
+
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	"github.com/MamangRust/monolith-ecommerce-slider/repository"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type SliderRepositoryTestSuite struct {

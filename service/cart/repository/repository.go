@@ -1,9 +1,18 @@
 package repository
 
 import (
+	pbproduct "github.com/MamangRust/monolith-ecommerce-pb/product"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
+	"github.com/MamangRust/monolith-ecommerce-pkg/adapter"
+	productadapter "github.com/MamangRust/monolith-ecommerce-pkg/adapter/product"
+	useradapter "github.com/MamangRust/monolith-ecommerce-pkg/adapter/user"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 )
+
+type GuardOptions struct {
+	User    []adapter.GuardOption
+	Product []adapter.GuardOption
+}
 
 type Repositories struct {
 	CartQuery    CartQueryRepository
@@ -13,13 +22,19 @@ type Repositories struct {
 }
 
 func NewRepositories(DB *db.Queries,
-	userQuery pb.UserQueryServiceClient,
-	productQuery pb.ProductQueryServiceClient,
+	userQueryClient pbuser.UserQueryServiceClient,
+	productQueryClient pbproduct.ProductQueryServiceClient,
+	guards ...GuardOptions,
 ) *Repositories {
+	var g GuardOptions
+	if len(guards) > 0 {
+		g = guards[0]
+	}
+
 	return &Repositories{
 		CartQuery:    NewCartQueryRepository(DB),
 		CartCommand:  NewCartCommandRepository(DB),
-		UserQuery:    NewUserQueryRepository(userQuery),
-		ProductQuery: NewProductQueryRepository(productQuery),
+		UserQuery:    useradapter.New(userQueryClient, nil, g.User...),
+		ProductQuery: productadapter.New(productQueryClient, nil, g.Product...),
 	}
 }

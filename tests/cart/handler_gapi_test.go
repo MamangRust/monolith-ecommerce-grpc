@@ -4,28 +4,31 @@ import (
 	"context"
 	"testing"
 
-	cart_cache "github.com/MamangRust/monolith-ecommerce-grpc-cart/cache"
-	cart_handler "github.com/MamangRust/monolith-ecommerce-grpc-cart/handler"
-	cart_repo "github.com/MamangRust/monolith-ecommerce-grpc-cart/repository"
-	cart_service "github.com/MamangRust/monolith-ecommerce-grpc-cart/service"
+	"github.com/stretchr/testify/suite"
+	"google.golang.org/grpc"
+
+	cart_cache "github.com/MamangRust/monolith-ecommerce-cart/cache"
+	cart_handler "github.com/MamangRust/monolith-ecommerce-cart/handler"
+	cart_repo "github.com/MamangRust/monolith-ecommerce-cart/repository"
+	cart_service "github.com/MamangRust/monolith-ecommerce-cart/service"
+	pbcart "github.com/MamangRust/monolith-ecommerce-pb/cart"
+	pbproduct "github.com/MamangRust/monolith-ecommerce-pb/product"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
-	"github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
-	"google.golang.org/grpc"
+	tests "github.com/MamangRust/monolith-ecommerce-test"
 )
 
 type CartGapiTestSuite struct {
 	tests.BaseTestSuite
-	queryClient   pb.CartQueryServiceClient
-	commandClient pb.CartCommandServiceClient
+	queryClient   pbcart.CartQueryServiceClient
+	commandClient pbcart.CartCommandServiceClient
 }
 
 func (s *CartGapiTestSuite) SetupSuite() {
 	s.BaseTestSuite.SetupSuite()
-	
+
 	// Setup dependencies
 	s.SetupUserService()
 	s.SetupCategoryService()
@@ -41,8 +44,8 @@ func (s *CartGapiTestSuite) SetupSuite() {
 	mencache := cart_cache.NewMencache(cacheStore)
 	repos := cart_repo.NewRepositories(
 		queries,
-		pb.NewUserQueryServiceClient(s.Conns["user"]),
-		pb.NewProductQueryServiceClient(s.Conns["product"]),
+		pbuser.NewUserQueryServiceClient(s.Conns["user"]),
+		pbproduct.NewProductQueryServiceClient(s.Conns["product"]),
 	)
 	svc := cart_service.NewService(&cart_service.Deps{
 		Cache:         mencache,
@@ -59,14 +62,14 @@ func (s *CartGapiTestSuite) SetupSuite() {
 
 	// Server
 	server := grpc.NewServer()
-	pb.RegisterCartQueryServiceServer(server, handler.CartQuery)
-	pb.RegisterCartCommandServiceServer(server, handler.CartCommand)
-	
+	pbcart.RegisterCartQueryServiceServer(server, handler.CartQuery)
+	pbcart.RegisterCartCommandServiceServer(server, handler.CartCommand)
+
 	addr := s.RegisterServer(server)
 	conn := s.GetConnection(addr)
 
-	s.queryClient = pb.NewCartQueryServiceClient(conn)
-	s.commandClient = pb.NewCartCommandServiceClient(conn)
+	s.queryClient = pbcart.NewCartQueryServiceClient(conn)
+	s.commandClient = pbcart.NewCartCommandServiceClient(conn)
 }
 
 func (s *CartGapiTestSuite) TestGapiLifecycle() {
@@ -79,7 +82,7 @@ func (s *CartGapiTestSuite) TestGapiLifecycle() {
 	prodID := s.SeedProduct(ctx, merchantID, categoryID)
 
 	// Add to Cart
-	createRes, err := s.commandClient.Create(ctx, &pb.CreateCartRequest{
+	createRes, err := s.commandClient.Create(ctx, &pbcart.CreateCartRequest{
 		UserId:    int32(userID),
 		ProductId: int32(prodID),
 		Quantity:  5,
@@ -88,7 +91,7 @@ func (s *CartGapiTestSuite) TestGapiLifecycle() {
 	s.NotNil(createRes)
 
 	// Get
-	listRes, err := s.queryClient.FindAll(ctx, &pb.FindAllCartRequest{UserId: int32(userID)})
+	listRes, err := s.queryClient.FindAll(ctx, &pbcart.FindAllCartRequest{UserId: int32(userID)})
 	s.Require().NoError(err)
 	s.NotEmpty(listRes.Data)
 }

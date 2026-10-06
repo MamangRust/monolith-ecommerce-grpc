@@ -1,47 +1,47 @@
 package categoryapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbcategory "github.com/MamangRust/monolith-ecommerce-pb/category"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
 type CategoryBaseResponseMapper interface {
-	ToResponseCategory(category *pb.CategoryResponse) *response.CategoryResponse
-	ToResponsesCategory(categories []*pb.CategoryResponse) []*response.CategoryResponse
+	ToResponseCategory(category *pbcategory.CategoryResponse) *response.CategoryResponse
+	ToResponsesCategory(categories []*pbcategory.CategoryResponse) []*response.CategoryResponse
 }
 
 type CategoryQueryResponseMapper interface {
 	CategoryBaseResponseMapper
 	CategoryStatsResponseMapper
-	ToApiResponseCategory(pbResponse *pb.ApiResponseCategory) *response.ApiResponseCategory
-	ToApiResponsesCategory(pbResponse *pb.ApiResponsesCategory) *response.ApiResponsesCategory
-	ToApiResponsePaginationCategory(pbResponse *pb.ApiResponsePaginationCategory) *response.ApiResponsePaginationCategory
-	ToApiResponsePaginationCategoryDeleteAt(pbResponse *pb.ApiResponsePaginationCategoryDeleteAt) *response.ApiResponsePaginationCategoryDeleteAt
+	ToApiResponseCategory(pbResponse *pbcategory.ApiResponseCategory) *response.ApiResponseCategory
+	ToApiResponsesCategory(pbResponse *pbcategory.ApiResponsesCategory) *response.ApiResponsesCategory
+	ToApiResponsePaginationCategory(pbResponse *pbcategory.ApiResponsePaginationCategory) *response.ApiResponsePaginationCategory
+	ToApiResponsePaginationCategoryDeleteAt(pbResponse *pbcategory.ApiResponsePaginationCategoryDeleteAt) *response.ApiResponsePaginationCategoryDeleteAt
 }
 
 type CategoryCommandResponseMapper interface {
 	CategoryBaseResponseMapper
-	ToResponseCategoryDelete(category *pb.CategoryResponseDeleteAt) *response.CategoryResponseDeleteAt
-	ToResponsesCategoryDeleteAt(categories []*pb.CategoryResponseDeleteAt) []*response.CategoryResponseDeleteAt
-	ToApiResponseCategoryDeleteAt(pbResponse *pb.ApiResponseCategoryDeleteAt) *response.ApiResponseCategoryDeleteAt
-	ToApiResponseCategory(pbResponse *pb.ApiResponseCategory) *response.ApiResponseCategory
-	ToApiResponseCategoryDelete(pbResponse *pb.ApiResponseCategoryDelete) *response.ApiResponseCategoryDelete
-	ToApiResponseCategoryAll(pbResponse *pb.ApiResponseCategoryAll) *response.ApiResponseCategoryAll
-	ToApiResponsePaginationCategoryDeleteAt(pbResponse *pb.ApiResponsePaginationCategoryDeleteAt) *response.ApiResponsePaginationCategoryDeleteAt
+	ToResponseCategoryDelete(category *pbcategory.CategoryResponseDeleteAt) *response.CategoryResponseDeleteAt
+	ToResponsesCategoryDeleteAt(categories []*pbcategory.CategoryResponseDeleteAt) []*response.CategoryResponseDeleteAt
+	ToApiResponseCategoryDeleteAt(pbResponse *pbcategory.ApiResponseCategoryDeleteAt) *response.ApiResponseCategoryDeleteAt
+	ToApiResponseCategory(pbResponse *pbcategory.ApiResponseCategory) *response.ApiResponseCategory
+	ToApiResponseCategoryDelete(pbResponse *pbcategory.ApiResponseCategoryDelete) *response.ApiResponseCategoryDelete
+	ToApiResponseCategoryAll(pbResponse *pbcategory.ApiResponseCategoryAll) *response.ApiResponseCategoryAll
+	ToApiResponsePaginationCategoryDeleteAt(pbResponse *pbcategory.ApiResponsePaginationCategoryDeleteAt) *response.ApiResponsePaginationCategoryDeleteAt
 }
 
 type CategoryStatsResponseMapper interface {
-	ToResponseCategoryMonthlyPrice(category *pb.CategoryMonthPriceResponse) *response.CategoryMonthPriceResponse
-	ToResponseCategoryMonthlyPrices(c []*pb.CategoryMonthPriceResponse) []*response.CategoryMonthPriceResponse
-	ToResponseCategoryYearlyPrice(category *pb.CategoryYearPriceResponse) *response.CategoryYearPriceResponse
-	ToResponseCategoryYearlyPrices(c []*pb.CategoryYearPriceResponse) []*response.CategoryYearPriceResponse
-	ToResponseCashierMonthlyTotalPrice(c *pb.CategoriesMonthlyTotalPriceResponse) *response.CategoriesMonthlyTotalPriceResponse
-	ToResponseCategoryMonthlyTotalPrices(c []*pb.CategoriesMonthlyTotalPriceResponse) []*response.CategoriesMonthlyTotalPriceResponse
-	ToResponseCategoryYearlyTotalSale(c *pb.CategoriesYearlyTotalPriceResponse) *response.CategoriesYearlyTotalPriceResponse
-	ToResponseCategoryYearlyTotalPrices(c []*pb.CategoriesYearlyTotalPriceResponse) []*response.CategoriesYearlyTotalPriceResponse
+	ToResponseCategoryMonthlyPrice(category *pbcategory.CategoryMonthPriceResponse) *response.CategoryMonthPriceResponse
+	ToResponseCategoryMonthlyPrices(c []*pbcategory.CategoryMonthPriceResponse) []*response.CategoryMonthPriceResponse
+	ToResponseCategoryYearlyPrice(category *pbcategory.CategoryYearPriceResponse) *response.CategoryYearPriceResponse
+	ToResponseCategoryYearlyPrices(c []*pbcategory.CategoryYearPriceResponse) []*response.CategoryYearPriceResponse
+	ToResponseCashierMonthlyTotalPrice(c *pbcategory.CategoriesMonthlyTotalPriceResponse) *response.CategoriesMonthlyTotalPriceResponse
+	ToResponseCategoryMonthlyTotalPrices(c []*pbcategory.CategoriesMonthlyTotalPriceResponse) []*response.CategoriesMonthlyTotalPriceResponse
+	ToResponseCategoryYearlyTotalSale(c *pbcategory.CategoriesYearlyTotalPriceResponse) *response.CategoriesYearlyTotalPriceResponse
+	ToResponseCategoryYearlyTotalPrices(c []*pbcategory.CategoriesYearlyTotalPriceResponse) []*response.CategoriesYearlyTotalPriceResponse
 
-	ToApiResponseCategoryMonthPrice(pbResponse *pb.ApiResponseCategoryMonthPrice) *response.ApiResponseCategoryMonthPrice
-	ToApiResponseCategoryYearPrice(pbResponse *pb.ApiResponseCategoryYearPrice) *response.ApiResponseCategoryYearPrice
-	ToApiResponseCategoryMonthlyTotalPrice(pbResponse *pb.ApiResponseCategoryMonthlyTotalPrice) *response.ApiResponseCategoryMonthlyTotalPrice
-	ToApiResponseCategoryYearlyTotalPrice(pbResponse *pb.ApiResponseCategoryYearlyTotalPrice) *response.ApiResponseCategoryYearlyTotalPrice
+	ToApiResponseCategoryMonthPrice(pbResponse *pbcategory.ApiResponseCategoryMonthPrice) *response.ApiResponseCategoryMonthPrice
+	ToApiResponseCategoryYearPrice(pbResponse *pbcategory.ApiResponseCategoryYearPrice) *response.ApiResponseCategoryYearPrice
+	ToApiResponseCategoryMonthlyTotalPrice(pbResponse *pbcategory.ApiResponseCategoryMonthlyTotalPrice) *response.ApiResponseCategoryMonthlyTotalPrice
+	ToApiResponseCategoryYearlyTotalPrice(pbResponse *pbcategory.ApiResponseCategoryYearlyTotalPrice) *response.ApiResponseCategoryYearlyTotalPrice
 }

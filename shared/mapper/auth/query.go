@@ -1,7 +1,7 @@
 package authapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbauth "github.com/MamangRust/monolith-ecommerce-pb"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
@@ -11,7 +11,7 @@ func NewAuthQueryResponseMapper() AuthQueryResponseMapper {
 	return &authQueryResponseMapper{}
 }
 
-func (s *authQueryResponseMapper) ToResponseGetMe(res *pb.ApiResponseGetMe) *response.ApiResponseGetMe {
+func (s *authQueryResponseMapper) ToResponseGetMe(res *pbauth.ApiResponseGetMe) *response.ApiResponseGetMe {
 	if res == nil {
 		return &response.ApiResponseGetMe{
 			Status:  "error",

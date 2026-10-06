@@ -4,16 +4,17 @@ import (
 	"context"
 	"testing"
 
-	biz_cache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_business/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_business/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_business/service"
+	"github.com/stretchr/testify/suite"
+
+	biz_cache "github.com/MamangRust/monolith-ecommerce-merchant_business/cache"
+	"github.com/MamangRust/monolith-ecommerce-merchant_business/repository"
+	"github.com/MamangRust/monolith-ecommerce-merchant_business/service"
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type MerchantBusinessServiceTestSuite struct {
@@ -38,7 +39,7 @@ func (s *MerchantBusinessServiceTestSuite) SetupSuite() {
 	mencache := biz_cache.NewMencache(cacheStore)
 	repos := repository.NewRepositories(
 		queries,
-		pb.NewMerchantQueryServiceClient(s.Conns["merchant"]),
+		pbmerchant.NewMerchantQueryServiceClient(s.Conns["merchant"]),
 	)
 
 	s.svc = service.NewService(&service.Deps{
@@ -130,7 +131,7 @@ func (s *MerchantBusinessServiceTestSuite) TestMerchantBusinessLifecycle() {
 	// 10. RestoreAll & DeleteAll
 	b1, _ := s.svc.MerchantBusinessCommand.Create(ctx, &requests.CreateMerchantBusinessInformationRequest{MerchantID: int(merchantID), BusinessType: "PT1", TaxID: "T1", EstablishedYear: 2021, NumberOfEmployees: 10})
 	b2, _ := s.svc.MerchantBusinessCommand.Create(ctx, &requests.CreateMerchantBusinessInformationRequest{MerchantID: int(merchantID), BusinessType: "PT2", TaxID: "T2", EstablishedYear: 2022, NumberOfEmployees: 20})
-	
+
 	s.svc.MerchantBusinessCommand.Trash(ctx, int(b1.MerchantBusinessInfoID))
 	s.svc.MerchantBusinessCommand.Trash(ctx, int(b2.MerchantBusinessInfoID))
 

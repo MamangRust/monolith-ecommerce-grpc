@@ -3,15 +3,16 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-cart/service"
+	"github.com/MamangRust/monolith-ecommerce-cart/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+
+	pbcart "github.com/MamangRust/monolith-ecommerce-pb/cart"
 )
 
 type cartQueryHandler struct {
-	pb.UnimplementedCartQueryServiceServer
+	pbcart.UnimplementedCartQueryServiceServer
 	cartQuery service.CartQueryService
 	logger    logger.LoggerInterface
 }
@@ -23,7 +24,7 @@ func NewCartQueryHandler(cartQuery service.CartQueryService, logger logger.Logge
 	}
 }
 
-func (h *cartQueryHandler) FindAll(ctx context.Context, request *pb.FindAllCartRequest) (*pb.ApiResponsePaginationCart, error) {
+func (h *cartQueryHandler) FindAll(ctx context.Context, request *pbcart.FindAllCartRequest) (*pbcart.ApiResponsePaginationCart, error) {
 	userID := int(request.GetUserId())
 	page, pageSize := normalizePage(int(request.GetPage()), int(request.GetPageSize()))
 	search := request.GetSearch()
@@ -40,14 +41,14 @@ func (h *cartQueryHandler) FindAll(ctx context.Context, request *pb.FindAllCartR
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoCartItems := make([]*pb.CartResponse, len(cartItems))
+	protoCartItems := make([]*pbcart.CartResponse, len(cartItems))
 	for i, cartItem := range cartItems {
 		protoCartItems[i] = mapToProtoCartResponse(cartItem)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationCart{
+	return &pbcart.ApiResponsePaginationCart{
 		Status:     "success",
 		Message:    "Successfully fetched cart items",
 		Data:       protoCartItems,

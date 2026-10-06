@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	transaction_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/transaction"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbtransaction "github.com/MamangRust/monolith-ecommerce-pb/transaction"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
@@ -14,8 +14,8 @@ import (
 )
 
 type transactionStatsHandlerApi struct {
-	statsClient           pb.TransactionStatsServiceClient
-	statsByMerchantClient pb.TransactionStatsByMerchantServiceClient
+	statsClient           pbtransaction.TransactionStatsServiceClient
+	statsByMerchantClient pbtransaction.TransactionStatsByMerchantServiceClient
 	logger                logger.LoggerInterface
 	statsMapper           apimapper.TransactionStatsResponseMapper
 	statsCache            transaction_cache.TransactionStatsCache
@@ -24,8 +24,8 @@ type transactionStatsHandlerApi struct {
 }
 
 type transactionStatsHandleDeps struct {
-	statsClient           pb.TransactionStatsServiceClient
-	statsByMerchantClient pb.TransactionStatsByMerchantServiceClient
+	statsClient           pbtransaction.TransactionStatsServiceClient
+	statsByMerchantClient pbtransaction.TransactionStatsByMerchantServiceClient
 	router                *echo.Echo
 	logger                logger.LoggerInterface
 	statsMapper           apimapper.TransactionStatsResponseMapper
@@ -92,7 +92,7 @@ func (h *transactionStatsHandlerApi) FindMonthStatusSuccess(c echo.Context) erro
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsClient.GetMonthlyAmountSuccess(ctx, &pb.MonthAmountTransactionRequest{Year: int32(year), Month: int32(month)})
+	res, err := h.statsClient.GetMonthlyAmountSuccess(ctx, &pbtransaction.MonthAmountTransactionRequest{Year: int32(year), Month: int32(month)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -120,7 +120,7 @@ func (h *transactionStatsHandlerApi) FindYearStatusSuccess(c echo.Context) error
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsClient.GetYearlyAmountSuccess(ctx, &pb.YearAmountTransactionRequest{Year: int32(year)})
+	res, err := h.statsClient.GetYearlyAmountSuccess(ctx, &pbtransaction.YearAmountTransactionRequest{Year: int32(year)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -151,7 +151,7 @@ func (h *transactionStatsHandlerApi) FindMonthStatusFailed(c echo.Context) error
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsClient.GetMonthlyAmountFailed(ctx, &pb.MonthAmountTransactionRequest{Year: int32(year), Month: int32(month)})
+	res, err := h.statsClient.GetMonthlyAmountFailed(ctx, &pbtransaction.MonthAmountTransactionRequest{Year: int32(year), Month: int32(month)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -179,7 +179,7 @@ func (h *transactionStatsHandlerApi) FindYearStatusFailed(c echo.Context) error 
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsClient.GetYearlyAmountFailed(ctx, &pb.YearAmountTransactionRequest{Year: int32(year)})
+	res, err := h.statsClient.GetYearlyAmountFailed(ctx, &pbtransaction.YearAmountTransactionRequest{Year: int32(year)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -212,7 +212,7 @@ func (h *transactionStatsHandlerApi) FindMonthStatusSuccessByMerchant(c echo.Con
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsByMerchantClient.GetMonthlyAmountSuccessByMerchant(ctx, &pb.MonthAmountTransactionMerchantRequest{
+	res, err := h.statsByMerchantClient.GetMonthlyAmountSuccessByMerchant(ctx, &pbtransaction.MonthAmountTransactionMerchantRequest{
 		Year: int32(year), Month: int32(month), MerchantId: int32(merchantID),
 	})
 	if err != nil {
@@ -245,7 +245,7 @@ func (h *transactionStatsHandlerApi) FindYearStatusSuccessByMerchant(c echo.Cont
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsByMerchantClient.GetYearlyAmountSuccessByMerchant(ctx, &pb.YearAmountTransactionMerchantRequest{
+	res, err := h.statsByMerchantClient.GetYearlyAmountSuccessByMerchant(ctx, &pbtransaction.YearAmountTransactionMerchantRequest{
 		Year: int32(year), MerchantId: int32(merchantID),
 	})
 	if err != nil {
@@ -280,7 +280,7 @@ func (h *transactionStatsHandlerApi) FindMonthStatusFailedByMerchant(c echo.Cont
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsByMerchantClient.GetMonthlyAmountFailedByMerchant(ctx, &pb.MonthAmountTransactionMerchantRequest{
+	res, err := h.statsByMerchantClient.GetMonthlyAmountFailedByMerchant(ctx, &pbtransaction.MonthAmountTransactionMerchantRequest{
 		Year: int32(year), Month: int32(month), MerchantId: int32(merchantID),
 	})
 	if err != nil {
@@ -313,7 +313,7 @@ func (h *transactionStatsHandlerApi) FindYearStatusFailedByMerchant(c echo.Conte
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsByMerchantClient.GetYearlyAmountFailedByMerchant(ctx, &pb.YearAmountTransactionMerchantRequest{
+	res, err := h.statsByMerchantClient.GetYearlyAmountFailedByMerchant(ctx, &pbtransaction.YearAmountTransactionMerchantRequest{
 		Year: int32(year), MerchantId: int32(merchantID),
 	})
 	if err != nil {
@@ -346,7 +346,7 @@ func (h *transactionStatsHandlerApi) FindMonthMethodSuccess(c echo.Context) erro
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsClient.GetMonthlyTransactionMethodSuccess(ctx, &pb.MonthMethodTransactionRequest{Year: int32(year), Month: int32(month)})
+	res, err := h.statsClient.GetMonthlyTransactionMethodSuccess(ctx, &pbtransaction.MonthMethodTransactionRequest{Year: int32(year), Month: int32(month)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -374,7 +374,7 @@ func (h *transactionStatsHandlerApi) FindYearMethodSuccess(c echo.Context) error
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsClient.GetYearlyTransactionMethodSuccess(ctx, &pb.YearMethodTransactionRequest{Year: int32(year)})
+	res, err := h.statsClient.GetYearlyTransactionMethodSuccess(ctx, &pbtransaction.YearMethodTransactionRequest{Year: int32(year)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -407,7 +407,7 @@ func (h *transactionStatsHandlerApi) FindMonthMethodByMerchantSuccess(c echo.Con
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsByMerchantClient.GetMonthlyTransactionMethodByMerchantSuccess(ctx, &pb.MonthMethodTransactionMerchantRequest{
+	res, err := h.statsByMerchantClient.GetMonthlyTransactionMethodByMerchantSuccess(ctx, &pbtransaction.MonthMethodTransactionMerchantRequest{
 		Year: int32(year), Month: int32(month), MerchantId: int32(merchantID),
 	})
 	if err != nil {
@@ -440,7 +440,7 @@ func (h *transactionStatsHandlerApi) FindYearMethodByMerchantSuccess(c echo.Cont
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsByMerchantClient.GetYearlyTransactionMethodByMerchantSuccess(ctx, &pb.YearMethodTransactionMerchantRequest{
+	res, err := h.statsByMerchantClient.GetYearlyTransactionMethodByMerchantSuccess(ctx, &pbtransaction.YearMethodTransactionMerchantRequest{
 		Year: int32(year), MerchantId: int32(merchantID),
 	})
 	if err != nil {
@@ -473,7 +473,7 @@ func (h *transactionStatsHandlerApi) FindMonthMethodFailed(c echo.Context) error
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsClient.GetMonthlyTransactionMethodFailed(ctx, &pb.MonthMethodTransactionRequest{Year: int32(year), Month: int32(month)})
+	res, err := h.statsClient.GetMonthlyTransactionMethodFailed(ctx, &pbtransaction.MonthMethodTransactionRequest{Year: int32(year), Month: int32(month)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -501,7 +501,7 @@ func (h *transactionStatsHandlerApi) FindYearMethodFailed(c echo.Context) error 
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsClient.GetYearlyTransactionMethodFailed(ctx, &pb.YearMethodTransactionRequest{Year: int32(year)})
+	res, err := h.statsClient.GetYearlyTransactionMethodFailed(ctx, &pbtransaction.YearMethodTransactionRequest{Year: int32(year)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -534,7 +534,7 @@ func (h *transactionStatsHandlerApi) FindMonthMethodByMerchantFailed(c echo.Cont
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsByMerchantClient.GetMonthlyTransactionMethodByMerchantFailed(ctx, &pb.MonthMethodTransactionMerchantRequest{
+	res, err := h.statsByMerchantClient.GetMonthlyTransactionMethodByMerchantFailed(ctx, &pbtransaction.MonthMethodTransactionMerchantRequest{
 		Year: int32(year), Month: int32(month), MerchantId: int32(merchantID),
 	})
 	if err != nil {
@@ -567,7 +567,7 @@ func (h *transactionStatsHandlerApi) FindYearMethodByMerchantFailed(c echo.Conte
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.statsByMerchantClient.GetYearlyTransactionMethodByMerchantFailed(ctx, &pb.YearMethodTransactionMerchantRequest{
+	res, err := h.statsByMerchantClient.GetYearlyTransactionMethodByMerchantFailed(ctx, &pbtransaction.YearMethodTransactionMerchantRequest{
 		Year: int32(year), MerchantId: int32(merchantID),
 	})
 	if err != nil {
@@ -578,4 +578,3 @@ func (h *transactionStatsHandlerApi) FindYearMethodByMerchantFailed(c echo.Conte
 	h.statsByMerchantCache.SetCachedYearMethodFailedByMerchant(ctx, req, apiResponse)
 	return c.JSON(http.StatusOK, apiResponse)
 }
-

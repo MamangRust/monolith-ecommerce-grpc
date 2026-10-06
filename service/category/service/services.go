@@ -1,8 +1,8 @@
 package service
 
 import (
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-category/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/repository"
+	mencache "github.com/MamangRust/monolith-ecommerce-category/cache"
+	"github.com/MamangRust/monolith-ecommerce-category/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 )

@@ -8,8 +8,9 @@ import (
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"go.uber.org/zap"
+
+	pbmerchant_document "github.com/MamangRust/monolith-ecommerce-pb/merchant_document"
 )
 
 type merchantDocumentCommandServiceStub struct {
@@ -55,7 +56,7 @@ func (s merchantDocumentCommandServiceStub) DeleteAll(context.Context) (bool, er
 	return false, fmt.Errorf("unexpected DeleteAll call")
 }
 
-func newMerchantDocumentCommandHandlerForTest(stub merchantDocumentCommandServiceStub) pb.MerchantDocumentCommandServiceServer {
+func newMerchantDocumentCommandHandlerForTest(stub merchantDocumentCommandServiceStub) pbmerchant_document.MerchantDocumentCommandServiceServer {
 	return NewMerchantDocumentCommandHandler(stub, &logger.Logger{Log: zap.NewNop()})
 }
 
@@ -81,7 +82,7 @@ func TestMerchantDocumentCommandHandlerUpdateUsesDocumentID(t *testing.T) {
 		},
 	})
 
-	got, err := handler.Update(context.Background(), &pb.UpdateMerchantDocumentRequest{
+	got, err := handler.Update(context.Background(), &pbmerchant_document.UpdateMerchantDocumentRequest{
 		DocumentId:   documentID,
 		MerchantId:   merchantID,
 		DocumentType: "business_license",
@@ -126,7 +127,7 @@ func TestMerchantDocumentCommandHandlerUpdateStatusUsesDocumentID(t *testing.T) 
 		},
 	})
 
-	got, err := handler.UpdateStatus(context.Background(), &pb.UpdateMerchantDocumentStatusRequest{
+	got, err := handler.UpdateStatus(context.Background(), &pbmerchant_document.UpdateMerchantDocumentStatusRequest{
 		DocumentId: documentID,
 		MerchantId: merchantID,
 		Status:     "approved",

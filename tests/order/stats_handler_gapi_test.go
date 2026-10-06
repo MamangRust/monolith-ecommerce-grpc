@@ -5,16 +5,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
-	tests "github.com/MamangRust/monolith-ecommerce-test"
 	"github.com/stretchr/testify/suite"
+
+	pborder "github.com/MamangRust/monolith-ecommerce-pb/order"
+	tests "github.com/MamangRust/monolith-ecommerce-test"
 )
 
 type OrderStatsGapiTestSuite struct {
 	tests.BaseTestSuite
-	client      pb.OrderStatsServiceClient
-	merchantID  int
-	userID      int
+	client           pborder.OrderStatsServiceClient
+	clientByMerchant pborder.OrderStatsByMerchantServiceClient
+	merchantID       int
+	userID           int
 }
 
 func (s *OrderStatsGapiTestSuite) SetupSuite() {
@@ -29,7 +31,8 @@ func (s *OrderStatsGapiTestSuite) SetupSuite() {
 	s.SetupTransactionService()
 	s.SetupOrderService()
 
-	s.client = pb.NewOrderStatsServiceClient(s.Conns["order"])
+	s.client = pborder.NewOrderStatsServiceClient(s.Conns["order"])
+	s.clientByMerchant = pborder.NewOrderStatsByMerchantServiceClient(s.Conns["order"])
 
 	ctx := context.Background()
 	s.userID = s.SeedUser(ctx)
@@ -39,7 +42,7 @@ func (s *OrderStatsGapiTestSuite) SetupSuite() {
 	orderID := s.SeedOrder(ctx, s.userID, s.merchantID, prodID)
 
 	// Ensure created_at is set to current time to be picked up by stats
-	_, err := s.DBPool().Exec(ctx, "UPDATE orders SET created_at = $1 WHERE order_id = $2", 
+	_, err := s.DBPool().Exec(ctx, "UPDATE orders SET created_at = $1 WHERE order_id = $2",
 		time.Now(), orderID)
 	s.Require().NoError(err)
 }
@@ -47,7 +50,7 @@ func (s *OrderStatsGapiTestSuite) SetupSuite() {
 func (s *OrderStatsGapiTestSuite) TestFindMonthlyTotalRevenue() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.FindYearMonthTotalRevenue{
+	req := &pborder.FindYearMonthTotalRevenue{
 		Year:  int32(now.Year()),
 		Month: int32(now.Month()),
 	}
@@ -61,7 +64,7 @@ func (s *OrderStatsGapiTestSuite) TestFindMonthlyTotalRevenue() {
 func (s *OrderStatsGapiTestSuite) TestFindYearlyTotalRevenue() {
 	ctx := context.Background()
 	year := time.Now().Year()
-	req := &pb.FindYearTotalRevenue{
+	req := &pborder.FindYearTotalRevenue{
 		Year: int32(year),
 	}
 
@@ -74,7 +77,7 @@ func (s *OrderStatsGapiTestSuite) TestFindYearlyTotalRevenue() {
 func (s *OrderStatsGapiTestSuite) TestFindMonthlyRevenue() {
 	ctx := context.Background()
 	year := time.Now().Year()
-	req := &pb.FindYearOrder{
+	req := &pborder.FindYearOrder{
 		Year: int32(year),
 	}
 
@@ -87,7 +90,7 @@ func (s *OrderStatsGapiTestSuite) TestFindMonthlyRevenue() {
 func (s *OrderStatsGapiTestSuite) TestFindYearlyRevenue() {
 	ctx := context.Background()
 	year := time.Now().Year()
-	req := &pb.FindYearOrder{
+	req := &pborder.FindYearOrder{
 		Year: int32(year),
 	}
 
@@ -100,13 +103,13 @@ func (s *OrderStatsGapiTestSuite) TestFindYearlyRevenue() {
 func (s *OrderStatsGapiTestSuite) TestFindMonthlyTotalRevenueByMerchant() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.FindYearMonthTotalRevenueByMerchant{
+	req := &pborder.FindYearMonthTotalRevenueByMerchant{
 		Year:       int32(now.Year()),
 		Month:      int32(now.Month()),
 		MerchantId: int32(s.merchantID),
 	}
 
-	res, err := s.client.FindMonthlyTotalRevenueByMerchant(ctx, req)
+	res, err := s.clientByMerchant.FindMonthlyTotalRevenueByMerchant(ctx, req)
 	s.NoError(err)
 	s.Equal("success", res.Status)
 	s.NotEmpty(res.Data)
@@ -115,12 +118,12 @@ func (s *OrderStatsGapiTestSuite) TestFindMonthlyTotalRevenueByMerchant() {
 func (s *OrderStatsGapiTestSuite) TestFindYearlyTotalRevenueByMerchant() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.FindYearTotalRevenueByMerchant{
+	req := &pborder.FindYearTotalRevenueByMerchant{
 		Year:       int32(now.Year()),
 		MerchantId: int32(s.merchantID),
 	}
 
-	res, err := s.client.FindYearlyTotalRevenueByMerchant(ctx, req)
+	res, err := s.clientByMerchant.FindYearlyTotalRevenueByMerchant(ctx, req)
 	s.NoError(err)
 	s.Equal("success", res.Status)
 	s.NotEmpty(res.Data)
@@ -129,12 +132,12 @@ func (s *OrderStatsGapiTestSuite) TestFindYearlyTotalRevenueByMerchant() {
 func (s *OrderStatsGapiTestSuite) TestFindMonthlyRevenueByMerchant() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.FindYearOrderByMerchant{
+	req := &pborder.FindYearOrderByMerchant{
 		Year:       int32(now.Year()),
 		MerchantId: int32(s.merchantID),
 	}
 
-	res, err := s.client.FindMonthlyRevenueByMerchant(ctx, req)
+	res, err := s.clientByMerchant.FindMonthlyRevenueByMerchant(ctx, req)
 	s.NoError(err)
 	s.Equal("success", res.Status)
 	s.NotEmpty(res.Data)
@@ -143,12 +146,12 @@ func (s *OrderStatsGapiTestSuite) TestFindMonthlyRevenueByMerchant() {
 func (s *OrderStatsGapiTestSuite) TestFindYearlyRevenueByMerchant() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.FindYearOrderByMerchant{
+	req := &pborder.FindYearOrderByMerchant{
 		Year:       int32(now.Year()),
 		MerchantId: int32(s.merchantID),
 	}
 
-	res, err := s.client.FindYearlyRevenueByMerchant(ctx, req)
+	res, err := s.clientByMerchant.FindYearlyRevenueByMerchant(ctx, req)
 	s.NoError(err)
 	s.Equal("success", res.Status)
 	s.NotEmpty(res.Data)

@@ -4,15 +4,16 @@ import (
 	"context"
 	"testing"
 
-	user_cache "github.com/MamangRust/monolith-ecommerce-grpc-user/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-user/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-user/service"
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
+	pbuserrole "github.com/MamangRust/monolith-ecommerce-pb/user_role"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
+	user_cache "github.com/MamangRust/monolith-ecommerce-user/cache"
+	"github.com/MamangRust/monolith-ecommerce-user/repository"
+	"github.com/MamangRust/monolith-ecommerce-user/service"
 
 	"github.com/stretchr/testify/suite"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
@@ -31,9 +32,13 @@ func (s *UserServiceTestSuite) SetupSuite() {
 
 	// Setup Role connection for repository
 	s.SetupRoleService()
-	roleClient := pb.NewRoleQueryServiceClient(s.Conns["role"])
+	roleClient := pbrole.NewRoleQueryServiceClient(s.Conns["role"])
 
-	repos := repository.NewRepositories(queries, roleClient)
+	repos := repository.NewRepositories(&repository.Deps{
+		Db:              queries,
+		RoleQueryClient: roleClient,
+		UserRoleClient:  pbuserrole.NewUserRoleServiceClient(s.Conns["role"]),
+	})
 
 	logger.ResetInstance()
 	lp := sdklog.NewLoggerProvider()
@@ -133,7 +138,7 @@ func (s *UserServiceTestSuite) TestUserLifecycle() {
 	// 12. RestoreAll & DeleteAll
 	u1, _ := s.userService.UserCommand.Create(ctx, &requests.CreateUserRequest{FirstName: "U1", LastName: "L1", Email: "u1@x.com", Password: "p1", ConfirmPassword: "p1"})
 	u2, _ := s.userService.UserCommand.Create(ctx, &requests.CreateUserRequest{FirstName: "U2", LastName: "L2", Email: "u2@x.com", Password: "p2", ConfirmPassword: "p2"})
-	
+
 	s.userService.UserCommand.Trash(ctx, int(u1.UserID))
 	s.userService.UserCommand.Trash(ctx, int(u2.UserID))
 

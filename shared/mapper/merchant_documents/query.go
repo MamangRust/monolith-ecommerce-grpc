@@ -1,7 +1,7 @@
 package merchantdocumentsapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant_document "github.com/MamangRust/monolith-ecommerce-pb/merchant_document"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	paginationapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/pagination"
 )
@@ -12,8 +12,10 @@ func NewMerchantDocumentQueryResponseMapper() MerchantDocumentQueryResponseMappe
 	return &merchantDocumentQueryResponseMapper{}
 }
 
-func (m *merchantDocumentQueryResponseMapper) MapMerchantDocument(doc *pb.MerchantDocument) *response.MerchantDocumentResponse {
-	if doc == nil { return nil }
+func (m *merchantDocumentQueryResponseMapper) MapMerchantDocument(doc *pbmerchant_document.MerchantDocument) *response.MerchantDocumentResponse {
+	if doc == nil {
+		return nil
+	}
 	return &response.MerchantDocumentResponse{
 		ID:           int(doc.DocumentId),
 		MerchantID:   int(doc.MerchantId),
@@ -26,7 +28,7 @@ func (m *merchantDocumentQueryResponseMapper) MapMerchantDocument(doc *pb.Mercha
 	}
 }
 
-func (m *merchantDocumentQueryResponseMapper) MapMerchantDocuments(docs []*pb.MerchantDocument) []*response.MerchantDocumentResponse {
+func (m *merchantDocumentQueryResponseMapper) MapMerchantDocuments(docs []*pbmerchant_document.MerchantDocument) []*response.MerchantDocumentResponse {
 	var responses []*response.MerchantDocumentResponse
 	for _, doc := range docs {
 		responses = append(responses, m.MapMerchantDocument(doc))
@@ -34,7 +36,7 @@ func (m *merchantDocumentQueryResponseMapper) MapMerchantDocuments(docs []*pb.Me
 	return responses
 }
 
-func (m *merchantDocumentQueryResponseMapper) ToApiResponseMerchantDocument(doc *pb.ApiResponseMerchantDocument) *response.ApiResponseMerchantDocument {
+func (m *merchantDocumentQueryResponseMapper) ToApiResponseMerchantDocument(doc *pbmerchant_document.ApiResponseMerchantDocument) *response.ApiResponseMerchantDocument {
 	return &response.ApiResponseMerchantDocument{
 		Status:  doc.Status,
 		Message: doc.Message,
@@ -42,7 +44,7 @@ func (m *merchantDocumentQueryResponseMapper) ToApiResponseMerchantDocument(doc 
 	}
 }
 
-func (m *merchantDocumentQueryResponseMapper) ToApiResponsesMerchantDocument(docs *pb.ApiResponsesMerchantDocument) *response.ApiResponsesMerchantDocument {
+func (m *merchantDocumentQueryResponseMapper) ToApiResponsesMerchantDocument(docs *pbmerchant_document.ApiResponsesMerchantDocument) *response.ApiResponsesMerchantDocument {
 	return &response.ApiResponsesMerchantDocument{
 		Status:  docs.Status,
 		Message: docs.Message,
@@ -50,7 +52,7 @@ func (m *merchantDocumentQueryResponseMapper) ToApiResponsesMerchantDocument(doc
 	}
 }
 
-func (m *merchantDocumentQueryResponseMapper) ToApiResponsePaginationMerchantDocument(docs *pb.ApiResponsePaginationMerchantDocument) *response.ApiResponsePaginationMerchantDocument {
+func (m *merchantDocumentQueryResponseMapper) ToApiResponsePaginationMerchantDocument(docs *pbmerchant_document.ApiResponsePaginationMerchantDocument) *response.ApiResponsePaginationMerchantDocument {
 	return &response.ApiResponsePaginationMerchantDocument{
 		Status:     docs.Status,
 		Message:    docs.Message,
@@ -59,11 +61,13 @@ func (m *merchantDocumentQueryResponseMapper) ToApiResponsePaginationMerchantDoc
 	}
 }
 
-func (m *merchantDocumentQueryResponseMapper) ToApiResponsePaginationMerchantDocumentDeleteAt(docs *pb.ApiResponsePaginationMerchantDocumentAt) *response.ApiResponsePaginationMerchantDocumentDeleteAt {
+func (m *merchantDocumentQueryResponseMapper) ToApiResponsePaginationMerchantDocumentDeleteAt(docs *pbmerchant_document.ApiResponsePaginationMerchantDocumentAt) *response.ApiResponsePaginationMerchantDocumentDeleteAt {
 	var data []*response.MerchantDocumentResponseDeleteAt
 	for _, doc := range docs.Data {
 		var deletedAt *string
-		if doc.DeletedAt != nil { deletedAt = &doc.DeletedAt.Value }
+		if doc.DeletedAt != nil {
+			deletedAt = &doc.DeletedAt.Value
+		}
 		data = append(data, &response.MerchantDocumentResponseDeleteAt{
 			ID:           int(doc.DocumentId),
 			MerchantID:   int(doc.MerchantId),

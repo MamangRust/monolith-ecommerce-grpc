@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package pb;
+package pb.merchant_business;
 
 import "common/api.proto";
 import "google/protobuf/wrappers.proto";
 
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/merchant_business";
 
 message FindByIdMerchantBusinessRequest{
     int32 id = 1;
@@ -61,12 +61,12 @@ message ApiResponsePaginationMerchantBusiness {
     string status = 1;
     string message = 2;
     repeated MerchantBusinessResponse data = 3;
-    PaginationMeta pagination = 4;
+    pb.common.PaginationMeta pagination = 4;
 }
   
 message ApiResponsePaginationMerchantBusinessDeleteAt {
     string status = 1;
     string message = 2;
     repeated MerchantBusinessResponseDeleteAt data = 3;
-    PaginationMeta pagination = 4;
+    pb.common.PaginationMeta pagination = 4;
 }

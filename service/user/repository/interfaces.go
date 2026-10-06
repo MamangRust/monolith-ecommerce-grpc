@@ -34,3 +34,11 @@ type RoleRepository interface {
 	FindByID(ctx context.Context, role_id int) (*db.Role, error)
 	FindByName(ctx context.Context, name string) (*db.Role, error)
 }
+
+// UserRoleRepository adapts the role service's user-role commands. service/user
+// uses it to assign the default role to a newly created user (mirrors auth
+// register). It is satisfied by userroleadapter.CommandRepository.
+type UserRoleRepository interface {
+	AssignRoleToUser(ctx context.Context, req *requests.CreateUserRoleRequest) (*db.UserRole, error)
+	RemoveRoleFromUser(ctx context.Context, req *requests.RemoveUserRoleRequest) error
+}

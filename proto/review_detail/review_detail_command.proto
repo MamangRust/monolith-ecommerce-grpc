@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package pb;
+package pb.review_detail;
 
 import "google/protobuf/empty.proto";
 import "review_detail/review_detail_common.proto";
 import "review/review_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/review_detail";
 
 message CreateReviewDetailRequest {
     int32 review_id = 1;
@@ -27,8 +27,8 @@ service ReviewDetailCommandService {
     rpc Update(UpdateReviewDetailRequest) returns (ApiResponseReviewDetail);
     rpc TrashedReviewDetail(FindByIdReviewDetailRequest) returns (ApiResponseReviewDetailDeleteAt);
     rpc RestoreReviewDetail(FindByIdReviewDetailRequest) returns (ApiResponseReviewDetailDeleteAt);
-    rpc DeleteReviewDetailPermanent(FindByIdReviewDetailRequest) returns (ApiResponseReviewDelete);
+    rpc DeleteReviewDetailPermanent(FindByIdReviewDetailRequest) returns (pb.review.ApiResponseReviewDelete);
 
-    rpc RestoreAllReviewDetail(google.protobuf.Empty) returns (ApiResponseReviewAll);
-    rpc DeleteAllReviewDetailPermanent(google.protobuf.Empty) returns (ApiResponseReviewAll);
+    rpc RestoreAllReviewDetail(google.protobuf.Empty) returns (pb.review.ApiResponseReviewAll);
+    rpc DeleteAllReviewDetailPermanent(google.protobuf.Empty) returns (pb.review.ApiResponseReviewAll);
 }

@@ -6,19 +6,19 @@ import (
 	"strings"
 
 	slider_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/slider"
+	pbslider "github.com/MamangRust/monolith-ecommerce-pb/slider"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/slider"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type sliderCommandHandleApi struct {
-	client      pb.SliderCommandServiceClient
+	client      pbslider.SliderCommandServiceClient
 	logger      logger.LoggerInterface
 	mapper      apimapper.SliderCommandResponseMapper
 	queryMapper apimapper.SliderQueryResponseMapper
@@ -27,7 +27,7 @@ type sliderCommandHandleApi struct {
 }
 
 type sliderCommandHandleDeps struct {
-	client      pb.SliderCommandServiceClient
+	client      pbslider.SliderCommandServiceClient
 	router      *echo.Echo
 	logger      logger.LoggerInterface
 	mapper      apimapper.SliderCommandResponseMapper
@@ -76,7 +76,7 @@ func (h *sliderCommandHandleApi) Create(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	grpcReq := &pb.CreateSliderRequest{
+	grpcReq := &pbslider.CreateSliderRequest{
 		Name:  formData.Nama,
 		Image: formData.FilePath,
 	}
@@ -115,7 +115,7 @@ func (h *sliderCommandHandleApi) Update(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	grpcReq := &pb.UpdateSliderRequest{
+	grpcReq := &pbslider.UpdateSliderRequest{
 		Id:    int32(id),
 		Name:  formData.Nama,
 		Image: formData.FilePath,
@@ -149,7 +149,7 @@ func (h *sliderCommandHandleApi) TrashedSlider(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.TrashedSlider(ctx, &pb.FindByIdSliderRequest{Id: int32(id)})
+	res, err := h.client.TrashedSlider(ctx, &pbslider.FindByIdSliderRequest{Id: int32(id)})
 	if err != nil {
 		return h.handleGrpcError(err, "Trash")
 	}
@@ -177,7 +177,7 @@ func (h *sliderCommandHandleApi) RestoreSlider(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.RestoreSlider(ctx, &pb.FindByIdSliderRequest{Id: int32(id)})
+	res, err := h.client.RestoreSlider(ctx, &pbslider.FindByIdSliderRequest{Id: int32(id)})
 	if err != nil {
 		return h.handleGrpcError(err, "Restore")
 	}
@@ -205,7 +205,7 @@ func (h *sliderCommandHandleApi) DeleteSliderPermanent(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.DeleteSliderPermanent(ctx, &pb.FindByIdSliderRequest{Id: int32(id)})
+	res, err := h.client.DeleteSliderPermanent(ctx, &pbslider.FindByIdSliderRequest{Id: int32(id)})
 	if err != nil {
 		return h.handleGrpcError(err, "Delete")
 	}
@@ -263,7 +263,7 @@ func (h *sliderCommandHandleApi) parseSliderForm(c echo.Context, requireImage bo
 
 	file, err := c.FormFile("image_slider")
 	if err == nil {
-		imagePath, err := h.upload.ProcessImageUpload(c, "uploads/slider", file, false)
+		imagePath, err := h.upload.ProcessImageUpload("uploads/slider", file, false)
 		if err != nil {
 			return formData, err
 		}

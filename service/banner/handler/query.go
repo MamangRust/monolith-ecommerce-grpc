@@ -3,16 +3,17 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-banner/service"
+	"github.com/MamangRust/monolith-ecommerce-banner/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/banner_errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+
+	pbbanner "github.com/MamangRust/monolith-ecommerce-pb/banner"
 )
 
 type bannerQueryHandler struct {
-	pb.UnimplementedBannerQueryServiceServer
+	pbbanner.UnimplementedBannerQueryServiceServer
 	BannerQuery service.BannerQueryService
 	logger      logger.LoggerInterface
 }
@@ -24,7 +25,7 @@ func NewBannerQueryHandler(svc service.BannerQueryService, logger logger.LoggerI
 	}
 }
 
-func (s *bannerQueryHandler) FindAll(ctx context.Context, request *pb.FindAllBannerRequest) (*pb.ApiResponsePaginationBanner, error) {
+func (s *bannerQueryHandler) FindAll(ctx context.Context, request *pbbanner.FindAllBannerRequest) (*pbbanner.ApiResponsePaginationBanner, error) {
 	page, pageSize := normalizePage(int(request.GetPage()), int(request.GetPageSize()))
 	search := request.GetSearch()
 
@@ -39,14 +40,14 @@ func (s *bannerQueryHandler) FindAll(ctx context.Context, request *pb.FindAllBan
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoBanners := make([]*pb.BannerResponse, len(banners))
+	protoBanners := make([]*pbbanner.BannerResponse, len(banners))
 	for i, banner := range banners {
 		protoBanners[i] = mapToProtoBannerResponse(banner)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationBanner{
+	return &pbbanner.ApiResponsePaginationBanner{
 		Status:     "success",
 		Message:    "Successfully fetched banners",
 		Data:       protoBanners,
@@ -54,7 +55,7 @@ func (s *bannerQueryHandler) FindAll(ctx context.Context, request *pb.FindAllBan
 	}, nil
 }
 
-func (s *bannerQueryHandler) FindById(ctx context.Context, request *pb.FindByIdBannerRequest) (*pb.ApiResponseBanner, error) {
+func (s *bannerQueryHandler) FindById(ctx context.Context, request *pbbanner.FindByIdBannerRequest) (*pbbanner.ApiResponseBanner, error) {
 	id := int(request.GetId())
 	if id == 0 {
 		return nil, banner_errors.ErrGrpcBannerInvalidId
@@ -65,14 +66,14 @@ func (s *bannerQueryHandler) FindById(ctx context.Context, request *pb.FindByIdB
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseBanner{
+	return &pbbanner.ApiResponseBanner{
 		Status:  "success",
 		Message: "Successfully fetched banner",
 		Data:    mapToProtoBannerResponse(banner),
 	}, nil
 }
 
-func (s *bannerQueryHandler) FindByActive(ctx context.Context, request *pb.FindAllBannerRequest) (*pb.ApiResponsePaginationBannerDeleteAt, error) {
+func (s *bannerQueryHandler) FindByActive(ctx context.Context, request *pbbanner.FindAllBannerRequest) (*pbbanner.ApiResponsePaginationBannerDeleteAt, error) {
 	page, pageSize := normalizePage(int(request.GetPage()), int(request.GetPageSize()))
 	search := request.GetSearch()
 
@@ -87,14 +88,14 @@ func (s *bannerQueryHandler) FindByActive(ctx context.Context, request *pb.FindA
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoBanners := make([]*pb.BannerResponseDeleteAt, len(banners))
+	protoBanners := make([]*pbbanner.BannerResponseDeleteAt, len(banners))
 	for i, banner := range banners {
 		protoBanners[i] = mapToProtoBannerResponseDeleteAt(banner)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationBannerDeleteAt{
+	return &pbbanner.ApiResponsePaginationBannerDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched active banners",
 		Data:       protoBanners,
@@ -102,7 +103,7 @@ func (s *bannerQueryHandler) FindByActive(ctx context.Context, request *pb.FindA
 	}, nil
 }
 
-func (s *bannerQueryHandler) FindByTrashed(ctx context.Context, request *pb.FindAllBannerRequest) (*pb.ApiResponsePaginationBannerDeleteAt, error) {
+func (s *bannerQueryHandler) FindByTrashed(ctx context.Context, request *pbbanner.FindAllBannerRequest) (*pbbanner.ApiResponsePaginationBannerDeleteAt, error) {
 	page, pageSize := normalizePage(int(request.GetPage()), int(request.GetPageSize()))
 	search := request.GetSearch()
 
@@ -117,14 +118,14 @@ func (s *bannerQueryHandler) FindByTrashed(ctx context.Context, request *pb.Find
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoBanners := make([]*pb.BannerResponseDeleteAt, len(banners))
+	protoBanners := make([]*pbbanner.BannerResponseDeleteAt, len(banners))
 	for i, banner := range banners {
 		protoBanners[i] = mapToProtoBannerResponseDeleteAt(banner)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationBannerDeleteAt{
+	return &pbbanner.ApiResponsePaginationBannerDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched trashed banners",
 		Data:       protoBanners,

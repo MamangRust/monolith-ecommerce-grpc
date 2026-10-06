@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-transaction/repository"
 	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"

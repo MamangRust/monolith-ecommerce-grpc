@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-order-item/service"
+	"github.com/MamangRust/monolith-ecommerce-order-item/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 )
 

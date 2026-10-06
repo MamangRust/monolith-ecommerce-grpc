@@ -4,15 +4,16 @@ import (
 	"context"
 	"testing"
 
-	item_cache "github.com/MamangRust/monolith-ecommerce-grpc-order-item/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-order-item/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-order-item/service"
+	"github.com/stretchr/testify/suite"
+
+	item_cache "github.com/MamangRust/monolith-ecommerce-order-item/cache"
+	"github.com/MamangRust/monolith-ecommerce-order-item/repository"
+	"github.com/MamangRust/monolith-ecommerce-order-item/service"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type OrderItemServiceTestSuite struct {
@@ -130,7 +131,7 @@ func (s *OrderItemServiceTestSuite) TestOrderItemLifecycle() {
 	// 11. RestoreAll & DeleteAll
 	i1, _ := s.svc.OrderItemCommand.Create(ctx, &requests.CreateOrderItemRecordRequest{OrderID: orderID, ProductID: productID, Quantity: 1, Price: 1000})
 	i2, _ := s.svc.OrderItemCommand.Create(ctx, &requests.CreateOrderItemRecordRequest{OrderID: orderID, ProductID: productID, Quantity: 1, Price: 1000})
-	
+
 	s.svc.OrderItemCommand.Trash(ctx, int(i1.OrderItemID))
 	s.svc.OrderItemCommand.Trash(ctx, int(i2.OrderItemID))
 

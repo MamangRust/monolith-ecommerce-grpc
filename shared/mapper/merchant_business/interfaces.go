@@ -1,26 +1,26 @@
 package merchantbusinessapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant_business "github.com/MamangRust/monolith-ecommerce-pb/merchant_business"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
 type MerchantBusinessBaseResponseMapper interface {
-	ToResponseMerchantBusiness(merchant *pb.MerchantBusinessResponse) *response.MerchantBusinessResponse
-	ToResponsesMerchantBusiness(merchants []*pb.MerchantBusinessResponse) []*response.MerchantBusinessResponse
-	ToApiResponseMerchantBusiness(pbResponse *pb.ApiResponseMerchantBusiness) *response.ApiResponseMerchantBusiness
+	ToResponseMerchantBusiness(merchant *pbmerchant_business.MerchantBusinessResponse) *response.MerchantBusinessResponse
+	ToResponsesMerchantBusiness(merchants []*pbmerchant_business.MerchantBusinessResponse) []*response.MerchantBusinessResponse
+	ToApiResponseMerchantBusiness(pbResponse *pbmerchant_business.ApiResponseMerchantBusiness) *response.ApiResponseMerchantBusiness
 }
 
 type MerchantBusinessQueryResponseMapper interface {
 	MerchantBusinessBaseResponseMapper
-	ToApiResponsesMerchantBusiness(pbResponse *pb.ApiResponsesMerchantBusiness) *response.ApiResponsesMerchantBusiness
-	ToApiResponsePaginationMerchantBusiness(pbResponse *pb.ApiResponsePaginationMerchantBusiness) *response.ApiResponsePaginationMerchantBusiness
-	ToApiResponsePaginationMerchantBusinessDeleteAt(pbResponse *pb.ApiResponsePaginationMerchantBusinessDeleteAt) *response.ApiResponsePaginationMerchantBusinessDeleteAt
+	ToApiResponsesMerchantBusiness(pbResponse *pbmerchant_business.ApiResponsesMerchantBusiness) *response.ApiResponsesMerchantBusiness
+	ToApiResponsePaginationMerchantBusiness(pbResponse *pbmerchant_business.ApiResponsePaginationMerchantBusiness) *response.ApiResponsePaginationMerchantBusiness
+	ToApiResponsePaginationMerchantBusinessDeleteAt(pbResponse *pbmerchant_business.ApiResponsePaginationMerchantBusinessDeleteAt) *response.ApiResponsePaginationMerchantBusinessDeleteAt
 }
 
 type MerchantBusinessCommandResponseMapper interface {
 	MerchantBusinessBaseResponseMapper
-	ToResponseMerchantBusinessDeleteAt(merchant *pb.MerchantBusinessResponseDeleteAt) *response.MerchantBusinessResponseDeleteAt
-	ToResponsesMerchantBusinessDeleteAt(merchants []*pb.MerchantBusinessResponseDeleteAt) []*response.MerchantBusinessResponseDeleteAt
-	ToApiResponseMerchantBusinessDeleteAt(pbResponse *pb.ApiResponseMerchantBusinessDeleteAt) *response.ApiResponseMerchantBusinessDeleteAt
+	ToResponseMerchantBusinessDeleteAt(merchant *pbmerchant_business.MerchantBusinessResponseDeleteAt) *response.MerchantBusinessResponseDeleteAt
+	ToResponsesMerchantBusinessDeleteAt(merchants []*pbmerchant_business.MerchantBusinessResponseDeleteAt) []*response.MerchantBusinessResponseDeleteAt
+	ToApiResponseMerchantBusinessDeleteAt(pbResponse *pbmerchant_business.ApiResponseMerchantBusinessDeleteAt) *response.ApiResponseMerchantBusinessDeleteAt
 }

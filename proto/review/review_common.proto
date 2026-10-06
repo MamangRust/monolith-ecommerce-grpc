@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package pb;
+package pb.review;
 
 import "common/api.proto";
 import "google/protobuf/wrappers.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/review";
 
 message FindByIdReviewRequest{
     int32 id = 1;
@@ -77,7 +77,7 @@ message ApiResponsePaginationReview {
     string status = 1;
     string message = 2;
     repeated ReviewResponse data = 3;
-    PaginationMeta pagination = 4;
+    pb.common.PaginationMeta pagination = 4;
 }
 
 message ApiResponseReviewDelete {
@@ -94,12 +94,12 @@ message ApiResponsePaginationReviewDeleteAt {
     string status = 1;
     string message = 2;
     repeated ReviewResponseDeleteAt data = 3;
-    PaginationMeta pagination = 4;
+    pb.common.PaginationMeta pagination = 4;
 }
 
 message ApiResponsePaginationReviewDetail{
     string status = 1;
     string message = 2;
     repeated ReviewsDetailResponse data = 3;
-    PaginationMeta pagination = 4;
+    pb.common.PaginationMeta pagination = 4;
 }

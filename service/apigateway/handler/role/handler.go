@@ -3,12 +3,12 @@ package rolehandler
 import (
 	api_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache"
 	role_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/role"
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/role"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc"
 )
@@ -28,7 +28,7 @@ func RegisterRoleHandler(deps *DepsRole) {
 	cache := role_cache.NewRoleMencache(deps.CacheStore)
 
 	NewRoleQueryHandleApi(&roleQueryHandleDeps{
-		client:     pb.NewRoleQueryServiceClient(deps.Client),
+		client:     pbrole.NewRoleQueryServiceClient(deps.Client),
 		router:     deps.E,
 		logger:     deps.Logger,
 		mapper:     mapper.QueryMapper(),
@@ -39,8 +39,8 @@ func RegisterRoleHandler(deps *DepsRole) {
 	})
 
 	NewRoleCommandHandleApi(&roleCommandHandleDeps{
-		client:      pb.NewRoleCommandServiceClient(deps.Client),
-		queryClient: pb.NewRoleQueryServiceClient(deps.Client),
+		client:      pbrole.NewRoleCommandServiceClient(deps.Client),
+		queryClient: pbrole.NewRoleQueryServiceClient(deps.Client),
 		router:      deps.E,
 		logger:      deps.Logger,
 		mapper:      mapper.CommandMapper(),

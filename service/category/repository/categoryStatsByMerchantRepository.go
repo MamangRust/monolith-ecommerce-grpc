@@ -61,7 +61,6 @@ func (r *categoryStatsByMerchantRepository) GetMonthlyTotalPriceByMerchant(
 		return nil, category_errors.ErrGetMonthlyTotalPriceByMerchant.WithInternal(err)
 	}
 
-
 	return res, nil
 }
 
@@ -74,7 +73,6 @@ func (r *categoryStatsByMerchantRepository) GetYearlyTotalPricesByMerchant(ctx c
 	if err != nil {
 		return nil, category_errors.ErrGetYearlyTotalPricesByMerchant.WithInternal(err)
 	}
-
 
 	return res, nil
 }
@@ -90,7 +88,6 @@ func (r *categoryStatsByMerchantRepository) GetMonthPriceByMerchant(ctx context.
 		return nil, category_errors.ErrGetMonthPriceByMerchant.WithInternal(err)
 	}
 
-
 	return res, nil
 }
 
@@ -105,7 +102,6 @@ func (r *categoryStatsByMerchantRepository) GetYearPriceByMerchant(ctx context.C
 	if err != nil {
 		return nil, category_errors.ErrGetYearPriceByMerchant.WithInternal(err)
 	}
-
 
 	return res, nil
 }

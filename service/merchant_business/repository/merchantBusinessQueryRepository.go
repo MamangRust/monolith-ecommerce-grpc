@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 
-	"errors"
-	"github.com/jackc/pgx/v5"
+	"database/sql"
+	errorsstd "errors"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -81,8 +81,8 @@ func (r *merchantBusinessQueryRepository) FindByID(ctx context.Context, user_id 
 	res, err := r.db.GetMerchantBusinessInformation(ctx, int32(user_id))
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, merchantbusiness_errors.ErrMerchantBusinessNotFound
+		if errorsstd.Is(err, sql.ErrNoRows) {
+			return nil, merchantbusiness_errors.ErrMerchantBusinessNotFound.WithInternal(err)
 		}
 		return nil, merchantbusiness_errors.ErrMerchantBusinessInternal.WithInternal(err)
 	}

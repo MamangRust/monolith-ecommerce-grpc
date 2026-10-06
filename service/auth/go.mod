@@ -3,6 +3,7 @@ module github.com/MamangRust/monolith-ecommerce-auth
 go 1.25.1
 
 require (
+	github.com/MamangRust/monolith-ecommerce-pb v0.0.0-00010101000000-000000000000
 	github.com/MamangRust/monolith-ecommerce-pkg v1.0.18
 	github.com/MamangRust/monolith-ecommerce-shared v1.0.20
 	github.com/jackc/pgx/v5 v5.9.1
@@ -53,7 +54,6 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pierrec/lz4/v4 v4.1.25 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20250401214520-65e299d6c5c9 // indirect
 	github.com/redis/go-redis/v9 v9.18.0 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
@@ -88,4 +88,10 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
+)
+
+replace (
+	github.com/MamangRust/monolith-ecommerce-pb => ../../pb
+	github.com/MamangRust/monolith-ecommerce-pkg => ../../pkg
+	github.com/MamangRust/monolith-ecommerce-shared => ../../shared
 )

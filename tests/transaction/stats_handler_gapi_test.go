@@ -5,15 +5,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
-	tests "github.com/MamangRust/monolith-ecommerce-test"
 	"github.com/stretchr/testify/suite"
+
+	pbtransaction "github.com/MamangRust/monolith-ecommerce-pb/transaction"
+	tests "github.com/MamangRust/monolith-ecommerce-test"
 )
 
 type TransactionStatsGapiTestSuite struct {
 	tests.BaseTestSuite
-	client           pb.TransactionStatsServiceClient
-	clientByMerchant pb.TransactionStatsByMerchantServiceClient
+	client           pbtransaction.TransactionStatsServiceClient
+	clientByMerchant pbtransaction.TransactionStatsByMerchantServiceClient
 	merchantID       int
 	userID           int
 }
@@ -30,8 +31,8 @@ func (s *TransactionStatsGapiTestSuite) SetupSuite() {
 	s.SetupTransactionService()
 	s.SetupOrderService()
 
-	s.client = pb.NewTransactionStatsServiceClient(s.Conns["transaction"])
-	s.clientByMerchant = pb.NewTransactionStatsByMerchantServiceClient(s.Conns["transaction"])
+	s.client = pbtransaction.NewTransactionStatsServiceClient(s.Conns["transaction"])
+	s.clientByMerchant = pbtransaction.NewTransactionStatsByMerchantServiceClient(s.Conns["transaction"])
 
 	ctx := context.Background()
 	s.userID = s.SeedUser(ctx)
@@ -58,7 +59,7 @@ func (s *TransactionStatsGapiTestSuite) SetupSuite() {
 func (s *TransactionStatsGapiTestSuite) TestGetMonthlyAmountSuccess() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.MonthAmountTransactionRequest{
+	req := &pbtransaction.MonthAmountTransactionRequest{
 		Year:  int32(now.Year()),
 		Month: int32(now.Month()),
 	}
@@ -72,7 +73,7 @@ func (s *TransactionStatsGapiTestSuite) TestGetMonthlyAmountSuccess() {
 func (s *TransactionStatsGapiTestSuite) TestGetYearlyAmountSuccess() {
 	ctx := context.Background()
 	year := time.Now().Year()
-	req := &pb.YearAmountTransactionRequest{
+	req := &pbtransaction.YearAmountTransactionRequest{
 		Year: int32(year),
 	}
 
@@ -85,7 +86,7 @@ func (s *TransactionStatsGapiTestSuite) TestGetYearlyAmountSuccess() {
 func (s *TransactionStatsGapiTestSuite) TestGetMonthlyAmountFailed() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.MonthAmountTransactionRequest{
+	req := &pbtransaction.MonthAmountTransactionRequest{
 		Year:  int32(now.Year()),
 		Month: int32(now.Month()),
 	}
@@ -99,7 +100,7 @@ func (s *TransactionStatsGapiTestSuite) TestGetMonthlyAmountFailed() {
 func (s *TransactionStatsGapiTestSuite) TestGetYearlyAmountFailed() {
 	ctx := context.Background()
 	year := time.Now().Year()
-	req := &pb.YearAmountTransactionRequest{
+	req := &pbtransaction.YearAmountTransactionRequest{
 		Year: int32(year),
 	}
 
@@ -112,7 +113,7 @@ func (s *TransactionStatsGapiTestSuite) TestGetYearlyAmountFailed() {
 func (s *TransactionStatsGapiTestSuite) TestGetMonthlyTransactionMethodSuccess() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.MonthMethodTransactionRequest{
+	req := &pbtransaction.MonthMethodTransactionRequest{
 		Year:  int32(now.Year()),
 		Month: int32(now.Month()),
 	}
@@ -126,7 +127,7 @@ func (s *TransactionStatsGapiTestSuite) TestGetMonthlyTransactionMethodSuccess()
 func (s *TransactionStatsGapiTestSuite) TestGetYearlyTransactionMethodSuccess() {
 	ctx := context.Background()
 	year := time.Now().Year()
-	req := &pb.YearMethodTransactionRequest{
+	req := &pbtransaction.YearMethodTransactionRequest{
 		Year: int32(year),
 	}
 
@@ -139,7 +140,7 @@ func (s *TransactionStatsGapiTestSuite) TestGetYearlyTransactionMethodSuccess() 
 func (s *TransactionStatsGapiTestSuite) TestGetMonthlyAmountSuccessByMerchant() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.MonthAmountTransactionMerchantRequest{
+	req := &pbtransaction.MonthAmountTransactionMerchantRequest{
 		Year:       int32(now.Year()),
 		Month:      int32(now.Month()),
 		MerchantId: int32(s.merchantID),
@@ -154,7 +155,7 @@ func (s *TransactionStatsGapiTestSuite) TestGetMonthlyAmountSuccessByMerchant() 
 func (s *TransactionStatsGapiTestSuite) TestGetYearlyAmountSuccessByMerchant() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.YearAmountTransactionMerchantRequest{
+	req := &pbtransaction.YearAmountTransactionMerchantRequest{
 		Year:       int32(now.Year()),
 		MerchantId: int32(s.merchantID),
 	}

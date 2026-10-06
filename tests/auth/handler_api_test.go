@@ -16,14 +16,18 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-auth/service"
 	auth_cache_api "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/auth"
 	authhandler "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/auth"
-	role_cache "github.com/MamangRust/monolith-ecommerce-grpc-role/cache"
-	role_handler "github.com/MamangRust/monolith-ecommerce-grpc-role/handler"
-	role_repo "github.com/MamangRust/monolith-ecommerce-grpc-role/repository"
-	role_service "github.com/MamangRust/monolith-ecommerce-grpc-role/service"
-	user_cache "github.com/MamangRust/monolith-ecommerce-grpc-user/cache"
-	user_handler "github.com/MamangRust/monolith-ecommerce-grpc-user/handler"
-	user_repo "github.com/MamangRust/monolith-ecommerce-grpc-user/repository"
-	user_service "github.com/MamangRust/monolith-ecommerce-grpc-user/service"
+	role_cache "github.com/MamangRust/monolith-ecommerce-role/cache"
+	role_handler "github.com/MamangRust/monolith-ecommerce-role/handler"
+	role_repo "github.com/MamangRust/monolith-ecommerce-role/repository"
+	role_service "github.com/MamangRust/monolith-ecommerce-role/service"
+	user_cache "github.com/MamangRust/monolith-ecommerce-user/cache"
+	user_handler "github.com/MamangRust/monolith-ecommerce-user/handler"
+	user_repo "github.com/MamangRust/monolith-ecommerce-user/repository"
+	user_service "github.com/MamangRust/monolith-ecommerce-user/service"
+	pb "github.com/MamangRust/monolith-ecommerce-pb"
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
+	pbuserrole "github.com/MamangRust/monolith-ecommerce-pb/user_role"
 	"github.com/MamangRust/monolith-ecommerce-pkg/auth"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
@@ -31,7 +35,6 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -93,16 +96,21 @@ func (s *AuthHandlerApiTestSuite) SetupSuite() {
 		Logger:  log,
 	})
 	roleServer := grpc.NewServer()
-	pb.RegisterRoleQueryServiceServer(roleServer, roleGapi.RoleQuery)
-	pb.RegisterRoleCommandServiceServer(roleServer, roleGapi.RoleCommand)
+	pbrole.RegisterRoleQueryServiceServer(roleServer, roleGapi.RoleQuery)
+	pbrole.RegisterRoleCommandServiceServer(roleServer, roleGapi.RoleCommand)
+	pbuserrole.RegisterUserRoleServiceServer(roleServer, roleGapi.UserRole)
 	roleLis, _ := net.Listen("tcp", "localhost:0")
 	go roleServer.Serve(roleLis)
 	roleConn, _ := grpc.NewClient(roleLis.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	// 2. Setup User Service & gRPC Server
 	userMencache := user_cache.NewMencache(cacheStore)
-	roleQueryClientForUser := pb.NewRoleQueryServiceClient(roleConn)
-	userRepos := user_repo.NewRepositories(queries, roleQueryClientForUser)
+	roleQueryClientForUser := pbrole.NewRoleQueryServiceClient(roleConn)
+	userRepos := user_repo.NewRepositories(&user_repo.Deps{
+		Db:              queries,
+		RoleQueryClient: roleQueryClientForUser,
+		UserRoleClient:  pbuserrole.NewUserRoleServiceClient(roleConn),
+	})
 	userSvc := user_service.NewService(&user_service.Deps{
 		Repositories:  userRepos,
 		Logger:        log,
@@ -115,19 +123,26 @@ func (s *AuthHandlerApiTestSuite) SetupSuite() {
 		Logger:  log,
 	})
 	userServer := grpc.NewServer()
-	pb.RegisterUserQueryServiceServer(userServer, userGapi.UserQuery)
-	pb.RegisterUserCommandServiceServer(userServer, userGapi.UserCommand)
+	pbuser.RegisterUserQueryServiceServer(userServer, userGapi.UserQuery)
+	pbuser.RegisterUserCommandServiceServer(userServer, userGapi.UserCommand)
 	userLis, _ := net.Listen("tcp", "localhost:0")
 	go userServer.Serve(userLis)
 	userConn, _ := grpc.NewClient(userLis.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	// 3. Setup Auth Service with gRPC clients
-	userQueryClient := pb.NewUserQueryServiceClient(userConn)
-	userCommandClient := pb.NewUserCommandServiceClient(userConn)
-	roleQueryClient := pb.NewRoleQueryServiceClient(roleConn)
-	roleCommandClient := pb.NewRoleCommandServiceClient(roleConn)
+	userQueryClient := pbuser.NewUserQueryServiceClient(userConn)
+	userCommandClient := pbuser.NewUserCommandServiceClient(userConn)
+	roleQueryClient := pbrole.NewRoleQueryServiceClient(roleConn)
+	roleCommandClient := pbrole.NewRoleCommandServiceClient(roleConn)
 
-	repos := repository.NewRepositories(queries, userQueryClient, userCommandClient, roleQueryClient, roleCommandClient)
+	repos := repository.NewRepositories(&repository.Deps{
+		Db:                queries,
+		UserQueryClient:   userQueryClient,
+		UserCommandClient: userCommandClient,
+		RoleQueryClient:   roleQueryClient,
+		RoleCommandClient: roleCommandClient,
+		UserRoleClient:    pbuserrole.NewUserRoleServiceClient(roleConn),
+	})
 
 	tokenManager, _ := auth.NewManager("mysecret")
 	mencache := auth_cache.NewMencache(cacheStore)
@@ -190,8 +205,8 @@ func (s *AuthHandlerApiTestSuite) SetupSuite() {
 	s.password = "password123"
 
 	// Seed ROLE_ADMIN via gRPC to ensure visibility
-	roleCommandClient = pb.NewRoleCommandServiceClient(roleConn)
-	createdRoleRes, err := roleCommandClient.CreateRole(context.Background(), &pb.CreateRoleRequest{
+	roleCommandClient = pbrole.NewRoleCommandServiceClient(roleConn)
+	createdRoleRes, err := roleCommandClient.CreateRole(context.Background(), &pbrole.CreateRoleRequest{
 		Name: "ROLE_ADMIN",
 	})
 	if err != nil {
@@ -221,8 +236,8 @@ func (s *AuthHandlerApiTestSuite) SetupSuite() {
 	}
 
 	// Verify via gRPC with empty search
-	roleClient := pb.NewRoleQueryServiceClient(roleConn)
-	roleRes, err := roleClient.FindAllRole(context.Background(), &pb.FindAllRoleRequest{
+	roleClient := pbrole.NewRoleQueryServiceClient(roleConn)
+	roleRes, err := roleClient.FindAllRole(context.Background(), &pbrole.FindAllRoleRequest{
 		Search:   "",
 		Page:     1,
 		PageSize: 10,

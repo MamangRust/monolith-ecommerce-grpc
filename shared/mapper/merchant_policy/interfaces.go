@@ -1,26 +1,26 @@
 package merchantpolicyapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant_policy "github.com/MamangRust/monolith-ecommerce-pb/merchant_policy"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
 type MerchantPolicyBaseResponseMapper interface {
-	ToResponseMerchantPolicy(merchant *pb.MerchantPoliciesResponse) *response.MerchantPoliciesResponse
-	ToResponsesMerchantPolicy(merchants []*pb.MerchantPoliciesResponse) []*response.MerchantPoliciesResponse
-	ToApiResponseMerchantPolicies(pbResponse *pb.ApiResponseMerchantPolicies) *response.ApiResponseMerchantPolicies
+	ToResponseMerchantPolicy(merchant *pbmerchant_policy.MerchantPoliciesResponse) *response.MerchantPoliciesResponse
+	ToResponsesMerchantPolicy(merchants []*pbmerchant_policy.MerchantPoliciesResponse) []*response.MerchantPoliciesResponse
+	ToApiResponseMerchantPolicies(pbResponse *pbmerchant_policy.ApiResponseMerchantPolicies) *response.ApiResponseMerchantPolicies
 }
 
 type MerchantPolicyQueryResponseMapper interface {
 	MerchantPolicyBaseResponseMapper
-	ToApiResponsesMerchantPolicies(pbResponse *pb.ApiResponsesMerchantPolicies) *response.ApiResponsesMerchantPolicies
-	ToApiResponsePaginationMerchantPolicies(pbResponse *pb.ApiResponsePaginationMerchantPolicies) *response.ApiResponsePaginationMerchantPolicies
-	ToApiResponsePaginationMerchantPoliciesDeleteAt(pbResponse *pb.ApiResponsePaginationMerchantPoliciesDeleteAt) *response.ApiResponsePaginationMerchantPoliciesDeleteAt
+	ToApiResponsesMerchantPolicies(pbResponse *pbmerchant_policy.ApiResponsesMerchantPolicies) *response.ApiResponsesMerchantPolicies
+	ToApiResponsePaginationMerchantPolicies(pbResponse *pbmerchant_policy.ApiResponsePaginationMerchantPolicies) *response.ApiResponsePaginationMerchantPolicies
+	ToApiResponsePaginationMerchantPoliciesDeleteAt(pbResponse *pbmerchant_policy.ApiResponsePaginationMerchantPoliciesDeleteAt) *response.ApiResponsePaginationMerchantPoliciesDeleteAt
 }
 
 type MerchantPolicyCommandResponseMapper interface {
 	MerchantPolicyBaseResponseMapper
-	ToResponseMerchantPolicyDeleteAt(merchant *pb.MerchantPoliciesResponseDeleteAt) *response.MerchantPoliciesResponseDeleteAt
-	ToResponsesMerchantPolicyDeleteAt(merchants []*pb.MerchantPoliciesResponseDeleteAt) []*response.MerchantPoliciesResponseDeleteAt
-	ToApiResponseMerchantPoliciesDeleteAt(pbResponse *pb.ApiResponseMerchantPoliciesDeleteAt) *response.ApiResponseMerchantPoliciesDeleteAt
+	ToResponseMerchantPolicyDeleteAt(merchant *pbmerchant_policy.MerchantPoliciesResponseDeleteAt) *response.MerchantPoliciesResponseDeleteAt
+	ToResponsesMerchantPolicyDeleteAt(merchants []*pbmerchant_policy.MerchantPoliciesResponseDeleteAt) []*response.MerchantPoliciesResponseDeleteAt
+	ToApiResponseMerchantPoliciesDeleteAt(pbResponse *pbmerchant_policy.ApiResponseMerchantPoliciesDeleteAt) *response.ApiResponseMerchantPoliciesDeleteAt
 }

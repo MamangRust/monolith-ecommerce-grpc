@@ -4,16 +4,17 @@ import (
 	"context"
 	"testing"
 
-	detail_cache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/service"
+	"github.com/stretchr/testify/suite"
+
+	detail_cache "github.com/MamangRust/monolith-ecommerce-merchant_detail/cache"
+	"github.com/MamangRust/monolith-ecommerce-merchant_detail/repository"
+	"github.com/MamangRust/monolith-ecommerce-merchant_detail/service"
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type MerchantDetailServiceTestSuite struct {
@@ -38,7 +39,7 @@ func (s *MerchantDetailServiceTestSuite) SetupSuite() {
 	mencache := detail_cache.NewMencache(cacheStore)
 	repos := repository.NewRepositories(
 		queries,
-		pb.NewMerchantQueryServiceClient(s.Conns["merchant"]),
+		pbmerchant.NewMerchantQueryServiceClient(s.Conns["merchant"]),
 	)
 
 	s.svc = service.NewService(&service.Deps{
@@ -130,7 +131,7 @@ func (s *MerchantDetailServiceTestSuite) TestMerchantDetailLifecycle() {
 	// 10. RestoreAll & DeleteAll
 	d1, _ := s.svc.MerchantDetailCommand.Create(ctx, &requests.CreateMerchantDetailRequest{MerchantID: int(merchantID), DisplayName: "D1", ShortDescription: "SD1"})
 	d2, _ := s.svc.MerchantDetailCommand.Create(ctx, &requests.CreateMerchantDetailRequest{MerchantID: int(merchantID), DisplayName: "D2", ShortDescription: "SD2"})
-	
+
 	s.svc.MerchantDetailCommand.Trash(ctx, int(d1.MerchantDetailID))
 	s.svc.MerchantDetailCommand.Trash(ctx, int(d2.MerchantDetailID))
 

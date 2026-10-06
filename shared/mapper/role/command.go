@@ -1,7 +1,7 @@
 package roleapimapper
 
 import (
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
@@ -12,7 +12,7 @@ func NewRoleCommandResponseMapper() RoleCommandResponseMapper {
 	return &roleCommandResponseMapper{}
 }
 
-func (s *roleCommandResponseMapper) ToApiResponseRole(pbResponse *pb.ApiResponseRole) *response.ApiResponseRole {
+func (s *roleCommandResponseMapper) ToApiResponseRole(pbResponse *pbrole.ApiResponseRole) *response.ApiResponseRole {
 	return &response.ApiResponseRole{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -20,22 +20,24 @@ func (s *roleCommandResponseMapper) ToApiResponseRole(pbResponse *pb.ApiResponse
 	}
 }
 
-func (s *roleCommandResponseMapper) ToApiResponseRoleDelete(pbResponse *pb.ApiResponseRoleDelete) *response.ApiResponseRoleDelete {
+func (s *roleCommandResponseMapper) ToApiResponseRoleDelete(pbResponse *pbrole.ApiResponseRoleDelete) *response.ApiResponseRoleDelete {
 	return &response.ApiResponseRoleDelete{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
 	}
 }
 
-func (s *roleCommandResponseMapper) ToApiResponseRoleAll(pbResponse *pb.ApiResponseRoleAll) *response.ApiResponseRoleAll {
+func (s *roleCommandResponseMapper) ToApiResponseRoleAll(pbResponse *pbrole.ApiResponseRoleAll) *response.ApiResponseRoleAll {
 	return &response.ApiResponseRoleAll{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
 	}
 }
 
-func (s *roleCommandResponseMapper) mapResponseRole(role *pb.RoleResponse) *response.RoleResponse {
-	if role == nil { return nil }
+func (s *roleCommandResponseMapper) mapResponseRole(role *pbrole.RoleResponse) *response.RoleResponse {
+	if role == nil {
+		return nil
+	}
 	return &response.RoleResponse{
 		ID:        int(role.Id),
 		Name:      role.Name,

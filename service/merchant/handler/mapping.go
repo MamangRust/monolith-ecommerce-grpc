@@ -2,9 +2,12 @@ package handler
 
 import (
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
+	pbmerchant_document "github.com/MamangRust/monolith-ecommerce-pb/merchant_document"
 )
 
 func getString(s *string) string {
@@ -44,9 +47,9 @@ func normalizePage(page, pageSize int) (int, int) {
 	return page, pageSize
 }
 
-func createPaginationMeta(page, pageSize, totalRecords int) *pb.PaginationMeta {
+func createPaginationMeta(page, pageSize, totalRecords int) *pbcommon.PaginationMeta {
 	totalPages := (totalRecords + pageSize - 1) / pageSize
-	return &pb.PaginationMeta{
+	return &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
@@ -54,10 +57,10 @@ func createPaginationMeta(page, pageSize, totalRecords int) *pb.PaginationMeta {
 	}
 }
 
-func mapToProtoMerchantResponse(m interface{}) *pb.MerchantResponse {
+func mapToProtoMerchantResponse(m interface{}) *pbmerchant.MerchantResponse {
 	switch v := m.(type) {
 	case *db.Merchant:
-		return &pb.MerchantResponse{
+		return &pbmerchant.MerchantResponse{
 			Id:           int32(v.MerchantID),
 			UserId:       int32(v.UserID),
 			Name:         v.Name,
@@ -70,7 +73,7 @@ func mapToProtoMerchantResponse(m interface{}) *pb.MerchantResponse {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetMerchantsRow:
-		return &pb.MerchantResponse{
+		return &pbmerchant.MerchantResponse{
 			Id:           int32(v.MerchantID),
 			UserId:       int32(v.UserID),
 			Name:         v.Name,
@@ -83,7 +86,7 @@ func mapToProtoMerchantResponse(m interface{}) *pb.MerchantResponse {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetMerchantByIDRow:
-		return &pb.MerchantResponse{
+		return &pbmerchant.MerchantResponse{
 			Id:           int32(v.MerchantID),
 			UserId:       int32(v.UserID),
 			Name:         v.Name,
@@ -96,7 +99,7 @@ func mapToProtoMerchantResponse(m interface{}) *pb.MerchantResponse {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.CreateMerchantRow:
-		return &pb.MerchantResponse{
+		return &pbmerchant.MerchantResponse{
 			Id:           int32(v.MerchantID),
 			UserId:       int32(v.UserID),
 			Name:         v.Name,
@@ -109,7 +112,7 @@ func mapToProtoMerchantResponse(m interface{}) *pb.MerchantResponse {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.UpdateMerchantRow:
-		return &pb.MerchantResponse{
+		return &pbmerchant.MerchantResponse{
 			Id:           int32(v.MerchantID),
 			UserId:       int32(v.UserID),
 			Name:         v.Name,
@@ -122,7 +125,7 @@ func mapToProtoMerchantResponse(m interface{}) *pb.MerchantResponse {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.UpdateMerchantStatusRow:
-		return &pb.MerchantResponse{
+		return &pbmerchant.MerchantResponse{
 			Id:           int32(v.MerchantID),
 			UserId:       int32(v.UserID),
 			Name:         v.Name,
@@ -139,10 +142,10 @@ func mapToProtoMerchantResponse(m interface{}) *pb.MerchantResponse {
 	}
 }
 
-func mapToProtoMerchantResponseDeleteAt(m interface{}) *pb.MerchantResponseDeleteAt {
+func mapToProtoMerchantResponseDeleteAt(m interface{}) *pbmerchant.MerchantResponseDeleteAt {
 	switch v := m.(type) {
 	case *db.Merchant:
-		return &pb.MerchantResponseDeleteAt{
+		return &pbmerchant.MerchantResponseDeleteAt{
 			Id:           int32(v.MerchantID),
 			UserId:       int32(v.UserID),
 			Name:         v.Name,
@@ -156,7 +159,7 @@ func mapToProtoMerchantResponseDeleteAt(m interface{}) *pb.MerchantResponseDelet
 			DeletedAt:    getStringValue(v.DeletedAt),
 		}
 	case *db.GetMerchantsActiveRow:
-		return &pb.MerchantResponseDeleteAt{
+		return &pbmerchant.MerchantResponseDeleteAt{
 			Id:           int32(v.MerchantID),
 			UserId:       int32(v.UserID),
 			Name:         v.Name,
@@ -174,10 +177,10 @@ func mapToProtoMerchantResponseDeleteAt(m interface{}) *pb.MerchantResponseDelet
 	}
 }
 
-func mapToProtoMerchantResponseTrashed(m interface{}) *pb.MerchantResponseDeleteAt {
+func mapToProtoMerchantResponseTrashed(m interface{}) *pbmerchant.MerchantResponseDeleteAt {
 	switch v := m.(type) {
 	case *db.GetMerchantsTrashedRow:
-		return &pb.MerchantResponseDeleteAt{
+		return &pbmerchant.MerchantResponseDeleteAt{
 			Id:           int32(v.MerchantID),
 			UserId:       int32(v.UserID),
 			Name:         v.Name,
@@ -195,10 +198,10 @@ func mapToProtoMerchantResponseTrashed(m interface{}) *pb.MerchantResponseDelete
 	}
 }
 
-func mapToProtoMerchantDocumentResponse(m interface{}) *pb.MerchantDocument {
+func mapToProtoMerchantDocumentResponse(m interface{}) *pbmerchant_document.MerchantDocument {
 	switch v := m.(type) {
 	case *db.MerchantDocument:
-		return &pb.MerchantDocument{
+		return &pbmerchant_document.MerchantDocument{
 			DocumentId:   int32(v.DocumentID),
 			MerchantId:   int32(v.MerchantID),
 			DocumentType: v.DocumentType,
@@ -209,7 +212,7 @@ func mapToProtoMerchantDocumentResponse(m interface{}) *pb.MerchantDocument {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetMerchantDocumentsRow:
-		return &pb.MerchantDocument{
+		return &pbmerchant_document.MerchantDocument{
 			DocumentId:   int32(v.DocumentID),
 			MerchantId:   int32(v.MerchantID),
 			DocumentType: v.DocumentType,
@@ -220,7 +223,7 @@ func mapToProtoMerchantDocumentResponse(m interface{}) *pb.MerchantDocument {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetActiveMerchantDocumentsRow:
-		return &pb.MerchantDocument{
+		return &pbmerchant_document.MerchantDocument{
 			DocumentId:   int32(v.DocumentID),
 			MerchantId:   int32(v.MerchantID),
 			DocumentType: v.DocumentType,
@@ -231,7 +234,7 @@ func mapToProtoMerchantDocumentResponse(m interface{}) *pb.MerchantDocument {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetMerchantDocumentRow:
-		return &pb.MerchantDocument{
+		return &pbmerchant_document.MerchantDocument{
 			DocumentId:   int32(v.DocumentID),
 			MerchantId:   int32(v.MerchantID),
 			DocumentType: v.DocumentType,
@@ -242,7 +245,7 @@ func mapToProtoMerchantDocumentResponse(m interface{}) *pb.MerchantDocument {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.CreateMerchantDocumentRow:
-		return &pb.MerchantDocument{
+		return &pbmerchant_document.MerchantDocument{
 			DocumentId:   int32(v.DocumentID),
 			MerchantId:   int32(v.MerchantID),
 			DocumentType: v.DocumentType,
@@ -257,10 +260,10 @@ func mapToProtoMerchantDocumentResponse(m interface{}) *pb.MerchantDocument {
 	}
 }
 
-func mapToProtoMerchantDocumentResponseAt(m interface{}) *pb.MerchantDocumentDeleteAt {
+func mapToProtoMerchantDocumentResponseAt(m interface{}) *pbmerchant_document.MerchantDocumentDeleteAt {
 	switch v := m.(type) {
 	case *db.GetTrashedMerchantDocumentsRow:
-		return &pb.MerchantDocumentDeleteAt{
+		return &pbmerchant_document.MerchantDocumentDeleteAt{
 			DocumentId:   int32(v.DocumentID),
 			MerchantId:   int32(v.MerchantID),
 			DocumentType: v.DocumentType,

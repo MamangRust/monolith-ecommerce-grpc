@@ -4,12 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-user/repository"
+	"github.com/stretchr/testify/suite"
+
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
+	pbuserrole "github.com/MamangRust/monolith-ecommerce-pb/user_role"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
+	"github.com/MamangRust/monolith-ecommerce-user/repository"
 )
 
 type UserRepositoryTestSuite struct {
@@ -23,8 +25,12 @@ func (s *UserRepositoryTestSuite) SetupSuite() {
 
 	queries := db.New(s.DBPool())
 	s.SetupRoleService()
-	roleClient := pb.NewRoleQueryServiceClient(s.Conns["role"])
-	s.repo = repository.NewRepositories(queries, roleClient)
+	roleClient := pbrole.NewRoleQueryServiceClient(s.Conns["role"])
+	s.repo = repository.NewRepositories(&repository.Deps{
+		Db:              queries,
+		RoleQueryClient: roleClient,
+		UserRoleClient:  pbuserrole.NewUserRoleServiceClient(s.Conns["role"]),
+	})
 }
 
 func (s *UserRepositoryTestSuite) TearDownSuite() {

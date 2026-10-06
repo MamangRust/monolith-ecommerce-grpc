@@ -8,8 +8,8 @@ import (
 	"time"
 
 	apicache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache"
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -21,7 +21,7 @@ import (
 // "request-role"/"response-role") yang tidak berfungsi di stack lokal sehingga
 // semua route admin memakai middleware ini timeout 408. Dengan gRPC langsung,
 // role diverifikasi secara sinkron dan RequireRoles dapat memutuskan 403.
-func RoleValidatorGRPC(client pb.RoleQueryServiceClient, logger logger.LoggerInterface, cache apicache.RoleCache) echo.MiddlewareFunc {
+func RoleValidatorGRPC(client pbrole.RoleQueryServiceClient, logger logger.LoggerInterface, cache apicache.RoleCache) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			userIDVal := c.Get("user_id")
@@ -43,7 +43,7 @@ func RoleValidatorGRPC(client pb.RoleQueryServiceClient, logger logger.LoggerInt
 				return next(c)
 			}
 
-			res, err := client.FindByUserId(ctx, &pb.FindByIdUserRoleRequest{UserId: int32(userID)})
+			res, err := client.FindByUserId(ctx, &pbrole.FindByIdUserRoleRequest{UserId: int32(userID)})
 			if err != nil {
 				logger.Error("Role validation via gRPC failed",
 					zap.Int("user_id", userID), zap.Error(err))

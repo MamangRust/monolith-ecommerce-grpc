@@ -3,17 +3,18 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-product/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-product/service"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/product_errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	pbproduct "github.com/MamangRust/monolith-ecommerce-pb/product"
 )
 
 type productCommandHandler struct {
-	pb.UnimplementedProductCommandServiceServer
+	pbproduct.UnimplementedProductCommandServiceServer
 	productService service.ProductCommandService
 	logger         logger.LoggerInterface
 }
@@ -25,7 +26,7 @@ func NewProductCommandHandler(productService service.ProductCommandService, logg
 	}
 }
 
-func (h *productCommandHandler) Create(ctx context.Context, request *pb.CreateProductRequest) (*pb.ApiResponseProduct, error) {
+func (h *productCommandHandler) Create(ctx context.Context, request *pbproduct.CreateProductRequest) (*pbproduct.ApiResponseProduct, error) {
 	rating := int(request.GetRating())
 	slug := request.GetSlugProduct()
 
@@ -52,14 +53,14 @@ func (h *productCommandHandler) Create(ctx context.Context, request *pb.CreatePr
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseProduct{
+	return &pbproduct.ApiResponseProduct{
 		Status:  "success",
 		Message: "Successfully created product",
 		Data:    mapToProtoProductResponse(product),
 	}, nil
 }
 
-func (h *productCommandHandler) Update(ctx context.Context, request *pb.UpdateProductRequest) (*pb.ApiResponseProduct, error) {
+func (h *productCommandHandler) Update(ctx context.Context, request *pbproduct.UpdateProductRequest) (*pbproduct.ApiResponseProduct, error) {
 	id := int(request.GetProductId())
 
 	if id == 0 {
@@ -93,14 +94,14 @@ func (h *productCommandHandler) Update(ctx context.Context, request *pb.UpdatePr
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseProduct{
+	return &pbproduct.ApiResponseProduct{
 		Status:  "success",
 		Message: "Successfully updated product",
 		Data:    mapToProtoProductResponse(product),
 	}, nil
 }
 
-func (h *productCommandHandler) TrashedProduct(ctx context.Context, request *pb.FindByIdProductRequest) (*pb.ApiResponseProductDeleteAt, error) {
+func (h *productCommandHandler) TrashedProduct(ctx context.Context, request *pbproduct.FindByIdProductRequest) (*pbproduct.ApiResponseProductDeleteAt, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -112,14 +113,14 @@ func (h *productCommandHandler) TrashedProduct(ctx context.Context, request *pb.
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseProductDeleteAt{
+	return &pbproduct.ApiResponseProductDeleteAt{
 		Status:  "success",
 		Message: "Successfully trashed product",
 		Data:    mapToProtoProductResponseDeleteAt(product),
 	}, nil
 }
 
-func (h *productCommandHandler) RestoreProduct(ctx context.Context, request *pb.FindByIdProductRequest) (*pb.ApiResponseProductDeleteAt, error) {
+func (h *productCommandHandler) RestoreProduct(ctx context.Context, request *pbproduct.FindByIdProductRequest) (*pbproduct.ApiResponseProductDeleteAt, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -131,14 +132,14 @@ func (h *productCommandHandler) RestoreProduct(ctx context.Context, request *pb.
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseProductDeleteAt{
+	return &pbproduct.ApiResponseProductDeleteAt{
 		Status:  "success",
 		Message: "Successfully restored product",
 		Data:    mapToProtoProductResponseDeleteAt(product),
 	}, nil
 }
 
-func (h *productCommandHandler) DeleteProductPermanent(ctx context.Context, request *pb.FindByIdProductRequest) (*pb.ApiResponseProductDelete, error) {
+func (h *productCommandHandler) DeleteProductPermanent(ctx context.Context, request *pbproduct.FindByIdProductRequest) (*pbproduct.ApiResponseProductDelete, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -150,58 +151,45 @@ func (h *productCommandHandler) DeleteProductPermanent(ctx context.Context, requ
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseProductDelete{
+	return &pbproduct.ApiResponseProductDelete{
 		Status:  "success",
 		Message: "Successfully deleted product permanently",
 	}, nil
 }
 
-func (h *productCommandHandler) RestoreAllProduct(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseProductAll, error) {
+func (h *productCommandHandler) RestoreAllProduct(ctx context.Context, _ *emptypb.Empty) (*pbproduct.ApiResponseProductAll, error) {
 	_, err := h.productService.RestoreAll(ctx)
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseProductAll{
+	return &pbproduct.ApiResponseProductAll{
 		Status:  "success",
 		Message: "Successfully restored all products",
 	}, nil
 }
 
-func (h *productCommandHandler) DeleteAllProductPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseProductAll, error) {
+func (h *productCommandHandler) DeleteAllProductPermanent(ctx context.Context, _ *emptypb.Empty) (*pbproduct.ApiResponseProductAll, error) {
 	_, err := h.productService.DeleteAll(ctx)
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseProductAll{
+	return &pbproduct.ApiResponseProductAll{
 		Status:  "success",
 		Message: "Successfully deleted all products permanently",
 	}, nil
 }
 
-func (h *productCommandHandler) UpdateProductCountStock(ctx context.Context, request *pb.UpdateProductCountStockRequest) (*pb.ApiResponseProduct, error) {
+func (h *productCommandHandler) UpdateProductCountStock(ctx context.Context, request *pbproduct.UpdateProductCountStockRequest) (*pbproduct.ApiResponseProduct, error) {
 	product, err := h.productService.UpdateProductCountStock(ctx, int(request.ProductId), int(request.Stock))
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseProduct{
+	return &pbproduct.ApiResponseProduct{
 		Status:  "success",
 		Message: "Successfully updated product count stock",
-		Data:    mapToProtoProductResponse(product),
-	}, nil
-}
-
-func (h *productCommandHandler) AdjustProductStock(ctx context.Context, request *pb.AdjustProductStockRequest) (*pb.ApiResponseProduct, error) {
-	product, err := h.productService.AdjustProductStock(ctx, int(request.ProductId), int(request.Delta), request.GetOperationId())
-	if err != nil {
-		return nil, errors.ToGrpcError(err)
-	}
-
-	return &pb.ApiResponseProduct{
-		Status:  "success",
-		Message: "Successfully adjusted product stock",
 		Data:    mapToProtoProductResponse(product),
 	}, nil
 }

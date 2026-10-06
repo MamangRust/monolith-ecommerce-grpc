@@ -4,26 +4,29 @@ import (
 	"context"
 	"testing"
 
-	gapi "github.com/MamangRust/monolith-ecommerce-grpc-user/handler"
-	"github.com/MamangRust/monolith-ecommerce-grpc-user/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-user/service"
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
+	pbuserrole "github.com/MamangRust/monolith-ecommerce-pb/user_role"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
+	gapi "github.com/MamangRust/monolith-ecommerce-user/handler"
+	"github.com/MamangRust/monolith-ecommerce-user/repository"
+	"github.com/MamangRust/monolith-ecommerce-user/service"
 
-	user_cache "github.com/MamangRust/monolith-ecommerce-grpc-user/cache"
 	"github.com/stretchr/testify/suite"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	user_cache "github.com/MamangRust/monolith-ecommerce-user/cache"
 )
 
 type UserGapiTestSuite struct {
 	tests.BaseTestSuite
-	client      pb.UserCommandServiceClient
-	queryClient pb.UserQueryServiceClient
+	client      pbuser.UserCommandServiceClient
+	queryClient pbuser.UserQueryServiceClient
 	userID      int
 }
 
@@ -31,10 +34,14 @@ func (s *UserGapiTestSuite) SetupSuite() {
 	s.BaseTestSuite.SetupSuite()
 
 	s.SetupRoleService()
-	roleClient := pb.NewRoleQueryServiceClient(s.Conns["role"])
+	roleClient := pbrole.NewRoleQueryServiceClient(s.Conns["role"])
 
 	queries := db.New(s.DBPool())
-	repos := repository.NewRepositories(queries, roleClient)
+	repos := repository.NewRepositories(&repository.Deps{
+		Db:              queries,
+		RoleQueryClient: roleClient,
+		UserRoleClient:  pbuserrole.NewUserRoleServiceClient(s.Conns["role"]),
+	})
 
 	logger.ResetInstance()
 	lp := sdklog.NewLoggerProvider()
@@ -57,21 +64,21 @@ func (s *UserGapiTestSuite) SetupSuite() {
 		Logger:  log,
 	})
 	server := grpc.NewServer()
-	pb.RegisterUserCommandServiceServer(server, userHandler.UserCommand)
-	pb.RegisterUserQueryServiceServer(server, userHandler.UserQuery)
+	pbuser.RegisterUserCommandServiceServer(server, userHandler.UserCommand)
+	pbuser.RegisterUserQueryServiceServer(server, userHandler.UserQuery)
 
 	addr := s.RegisterServer(server)
 	conn := s.GetConnection(addr)
 
-	s.client = pb.NewUserCommandServiceClient(conn)
-	s.queryClient = pb.NewUserQueryServiceClient(conn)
+	s.client = pbuser.NewUserCommandServiceClient(conn)
+	s.queryClient = pbuser.NewUserQueryServiceClient(conn)
 }
 
 func (s *UserGapiTestSuite) TestUserGapiLifecycle() {
 	ctx := context.Background()
 
 	// 1. Create
-	createReq := &pb.CreateUserRequest{
+	createReq := &pbuser.CreateUserRequest{
 		Firstname:       "Gapi",
 		Lastname:        "User",
 		Email:           "gapi.user@example.com",
@@ -84,22 +91,22 @@ func (s *UserGapiTestSuite) TestUserGapiLifecycle() {
 	userID := res.Data.Id
 
 	// 2. FindById
-	getRes, err := s.queryClient.FindById(ctx, &pb.FindByIdUserRequest{Id: userID})
+	getRes, err := s.queryClient.FindById(ctx, &pbuser.FindByIdUserRequest{Id: userID})
 	s.Require().NoError(err)
 	s.Equal(userID, getRes.Data.Id)
 
 	// 3. FindAll
-	allRes, err := s.queryClient.FindAll(ctx, &pb.FindAllUserRequest{Page: 1, PageSize: 10})
+	allRes, err := s.queryClient.FindAll(ctx, &pbuser.FindAllUserRequest{Page: 1, PageSize: 10})
 	s.Require().NoError(err)
 	s.NotEmpty(allRes.Data)
 
 	// 4. FindByActive
-	activeRes, err := s.queryClient.FindByActive(ctx, &pb.FindAllUserRequest{Page: 1, PageSize: 10})
+	activeRes, err := s.queryClient.FindByActive(ctx, &pbuser.FindAllUserRequest{Page: 1, PageSize: 10})
 	s.Require().NoError(err)
 	s.NotEmpty(activeRes.Data)
 
 	// 5. Update
-	updateRes, err := s.client.Update(ctx, &pb.UpdateUserRequest{
+	updateRes, err := s.client.Update(ctx, &pbuser.UpdateUserRequest{
 		Id:              userID,
 		Firstname:       "GapiUpdated",
 		Lastname:        "UserUpdated",
@@ -111,21 +118,21 @@ func (s *UserGapiTestSuite) TestUserGapiLifecycle() {
 	s.Equal("GapiUpdated", updateRes.Data.Firstname)
 
 	// 6. Trash
-	_, err = s.client.TrashedUser(ctx, &pb.FindByIdUserRequest{Id: userID})
+	_, err = s.client.TrashedUser(ctx, &pbuser.FindByIdUserRequest{Id: userID})
 	s.Require().NoError(err)
 
 	// 7. FindByTrashed
-	trashedRes, err := s.queryClient.FindByTrashed(ctx, &pb.FindAllUserRequest{Page: 1, PageSize: 10})
+	trashedRes, err := s.queryClient.FindByTrashed(ctx, &pbuser.FindAllUserRequest{Page: 1, PageSize: 10})
 	s.Require().NoError(err)
 	s.NotEmpty(trashedRes.Data)
 
 	// 8. Restore
-	_, err = s.client.RestoreUser(ctx, &pb.FindByIdUserRequest{Id: userID})
+	_, err = s.client.RestoreUser(ctx, &pbuser.FindByIdUserRequest{Id: userID})
 	s.Require().NoError(err)
 
 	// 9. DeletePermanent
-	_, _ = s.client.TrashedUser(ctx, &pb.FindByIdUserRequest{Id: userID})
-	_, err = s.client.DeleteUserPermanent(ctx, &pb.FindByIdUserRequest{Id: userID})
+	_, _ = s.client.TrashedUser(ctx, &pbuser.FindByIdUserRequest{Id: userID})
+	_, err = s.client.DeleteUserPermanent(ctx, &pbuser.FindByIdUserRequest{Id: userID})
 	s.Require().NoError(err)
 
 	// 10. RestoreAll

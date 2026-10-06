@@ -5,14 +5,15 @@ import (
 	"log"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	pbreview_detail "github.com/MamangRust/monolith-ecommerce-pb/review_detail"
 )
 
 func (h *Handler) mapToReviewDetailResponse(data interface{}) interface{} {
 	switch v := data.(type) {
 	case *db.GetReviewDetailRow:
-		return &pb.ReviewDetailsResponse{
+		return &pbreview_detail.ReviewDetailsResponse{
 			Id:        int32(v.ReviewDetailID),
 			ReviewId:  int32(v.ReviewID),
 			Type:      v.Type,
@@ -22,7 +23,7 @@ func (h *Handler) mapToReviewDetailResponse(data interface{}) interface{} {
 			UpdatedAt: v.UpdatedAt.Time.Format("2006-01-02"),
 		}
 	case *db.GetReviewDetailsRow:
-		return &pb.ReviewDetailsResponse{
+		return &pbreview_detail.ReviewDetailsResponse{
 			Id:        int32(v.ReviewDetailID),
 			ReviewId:  int32(v.ReviewID),
 			Type:      v.Type,
@@ -36,7 +37,7 @@ func (h *Handler) mapToReviewDetailResponse(data interface{}) interface{} {
 		if v.DeletedAt.Valid {
 			deletedAt = v.DeletedAt.Time.Format("2006-01-02")
 		}
-		return &pb.ReviewDetailsResponseDeleteAt{
+		return &pbreview_detail.ReviewDetailsResponseDeleteAt{
 			Id:        int32(v.ReviewDetailID),
 			ReviewId:  int32(v.ReviewID),
 			Type:      v.Type,
@@ -51,7 +52,7 @@ func (h *Handler) mapToReviewDetailResponse(data interface{}) interface{} {
 		if v.DeletedAt.Valid {
 			deletedAt = v.DeletedAt.Time.Format("2006-01-02")
 		}
-		return &pb.ReviewDetailsResponseDeleteAt{
+		return &pbreview_detail.ReviewDetailsResponseDeleteAt{
 			Id:        int32(v.ReviewDetailID),
 			ReviewId:  int32(v.ReviewID),
 			Type:      v.Type,
@@ -62,7 +63,7 @@ func (h *Handler) mapToReviewDetailResponse(data interface{}) interface{} {
 			DeletedAt: &wrapperspb.StringValue{Value: deletedAt},
 		}
 	case *db.CreateReviewDetailRow:
-		return &pb.ReviewDetailsResponse{
+		return &pbreview_detail.ReviewDetailsResponse{
 			Id:        int32(v.ReviewDetailID),
 			ReviewId:  int32(v.ReviewID),
 			Type:      v.Type,
@@ -72,7 +73,7 @@ func (h *Handler) mapToReviewDetailResponse(data interface{}) interface{} {
 			UpdatedAt: v.UpdatedAt.Time.Format("2006-01-02"),
 		}
 	case *db.UpdateReviewDetailRow:
-		return &pb.ReviewDetailsResponse{
+		return &pbreview_detail.ReviewDetailsResponse{
 			Id:        int32(v.ReviewDetailID),
 			ReviewId:  int32(v.ReviewID),
 			Type:      v.Type,
@@ -86,7 +87,7 @@ func (h *Handler) mapToReviewDetailResponse(data interface{}) interface{} {
 		if v.DeletedAt.Valid {
 			deletedAt = v.DeletedAt.Time.Format("2006-01-02")
 		}
-		return &pb.ReviewDetailsResponseDeleteAt{
+		return &pbreview_detail.ReviewDetailsResponseDeleteAt{
 			Id:        int32(v.ReviewDetailID),
 			ReviewId:  int32(v.ReviewID),
 			Type:      v.Type,

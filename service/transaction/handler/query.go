@@ -3,16 +3,17 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/service"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/MamangRust/monolith-ecommerce-transaction/service"
+
+	pbtransaction "github.com/MamangRust/monolith-ecommerce-pb/transaction"
 )
 
 type transactionQueryHandler struct {
-	pb.UnimplementedTransactionQueryServiceServer
+	pbtransaction.UnimplementedTransactionQueryServiceServer
 	service service.TransactionQueryService
 	logger  logger.LoggerInterface
 }
@@ -24,7 +25,7 @@ func NewTransactionQueryHandler(service service.TransactionQueryService, logger 
 	}
 }
 
-func (h *transactionQueryHandler) FindAllTransactions(ctx context.Context, req *pb.FindAllTransactionRequest) (*pb.ApiResponsePaginationTransaction, error) {
+func (h *transactionQueryHandler) FindAllTransactions(ctx context.Context, req *pbtransaction.FindAllTransactionRequest) (*pbtransaction.ApiResponsePaginationTransaction, error) {
 	request := &requests.FindAllTransaction{
 		Page:     int(req.GetPage()),
 		PageSize: int(req.GetPageSize()),
@@ -33,15 +34,15 @@ func (h *transactionQueryHandler) FindAllTransactions(ctx context.Context, req *
 
 	data, total, err := h.service.FindAll(ctx, request)
 	if err != nil {
-		return nil, errors.ToGrpcError(err)
+		return nil, err
 	}
 
-	var transactions []*pb.TransactionResponse
+	var transactions []*pbtransaction.TransactionResponse
 	for _, v := range data {
 		transactions = append(transactions, h.ToTransactionResponse(v))
 	}
 
-	return &pb.ApiResponsePaginationTransaction{
+	return &pbtransaction.ApiResponsePaginationTransaction{
 		Status:     "success",
 		Message:    "Successfully fetched transactions",
 		Data:       transactions,
@@ -49,7 +50,7 @@ func (h *transactionQueryHandler) FindAllTransactions(ctx context.Context, req *
 	}, nil
 }
 
-func (h *transactionQueryHandler) FindByActive(ctx context.Context, req *pb.FindAllTransactionRequest) (*pb.ApiResponsePaginationTransaction, error) {
+func (h *transactionQueryHandler) FindByActive(ctx context.Context, req *pbtransaction.FindAllTransactionRequest) (*pbtransaction.ApiResponsePaginationTransaction, error) {
 	request := &requests.FindAllTransaction{
 		Page:     int(req.GetPage()),
 		PageSize: int(req.GetPageSize()),
@@ -58,15 +59,15 @@ func (h *transactionQueryHandler) FindByActive(ctx context.Context, req *pb.Find
 
 	data, total, err := h.service.FindActive(ctx, request)
 	if err != nil {
-		return nil, errors.ToGrpcError(err)
+		return nil, err
 	}
 
-	var transactions []*pb.TransactionResponse
+	var transactions []*pbtransaction.TransactionResponse
 	for _, v := range data {
 		transactions = append(transactions, h.ToTransactionResponseActive(v))
 	}
 
-	return &pb.ApiResponsePaginationTransaction{
+	return &pbtransaction.ApiResponsePaginationTransaction{
 		Status:     "success",
 		Message:    "Successfully fetched active transactions",
 		Data:       transactions,
@@ -74,7 +75,7 @@ func (h *transactionQueryHandler) FindByActive(ctx context.Context, req *pb.Find
 	}, nil
 }
 
-func (h *transactionQueryHandler) FindByTrashed(ctx context.Context, req *pb.FindAllTransactionRequest) (*pb.ApiResponsePaginationTransactionDeleteAt, error) {
+func (h *transactionQueryHandler) FindByTrashed(ctx context.Context, req *pbtransaction.FindAllTransactionRequest) (*pbtransaction.ApiResponsePaginationTransactionDeleteAt, error) {
 	request := &requests.FindAllTransaction{
 		Page:     int(req.GetPage()),
 		PageSize: int(req.GetPageSize()),
@@ -83,15 +84,15 @@ func (h *transactionQueryHandler) FindByTrashed(ctx context.Context, req *pb.Fin
 
 	data, total, err := h.service.FindTrashed(ctx, request)
 	if err != nil {
-		return nil, errors.ToGrpcError(err)
+		return nil, err
 	}
 
-	var transactions []*pb.TransactionResponseDeleteAt
+	var transactions []*pbtransaction.TransactionResponseDeleteAt
 	for _, v := range data {
 		transactions = append(transactions, h.ToTransactionResponseDeleteAt(v))
 	}
 
-	return &pb.ApiResponsePaginationTransactionDeleteAt{
+	return &pbtransaction.ApiResponsePaginationTransactionDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched trashed transactions",
 		Data:       transactions,
@@ -99,33 +100,33 @@ func (h *transactionQueryHandler) FindByTrashed(ctx context.Context, req *pb.Fin
 	}, nil
 }
 
-func (h *transactionQueryHandler) FindById(ctx context.Context, req *pb.FindByIdTransactionRequest) (*pb.ApiResponseTransaction, error) {
+func (h *transactionQueryHandler) FindById(ctx context.Context, req *pbtransaction.FindByIdTransactionRequest) (*pbtransaction.ApiResponseTransaction, error) {
 	data, err := h.service.FindByID(ctx, int(req.GetId()))
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseTransaction{
+	return &pbtransaction.ApiResponseTransaction{
 		Status:  "success",
 		Message: "Successfully fetched transaction",
 		Data:    h.ToTransactionResponseId(data),
 	}, nil
 }
 
-func (h *transactionQueryHandler) FindByOrderId(ctx context.Context, req *pb.FindByOrderIdTransactionRequest) (*pb.ApiResponseTransaction, error) {
+func (h *transactionQueryHandler) FindByOrderId(ctx context.Context, req *pbtransaction.FindByOrderIdTransactionRequest) (*pbtransaction.ApiResponseTransaction, error) {
 	data, err := h.service.FindByOrderID(ctx, int(req.GetOrderId()))
 	if err != nil {
-		return nil, errors.ToGrpcError(err)
+		return nil, err
 	}
 
-	return &pb.ApiResponseTransaction{
+	return &pbtransaction.ApiResponseTransaction{
 		Status:  "success",
 		Message: "Successfully fetched transaction by order id",
 		Data:    h.ToTransactionResponseOrderId(data),
 	}, nil
 }
 
-func (h *transactionQueryHandler) FindByMerchant(ctx context.Context, req *pb.FindAllTransactionByMerchantRequest) (*pb.ApiResponsePaginationTransaction, error) {
+func (h *transactionQueryHandler) FindByMerchant(ctx context.Context, req *pbtransaction.FindAllTransactionByMerchantRequest) (*pbtransaction.ApiResponsePaginationTransaction, error) {
 	request := &requests.FindAllTransactionByMerchant{
 		MerchantID: int(req.GetMerchantId()),
 		Page:       int(req.GetPage()),
@@ -135,15 +136,15 @@ func (h *transactionQueryHandler) FindByMerchant(ctx context.Context, req *pb.Fi
 
 	data, total, err := h.service.FindByMerchant(ctx, request)
 	if err != nil {
-		return nil, errors.ToGrpcError(err)
+		return nil, err
 	}
 
-	var transactions []*pb.TransactionResponse
+	var transactions []*pbtransaction.TransactionResponse
 	for _, v := range data {
 		transactions = append(transactions, h.ToTransactionResponseMerchant(v))
 	}
 
-	return &pb.ApiResponsePaginationTransaction{
+	return &pbtransaction.ApiResponsePaginationTransaction{
 		Status:     "success",
 		Message:    "Successfully fetched transactions by merchant",
 		Data:       transactions,
@@ -153,26 +154,26 @@ func (h *transactionQueryHandler) FindByMerchant(ctx context.Context, req *pb.Fi
 
 // Manual Mappings
 
-func (h *transactionQueryHandler) ToTransactionResponse(v *db.GetTransactionsRow) *pb.TransactionResponse {
+func (h *transactionQueryHandler) ToTransactionResponse(v *db.GetTransactionsRow) *pbtransaction.TransactionResponse {
 	return mapToProtoTransactionResponse(v)
 }
 
-func (h *transactionQueryHandler) ToTransactionResponseActive(v *db.GetTransactionsActiveRow) *pb.TransactionResponse {
+func (h *transactionQueryHandler) ToTransactionResponseActive(v *db.GetTransactionsActiveRow) *pbtransaction.TransactionResponse {
 	return mapToProtoTransactionResponse(v)
 }
 
-func (h *transactionQueryHandler) ToTransactionResponseDeleteAt(v *db.GetTransactionsTrashedRow) *pb.TransactionResponseDeleteAt {
+func (h *transactionQueryHandler) ToTransactionResponseDeleteAt(v *db.GetTransactionsTrashedRow) *pbtransaction.TransactionResponseDeleteAt {
 	return mapToProtoTransactionResponseDeleteAt(v)
 }
 
-func (h *transactionQueryHandler) ToTransactionResponseId(v *db.GetTransactionByIDRow) *pb.TransactionResponse {
+func (h *transactionQueryHandler) ToTransactionResponseId(v *db.GetTransactionByIDRow) *pbtransaction.TransactionResponse {
 	return mapToProtoTransactionResponse(v)
 }
 
-func (h *transactionQueryHandler) ToTransactionResponseOrderId(v *db.GetTransactionByOrderIDRow) *pb.TransactionResponse {
+func (h *transactionQueryHandler) ToTransactionResponseOrderId(v *db.GetTransactionByOrderIDRow) *pbtransaction.TransactionResponse {
 	return mapToProtoTransactionResponse(v)
 }
 
-func (h *transactionQueryHandler) ToTransactionResponseMerchant(v *db.GetTransactionByMerchantRow) *pb.TransactionResponse {
+func (h *transactionQueryHandler) ToTransactionResponseMerchant(v *db.GetTransactionByMerchantRow) *pbtransaction.TransactionResponse {
 	return mapToProtoTransactionResponse(v)
 }

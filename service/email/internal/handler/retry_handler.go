@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/IBM/sarama"
-	"github.com/MamangRust/monolith-ecommerce-grpc-email/internal/mailer"
-	"github.com/MamangRust/monolith-ecommerce-grpc-email/internal/metrics"
+	"github.com/MamangRust/monolith-ecommerce-email/internal/mailer"
+	"github.com/MamangRust/monolith-ecommerce-email/internal/metrics"
 	"github.com/MamangRust/monolith-ecommerce-pkg/emailretry"
 	"github.com/MamangRust/monolith-ecommerce-pkg/event"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
@@ -62,6 +62,8 @@ func (h *retryHandler) Cleanup(_ sarama.ConsumerGroupSession) error { return nil
 
 func (h *retryHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
+		// Phase 5: continue the trace — the retry message carries the traceparent
+		// injected when the main consumer offloaded it.
 		ctx := otel.GetTextMapPropagator().Extract(h.ctx, kafkaHeaderCarrier(msg.Headers))
 		ctx, span := otel.Tracer("email-handler").Start(ctx, "retry:"+msg.Topic)
 		span.SetAttributes(

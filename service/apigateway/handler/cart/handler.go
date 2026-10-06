@@ -2,10 +2,10 @@ package carthandler
 
 import (
 	cart_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/cart"
+	pbcart "github.com/MamangRust/monolith-ecommerce-pb/cart"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/cart"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc"
 )
@@ -22,7 +22,7 @@ func RegisterCartHandler(deps *DepsCart) {
 	cache := cart_cache.NewCartMencache(deps.CacheStore)
 
 	NewCartQueryHandleApi(&cartQueryHandleDeps{
-		client: pb.NewCartQueryServiceClient(deps.Client),
+		client: pbcart.NewCartQueryServiceClient(deps.Client),
 		router: deps.E,
 		logger: deps.Logger,
 		mapper: mapper.QueryMapper(),
@@ -30,7 +30,7 @@ func RegisterCartHandler(deps *DepsCart) {
 	})
 
 	NewCartCommandHandleApi(&cartCommandHandleDeps{
-		client: pb.NewCartCommandServiceClient(deps.Client),
+		client: pbcart.NewCartCommandServiceClient(deps.Client),
 		router: deps.E,
 		logger: deps.Logger,
 		mapper: mapper.CommandMapper(),

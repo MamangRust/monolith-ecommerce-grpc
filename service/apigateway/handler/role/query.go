@@ -7,18 +7,18 @@ import (
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache"
 	role_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/role"
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/role"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 )
 
 type roleQueryHandlerApi struct {
 	kafka      *kafka.Kafka
-	role       pb.RoleQueryServiceClient
+	role       pbrole.RoleQueryServiceClient
 	logger     logger.LoggerInterface
 	mapper     apimapper.RoleQueryResponseMapper
 	cache      role_cache.RoleQueryCache
@@ -26,7 +26,7 @@ type roleQueryHandlerApi struct {
 }
 
 type roleQueryHandleDeps struct {
-	client     pb.RoleQueryServiceClient
+	client     pbrole.RoleQueryServiceClient
 	router     *echo.Echo
 	logger     logger.LoggerInterface
 	mapper     apimapper.RoleQueryResponseMapper
@@ -89,7 +89,7 @@ func (h *roleQueryHandlerApi) FindAll(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.role.FindAllRole(ctx, &pb.FindAllRoleRequest{
+	res, err := h.role.FindAllRole(ctx, &pbrole.FindAllRoleRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
@@ -124,7 +124,7 @@ func (h *roleQueryHandlerApi) FindById(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.role.FindByIdRole(ctx, &pb.FindByIdRoleRequest{RoleId: int32(roleID)})
+	res, err := h.role.FindByIdRole(ctx, &pbrole.FindByIdRoleRequest{RoleId: int32(roleID)})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
@@ -165,7 +165,7 @@ func (h *roleQueryHandlerApi) FindByActive(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.role.FindByActive(ctx, &pb.FindAllRoleRequest{
+	res, err := h.role.FindByActive(ctx, &pbrole.FindAllRoleRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
@@ -208,7 +208,7 @@ func (h *roleQueryHandlerApi) FindByTrashed(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.role.FindByTrashed(ctx, &pb.FindAllRoleRequest{
+	res, err := h.role.FindByTrashed(ctx, &pbrole.FindAllRoleRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
@@ -243,7 +243,7 @@ func (h *roleQueryHandlerApi) FindByUserId(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.role.FindByUserId(ctx, &pb.FindByIdUserRoleRequest{UserId: int32(userID)})
+	res, err := h.role.FindByUserId(ctx, &pbrole.FindByIdUserRoleRequest{UserId: int32(userID)})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}

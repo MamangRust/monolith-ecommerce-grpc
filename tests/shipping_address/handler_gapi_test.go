@@ -4,24 +4,25 @@ import (
 	"context"
 	"testing"
 
-	ship_cache "github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/cache"
-	ship_handler "github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/handler"
-	ship_repo "github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/repository"
-	ship_service "github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/service"
-	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/cache"
-	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
-	tests "github.com/MamangRust/monolith-ecommerce-test"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	pbshipping_address "github.com/MamangRust/monolith-ecommerce-pb/shipping_address"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	"github.com/MamangRust/monolith-ecommerce-shared/cache"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
+	ship_cache "github.com/MamangRust/monolith-ecommerce-shipping-address/cache"
+	ship_handler "github.com/MamangRust/monolith-ecommerce-shipping-address/handler"
+	ship_repo "github.com/MamangRust/monolith-ecommerce-shipping-address/repository"
+	ship_service "github.com/MamangRust/monolith-ecommerce-shipping-address/service"
+	tests "github.com/MamangRust/monolith-ecommerce-test"
 )
 
 type ShippingAddressGapiTestSuite struct {
 	tests.BaseTestSuite
-	queryClient   pb.ShippingQueryServiceClient
-	commandClient pb.ShippingCommandServiceClient
+	queryClient   pbshipping_address.ShippingQueryServiceClient
+	commandClient pbshipping_address.ShippingCommandServiceClient
 }
 
 func (s *ShippingAddressGapiTestSuite) SetupSuite() {
@@ -59,14 +60,14 @@ func (s *ShippingAddressGapiTestSuite) SetupSuite() {
 
 	// Server
 	server := grpc.NewServer()
-	pb.RegisterShippingQueryServiceServer(server, handler.ShippingQuery)
-	pb.RegisterShippingCommandServiceServer(server, handler.ShippingCommand)
+	pbshipping_address.RegisterShippingQueryServiceServer(server, handler.ShippingQuery)
+	pbshipping_address.RegisterShippingCommandServiceServer(server, handler.ShippingCommand)
 
 	addr := s.RegisterServer(server)
 	conn := s.GetConnection(addr)
 
-	s.queryClient = pb.NewShippingQueryServiceClient(conn)
-	s.commandClient = pb.NewShippingCommandServiceClient(conn)
+	s.queryClient = pbshipping_address.NewShippingQueryServiceClient(conn)
+	s.commandClient = pbshipping_address.NewShippingCommandServiceClient(conn)
 }
 
 func (s *ShippingAddressGapiTestSuite) TestShippingAddressGapiLifecycle() {
@@ -80,7 +81,7 @@ func (s *ShippingAddressGapiTestSuite) TestShippingAddressGapiLifecycle() {
 	orderID := s.SeedOrder(ctx, userID, merchantID, productID)
 
 	// 2. Create
-	createRes, err := s.commandClient.CreateShipping(ctx, &pb.CreateShippingAddressRequest{
+	createRes, err := s.commandClient.CreateShipping(ctx, &pbshipping_address.CreateShippingAddressRequest{
 		OrderId:        int32(orderID),
 		Alamat:         "GAPI Home",
 		Provinsi:       "GAPI Province",
@@ -95,22 +96,22 @@ func (s *ShippingAddressGapiTestSuite) TestShippingAddressGapiLifecycle() {
 	addrID := createRes.Data.Id
 
 	// 3. FindById
-	getRes, err := s.queryClient.FindById(ctx, &pb.FindByIdShippingRequest{Id: addrID})
+	getRes, err := s.queryClient.FindById(ctx, &pbshipping_address.FindByIdShippingRequest{Id: addrID})
 	s.Require().NoError(err)
 	s.Equal("GAPI Home", getRes.Data.Alamat)
 
 	// 4. FindAll
-	allRes, err := s.queryClient.FindAll(ctx, &pb.FindAllShippingRequest{Page: 1, PageSize: 10})
+	allRes, err := s.queryClient.FindAll(ctx, &pbshipping_address.FindAllShippingRequest{Page: 1, PageSize: 10})
 	s.Require().NoError(err)
 	s.NotEmpty(allRes.Data)
 
 	// 5. FindByActive
-	activeRes, err := s.queryClient.FindByActive(ctx, &pb.FindAllShippingRequest{Page: 1, PageSize: 10})
+	activeRes, err := s.queryClient.FindByActive(ctx, &pbshipping_address.FindAllShippingRequest{Page: 1, PageSize: 10})
 	s.Require().NoError(err)
 	s.NotEmpty(activeRes.Data)
 
 	// 6. Update
-	updateRes, err := s.commandClient.UpdateShipping(ctx, &pb.UpdateShippingAddressRequest{
+	updateRes, err := s.commandClient.UpdateShipping(ctx, &pbshipping_address.UpdateShippingAddressRequest{
 		ShippingId:     addrID,
 		OrderId:        int32(orderID),
 		Alamat:         "GAPI Home Updated",
@@ -125,21 +126,21 @@ func (s *ShippingAddressGapiTestSuite) TestShippingAddressGapiLifecycle() {
 	s.Equal("GAPI Home Updated", updateRes.Data.Alamat)
 
 	// 7. Trash
-	_, err = s.commandClient.TrashedShipping(ctx, &pb.FindByIdShippingRequest{Id: addrID})
+	_, err = s.commandClient.TrashedShipping(ctx, &pbshipping_address.FindByIdShippingRequest{Id: addrID})
 	s.Require().NoError(err)
 
 	// 8. FindByTrashed
-	trashedRes, err := s.queryClient.FindByTrashed(ctx, &pb.FindAllShippingRequest{Page: 1, PageSize: 10})
+	trashedRes, err := s.queryClient.FindByTrashed(ctx, &pbshipping_address.FindAllShippingRequest{Page: 1, PageSize: 10})
 	s.Require().NoError(err)
 	s.NotEmpty(trashedRes.Data)
 
 	// 9. Restore
-	_, err = s.commandClient.RestoreShipping(ctx, &pb.FindByIdShippingRequest{Id: addrID})
+	_, err = s.commandClient.RestoreShipping(ctx, &pbshipping_address.FindByIdShippingRequest{Id: addrID})
 	s.Require().NoError(err)
 
 	// 10. DeletePermanent
-	_, _ = s.commandClient.TrashedShipping(ctx, &pb.FindByIdShippingRequest{Id: addrID})
-	_, err = s.commandClient.DeleteShippingPermanent(ctx, &pb.FindByIdShippingRequest{Id: addrID})
+	_, _ = s.commandClient.TrashedShipping(ctx, &pbshipping_address.FindByIdShippingRequest{Id: addrID})
+	_, err = s.commandClient.DeleteShippingPermanent(ctx, &pbshipping_address.FindByIdShippingRequest{Id: addrID})
 	s.Require().NoError(err)
 
 	// 11. RestoreAll

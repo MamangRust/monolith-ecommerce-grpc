@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	category_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/category"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbcategory "github.com/MamangRust/monolith-ecommerce-pb/category"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -15,9 +15,8 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-
 type categoryCommandHandlerApi struct {
-	client       pb.CategoryCommandServiceClient
+	client       pbcategory.CategoryCommandServiceClient
 	logger       logger.LoggerInterface
 	mapper       apimapper.CategoryCommandResponseMapper
 	cache        category_cache.CategoryMencache
@@ -25,10 +24,8 @@ type categoryCommandHandlerApi struct {
 	errors       errors.ApiHandler
 }
 
-
-
 type categoryCommandHandleDeps struct {
-	client       pb.CategoryCommandServiceClient
+	client       pbcategory.CategoryCommandServiceClient
 	router       *echo.Echo
 	logger       logger.LoggerInterface
 	mapper       apimapper.CategoryCommandResponseMapper
@@ -76,35 +73,39 @@ func NewCategoryCommandHandleApi(params *categoryCommandHandleDeps) *categoryCom
 // @Router /api/category-command/create [post]
 func (h *categoryCommandHandlerApi) Create(c echo.Context) error {
 	var req requests.CreateCategoryRequest
-	if err := c.Bind(&req); err != nil { return errors.NewBadRequestError("invalid request").WithInternal(err) }
+	if err := c.Bind(&req); err != nil {
+		return errors.NewBadRequestError("invalid request").WithInternal(err)
+	}
 
 	// Process the optional image upload first so ImageCategory is populated
 	// before validation (ImageCategory is a required field).
 	file, err := c.FormFile("image")
 	var imageURL string
 	if err == nil {
-		imageURL, err = h.upload_image.ProcessImageUpload(c, "uploads/category", file, false)
+		imageURL, err = h.upload_image.ProcessImageUpload("uploads/category", file, false)
 		if err != nil {
 			return err
 		}
 	}
 	req.ImageCategory = imageURL
 
-	if err := req.Validate(); err != nil { return errors.NewValidationError(nil) } // Simplified validation error
+	if err := req.Validate(); err != nil {
+		return errors.NewValidationError(nil)
+	} // Simplified validation error
 
 	slugCategory := ""
-	if req.SlugCategory != nil { slugCategory = *req.SlugCategory }
+	if req.SlugCategory != nil {
+		slugCategory = *req.SlugCategory
+	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.Create(ctx, &pb.CreateCategoryRequest{
+	res, err := h.client.Create(ctx, &pbcategory.CreateCategoryRequest{
 		Name: req.Name, Description: req.Description, SlugCategory: slugCategory, ImageCategory: imageURL,
 	})
 
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
-
 
 	return c.JSON(http.StatusCreated, h.mapper.ToApiResponseCategory(res))
 }
@@ -126,29 +127,34 @@ func (h *categoryCommandHandlerApi) Create(c echo.Context) error {
 // @Router /api/category-command/update/{id} [post]
 func (h *categoryCommandHandlerApi) Update(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil { return errors.NewBadRequestError("id is required") }
+	if err != nil {
+		return errors.NewBadRequestError("id is required")
+	}
 
 	var req requests.UpdateCategoryRequest
-	if err := c.Bind(&req); err != nil { return errors.NewBadRequestError("invalid request").WithInternal(err) }
+	if err := c.Bind(&req); err != nil {
+		return errors.NewBadRequestError("invalid request").WithInternal(err)
+	}
 
 	file, err := c.FormFile("image")
 	var imageURL string
 	if err == nil {
-		imageURL, err = h.upload_image.ProcessImageUpload(c, "uploads/category", file, false)
+		imageURL, err = h.upload_image.ProcessImageUpload("uploads/category", file, false)
 	}
 
 	slugCategory := ""
-	if req.SlugCategory != nil { slugCategory = *req.SlugCategory }
+	if req.SlugCategory != nil {
+		slugCategory = *req.SlugCategory
+	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.Update(ctx, &pb.UpdateCategoryRequest{
+	res, err := h.client.Update(ctx, &pbcategory.UpdateCategoryRequest{
 		CategoryId: int32(id), Name: req.Name, Description: req.Description, SlugCategory: slugCategory, ImageCategory: imageURL,
 	})
 
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	h.cache.DeleteCachedCategoryCache(ctx, id)
 
@@ -168,14 +174,15 @@ func (h *categoryCommandHandlerApi) Update(c echo.Context) error {
 // @Router /api/category-command/trashed/{id} [post]
 func (h *categoryCommandHandlerApi) Trashed(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil { return errors.NewBadRequestError("id is required") }
+	if err != nil {
+		return errors.NewBadRequestError("id is required")
+	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.TrashedCategory(ctx, &pb.FindByIdCategoryRequest{Id: int32(id)})
+	res, err := h.client.TrashedCategory(ctx, &pbcategory.FindByIdCategoryRequest{Id: int32(id)})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	h.cache.DeleteCachedCategoryCache(ctx, id)
 
@@ -195,14 +202,15 @@ func (h *categoryCommandHandlerApi) Trashed(c echo.Context) error {
 // @Router /api/category-command/restore/{id} [post]
 func (h *categoryCommandHandlerApi) Restore(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil { return errors.NewBadRequestError("id is required") }
+	if err != nil {
+		return errors.NewBadRequestError("id is required")
+	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.RestoreCategory(ctx, &pb.FindByIdCategoryRequest{Id: int32(id)})
+	res, err := h.client.RestoreCategory(ctx, &pbcategory.FindByIdCategoryRequest{Id: int32(id)})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	h.cache.DeleteCachedCategoryCache(ctx, id)
 
@@ -222,14 +230,15 @@ func (h *categoryCommandHandlerApi) Restore(c echo.Context) error {
 // @Router /api/category-command/permanent/{id} [delete]
 func (h *categoryCommandHandlerApi) DeletePermanent(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil { return errors.NewBadRequestError("id is required") }
+	if err != nil {
+		return errors.NewBadRequestError("id is required")
+	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.DeleteCategoryPermanent(ctx, &pb.FindByIdCategoryRequest{Id: int32(id)})
+	res, err := h.client.DeleteCategoryPermanent(ctx, &pbcategory.FindByIdCategoryRequest{Id: int32(id)})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	h.cache.DeleteCachedCategoryCache(ctx, id)
 
@@ -252,7 +261,6 @@ func (h *categoryCommandHandlerApi) RestoreAll(c echo.Context) error {
 		return errors.ParseGrpcError(err)
 	}
 
-
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseCategoryAll(res))
 }
 
@@ -272,8 +280,5 @@ func (h *categoryCommandHandlerApi) DeleteAllPermanent(c echo.Context) error {
 		return errors.ParseGrpcError(err)
 	}
 
-
 	return c.JSON(http.StatusOK, h.mapper.ToApiResponseCategoryAll(res))
 }
-
-

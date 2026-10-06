@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package pb;
+package pb.shipping_address;
 
 import "shipping_address/shipping_address_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/shipping_address";
 
 message FindAllShippingRequest {
     int32 page = 1;

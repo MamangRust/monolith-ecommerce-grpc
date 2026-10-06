@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/repository"
+	"github.com/MamangRust/monolith-ecommerce-merchant_detail/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -15,22 +15,22 @@ import (
 )
 
 type merchantSocialLinkCommandService struct {
-	observability    observability.TraceLoggerObservability
-	repository       repository.MerchantSocialLinkCommandRepository
-	logger           logger.LoggerInterface
+	observability observability.TraceLoggerObservability
+	repository    repository.MerchantSocialLinkCommandRepository
+	logger        logger.LoggerInterface
 }
 
 type MerchantSocialLinkCommandServiceDeps struct {
-	Observability    observability.TraceLoggerObservability
-	Repository       repository.MerchantSocialLinkCommandRepository
-	Logger           logger.LoggerInterface
+	Observability observability.TraceLoggerObservability
+	Repository    repository.MerchantSocialLinkCommandRepository
+	Logger        logger.LoggerInterface
 }
 
 func NewMerchantSocialLinkCommandService(deps *MerchantSocialLinkCommandServiceDeps) *merchantSocialLinkCommandService {
 	return &merchantSocialLinkCommandService{
-		observability:    deps.Observability,
-		repository:       deps.Repository,
-		logger:           deps.Logger,
+		observability: deps.Observability,
+		repository:    deps.Repository,
+		logger:        deps.Logger,
 	}
 }
 

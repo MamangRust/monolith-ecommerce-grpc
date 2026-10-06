@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-order-item/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-order-item/repository"
+	"github.com/MamangRust/monolith-ecommerce-order-item/cache"
+	"github.com/MamangRust/monolith-ecommerce-order-item/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -110,7 +110,7 @@ func (s *orderItemCommandService) Trash(ctx context.Context, orderItemID int) (*
 		status = "error"
 		return errorhandler.HandleError[*db.OrderItem](
 			s.logger,
-			err,
+			orderitem_errors.ErrFailedTrashedOrderItem,
 			method,
 			span,
 		)
@@ -138,7 +138,7 @@ func (s *orderItemCommandService) Restore(ctx context.Context, orderItemID int) 
 		status = "error"
 		return errorhandler.HandleError[*db.OrderItem](
 			s.logger,
-			err,
+			orderitem_errors.ErrFailedRestoreOrderItem,
 			method,
 			span,
 		)
@@ -166,7 +166,7 @@ func (s *orderItemCommandService) DeletePermanent(ctx context.Context, orderItem
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			orderitem_errors.ErrFailedDeleteOrderItem,
 			method,
 			span,
 		)
@@ -194,7 +194,7 @@ func (s *orderItemCommandService) DeleteByOrderPermanent(ctx context.Context, or
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			orderitem_errors.ErrFailedDeleteOrderItem,
 			method,
 			span,
 		)
@@ -248,7 +248,7 @@ func (s *orderItemCommandService) DeleteAll(ctx context.Context) (bool, error) {
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			orderitem_errors.ErrFailedDeleteAllOrderItem,
 			method,
 			span,
 		)

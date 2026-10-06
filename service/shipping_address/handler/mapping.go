@@ -2,8 +2,10 @@ package handler
 
 import (
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
+	pbshipping_address "github.com/MamangRust/monolith-ecommerce-pb/shipping_address"
 )
 
 func normalizePage(page, pageSize int) (int, int) {
@@ -16,9 +18,9 @@ func normalizePage(page, pageSize int) (int, int) {
 	return page, pageSize
 }
 
-func createPaginationMeta(page, pageSize, totalRecords int) *pb.PaginationMeta {
+func createPaginationMeta(page, pageSize, totalRecords int) *pbcommon.PaginationMeta {
 	totalPages := (totalRecords + pageSize - 1) / pageSize
-	return &pb.PaginationMeta{
+	return &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
@@ -26,10 +28,10 @@ func createPaginationMeta(page, pageSize, totalRecords int) *pb.PaginationMeta {
 	}
 }
 
-func mapToProtoShippingResponse(shipping interface{}) *pb.ShippingResponse {
+func mapToProtoShippingResponse(shipping interface{}) *pbshipping_address.ShippingResponse {
 	switch s := shipping.(type) {
 	case *db.ShippingAddress:
-		return &pb.ShippingResponse{
+		return &pbshipping_address.ShippingResponse{
 			Id:             int32(s.ShippingAddressID),
 			OrderId:        int32(s.OrderID),
 			Alamat:         s.Alamat,
@@ -40,10 +42,9 @@ func mapToProtoShippingResponse(shipping interface{}) *pb.ShippingResponse {
 			ShippingCost:   int32(s.ShippingCost),
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
-			Courier:        s.Courier,
 		}
 	case *db.GetShippingAddressRow:
-		return &pb.ShippingResponse{
+		return &pbshipping_address.ShippingResponse{
 			Id:             int32(s.ShippingAddressID),
 			OrderId:        int32(s.OrderID),
 			Alamat:         s.Alamat,
@@ -54,10 +55,9 @@ func mapToProtoShippingResponse(shipping interface{}) *pb.ShippingResponse {
 			ShippingCost:   int32(s.ShippingCost),
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
-			Courier:        s.Courier,
 		}
 	case *db.GetShippingByIDRow:
-		return &pb.ShippingResponse{
+		return &pbshipping_address.ShippingResponse{
 			Id:             int32(s.ShippingAddressID),
 			OrderId:        int32(s.OrderID),
 			Alamat:         s.Alamat,
@@ -68,10 +68,9 @@ func mapToProtoShippingResponse(shipping interface{}) *pb.ShippingResponse {
 			ShippingCost:   int32(s.ShippingCost),
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
-			Courier:        s.Courier,
 		}
 	case *db.GetShippingAddressByOrderIDRow:
-		return &pb.ShippingResponse{
+		return &pbshipping_address.ShippingResponse{
 			Id:             int32(s.ShippingAddressID),
 			OrderId:        int32(s.OrderID),
 			Alamat:         s.Alamat,
@@ -82,10 +81,9 @@ func mapToProtoShippingResponse(shipping interface{}) *pb.ShippingResponse {
 			ShippingCost:   int32(s.ShippingCost),
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
-			Courier:        s.Courier,
 		}
 	case *db.CreateShippingAddressRow:
-		return &pb.ShippingResponse{
+		return &pbshipping_address.ShippingResponse{
 			Id:             int32(s.ShippingAddressID),
 			OrderId:        int32(s.OrderID),
 			Alamat:         s.Alamat,
@@ -96,10 +94,9 @@ func mapToProtoShippingResponse(shipping interface{}) *pb.ShippingResponse {
 			ShippingCost:   int32(s.ShippingCost),
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
-			Courier:        s.Courier,
 		}
 	case *db.UpdateShippingAddressRow:
-		return &pb.ShippingResponse{
+		return &pbshipping_address.ShippingResponse{
 			Id:             int32(s.ShippingAddressID),
 			OrderId:        int32(s.OrderID),
 			Alamat:         s.Alamat,
@@ -110,21 +107,20 @@ func mapToProtoShippingResponse(shipping interface{}) *pb.ShippingResponse {
 			ShippingCost:   int32(s.ShippingCost),
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
-			Courier:        s.Courier,
 		}
 	default:
 		return nil
 	}
 }
 
-func mapToProtoShippingResponseDeleteAt(shipping interface{}) *pb.ShippingResponseDeleteAt {
+func mapToProtoShippingResponseDeleteAt(shipping interface{}) *pbshipping_address.ShippingResponseDeleteAt {
 	switch s := shipping.(type) {
 	case *db.ShippingAddress:
 		var deletedAt *wrapperspb.StringValue
 		if s.DeletedAt.Valid {
 			deletedAt = wrapperspb.String(s.DeletedAt.Time.Format("2006-01-02"))
 		}
-		return &pb.ShippingResponseDeleteAt{
+		return &pbshipping_address.ShippingResponseDeleteAt{
 			Id:             int32(s.ShippingAddressID),
 			OrderId:        int32(s.OrderID),
 			Alamat:         s.Alamat,
@@ -136,14 +132,13 @@ func mapToProtoShippingResponseDeleteAt(shipping interface{}) *pb.ShippingRespon
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
 			DeletedAt:      deletedAt,
-			Courier:        s.Courier,
 		}
 	case *db.GetShippingAddressActiveRow:
 		var deletedAt *wrapperspb.StringValue
 		if s.DeletedAt.Valid {
 			deletedAt = wrapperspb.String(s.DeletedAt.Time.Format("2006-01-02"))
 		}
-		return &pb.ShippingResponseDeleteAt{
+		return &pbshipping_address.ShippingResponseDeleteAt{
 			Id:             int32(s.ShippingAddressID),
 			OrderId:        int32(s.OrderID),
 			Alamat:         s.Alamat,
@@ -155,14 +150,13 @@ func mapToProtoShippingResponseDeleteAt(shipping interface{}) *pb.ShippingRespon
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
 			DeletedAt:      deletedAt,
-			Courier:        s.Courier,
 		}
 	case *db.GetShippingAddressTrashedRow:
 		var deletedAt *wrapperspb.StringValue
 		if s.DeletedAt.Valid {
 			deletedAt = wrapperspb.String(s.DeletedAt.Time.Format("2006-01-02"))
 		}
-		return &pb.ShippingResponseDeleteAt{
+		return &pbshipping_address.ShippingResponseDeleteAt{
 			Id:             int32(s.ShippingAddressID),
 			OrderId:        int32(s.OrderID),
 			Alamat:         s.Alamat,
@@ -174,7 +168,6 @@ func mapToProtoShippingResponseDeleteAt(shipping interface{}) *pb.ShippingRespon
 			CreatedAt:      s.CreatedAt.Time.Format("2006-01-02"),
 			UpdatedAt:      s.UpdatedAt.Time.Format("2006-01-02"),
 			DeletedAt:      deletedAt,
-			Courier:        s.Courier,
 		}
 	default:
 		return nil

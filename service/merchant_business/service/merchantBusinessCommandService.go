@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_business/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_business/repository"
+	mencache "github.com/MamangRust/monolith-ecommerce-merchant_business/cache"
+	"github.com/MamangRust/monolith-ecommerce-merchant_business/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -114,7 +114,7 @@ func (s *merchantBusinessCommandService) Trash(ctx context.Context, merchantID i
 		status = "error"
 		return errorhandler.HandleError[*db.MerchantBusinessInformation](
 			s.logger,
-			err,
+			merchantbusiness_errors.ErrFailedTrashedMerchantBusiness,
 			method,
 			span,
 
@@ -145,7 +145,7 @@ func (s *merchantBusinessCommandService) Restore(ctx context.Context, merchantID
 		status = "error"
 		return errorhandler.HandleError[*db.MerchantBusinessInformation](
 			s.logger,
-			err,
+			merchantbusiness_errors.ErrFailedRestoreMerchantBusiness,
 			method,
 			span,
 
@@ -175,7 +175,7 @@ func (s *merchantBusinessCommandService) DeletePermanent(ctx context.Context, me
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			merchantbusiness_errors.ErrFailedDeleteMerchantBusinessPermanent,
 			method,
 			span,
 
@@ -230,7 +230,7 @@ func (s *merchantBusinessCommandService) DeleteAll(ctx context.Context) (bool, e
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			merchantbusiness_errors.ErrFailedDeleteAllMerchantBusinessPermanent,
 			method,
 			span,
 		)

@@ -5,7 +5,8 @@ import (
 	"strconv"
 
 	merchant_detail_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/merchant_detail"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
+	pbmerchant_detail "github.com/MamangRust/monolith-ecommerce-pb/merchant_detail"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
@@ -14,7 +15,7 @@ import (
 )
 
 type merchantDetailQueryHandlerApi struct {
-	client     pb.MerchantDetailQueryServiceClient
+	client     pbmerchant_detail.MerchantDetailQueryServiceClient
 	logger     logger.LoggerInterface
 	mapper     apimapper.MerchantDetailQueryResponseMapper
 	cache      merchant_detail_cache.MerchantDetailQueryCache
@@ -22,7 +23,7 @@ type merchantDetailQueryHandlerApi struct {
 }
 
 type merchantDetailQueryHandleDeps struct {
-	client     pb.MerchantDetailQueryServiceClient
+	client     pbmerchant_detail.MerchantDetailQueryServiceClient
 	router     *echo.Echo
 	logger     logger.LoggerInterface
 	mapper     apimapper.MerchantDetailQueryResponseMapper
@@ -63,9 +64,13 @@ func NewMerchantDetailQueryHandleApi(params *merchantDetailQueryHandleDeps) *mer
 // @Router /api/merchant-detail-query [get]
 func (h *merchantDetailQueryHandlerApi) FindAll(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -75,7 +80,7 @@ func (h *merchantDetailQueryHandlerApi) FindAll(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindAll(ctx, &pb.FindAllMerchantRequest{Page: int32(page), PageSize: int32(pageSize), Search: search})
+	res, err := h.client.FindAll(ctx, &pbmerchant.FindAllMerchantRequest{Page: int32(page), PageSize: int32(pageSize), Search: search})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -99,14 +104,16 @@ func (h *merchantDetailQueryHandlerApi) FindAll(c echo.Context) error {
 // @Router /api/merchant-detail-query/{id} [get]
 func (h *merchantDetailQueryHandlerApi) FindById(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return sharedErrors.NewBadRequestError("id is required") }
+	if err != nil || id <= 0 {
+		return sharedErrors.NewBadRequestError("id is required")
+	}
 
 	ctx := c.Request().Context()
 	if cachedData, found := h.cache.GetCachedMerchantDetailRelation(ctx, id); found {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindById(ctx, &pb.FindByIdMerchantDetailRequest{Id: int32(id)})
+	res, err := h.client.FindById(ctx, &pbmerchant_detail.FindByIdMerchantDetailRequest{Id: int32(id)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -131,9 +138,13 @@ func (h *merchantDetailQueryHandlerApi) FindById(c echo.Context) error {
 // @Router /api/merchant-detail-query/active [get]
 func (h *merchantDetailQueryHandlerApi) FindByActive(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -143,7 +154,7 @@ func (h *merchantDetailQueryHandlerApi) FindByActive(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindByActive(ctx, &pb.FindAllMerchantRequest{Page: int32(page), PageSize: int32(pageSize), Search: search})
+	res, err := h.client.FindByActive(ctx, &pbmerchant.FindAllMerchantRequest{Page: int32(page), PageSize: int32(pageSize), Search: search})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -168,9 +179,13 @@ func (h *merchantDetailQueryHandlerApi) FindByActive(c echo.Context) error {
 // @Router /api/merchant-detail-query/trashed [get]
 func (h *merchantDetailQueryHandlerApi) FindByTrashed(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -180,7 +195,7 @@ func (h *merchantDetailQueryHandlerApi) FindByTrashed(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindByTrashed(ctx, &pb.FindAllMerchantRequest{Page: int32(page), PageSize: int32(pageSize), Search: search})
+	res, err := h.client.FindByTrashed(ctx, &pbmerchant.FindAllMerchantRequest{Page: int32(page), PageSize: int32(pageSize), Search: search})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -190,4 +205,3 @@ func (h *merchantDetailQueryHandlerApi) FindByTrashed(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
-

@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/repository"
+	"github.com/MamangRust/monolith-ecommerce-merchant_award/cache"
+	"github.com/MamangRust/monolith-ecommerce-merchant_award/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -109,7 +109,7 @@ func (s *merchantAwardCommandService) Trash(ctx context.Context, merchantID int)
 		status = "error"
 		return errorhandler.HandleError[*db.MerchantCertificationsAndAward](
 			s.logger,
-			err,
+			merchantaward_errors.ErrFailedTrashedMerchantAward,
 			method,
 			span,
 			zap.Error(err),
@@ -138,7 +138,7 @@ func (s *merchantAwardCommandService) Restore(ctx context.Context, merchantID in
 		status = "error"
 		return errorhandler.HandleError[*db.MerchantCertificationsAndAward](
 			s.logger,
-			err,
+			merchantaward_errors.ErrFailedRestoreMerchantAward,
 			method,
 			span,
 			zap.Error(err),
@@ -165,7 +165,7 @@ func (s *merchantAwardCommandService) DeletePermanent(ctx context.Context, merch
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			merchantaward_errors.ErrFailedDeleteMerchantAwardPermanent,
 			method,
 			span,
 			zap.Error(err),
@@ -221,7 +221,7 @@ func (s *merchantAwardCommandService) DeleteAll(ctx context.Context) (bool, erro
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			merchantaward_errors.ErrFailedDeleteAllMerchantAwardsPermanent,
 			method,
 			span,
 			zap.Error(err),

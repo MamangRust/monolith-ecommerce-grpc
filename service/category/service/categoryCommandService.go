@@ -4,8 +4,8 @@ import (
 	"context"
 	"os"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/repository"
+	"github.com/MamangRust/monolith-ecommerce-category/cache"
+	"github.com/MamangRust/monolith-ecommerce-category/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/utils"

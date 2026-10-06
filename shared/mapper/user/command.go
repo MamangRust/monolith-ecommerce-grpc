@@ -1,7 +1,7 @@
 package userapimapper
 
 import (
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
@@ -15,12 +15,12 @@ func NewUserCommandResponseMapper() UserCommandResponseMapper {
 // ToApiResponseUser converts a single user response into an API response.
 //
 // Args:
-//   - pbResponse: A pointer to a pb.ApiResponseUser containing the user data.
+//   - pbResponse: A pointer to a pbuser.ApiResponseUser containing the user data.
 //
 // Returns:
 //   - A pointer to a response.ApiResponseUser containing the mapped user data, including
 //     Status, Message, and Data.
-func (u *userCommandResponseMapper) ToApiResponseUser(pbResponse *pb.ApiResponseUser) *response.ApiResponseUser {
+func (u *userCommandResponseMapper) ToApiResponseUser(pbResponse *pbuser.ApiResponseUser) *response.ApiResponseUser {
 	return &response.ApiResponseUser{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -28,7 +28,7 @@ func (u *userCommandResponseMapper) ToApiResponseUser(pbResponse *pb.ApiResponse
 	}
 }
 
-func (u *userCommandResponseMapper) ToApiResponseUserDeleteAt(pbResponse *pb.ApiResponseUserDeleteAt) *response.ApiResponseUserDeleteAt {
+func (u *userCommandResponseMapper) ToApiResponseUserDeleteAt(pbResponse *pbuser.ApiResponseUserDeleteAt) *response.ApiResponseUserDeleteAt {
 	return &response.ApiResponseUserDeleteAt{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -39,25 +39,25 @@ func (u *userCommandResponseMapper) ToApiResponseUserDeleteAt(pbResponse *pb.Api
 // ToApiResponseUserDelete maps a permanently deleted user response to an API response.
 //
 // Args:
-//   - pbResponse: A pointer to a pb.ApiResponseUserDelete containing the user data.
+//   - pbResponse: A pointer to a pbuser.ApiResponseUserDelete containing the user data.
 //
 // Returns:
 //   - A pointer to a response.ApiResponseUserDelete containing the mapped status and message.
-func (u *userCommandResponseMapper) ToApiResponseUserDelete(pbResponse *pb.ApiResponseUserDelete) *response.ApiResponseUserDelete {
+func (u *userCommandResponseMapper) ToApiResponseUserDelete(pbResponse *pbuser.ApiResponseUserDelete) *response.ApiResponseUserDelete {
 	return &response.ApiResponseUserDelete{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
 	}
 }
 
-// ToApiResponseUserAll maps a pb.ApiResponseUserAll to a response.ApiResponseUserAll.
+// ToApiResponseUserAll maps a pbuser.ApiResponseUserAll to a response.ApiResponseUserAll.
 //
 // Args:
-//   - pbResponse: A pointer to a pb.ApiResponseUserAll containing the status and message.
+//   - pbResponse: A pointer to a pbuser.ApiResponseUserAll containing the status and message.
 //
 // Returns:
 //   - A pointer to a response.ApiResponseUserAll containing the mapped status and message.
-func (u *userCommandResponseMapper) ToApiResponseUserAll(pbResponse *pb.ApiResponseUserAll) *response.ApiResponseUserAll {
+func (u *userCommandResponseMapper) ToApiResponseUserAll(pbResponse *pbuser.ApiResponseUserAll) *response.ApiResponseUserAll {
 	return &response.ApiResponseUserAll{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -67,12 +67,12 @@ func (u *userCommandResponseMapper) ToApiResponseUserAll(pbResponse *pb.ApiRespo
 // ToResponseUser maps a protobuf UserResponse to a domain UserResponse.
 //
 // Args:
-//   - user: A pointer to a pb.UserResponse containing the user data.
+//   - user: A pointer to a pbuser.UserResponse containing the user data.
 //
 // Returns:
 //   - A pointer to a response.UserResponse containing the mapped user data, including
 //     ID, FirstName, LastName, Email, CreatedAt, and UpdatedAt.
-func (u *userCommandResponseMapper) ToResponseUser(user *pb.UserResponse) *response.UserResponse {
+func (u *userCommandResponseMapper) ToResponseUser(user *pbuser.UserResponse) *response.UserResponse {
 	return &response.UserResponse{
 		ID:        int(user.Id),
 		FirstName: user.Firstname,
@@ -86,12 +86,12 @@ func (u *userCommandResponseMapper) ToResponseUser(user *pb.UserResponse) *respo
 // ToResponseUserDeleteAt maps a protobuf UserResponseDeleteAt to a domain UserResponseDeleteAt.
 //
 // Args:
-//   - user: A pointer to a pb.UserResponseDeleteAt containing the user data.
+//   - user: A pointer to a pbuser.UserResponseDeleteAt containing the user data.
 //
 // Returns:
 //   - A pointer to a response.UserResponseDeleteAt containing the mapped user data, including
 //     ID, FirstName, LastName, Email, CreatedAt, UpdatedAt, and potentially DeletedAt, if available.
-func (u *userCommandResponseMapper) ToResponseUserDeleteAt(user *pb.UserResponseDeleteAt) *response.UserResponseDeleteAt {
+func (u *userCommandResponseMapper) ToResponseUserDeleteAt(user *pbuser.UserResponseDeleteAt) *response.UserResponseDeleteAt {
 	var deletedAt string
 	if user.DeletedAt != nil {
 		deletedAt = user.DeletedAt.Value

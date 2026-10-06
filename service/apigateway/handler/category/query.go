@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	category_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/category"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbcategory "github.com/MamangRust/monolith-ecommerce-pb/category"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
@@ -14,17 +14,15 @@ import (
 )
 
 type categoryQueryHandlerApi struct {
-	client     pb.CategoryQueryServiceClient
-	logger     logger.LoggerInterface
-	mapper     apimapper.CategoryQueryResponseMapper
-	cache      category_cache.CategoryMencache
-	errors     errors.ApiHandler
+	client pbcategory.CategoryQueryServiceClient
+	logger logger.LoggerInterface
+	mapper apimapper.CategoryQueryResponseMapper
+	cache  category_cache.CategoryMencache
+	errors errors.ApiHandler
 }
 
-
-
 type categoryQueryHandleDeps struct {
-	client     pb.CategoryQueryServiceClient
+	client     pbcategory.CategoryQueryServiceClient
 	router     *echo.Echo
 	logger     logger.LoggerInterface
 	mapper     apimapper.CategoryQueryResponseMapper
@@ -34,13 +32,12 @@ type categoryQueryHandleDeps struct {
 
 func NewCategoryQueryHandleApi(params *categoryQueryHandleDeps) *categoryQueryHandlerApi {
 	categoryQueryHandler := &categoryQueryHandlerApi{
-		client:     params.client,
-		logger:     params.logger,
-		mapper:     params.mapper,
-		cache:      params.cache,
-		errors:     params.apiHandler,
+		client: params.client,
+		logger: params.logger,
+		mapper: params.mapper,
+		cache:  params.cache,
+		errors: params.apiHandler,
 	}
-
 
 	routerCategory := params.router.Group("/api/category-query")
 
@@ -66,9 +63,13 @@ func NewCategoryQueryHandleApi(params *categoryQueryHandleDeps) *categoryQueryHa
 // @Router /api/category-query [get]
 func (h *categoryQueryHandlerApi) FindAll(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -78,14 +79,12 @@ func (h *categoryQueryHandlerApi) FindAll(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindAll(ctx, &pb.FindAllCategoryRequest{
+	res, err := h.client.FindAll(ctx, &pbcategory.FindAllCategoryRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
-
 
 	apiResponse := h.mapper.ToApiResponsePaginationCategory(res)
 	h.cache.SetCachedCategoriesCache(ctx, req, apiResponse)
@@ -106,18 +105,19 @@ func (h *categoryQueryHandlerApi) FindAll(c echo.Context) error {
 // @Router /api/category-query/{id} [get]
 func (h *categoryQueryHandlerApi) FindById(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil { return errors.NewBadRequestError("id is required") }
+	if err != nil {
+		return errors.NewBadRequestError("id is required")
+	}
 
 	ctx := c.Request().Context()
 	if cachedData, found := h.cache.GetCachedCategoryCache(ctx, id); found {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindById(ctx, &pb.FindByIdCategoryRequest{Id: int32(id)})
+	res, err := h.client.FindById(ctx, &pbcategory.FindByIdCategoryRequest{Id: int32(id)})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	apiResponse := h.mapper.ToApiResponseCategory(res)
 	h.cache.SetCachedCategoryCache(ctx, apiResponse)
@@ -139,9 +139,13 @@ func (h *categoryQueryHandlerApi) FindById(c echo.Context) error {
 // @Router /api/category-query/active [get]
 func (h *categoryQueryHandlerApi) FindByActive(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -151,14 +155,12 @@ func (h *categoryQueryHandlerApi) FindByActive(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindByActive(ctx, &pb.FindAllCategoryRequest{
+	res, err := h.client.FindByActive(ctx, &pbcategory.FindAllCategoryRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
-
 
 	apiResponse := h.mapper.ToApiResponsePaginationCategoryDeleteAt(res)
 	h.cache.SetCachedCategoryActiveCache(ctx, req, apiResponse)
@@ -180,9 +182,13 @@ func (h *categoryQueryHandlerApi) FindByActive(c echo.Context) error {
 // @Router /api/category-query/trashed [get]
 func (h *categoryQueryHandlerApi) FindByTrashed(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -192,19 +198,15 @@ func (h *categoryQueryHandlerApi) FindByTrashed(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindByTrashed(ctx, &pb.FindAllCategoryRequest{
+	res, err := h.client.FindByTrashed(ctx, &pbcategory.FindAllCategoryRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
 
-
-
 	apiResponse := h.mapper.ToApiResponsePaginationCategoryDeleteAt(res)
 	h.cache.SetCachedCategoryTrashedCache(ctx, req, apiResponse)
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
-
-

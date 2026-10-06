@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-transaction/service"
 )
 
 type Deps struct {
@@ -19,9 +19,9 @@ type Handler struct {
 
 func NewHandler(deps *Deps) *Handler {
 	return &Handler{
-		TransactionQuery: NewTransactionQueryHandler(deps.Service.TransactionQuery, deps.Logger),
-		TransactionCommand: NewTransactionCommandHandler(deps.Service.TransactionCommand, deps.Logger),
-		TransactionStats: NewTransactionStatsHandler(deps.Service.TransactionStats, deps.Logger),
+		TransactionQuery:           NewTransactionQueryHandler(deps.Service.TransactionQuery, deps.Logger),
+		TransactionCommand:         NewTransactionCommandHandler(deps.Service.TransactionCommand, deps.Logger),
+		TransactionStats:           NewTransactionStatsHandler(deps.Service.TransactionStats, deps.Logger),
 		TransactionStatsByMerchant: NewTransactionStatsByMerchantHandler(deps.Service.TransactionStatsByMerchant, deps.Logger),
 	}
 }

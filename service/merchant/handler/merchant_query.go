@@ -3,28 +3,29 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant/service"
+	"github.com/MamangRust/monolith-ecommerce-merchant/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	merchant_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
 )
 
 type merchantQueryHandler struct {
-	pb.UnimplementedMerchantQueryServiceServer
+	pbmerchant.UnimplementedMerchantQueryServiceServer
 	merchantQuery service.MerchantQueryService
 	logger        logger.LoggerInterface
 }
 
-func NewMerchantQueryHandler(svc service.MerchantQueryService, logger logger.LoggerInterface) pb.MerchantQueryServiceServer {
+func NewMerchantQueryHandler(svc service.MerchantQueryService, logger logger.LoggerInterface) pbmerchant.MerchantQueryServiceServer {
 	return &merchantQueryHandler{
 		merchantQuery: svc,
 		logger:        logger,
 	}
 }
 
-func (s *merchantQueryHandler) FindAll(ctx context.Context, request *pb.FindAllMerchantRequest) (*pb.ApiResponsePaginationMerchant, error) {
+func (s *merchantQueryHandler) FindAll(ctx context.Context, request *pbmerchant.FindAllMerchantRequest) (*pbmerchant.ApiResponsePaginationMerchant, error) {
 	page, pageSize := normalizePage(int(request.GetPage()), int(request.GetPageSize()))
 	search := request.GetSearch()
 
@@ -39,14 +40,14 @@ func (s *merchantQueryHandler) FindAll(ctx context.Context, request *pb.FindAllM
 		return nil, errors.ToGrpcError(err)
 	}
 
-	pbMerchants := make([]*pb.MerchantResponse, len(merchants))
+	pbMerchants := make([]*pbmerchant.MerchantResponse, len(merchants))
 	for i, m := range merchants {
 		pbMerchants[i] = mapToProtoMerchantResponse(m)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationMerchant{
+	return &pbmerchant.ApiResponsePaginationMerchant{
 		Status:     "success",
 		Message:    "Successfully fetched merchants",
 		Data:       pbMerchants,
@@ -54,7 +55,7 @@ func (s *merchantQueryHandler) FindAll(ctx context.Context, request *pb.FindAllM
 	}, nil
 }
 
-func (s *merchantQueryHandler) FindById(ctx context.Context, request *pb.FindByIdMerchantRequest) (*pb.ApiResponseMerchant, error) {
+func (s *merchantQueryHandler) FindById(ctx context.Context, request *pbmerchant.FindByIdMerchantRequest) (*pbmerchant.ApiResponseMerchant, error) {
 	id := int(request.GetId())
 	if id == 0 {
 		return nil, merchant_errors.ErrGrpcInvalidMerchantId
@@ -65,14 +66,14 @@ func (s *merchantQueryHandler) FindById(ctx context.Context, request *pb.FindByI
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseMerchant{
+	return &pbmerchant.ApiResponseMerchant{
 		Status:  "success",
 		Message: "Successfully fetched merchant",
 		Data:    mapToProtoMerchantResponse(merchant),
 	}, nil
 }
 
-func (s *merchantQueryHandler) FindByActive(ctx context.Context, request *pb.FindAllMerchantRequest) (*pb.ApiResponsePaginationMerchantDeleteAt, error) {
+func (s *merchantQueryHandler) FindByActive(ctx context.Context, request *pbmerchant.FindAllMerchantRequest) (*pbmerchant.ApiResponsePaginationMerchantDeleteAt, error) {
 	page, pageSize := normalizePage(int(request.GetPage()), int(request.GetPageSize()))
 	search := request.GetSearch()
 
@@ -87,14 +88,14 @@ func (s *merchantQueryHandler) FindByActive(ctx context.Context, request *pb.Fin
 		return nil, errors.ToGrpcError(err)
 	}
 
-	pbMerchants := make([]*pb.MerchantResponseDeleteAt, len(merchants))
+	pbMerchants := make([]*pbmerchant.MerchantResponseDeleteAt, len(merchants))
 	for i, m := range merchants {
 		pbMerchants[i] = mapToProtoMerchantResponseDeleteAt(m)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationMerchantDeleteAt{
+	return &pbmerchant.ApiResponsePaginationMerchantDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched active merchants",
 		Data:       pbMerchants,
@@ -102,7 +103,7 @@ func (s *merchantQueryHandler) FindByActive(ctx context.Context, request *pb.Fin
 	}, nil
 }
 
-func (s *merchantQueryHandler) FindByTrashed(ctx context.Context, request *pb.FindAllMerchantRequest) (*pb.ApiResponsePaginationMerchantDeleteAt, error) {
+func (s *merchantQueryHandler) FindByTrashed(ctx context.Context, request *pbmerchant.FindAllMerchantRequest) (*pbmerchant.ApiResponsePaginationMerchantDeleteAt, error) {
 	page, pageSize := normalizePage(int(request.GetPage()), int(request.GetPageSize()))
 	search := request.GetSearch()
 
@@ -117,14 +118,14 @@ func (s *merchantQueryHandler) FindByTrashed(ctx context.Context, request *pb.Fi
 		return nil, errors.ToGrpcError(err)
 	}
 
-	pbMerchants := make([]*pb.MerchantResponseDeleteAt, len(merchants))
+	pbMerchants := make([]*pbmerchant.MerchantResponseDeleteAt, len(merchants))
 	for i, m := range merchants {
 		pbMerchants[i] = mapToProtoMerchantResponseTrashed(m)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationMerchantDeleteAt{
+	return &pbmerchant.ApiResponsePaginationMerchantDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched trashed merchants",
 		Data:       pbMerchants,

@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package pb.order.stats;
+
+import "order/order_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/order";
+
+message FindYearOrderByMerchant {
+    int32 merchant_id = 1;
+    int32 year = 2;
+}
+
+message FindYearMonthTotalRevenueByMerchant {
+    int32 year = 1;
+    int32 month = 2;
+    int32 merchant_id = 3;
+}
+
+message FindYearTotalRevenueByMerchant {
+    int32 year = 1;
+    int32 merchant_id = 2;
+}
+
+service OrderStatsByMerchantService {
+    rpc FindMonthlyTotalRevenueByMerchant(
+        FindYearMonthTotalRevenueByMerchant
+    ) returns (
+        ApiResponseOrderMonthlyTotalRevenue
+    );
+
+    rpc FindYearlyTotalRevenueByMerchant(
+        FindYearTotalRevenueByMerchant
+    ) returns (
+        ApiResponseOrderYearlyTotalRevenue
+    );
+
+    rpc FindMonthlyRevenueByMerchant(
+        FindYearOrderByMerchant
+    ) returns (
+        ApiResponseOrderMonthly
+    );
+
+    rpc FindYearlyRevenueByMerchant(
+        FindYearOrderByMerchant
+    ) returns (
+        ApiResponseOrderYearly
+    );
+}

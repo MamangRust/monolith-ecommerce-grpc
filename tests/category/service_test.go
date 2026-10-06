@@ -4,15 +4,16 @@ import (
 	"context"
 	"testing"
 
-	cat_cache "github.com/MamangRust/monolith-ecommerce-grpc-category/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/service"
+	"github.com/stretchr/testify/suite"
+
+	cat_cache "github.com/MamangRust/monolith-ecommerce-category/cache"
+	"github.com/MamangRust/monolith-ecommerce-category/repository"
+	"github.com/MamangRust/monolith-ecommerce-category/service"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type CategoryServiceTestSuite struct {
@@ -110,7 +111,7 @@ func (s *CategoryServiceTestSuite) TestCategoryLifecycle() {
 	s2 := "s2"
 	c1, _ := s.svc.CategoryCommand.Create(ctx, &requests.CreateCategoryRequest{Name: "C1", Description: "D1", SlugCategory: &s1, ImageCategory: "I1"})
 	c2, _ := s.svc.CategoryCommand.Create(ctx, &requests.CreateCategoryRequest{Name: "C2", Description: "D2", SlugCategory: &s2, ImageCategory: "I2"})
-	
+
 	s.svc.CategoryCommand.Trash(ctx, int(c1.CategoryID))
 	s.svc.CategoryCommand.Trash(ctx, int(c2.CategoryID))
 

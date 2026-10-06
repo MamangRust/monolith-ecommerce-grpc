@@ -16,8 +16,5 @@ func NewProductCommandCache(store *cache.CacheStore) *productCommandCache {
 }
 
 func (c *productCommandCache) DeleteCachedProduct(ctx context.Context, productID int) {
-	// Product mutations affect every list projection as well as the detail key.
-	if _, err := c.store.InvalidateCache(ctx, "product:*"); err != nil {
-		cache.DeleteFromCache(ctx, c.store, fmt.Sprintf(productByIdCacheKey, productID))
-	}
+	cache.DeleteFromCache(ctx, c.store, fmt.Sprintf(productByIdCacheKey, productID))
 }

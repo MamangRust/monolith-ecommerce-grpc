@@ -1,9 +1,10 @@
 package handler
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/MamangRust/monolith-ecommerce-shipping-address/service"
+
+	pbshipping_address "github.com/MamangRust/monolith-ecommerce-pb/shipping_address"
 )
 
 type Deps struct {
@@ -12,8 +13,8 @@ type Deps struct {
 }
 
 type Handler struct {
-	ShippingQuery   pb.ShippingQueryServiceServer
-	ShippingCommand pb.ShippingCommandServiceServer
+	ShippingQuery   pbshipping_address.ShippingQueryServiceServer
+	ShippingCommand pbshipping_address.ShippingCommandServiceServer
 }
 
 func NewHandler(deps *Deps) *Handler {

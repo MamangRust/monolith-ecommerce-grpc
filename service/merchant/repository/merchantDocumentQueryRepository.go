@@ -3,12 +3,12 @@ package repository
 import (
 	"context"
 
+	"database/sql"
 	"errors"
-	"github.com/jackc/pgx/v5"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors/merchant"
+	merchant_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant"
 )
 
 type merchantDocumentQueryRepository struct {
@@ -90,7 +90,7 @@ func (r *merchantDocumentQueryRepository) FindTrashed(ctx context.Context, req *
 func (r *merchantDocumentQueryRepository) FindByID(ctx context.Context, id int) (*db.GetMerchantDocumentRow, error) {
 	doc, err := r.db.GetMerchantDocument(ctx, int32(id))
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, merchant_errors.ErrMerchantNotFound.WithInternal(err)
 		}
 		return nil, merchant_errors.ErrMerchantInternal.WithInternal(err)

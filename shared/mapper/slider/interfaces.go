@@ -1,29 +1,29 @@
 package sliderapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbslider "github.com/MamangRust/monolith-ecommerce-pb/slider"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
 type SliderBaseResponseMapper interface {
-	ToResponseSlider(pbResponse *pb.SliderResponse) *response.SliderResponse
-	ToResponsesSlider(pbResponses []*pb.SliderResponse) []*response.SliderResponse
+	ToResponseSlider(pbResponse *pbslider.SliderResponse) *response.SliderResponse
+	ToResponsesSlider(pbResponses []*pbslider.SliderResponse) []*response.SliderResponse
 }
 
 type SliderQueryResponseMapper interface {
 	SliderBaseResponseMapper
-	ToApiResponseSlider(pbResponse *pb.ApiResponseSlider) *response.ApiResponseSlider
-	ToApiResponsesSlider(pbResponse *pb.ApiResponsesSlider) *response.ApiResponsesSlider
-	ToApiResponsePaginationSlider(pbResponse *pb.ApiResponsePaginationSlider) *response.ApiResponsePaginationSlider
-	ToApiResponsePaginationSliderDeleteAt(pbResponse *pb.ApiResponsePaginationSliderDeleteAt) *response.ApiResponsePaginationSliderDeleteAt
+	ToApiResponseSlider(pbResponse *pbslider.ApiResponseSlider) *response.ApiResponseSlider
+	ToApiResponsesSlider(pbResponse *pbslider.ApiResponsesSlider) *response.ApiResponsesSlider
+	ToApiResponsePaginationSlider(pbResponse *pbslider.ApiResponsePaginationSlider) *response.ApiResponsePaginationSlider
+	ToApiResponsePaginationSliderDeleteAt(pbResponse *pbslider.ApiResponsePaginationSliderDeleteAt) *response.ApiResponsePaginationSliderDeleteAt
 }
 
 type SliderCommandResponseMapper interface {
 	SliderBaseResponseMapper
-	ToResponseSliderDeleteAt(pbResponse *pb.SliderResponseDeleteAt) *response.SliderResponseDeleteAt
-	ToResponsesSliderDeleteAt(pbResponses []*pb.SliderResponseDeleteAt) []*response.SliderResponseDeleteAt
-	ToApiResponseSliderDeleteAt(pbResponse *pb.ApiResponseSliderDeleteAt) *response.ApiResponseSliderDeleteAt
-	ToApiResponseSliderDelete(pbResponse *pb.ApiResponseSliderDelete) *response.ApiResponseSliderDelete
-	ToApiResponseSliderAll(pbResponse *pb.ApiResponseSliderAll) *response.ApiResponseSliderAll
-	ToApiResponsePaginationSliderDeleteAt(pbResponse *pb.ApiResponsePaginationSliderDeleteAt) *response.ApiResponsePaginationSliderDeleteAt
+	ToResponseSliderDeleteAt(pbResponse *pbslider.SliderResponseDeleteAt) *response.SliderResponseDeleteAt
+	ToResponsesSliderDeleteAt(pbResponses []*pbslider.SliderResponseDeleteAt) []*response.SliderResponseDeleteAt
+	ToApiResponseSliderDeleteAt(pbResponse *pbslider.ApiResponseSliderDeleteAt) *response.ApiResponseSliderDeleteAt
+	ToApiResponseSliderDelete(pbResponse *pbslider.ApiResponseSliderDelete) *response.ApiResponseSliderDelete
+	ToApiResponseSliderAll(pbResponse *pbslider.ApiResponseSliderAll) *response.ApiResponseSliderAll
+	ToApiResponsePaginationSliderDeleteAt(pbResponse *pbslider.ApiResponsePaginationSliderDeleteAt) *response.ApiResponsePaginationSliderDeleteAt
 }

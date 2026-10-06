@@ -1,11 +1,13 @@
 package handler
 
-import "github.com/MamangRust/monolith-ecommerce-shared/pb"
+import (
+	pbcart "github.com/MamangRust/monolith-ecommerce-pb/cart"
+)
 
 type CartQueryHandler interface {
-	pb.CartQueryServiceServer
+	pbcart.CartQueryServiceServer
 }
 
 type CartCommandHandler interface {
-	pb.CartCommandServiceServer
+	pbcart.CartCommandServiceServer
 }

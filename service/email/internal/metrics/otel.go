@@ -8,33 +8,35 @@ import (
 var (
 	EmailSent       metric.Int64Counter
 	EmailFailed     metric.Int64Counter
+	EmailDuplicated metric.Int64Counter
 	EmailInvalid    metric.Int64Counter
 	EmailRetried    metric.Int64Counter
 	EmailDeadLetter metric.Int64Counter
 )
 
-// Register creates the OpenTelemetry counters from the global meter. Call it
-// after the OTel SDK has been initialized in main (via pkg/otel, otel.go) so
-// the counters are bound to the real meter provider and exported through the
-// OTLP metric pipeline instead of a /metrics endpoint.
-func Register() {
+// Register creates all email service counters on the "email-service" meter.
+// The instruments report through the OpenTelemetry SDK (OTLP) configured in main.
+func Register() error {
 	meter := otel.Meter("email-service")
 
-	EmailSent = mustCounter(meter, "email_sent_total", "Total emails sent successfully")
-	EmailFailed = mustCounter(meter, "email_failed_total", "Total emails failed")
-	EmailInvalid = mustCounter(meter, "email_invalid_total", "Total malformed or unprocessable Kafka messages")
-	EmailRetried = mustCounter(meter, "email_retried_total", "Total emails published to the retry topic after a transient SMTP failure")
-	EmailDeadLetter = mustCounter(meter, "email_deadletter_total", "Total emails dead-lettered after exhausting retries")
-}
-
-func mustCounter(meter metric.Meter, name, description string) metric.Int64Counter {
-	counter, err := meter.Int64Counter(
-		name,
-		metric.WithDescription(description),
-		metric.WithUnit("1"),
-	)
-	if err != nil {
-		panic(err)
+	var err error
+	if EmailSent, err = meter.Int64Counter("email_sent_total", metric.WithDescription("Total emails sent successfully")); err != nil {
+		return err
 	}
-	return counter
+	if EmailFailed, err = meter.Int64Counter("email_failed_total", metric.WithDescription("Total emails failed")); err != nil {
+		return err
+	}
+	if EmailDuplicated, err = meter.Int64Counter("email_duplicated_total", metric.WithDescription("Total duplicate Kafka messages skipped")); err != nil {
+		return err
+	}
+	if EmailInvalid, err = meter.Int64Counter("email_invalid_total", metric.WithDescription("Total malformed or unprocessable Kafka messages")); err != nil {
+		return err
+	}
+	if EmailRetried, err = meter.Int64Counter("email_retried_total", metric.WithDescription("Total emails published to the retry topic after a transient SMTP failure")); err != nil {
+		return err
+	}
+	if EmailDeadLetter, err = meter.Int64Counter("email_deadletter_total", metric.WithDescription("Total emails dead-lettered after exhausting retries")); err != nil {
+		return err
+	}
+	return nil
 }

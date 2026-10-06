@@ -10,20 +10,20 @@ import (
 	"testing"
 	"time"
 
-	rolehandler "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/role"
 	apicache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache"
-	role_cache "github.com/MamangRust/monolith-ecommerce-grpc-role/cache"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	rolehandler "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/role"
+	role_cache "github.com/MamangRust/monolith-ecommerce-role/cache"
+	"github.com/MamangRust/monolith-ecommerce-role/handler"
+	"github.com/MamangRust/monolith-ecommerce-role/repository"
+	"github.com/MamangRust/monolith-ecommerce-role/service"
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	app_errors "github.com/MamangRust/monolith-ecommerce-shared/errors"
-	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/handler"
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
+	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
+	app_errors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
+	tests "github.com/MamangRust/monolith-ecommerce-test"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
@@ -82,8 +82,8 @@ func (s *RoleApiTestSuite) SetupSuite() {
 		Logger:  log,
 	})
 	server := grpc.NewServer()
-	pb.RegisterRoleCommandServiceServer(server, roleHandlerGrpc.RoleCommand)
-	pb.RegisterRoleQueryServiceServer(server, roleHandlerGrpc.RoleQuery)
+	pbrole.RegisterRoleCommandServiceServer(server, roleHandlerGrpc.RoleCommand)
+	pbrole.RegisterRoleQueryServiceServer(server, roleHandlerGrpc.RoleQuery)
 	s.grpcServer = server
 
 	lis, err := net.Listen("tcp", "localhost:0")

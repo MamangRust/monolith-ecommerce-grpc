@@ -6,15 +6,23 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/jackc/pgx/v5/pgxpool"
 	goredis "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/suite"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+
+	pbcategory "github.com/MamangRust/monolith-ecommerce-pb/category"
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
+	pborder "github.com/MamangRust/monolith-ecommerce-pb/order"
+	pborder_item "github.com/MamangRust/monolith-ecommerce-pb/order_item"
+	pbproduct "github.com/MamangRust/monolith-ecommerce-pb/product"
+	pbreview "github.com/MamangRust/monolith-ecommerce-pb/review"
+	pbshipping_address "github.com/MamangRust/monolith-ecommerce-pb/shipping_address"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
+	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 )
 
 type BaseTestSuite struct {
@@ -100,7 +108,7 @@ func (s *BaseTestSuite) SeedUser(ctx context.Context) int {
 	// Each call seeds a unique email so suites with multiple test methods can
 	// share one database without colliding on a fixed address.
 	email := fmt.Sprintf("seed.user.%s@example.com", uniqueSuffix())
-	res, err := pb.NewUserCommandServiceClient(s.Conns["user"]).Create(ctx, &pb.CreateUserRequest{
+	res, err := pbuser.NewUserCommandServiceClient(s.Conns["user"]).Create(ctx, &pbuser.CreateUserRequest{
 		Firstname:       "Seed",
 		Lastname:        "User",
 		Email:           email,
@@ -113,7 +121,7 @@ func (s *BaseTestSuite) SeedUser(ctx context.Context) int {
 
 func (s *BaseTestSuite) SeedCategory(ctx context.Context) int {
 	seedSuffix := uniqueSuffix()
-	res, err := pb.NewCategoryCommandServiceClient(s.Conns["category"]).Create(ctx, &pb.CreateCategoryRequest{
+	res, err := pbcategory.NewCategoryCommandServiceClient(s.Conns["category"]).Create(ctx, &pbcategory.CreateCategoryRequest{
 		Name:          "Seed Category " + seedSuffix,
 		Description:   "Seed Description",
 		SlugCategory:  "seed-category-" + seedSuffix,
@@ -124,7 +132,7 @@ func (s *BaseTestSuite) SeedCategory(ctx context.Context) int {
 }
 
 func (s *BaseTestSuite) SeedMerchant(ctx context.Context, userID int) int {
-	res, err := pb.NewMerchantCommandServiceClient(s.Conns["merchant"]).Create(ctx, &pb.CreateMerchantRequest{
+	res, err := pbmerchant.NewMerchantCommandServiceClient(s.Conns["merchant"]).Create(ctx, &pbmerchant.CreateMerchantRequest{
 		UserId:       int32(userID),
 		Name:         "Seed Merchant",
 		Description:  "Seed Description",
@@ -139,7 +147,7 @@ func (s *BaseTestSuite) SeedMerchant(ctx context.Context, userID int) int {
 
 func (s *BaseTestSuite) SeedProduct(ctx context.Context, merchantID int, categoryID int) int {
 	seedSuffix := uniqueSuffix()
-	res, err := pb.NewProductCommandServiceClient(s.Conns["product"]).Create(ctx, &pb.CreateProductRequest{
+	res, err := pbproduct.NewProductCommandServiceClient(s.Conns["product"]).Create(ctx, &pbproduct.CreateProductRequest{
 		MerchantId:   int32(merchantID),
 		CategoryId:   int32(categoryID),
 		Name:         "Seed Product " + seedSuffix,
@@ -158,7 +166,7 @@ func (s *BaseTestSuite) SeedProduct(ctx context.Context, merchantID int, categor
 }
 
 func (s *BaseTestSuite) SeedShippingAddress(ctx context.Context, orderID int) int {
-	res, err := pb.NewShippingCommandServiceClient(s.Conns["shipping-address"]).CreateShipping(ctx, &pb.CreateShippingAddressRequest{
+	res, err := pbshipping_address.NewShippingCommandServiceClient(s.Conns["shipping-address"]).CreateShipping(ctx, &pbshipping_address.CreateShippingAddressRequest{
 		OrderId:        int32(orderID),
 		Alamat:         "Seed Address",
 		Provinsi:       "Seed Province",
@@ -173,18 +181,18 @@ func (s *BaseTestSuite) SeedShippingAddress(ctx context.Context, orderID int) in
 }
 
 func (s *BaseTestSuite) SeedOrder(ctx context.Context, userID int, merchID int, prodID int) int {
-	res, err := pb.NewOrderCommandServiceClient(s.Conns["order"]).Create(ctx, &pb.CreateOrderRequest{
+	res, err := pborder.NewOrderCommandServiceClient(s.Conns["order"]).Create(ctx, &pborder.CreateOrderRequest{
 		UserId:     int32(userID),
 		MerchantId: int32(merchID),
 		TotalPrice: 10000,
-		Items: []*pb.CreateOrderItemRequest{
+		Items: []*pborder.CreateOrderItemRequest{
 			{
 				ProductId: int32(prodID),
 				Quantity:  1,
 				Price:     10000,
 			},
 		},
-		Shipping: &pb.CreateShippingAddressRequest{
+		Shipping: &pbshipping_address.CreateShippingAddressRequest{
 			Alamat:         "Seed Address",
 			Provinsi:       "Seed Province",
 			Kota:           "Seed City",
@@ -199,7 +207,7 @@ func (s *BaseTestSuite) SeedOrder(ctx context.Context, userID int, merchID int, 
 }
 
 func (s *BaseTestSuite) SeedReview(ctx context.Context, userID int, productID int) int {
-	res, err := pb.NewReviewCommandServiceClient(s.Conns["review"]).Create(ctx, &pb.CreateReviewRequest{
+	res, err := pbreview.NewReviewCommandServiceClient(s.Conns["review"]).Create(ctx, &pbreview.CreateReviewRequest{
 		UserId:    int32(userID),
 		ProductId: int32(productID),
 		Rating:    5,
@@ -210,7 +218,7 @@ func (s *BaseTestSuite) SeedReview(ctx context.Context, userID int, productID in
 }
 
 func (s *BaseTestSuite) SeedOrderItem(ctx context.Context, orderID int, productID int) int {
-	res, err := pb.NewOrderItemCommandServiceClient(s.Conns["order-item"]).CreateOrderItem(ctx, &pb.CreateOrderItemRecordRequest{
+	res, err := pborder_item.NewOrderItemCommandServiceClient(s.Conns["order-item"]).CreateOrderItem(ctx, &pborder_item.CreateOrderItemRecordRequest{
 		OrderId:   int32(orderID),
 		ProductId: int32(productID),
 		Quantity:  1,

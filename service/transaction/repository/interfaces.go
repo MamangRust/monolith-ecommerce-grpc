@@ -3,8 +3,6 @@ package repository
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5"
-
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 )
@@ -157,14 +155,6 @@ type TransactionQueryRepository interface {
 type TransactionCommandRepository interface {
 	Create(
 		ctx context.Context,
-		request *requests.CreateTransactionRequest,
-	) (*db.CreateTransactionRow, error)
-
-	// CreateInTx runs the transaction insert inside the given database transaction
-	// so the business row and its outbox event commit atomically.
-	CreateInTx(
-		ctx context.Context,
-		tx pgx.Tx,
 		request *requests.CreateTransactionRequest,
 	) (*db.CreateTransactionRow, error)
 

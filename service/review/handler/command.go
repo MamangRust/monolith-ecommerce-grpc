@@ -3,29 +3,30 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-review/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-review/service"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	review_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/review"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
+	review_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/review"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	pbreview "github.com/MamangRust/monolith-ecommerce-pb/review"
 )
 
 type reviewCommandHandler struct {
-	pb.UnimplementedReviewCommandServiceServer
+	pbreview.UnimplementedReviewCommandServiceServer
 	reviewService service.ReviewCommandService
 	logger        logger.LoggerInterface
 }
 
-func NewReviewCommandHandler(reviewService service.ReviewCommandService, logger logger.LoggerInterface) pb.ReviewCommandServiceServer {
+func NewReviewCommandHandler(reviewService service.ReviewCommandService, logger logger.LoggerInterface) pbreview.ReviewCommandServiceServer {
 	return &reviewCommandHandler{
 		reviewService: reviewService,
 		logger:        logger,
 	}
 }
 
-func (h *reviewCommandHandler) Create(ctx context.Context, request *pb.CreateReviewRequest) (*pb.ApiResponseReview, error) {
+func (h *reviewCommandHandler) Create(ctx context.Context, request *pbreview.CreateReviewRequest) (*pbreview.ApiResponseReview, error) {
 	req := &requests.CreateReviewRequest{
 		UserID:    int(request.GetUserId()),
 		ProductID: int(request.GetProductId()),
@@ -43,16 +44,16 @@ func (h *reviewCommandHandler) Create(ctx context.Context, request *pb.CreateRev
 	}
 
 	var hMapping reviewHandleGrpc
-	protoReview := hMapping.mapResponse(review).(*pb.ReviewResponse)
+	protoReview := hMapping.mapResponse(review).(*pbreview.ReviewResponse)
 
-	return &pb.ApiResponseReview{
+	return &pbreview.ApiResponseReview{
 		Status:  "success",
 		Message: "Successfully created review",
 		Data:    protoReview,
 	}, nil
 }
 
-func (h *reviewCommandHandler) Update(ctx context.Context, request *pb.UpdateReviewRequest) (*pb.ApiResponseReview, error) {
+func (h *reviewCommandHandler) Update(ctx context.Context, request *pbreview.UpdateReviewRequest) (*pbreview.ApiResponseReview, error) {
 	id := int(request.GetReviewId())
 
 	if id == 0 {
@@ -76,16 +77,16 @@ func (h *reviewCommandHandler) Update(ctx context.Context, request *pb.UpdateRev
 	}
 
 	var hMapping reviewHandleGrpc
-	protoReview := hMapping.mapResponse(review).(*pb.ReviewResponse)
+	protoReview := hMapping.mapResponse(review).(*pbreview.ReviewResponse)
 
-	return &pb.ApiResponseReview{
+	return &pbreview.ApiResponseReview{
 		Status:  "success",
 		Message: "Successfully updated review",
 		Data:    protoReview,
 	}, nil
 }
 
-func (h *reviewCommandHandler) TrashedReview(ctx context.Context, request *pb.FindByIdReviewRequest) (*pb.ApiResponseReviewDeleteAt, error) {
+func (h *reviewCommandHandler) TrashedReview(ctx context.Context, request *pbreview.FindByIdReviewRequest) (*pbreview.ApiResponseReviewDeleteAt, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -98,16 +99,16 @@ func (h *reviewCommandHandler) TrashedReview(ctx context.Context, request *pb.Fi
 	}
 
 	var hMapping reviewHandleGrpc
-	protoReview := hMapping.mapResponse(review).(*pb.ReviewResponseDeleteAt)
+	protoReview := hMapping.mapResponse(review).(*pbreview.ReviewResponseDeleteAt)
 
-	return &pb.ApiResponseReviewDeleteAt{
+	return &pbreview.ApiResponseReviewDeleteAt{
 		Status:  "success",
 		Message: "Successfully trashed review",
 		Data:    protoReview,
 	}, nil
 }
 
-func (h *reviewCommandHandler) RestoreReview(ctx context.Context, request *pb.FindByIdReviewRequest) (*pb.ApiResponseReviewDeleteAt, error) {
+func (h *reviewCommandHandler) RestoreReview(ctx context.Context, request *pbreview.FindByIdReviewRequest) (*pbreview.ApiResponseReviewDeleteAt, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -120,16 +121,16 @@ func (h *reviewCommandHandler) RestoreReview(ctx context.Context, request *pb.Fi
 	}
 
 	var hMapping reviewHandleGrpc
-	protoReview := hMapping.mapResponse(review).(*pb.ReviewResponseDeleteAt)
+	protoReview := hMapping.mapResponse(review).(*pbreview.ReviewResponseDeleteAt)
 
-	return &pb.ApiResponseReviewDeleteAt{
+	return &pbreview.ApiResponseReviewDeleteAt{
 		Status:  "success",
 		Message: "Successfully restored review",
 		Data:    protoReview,
 	}, nil
 }
 
-func (h *reviewCommandHandler) DeleteReviewPermanent(ctx context.Context, request *pb.FindByIdReviewRequest) (*pb.ApiResponseReviewDelete, error) {
+func (h *reviewCommandHandler) DeleteReviewPermanent(ctx context.Context, request *pbreview.FindByIdReviewRequest) (*pbreview.ApiResponseReviewDelete, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -141,31 +142,31 @@ func (h *reviewCommandHandler) DeleteReviewPermanent(ctx context.Context, reques
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseReviewDelete{
+	return &pbreview.ApiResponseReviewDelete{
 		Status:  "success",
 		Message: "Successfully deleted review permanently",
 	}, nil
 }
 
-func (h *reviewCommandHandler) RestoreAllReview(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseReviewAll, error) {
+func (h *reviewCommandHandler) RestoreAllReview(ctx context.Context, _ *emptypb.Empty) (*pbreview.ApiResponseReviewAll, error) {
 	_, err := h.reviewService.RestoreAll(ctx)
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseReviewAll{
+	return &pbreview.ApiResponseReviewAll{
 		Status:  "success",
 		Message: "Successfully restored all reviews",
 	}, nil
 }
 
-func (h *reviewCommandHandler) DeleteAllReviewPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseReviewAll, error) {
+func (h *reviewCommandHandler) DeleteAllReviewPermanent(ctx context.Context, _ *emptypb.Empty) (*pbreview.ApiResponseReviewAll, error) {
 	_, err := h.reviewService.DeleteAll(ctx)
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseReviewAll{
+	return &pbreview.ApiResponseReviewAll{
 		Status:  "success",
 		Message: "Successfully deleted all reviews permanently",
 	}, nil

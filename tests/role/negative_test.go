@@ -5,17 +5,18 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	apigatewaymiddlewares "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	apigatewaymiddlewares "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 )
 
 // gapi: non-existent role must map to codes.NotFound (404), not Internal.
 func (s *RoleGapiTestSuite) TestRoleGapiNotFound() {
 	ctx := context.Background()
-	_, err := s.queryClient.FindByIdRole(ctx, &pb.FindByIdRoleRequest{RoleId: 999999})
+	_, err := s.queryClient.FindByIdRole(ctx, &pbrole.FindByIdRoleRequest{RoleId: 999999})
 	s.Require().Error(err)
 	st, ok := status.FromError(err)
 	s.Require().True(ok, "expected a gRPC status error")

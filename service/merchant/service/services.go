@@ -1,13 +1,11 @@
 package service
 
 import (
-	merchantCache "github.com/MamangRust/monolith-ecommerce-grpc-merchant/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant/repository"
+	merchantCache "github.com/MamangRust/monolith-ecommerce-merchant/cache"
+	"github.com/MamangRust/monolith-ecommerce-merchant/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	"github.com/MamangRust/monolith-ecommerce-pkg/outbox"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Service struct {
@@ -21,8 +19,6 @@ type Deps struct {
 	Kafka         *kafka.Kafka
 	Repositories  *repository.Repositories
 	Mencache      *merchantCache.Mencache
-	Pool          *pgxpool.Pool
-	Outbox        *outbox.OutboxService
 	Logger        logger.LoggerInterface
 	Observability observability.TraceLoggerObservability
 }
@@ -41,19 +37,12 @@ func NewService(deps *Deps) *Service {
 			MerchantRepository: deps.Repositories.MerchantCommand,
 			MerchantQuery:      deps.Repositories.MerchantQuery,
 			UserRepository:     deps.Repositories.UserQuery,
-			Pool:               deps.Pool,
-			Outbox:             deps.Outbox,
 			Logger:             deps.Logger,
 			Observability:      deps.Observability,
 		}),
 		MerchantDocumentCommand: NewMerchantDocumentCommandService(&MerchantDocumentCommandServiceDeps{
-			Kafka:         deps.Kafka,
 			Cache:         deps.Mencache.MerchantDocumentCommandCache,
 			Repository:    deps.Repositories.MerchantDocumentCommand,
-			MerchantQuery: deps.Repositories.MerchantQuery,
-			UserQuery:     deps.Repositories.UserQuery,
-			Pool:          deps.Pool,
-			Outbox:        deps.Outbox,
 			Logger:        deps.Logger,
 			Observability: deps.Observability,
 		}),

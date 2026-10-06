@@ -1,13 +1,14 @@
 syntax = "proto3";
 
-package pb;
+package pb.merchant_social_link;
+
 
 import "merchant_detail/merchant_detail_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/merchant_social_link";
 
 message ApiResponseMerchantSocial {
     string status = 1;
     string message = 2;
-    MerchantSocialMediaLinkResponse data = 3;
+    pb.merchant_detail.MerchantSocialMediaLinkResponse data = 3;
 }

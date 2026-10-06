@@ -5,19 +5,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
-	tests "github.com/MamangRust/monolith-ecommerce-test"
 	"github.com/stretchr/testify/suite"
+
+	pbcategory "github.com/MamangRust/monolith-ecommerce-pb/category"
+	tests "github.com/MamangRust/monolith-ecommerce-test"
 )
 
 type CategoryStatsGapiTestSuite struct {
 	tests.BaseTestSuite
-	client           pb.CategoryStatsServiceClient
-	clientById       pb.CategoryStatsByIdServiceClient
-	clientByMerchant pb.CategoryStatsByMerchantServiceClient
-	categoryID      int
-	merchantID      int
-	userID          int
+	client           pbcategory.CategoryStatsServiceClient
+	clientById       pbcategory.CategoryStatsByIdServiceClient
+	clientByMerchant pbcategory.CategoryStatsByMerchantServiceClient
+	categoryID       int
+	merchantID       int
+	userID           int
 }
 
 func (s *CategoryStatsGapiTestSuite) SetupSuite() {
@@ -32,9 +33,9 @@ func (s *CategoryStatsGapiTestSuite) SetupSuite() {
 	s.SetupTransactionService()
 	s.SetupOrderService()
 
-	s.client = pb.NewCategoryStatsServiceClient(s.Conns["category"])
-	s.clientById = pb.NewCategoryStatsByIdServiceClient(s.Conns["category"])
-	s.clientByMerchant = pb.NewCategoryStatsByMerchantServiceClient(s.Conns["category"])
+	s.client = pbcategory.NewCategoryStatsServiceClient(s.Conns["category"])
+	s.clientById = pbcategory.NewCategoryStatsByIdServiceClient(s.Conns["category"])
+	s.clientByMerchant = pbcategory.NewCategoryStatsByMerchantServiceClient(s.Conns["category"])
 
 	ctx := context.Background()
 	s.userID = s.SeedUser(ctx)
@@ -44,7 +45,7 @@ func (s *CategoryStatsGapiTestSuite) SetupSuite() {
 	orderID := s.SeedOrder(ctx, s.userID, s.merchantID, prodID)
 
 	// Ensure created_at is set to current time to be picked up by stats
-	_, err := s.DBPool().Exec(ctx, "UPDATE orders SET created_at = $1 WHERE order_id = $2", 
+	_, err := s.DBPool().Exec(ctx, "UPDATE orders SET created_at = $1 WHERE order_id = $2",
 		time.Now(), orderID)
 	s.Require().NoError(err)
 }
@@ -52,7 +53,7 @@ func (s *CategoryStatsGapiTestSuite) SetupSuite() {
 func (s *CategoryStatsGapiTestSuite) TestFindMonthlyTotalPrices() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.FindYearMonthTotalPrices{
+	req := &pbcategory.FindYearMonthTotalPrices{
 		Year:  int32(now.Year()),
 		Month: int32(now.Month()),
 	}
@@ -66,7 +67,7 @@ func (s *CategoryStatsGapiTestSuite) TestFindMonthlyTotalPrices() {
 func (s *CategoryStatsGapiTestSuite) TestFindYearlyTotalPrices() {
 	ctx := context.Background()
 	year := time.Now().Year()
-	req := &pb.FindYearTotalPrices{
+	req := &pbcategory.FindYearTotalPrices{
 		Year: int32(year),
 	}
 
@@ -79,7 +80,7 @@ func (s *CategoryStatsGapiTestSuite) TestFindYearlyTotalPrices() {
 func (s *CategoryStatsGapiTestSuite) TestFindMonthPrice() {
 	ctx := context.Background()
 	year := time.Now().Year()
-	req := &pb.FindYearCategory{
+	req := &pbcategory.FindYearCategory{
 		Year: int32(year),
 	}
 
@@ -92,7 +93,7 @@ func (s *CategoryStatsGapiTestSuite) TestFindMonthPrice() {
 func (s *CategoryStatsGapiTestSuite) TestFindYearPrice() {
 	ctx := context.Background()
 	year := time.Now().Year()
-	req := &pb.FindYearCategory{
+	req := &pbcategory.FindYearCategory{
 		Year: int32(year),
 	}
 
@@ -105,7 +106,7 @@ func (s *CategoryStatsGapiTestSuite) TestFindYearPrice() {
 func (s *CategoryStatsGapiTestSuite) TestFindMonthlyTotalPricesById() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.FindYearMonthTotalPriceById{
+	req := &pbcategory.FindYearMonthTotalPriceById{
 		Year:       int32(now.Year()),
 		Month:      int32(now.Month()),
 		CategoryId: int32(s.categoryID),
@@ -120,7 +121,7 @@ func (s *CategoryStatsGapiTestSuite) TestFindMonthlyTotalPricesById() {
 func (s *CategoryStatsGapiTestSuite) TestFindYearlyTotalPricesById() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.FindYearTotalPriceById{
+	req := &pbcategory.FindYearTotalPriceById{
 		Year:       int32(now.Year()),
 		CategoryId: int32(s.categoryID),
 	}
@@ -134,7 +135,7 @@ func (s *CategoryStatsGapiTestSuite) TestFindYearlyTotalPricesById() {
 func (s *CategoryStatsGapiTestSuite) TestFindMonthPriceById() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.FindYearCategoryById{
+	req := &pbcategory.FindYearCategoryById{
 		Year:       int32(now.Year()),
 		CategoryId: int32(s.categoryID),
 	}
@@ -148,7 +149,7 @@ func (s *CategoryStatsGapiTestSuite) TestFindMonthPriceById() {
 func (s *CategoryStatsGapiTestSuite) TestFindYearPriceById() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.FindYearCategoryById{
+	req := &pbcategory.FindYearCategoryById{
 		Year:       int32(now.Year()),
 		CategoryId: int32(s.categoryID),
 	}
@@ -162,7 +163,7 @@ func (s *CategoryStatsGapiTestSuite) TestFindYearPriceById() {
 func (s *CategoryStatsGapiTestSuite) TestFindMonthlyTotalPricesByMerchant() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.FindYearMonthTotalPriceByMerchant{
+	req := &pbcategory.FindYearMonthTotalPriceByMerchant{
 		Year:       int32(now.Year()),
 		Month:      int32(now.Month()),
 		MerchantId: int32(s.merchantID),
@@ -177,7 +178,7 @@ func (s *CategoryStatsGapiTestSuite) TestFindMonthlyTotalPricesByMerchant() {
 func (s *CategoryStatsGapiTestSuite) TestFindYearlyTotalPricesByMerchant() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.FindYearTotalPriceByMerchant{
+	req := &pbcategory.FindYearTotalPriceByMerchant{
 		Year:       int32(now.Year()),
 		MerchantId: int32(s.merchantID),
 	}
@@ -191,7 +192,7 @@ func (s *CategoryStatsGapiTestSuite) TestFindYearlyTotalPricesByMerchant() {
 func (s *CategoryStatsGapiTestSuite) TestFindMonthPriceByMerchant() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.FindYearCategoryByMerchant{
+	req := &pbcategory.FindYearCategoryByMerchant{
 		Year:       int32(now.Year()),
 		MerchantId: int32(s.merchantID),
 	}
@@ -205,7 +206,7 @@ func (s *CategoryStatsGapiTestSuite) TestFindMonthPriceByMerchant() {
 func (s *CategoryStatsGapiTestSuite) TestFindYearPriceByMerchant() {
 	ctx := context.Background()
 	now := time.Now()
-	req := &pb.FindYearCategoryByMerchant{
+	req := &pbcategory.FindYearCategoryByMerchant{
 		Year:       int32(now.Year()),
 		MerchantId: int32(s.merchantID),
 	}

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-product/apps"
 	"github.com/MamangRust/monolith-ecommerce-pkg/server"
+	"github.com/MamangRust/monolith-ecommerce-product/apps"
 )
 
 func main() {

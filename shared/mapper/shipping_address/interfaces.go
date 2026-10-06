@@ -1,29 +1,29 @@
 package shippingaddressapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbshipping_address "github.com/MamangRust/monolith-ecommerce-pb/shipping_address"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
 type ShippingAddressBaseResponseMapper interface {
-	ToResponseShippingAddress(pbResponse *pb.ShippingResponse) *response.ShippingAddressResponse
-	ToResponsesShippingAddress(pbResponses []*pb.ShippingResponse) []*response.ShippingAddressResponse
+	ToResponseShippingAddress(pbResponse *pbshipping_address.ShippingResponse) *response.ShippingAddressResponse
+	ToResponsesShippingAddress(pbResponses []*pbshipping_address.ShippingResponse) []*response.ShippingAddressResponse
 }
 
 type ShippingAddressQueryResponseMapper interface {
 	ShippingAddressBaseResponseMapper
-	ToApiResponseShippingAddress(pbResponse *pb.ApiResponseShipping) *response.ApiResponseShippingAddress
-	ToApiResponsesShippingAddress(pbResponse *pb.ApiResponsesShipping) *response.ApiResponsesShippingAddress
-	ToApiResponsePaginationShippingAddress(pbResponse *pb.ApiResponsePaginationShipping) *response.ApiResponsePaginationShippingAddress
-	ToApiResponsePaginationShippingAddressDeleteAt(pbResponse *pb.ApiResponsePaginationShippingDeleteAt) *response.ApiResponsePaginationShippingAddressDeleteAt
+	ToApiResponseShippingAddress(pbResponse *pbshipping_address.ApiResponseShipping) *response.ApiResponseShippingAddress
+	ToApiResponsesShippingAddress(pbResponse *pbshipping_address.ApiResponsesShipping) *response.ApiResponsesShippingAddress
+	ToApiResponsePaginationShippingAddress(pbResponse *pbshipping_address.ApiResponsePaginationShipping) *response.ApiResponsePaginationShippingAddress
+	ToApiResponsePaginationShippingAddressDeleteAt(pbResponse *pbshipping_address.ApiResponsePaginationShippingDeleteAt) *response.ApiResponsePaginationShippingAddressDeleteAt
 }
 
 type ShippingAddressCommandResponseMapper interface {
 	ShippingAddressBaseResponseMapper
-	ToResponseShippingAddressDeleteAt(pbResponse *pb.ShippingResponseDeleteAt) *response.ShippingAddressResponseDeleteAt
-	ToResponsesShippingAddressDeleteAt(pbResponses []*pb.ShippingResponseDeleteAt) []*response.ShippingAddressResponseDeleteAt
-	ToApiResponseShippingAddressDeleteAt(pbResponse *pb.ApiResponseShippingDeleteAt) *response.ApiResponseShippingAddressDeleteAt
-	ToApiResponseShippingAddressDelete(pbResponse *pb.ApiResponseShippingDelete) *response.ApiResponseShippingAddressDelete
-	ToApiResponseShippingAddressAll(pbResponse *pb.ApiResponseShippingAll) *response.ApiResponseShippingAddressAll
-	ToApiResponsePaginationShippingAddressDeleteAt(pbResponse *pb.ApiResponsePaginationShippingDeleteAt) *response.ApiResponsePaginationShippingAddressDeleteAt
+	ToResponseShippingAddressDeleteAt(pbResponse *pbshipping_address.ShippingResponseDeleteAt) *response.ShippingAddressResponseDeleteAt
+	ToResponsesShippingAddressDeleteAt(pbResponses []*pbshipping_address.ShippingResponseDeleteAt) []*response.ShippingAddressResponseDeleteAt
+	ToApiResponseShippingAddressDeleteAt(pbResponse *pbshipping_address.ApiResponseShippingDeleteAt) *response.ApiResponseShippingAddressDeleteAt
+	ToApiResponseShippingAddressDelete(pbResponse *pbshipping_address.ApiResponseShippingDelete) *response.ApiResponseShippingAddressDelete
+	ToApiResponseShippingAddressAll(pbResponse *pbshipping_address.ApiResponseShippingAll) *response.ApiResponseShippingAddressAll
+	ToApiResponsePaginationShippingAddressDeleteAt(pbResponse *pbshipping_address.ApiResponsePaginationShippingDeleteAt) *response.ApiResponsePaginationShippingAddressDeleteAt
 }

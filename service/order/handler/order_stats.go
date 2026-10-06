@@ -3,34 +3,32 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-order/service"
+	"github.com/MamangRust/monolith-ecommerce-order/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors/order_errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors/order_errors"
+
+	pborder "github.com/MamangRust/monolith-ecommerce-pb/order"
 )
 
 type orderStatsHandler struct {
-	pb.UnimplementedOrderStatsServiceServer
-	orderStats           service.OrderStatsService
-	orderStatsByMerchant service.OrderStatsByMerchantService
-	logger               logger.LoggerInterface
+	pborder.UnimplementedOrderStatsServiceServer
+	orderStats service.OrderStatsService
+	logger     logger.LoggerInterface
 }
 
 func NewOrderStatsHandler(
 	orderStats service.OrderStatsService,
-	orderStatsByMerchant service.OrderStatsByMerchantService,
 	logger logger.LoggerInterface,
 ) OrderStatsHandler {
 	return &orderStatsHandler{
-		orderStats:           orderStats,
-		orderStatsByMerchant: orderStatsByMerchant,
-		logger:               logger,
+		orderStats: orderStats,
+		logger:     logger,
 	}
 }
 
-func (s *orderStatsHandler) FindMonthlyTotalRevenue(ctx context.Context, req *pb.FindYearMonthTotalRevenue) (*pb.ApiResponseOrderMonthlyTotalRevenue, error) {
+func (s *orderStatsHandler) FindMonthlyTotalRevenue(ctx context.Context, req *pborder.FindYearMonthTotalRevenue) (*pborder.ApiResponseOrderMonthlyTotalRevenue, error) {
 	year := int(req.GetYear())
 	month := int(req.GetMonth())
 
@@ -52,23 +50,23 @@ func (s *orderStatsHandler) FindMonthlyTotalRevenue(ctx context.Context, req *pb
 		return nil, errors.ToGrpcError(err)
 	}
 
-	var data []*pb.OrderMonthlyTotalRevenueResponse
+	var data []*pborder.OrderMonthlyTotalRevenueResponse
 	for _, method := range methods {
-		data = append(data, &pb.OrderMonthlyTotalRevenueResponse{
+		data = append(data, &pborder.OrderMonthlyTotalRevenueResponse{
 			Year:         method.Year,
 			Month:        method.Month,
 			TotalRevenue: int32(method.TotalRevenue),
 		})
 	}
 
-	return &pb.ApiResponseOrderMonthlyTotalRevenue{
+	return &pborder.ApiResponseOrderMonthlyTotalRevenue{
 		Status:  "success",
 		Message: "Monthly sales retrieved successfully",
 		Data:    data,
 	}, nil
 }
 
-func (s *orderStatsHandler) FindYearlyTotalRevenue(ctx context.Context, req *pb.FindYearTotalRevenue) (*pb.ApiResponseOrderYearlyTotalRevenue, error) {
+func (s *orderStatsHandler) FindYearlyTotalRevenue(ctx context.Context, req *pborder.FindYearTotalRevenue) (*pborder.ApiResponseOrderYearlyTotalRevenue, error) {
 	year := int(req.GetYear())
 
 	if year <= 0 {
@@ -80,22 +78,22 @@ func (s *orderStatsHandler) FindYearlyTotalRevenue(ctx context.Context, req *pb.
 		return nil, errors.ToGrpcError(err)
 	}
 
-	var data []*pb.OrderYearlyTotalRevenueResponse
+	var data []*pborder.OrderYearlyTotalRevenueResponse
 	for _, method := range methods {
-		data = append(data, &pb.OrderYearlyTotalRevenueResponse{
+		data = append(data, &pborder.OrderYearlyTotalRevenueResponse{
 			Year:         method.Year,
 			TotalRevenue: int32(method.TotalRevenue),
 		})
 	}
 
-	return &pb.ApiResponseOrderYearlyTotalRevenue{
+	return &pborder.ApiResponseOrderYearlyTotalRevenue{
 		Status:  "success",
 		Message: "Yearly payment methods retrieved successfully",
 		Data:    data,
 	}, nil
 }
 
-func (s *orderStatsHandler) FindMonthlyRevenue(ctx context.Context, request *pb.FindYearOrder) (*pb.ApiResponseOrderMonthly, error) {
+func (s *orderStatsHandler) FindMonthlyRevenue(ctx context.Context, request *pborder.FindYearOrder) (*pborder.ApiResponseOrderMonthly, error) {
 	year := int(request.GetYear())
 
 	if year <= 0 {
@@ -107,9 +105,9 @@ func (s *orderStatsHandler) FindMonthlyRevenue(ctx context.Context, request *pb.
 		return nil, errors.ToGrpcError(err)
 	}
 
-	var data []*pb.OrderMonthlyResponse
+	var data []*pborder.OrderMonthlyResponse
 	for _, item := range res {
-		data = append(data, &pb.OrderMonthlyResponse{
+		data = append(data, &pborder.OrderMonthlyResponse{
 			Month:          item.Month,
 			OrderCount:     int32(item.OrderCount),
 			TotalRevenue:   int32(item.TotalRevenue),
@@ -117,14 +115,14 @@ func (s *orderStatsHandler) FindMonthlyRevenue(ctx context.Context, request *pb.
 		})
 	}
 
-	return &pb.ApiResponseOrderMonthly{
+	return &pborder.ApiResponseOrderMonthly{
 		Status:  "success",
 		Message: "Monthly revenue data retrieved",
 		Data:    data,
 	}, nil
 }
 
-func (s *orderStatsHandler) FindYearlyRevenue(ctx context.Context, request *pb.FindYearOrder) (*pb.ApiResponseOrderYearly, error) {
+func (s *orderStatsHandler) FindYearlyRevenue(ctx context.Context, request *pborder.FindYearOrder) (*pborder.ApiResponseOrderYearly, error) {
 	year := int(request.GetYear())
 
 	if year <= 0 {
@@ -136,9 +134,9 @@ func (s *orderStatsHandler) FindYearlyRevenue(ctx context.Context, request *pb.F
 		return nil, errors.ToGrpcError(err)
 	}
 
-	var data []*pb.OrderYearlyResponse
+	var data []*pborder.OrderYearlyResponse
 	for _, item := range res {
-		data = append(data, &pb.OrderYearlyResponse{
+		data = append(data, &pborder.OrderYearlyResponse{
 			Year:               item.Year,
 			OrderCount:         int32(item.OrderCount),
 			TotalRevenue:       int32(item.TotalRevenue),
@@ -147,169 +145,9 @@ func (s *orderStatsHandler) FindYearlyRevenue(ctx context.Context, request *pb.F
 		})
 	}
 
-	return &pb.ApiResponseOrderYearly{
+	return &pborder.ApiResponseOrderYearly{
 		Status:  "success",
 		Message: "Yearly revenue data retrieved",
-		Data:    data,
-	}, nil
-}
-
-func (s *orderStatsHandler) FindMonthlyTotalRevenueByMerchant(ctx context.Context, req *pb.FindYearMonthTotalRevenueByMerchant) (*pb.ApiResponseOrderMonthlyTotalRevenue, error) {
-	year := int(req.GetYear())
-	month := int(req.GetMonth())
-	id := int(req.GetMerchantId())
-
-	if year <= 0 {
-		return nil, order_errors.ErrGrpcInvalidYear
-	}
-
-	if month <= 0 || month > 12 {
-		return nil, order_errors.ErrGrpcInvalidMonth
-	}
-
-	if id <= 0 {
-		return nil, order_errors.ErrGrpcFailedInvalidMerchantId
-	}
-
-	reqService := requests.MonthTotalRevenueMerchant{
-		Year:       year,
-		Month:      month,
-		MerchantID: id,
-	}
-
-	methods, err := s.orderStatsByMerchant.FindMonthlyTotalRevenueByMerchant(ctx, &reqService)
-	if err != nil {
-		return nil, errors.ToGrpcError(err)
-	}
-
-	var data []*pb.OrderMonthlyTotalRevenueResponse
-	for _, method := range methods {
-		data = append(data, &pb.OrderMonthlyTotalRevenueResponse{
-			Year:         method.Year,
-			Month:        method.Month,
-			TotalRevenue: int32(method.TotalRevenue),
-		})
-	}
-
-	return &pb.ApiResponseOrderMonthlyTotalRevenue{
-		Status:  "success",
-		Message: "Monthly sales retrieved successfully",
-		Data:    data,
-	}, nil
-}
-
-func (s *orderStatsHandler) FindYearlyTotalRevenueByMerchant(ctx context.Context, req *pb.FindYearTotalRevenueByMerchant) (*pb.ApiResponseOrderYearlyTotalRevenue, error) {
-	year := int(req.GetYear())
-	id := int(req.GetMerchantId())
-
-	if year <= 0 {
-		return nil, order_errors.ErrGrpcInvalidYear
-	}
-
-	if id <= 0 {
-		return nil, order_errors.ErrGrpcFailedInvalidMerchantId
-	}
-
-	reqService := requests.YearTotalRevenueMerchant{
-		Year:       year,
-		MerchantID: id,
-	}
-
-	methods, err := s.orderStatsByMerchant.FindYearlyTotalRevenueByMerchant(ctx, &reqService)
-	if err != nil {
-		return nil, errors.ToGrpcError(err)
-	}
-
-	var data []*pb.OrderYearlyTotalRevenueResponse
-	for _, method := range methods {
-		data = append(data, &pb.OrderYearlyTotalRevenueResponse{
-			Year:         method.Year,
-			TotalRevenue: int32(method.TotalRevenue),
-		})
-	}
-
-	return &pb.ApiResponseOrderYearlyTotalRevenue{
-		Status:  "success",
-		Message: "Yearly payment methods retrieved successfully",
-		Data:    data,
-	}, nil
-}
-
-func (s *orderStatsHandler) FindMonthlyRevenueByMerchant(ctx context.Context, request *pb.FindYearOrderByMerchant) (*pb.ApiResponseOrderMonthly, error) {
-	year := int(request.GetYear())
-	id := int(request.GetMerchantId())
-
-	if year <= 0 {
-		return nil, order_errors.ErrGrpcInvalidYear
-	}
-
-	if id <= 0 {
-		return nil, order_errors.ErrGrpcFailedInvalidMerchantId
-	}
-
-	reqService := requests.MonthOrderMerchant{
-		Year:       year,
-		MerchantID: id,
-	}
-
-	res, err := s.orderStatsByMerchant.FindMonthlyOrderByMerchant(ctx, &reqService)
-	if err != nil {
-		return nil, errors.ToGrpcError(err)
-	}
-
-	var data []*pb.OrderMonthlyResponse
-	for _, item := range res {
-		data = append(data, &pb.OrderMonthlyResponse{
-			Month:          item.Month,
-			OrderCount:     int32(item.OrderCount),
-			TotalRevenue:   int32(item.TotalRevenue),
-			TotalItemsSold: int32(item.TotalItemsSold),
-		})
-	}
-
-	return &pb.ApiResponseOrderMonthly{
-		Status:  "success",
-		Message: "Monthly revenue by merchant data retrieved",
-		Data:    data,
-	}, nil
-}
-
-func (s *orderStatsHandler) FindYearlyRevenueByMerchant(ctx context.Context, request *pb.FindYearOrderByMerchant) (*pb.ApiResponseOrderYearly, error) {
-	year := int(request.GetYear())
-	id := int(request.GetMerchantId())
-
-	if year <= 0 {
-		return nil, order_errors.ErrGrpcInvalidYear
-	}
-
-	if id <= 0 {
-		return nil, order_errors.ErrGrpcFailedInvalidId
-	}
-
-	reqService := requests.YearOrderMerchant{
-		Year:       year,
-		MerchantID: id,
-	}
-
-	res, err := s.orderStatsByMerchant.FindYearlyOrderByMerchant(ctx, &reqService)
-	if err != nil {
-		return nil, errors.ToGrpcError(err)
-	}
-
-	var data []*pb.OrderYearlyResponse
-	for _, item := range res {
-		data = append(data, &pb.OrderYearlyResponse{
-			Year:               item.Year,
-			OrderCount:         int32(item.OrderCount),
-			TotalRevenue:       int32(item.TotalRevenue),
-			TotalItemsSold:     int32(item.TotalItemsSold),
-			UniqueProductsSold: int32(item.UniqueProductsSold),
-		})
-	}
-
-	return &pb.ApiResponseOrderYearly{
-		Status:  "success",
-		Message: "Yearly revenue by merchant data retrieved",
 		Data:    data,
 	}, nil
 }

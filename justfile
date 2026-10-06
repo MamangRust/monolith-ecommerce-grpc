@@ -1,5 +1,8 @@
 set shell := ["bash", "-c"]
 PROTOBUF_INCLUDE := env_var_or_default("PROTOBUF_INCLUDE", "third_party/protobuf")
+PROTO_DIR := "proto"
+OUTDIR_PROTO := "pb"
+PB_MODULE := "github.com/MamangRust/monolith-ecommerce-pb"
 
 # Tidy all go.mod files
 tidy-all:
@@ -35,13 +38,18 @@ migrate:
 migrate-down:
     go run service/migrate/cmd/main.go down
 
-# Generate Proto
+# Generate protocol buffers (one Go package per domain: pb/cart, pb/merchant, ...)
 generate-proto:
     @if [ -z "{{PROTOBUF_INCLUDE}}" ] || [ ! -f "{{PROTOBUF_INCLUDE}}/google/protobuf/wrappers.proto" ]; then \
         echo "Missing protobuf well-known types. Set PROTOBUF_INCLUDE to a directory containing google/protobuf/wrappers.proto." >&2; \
         exit 1; \
     fi
-    protoc --proto_path=proto --proto_path="{{PROTOBUF_INCLUDE}}" --go_out=shared/pb --go_opt=module=github.com/MamangRust/monolith-ecommerce-shared/pb --go_opt=Mgoogle/protobuf/wrappers.proto=google.golang.org/protobuf/types/known/wrapperspb --go_opt=Mgoogle/protobuf/empty.proto=google.golang.org/protobuf/types/known/emptypb --go-grpc_out=shared/pb --go-grpc_opt=module=github.com/MamangRust/monolith-ecommerce-shared/pb --go-grpc_opt=Mgoogle/protobuf/wrappers.proto=google.golang.org/protobuf/types/known/wrapperspb --go-grpc_opt=Mgoogle/protobuf/empty.proto=google.golang.org/protobuf/types/known/emptypb $(find proto -name "*.proto" -print)
+    export PATH="$(go env GOPATH)/bin:$PATH"; protoc \
+        --proto_path={{PROTO_DIR}} \
+        --proto_path="{{PROTOBUF_INCLUDE}}" \
+        --go_out={{OUTDIR_PROTO}} --go_opt=module={{PB_MODULE}} \
+        --go-grpc_out={{OUTDIR_PROTO}} --go-grpc_opt=module={{PB_MODULE}} \
+        $(find {{PROTO_DIR}} -name "*.proto" -not -path "*/google/*")
 
 # Generate SQLC output
 generate-sql:

@@ -4,9 +4,11 @@ import (
 	"math"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
+	pbproduct "github.com/MamangRust/monolith-ecommerce-pb/product"
 )
 
 func normalizePage(page, pageSize int) (int, int) {
@@ -19,9 +21,9 @@ func normalizePage(page, pageSize int) (int, int) {
 	return page, pageSize
 }
 
-func createPaginationMeta(page, pageSize, totalRecords int) *pb.PaginationMeta {
+func createPaginationMeta(page, pageSize, totalRecords int) *pbcommon.PaginationMeta {
 	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
-	return &pb.PaginationMeta{
+	return &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
@@ -76,10 +78,10 @@ func weightPtrToInt32(w interface{}) int32 {
 	return 0
 }
 
-func mapToProtoProductResponse(item interface{}) *pb.ProductResponse {
+func mapToProtoProductResponse(item interface{}) *pbproduct.ProductResponse {
 	switch v := item.(type) {
 	case *db.Product:
-		return &pb.ProductResponse{
+		return &pbproduct.ProductResponse{
 			Id:           int32(v.ProductID),
 			MerchantId:   int32(v.MerchantID),
 			CategoryId:   int32(v.CategoryID),
@@ -96,7 +98,7 @@ func mapToProtoProductResponse(item interface{}) *pb.ProductResponse {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetProductsRow:
-		return &pb.ProductResponse{
+		return &pbproduct.ProductResponse{
 			Id:           int32(v.ProductID),
 			MerchantId:   int32(v.MerchantID),
 			CategoryId:   int32(v.CategoryID),
@@ -113,7 +115,7 @@ func mapToProtoProductResponse(item interface{}) *pb.ProductResponse {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetProductsByMerchantRow:
-		return &pb.ProductResponse{
+		return &pbproduct.ProductResponse{
 			Id:           int32(v.ProductID),
 			MerchantId:   int32(v.MerchantID),
 			CategoryId:   int32(v.CategoryID),
@@ -130,7 +132,7 @@ func mapToProtoProductResponse(item interface{}) *pb.ProductResponse {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetProductsByCategoryNameRow:
-		return &pb.ProductResponse{
+		return &pbproduct.ProductResponse{
 			Id:           int32(v.ProductID),
 			MerchantId:   int32(v.MerchantID),
 			CategoryId:   int32(v.CategoryID),
@@ -147,7 +149,7 @@ func mapToProtoProductResponse(item interface{}) *pb.ProductResponse {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetProductByIDRow:
-		return &pb.ProductResponse{
+		return &pbproduct.ProductResponse{
 			Id:           int32(v.ProductID),
 			MerchantId:   int32(v.MerchantID),
 			CategoryId:   int32(v.CategoryID),
@@ -164,7 +166,7 @@ func mapToProtoProductResponse(item interface{}) *pb.ProductResponse {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.CreateProductRow:
-		return &pb.ProductResponse{
+		return &pbproduct.ProductResponse{
 			Id:           int32(v.ProductID),
 			MerchantId:   int32(v.MerchantID),
 			CategoryId:   int32(v.CategoryID),
@@ -181,7 +183,7 @@ func mapToProtoProductResponse(item interface{}) *pb.ProductResponse {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.UpdateProductRow:
-		return &pb.ProductResponse{
+		return &pbproduct.ProductResponse{
 			Id:           int32(v.ProductID),
 			MerchantId:   int32(v.MerchantID),
 			CategoryId:   int32(v.CategoryID),
@@ -198,7 +200,7 @@ func mapToProtoProductResponse(item interface{}) *pb.ProductResponse {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.TrashProductRow:
-		return &pb.ProductResponse{
+		return &pbproduct.ProductResponse{
 			Id:           int32(v.ProductID),
 			MerchantId:   int32(v.MerchantID),
 			CategoryId:   int32(v.CategoryID),
@@ -215,7 +217,7 @@ func mapToProtoProductResponse(item interface{}) *pb.ProductResponse {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.RestoreProductRow:
-		return &pb.ProductResponse{
+		return &pbproduct.ProductResponse{
 			Id:           int32(v.ProductID),
 			MerchantId:   int32(v.MerchantID),
 			CategoryId:   int32(v.CategoryID),
@@ -232,12 +234,7 @@ func mapToProtoProductResponse(item interface{}) *pb.ProductResponse {
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.UpdateProductCountStockRow:
-		return &pb.ProductResponse{
-			Id:           int32(v.ProductID),
-			CountInStock: int32(v.CountInStock),
-		}
-	case *db.AdjustProductStockRow:
-		return &pb.ProductResponse{
+		return &pbproduct.ProductResponse{
 			Id:           int32(v.ProductID),
 			CountInStock: int32(v.CountInStock),
 		}
@@ -246,13 +243,13 @@ func mapToProtoProductResponse(item interface{}) *pb.ProductResponse {
 	}
 }
 
-func mapToProtoProductResponseDeleteAt(item interface{}) *pb.ProductResponseDeleteAt {
-	var res *pb.ProductResponseDeleteAt
+func mapToProtoProductResponseDeleteAt(item interface{}) *pbproduct.ProductResponseDeleteAt {
+	var res *pbproduct.ProductResponseDeleteAt
 	var deletedAt interface{}
 
 	switch v := item.(type) {
 	case *db.Product:
-		res = &pb.ProductResponseDeleteAt{
+		res = &pbproduct.ProductResponseDeleteAt{
 			Id:           int32(v.ProductID),
 			MerchantId:   int32(v.MerchantID),
 			CategoryId:   int32(v.CategoryID),
@@ -270,7 +267,7 @@ func mapToProtoProductResponseDeleteAt(item interface{}) *pb.ProductResponseDele
 		}
 		deletedAt = v.DeletedAt
 	case *db.GetProductsActiveRow:
-		res = &pb.ProductResponseDeleteAt{
+		res = &pbproduct.ProductResponseDeleteAt{
 			Id:           int32(v.ProductID),
 			MerchantId:   int32(v.MerchantID),
 			CategoryId:   int32(v.CategoryID),
@@ -288,7 +285,7 @@ func mapToProtoProductResponseDeleteAt(item interface{}) *pb.ProductResponseDele
 		}
 		deletedAt = v.DeletedAt
 	case *db.GetProductsTrashedRow:
-		res = &pb.ProductResponseDeleteAt{
+		res = &pbproduct.ProductResponseDeleteAt{
 			Id:           int32(v.ProductID),
 			MerchantId:   int32(v.MerchantID),
 			CategoryId:   int32(v.CategoryID),
@@ -306,7 +303,7 @@ func mapToProtoProductResponseDeleteAt(item interface{}) *pb.ProductResponseDele
 		}
 		deletedAt = v.DeletedAt
 	case *db.TrashProductRow:
-		res = &pb.ProductResponseDeleteAt{
+		res = &pbproduct.ProductResponseDeleteAt{
 			Id:           int32(v.ProductID),
 			MerchantId:   int32(v.MerchantID),
 			CategoryId:   int32(v.CategoryID),
@@ -323,7 +320,7 @@ func mapToProtoProductResponseDeleteAt(item interface{}) *pb.ProductResponseDele
 			UpdatedAt:    formatTimestamp(v.UpdatedAt),
 		}
 	case *db.RestoreProductRow:
-		res = &pb.ProductResponseDeleteAt{
+		res = &pbproduct.ProductResponseDeleteAt{
 			Id:           int32(v.ProductID),
 			MerchantId:   int32(v.MerchantID),
 			CategoryId:   int32(v.CategoryID),

@@ -1,11 +1,13 @@
 package handler
 
-import "github.com/MamangRust/monolith-ecommerce-shared/pb"
+import (
+	pbmerchant_award "github.com/MamangRust/monolith-ecommerce-pb/merchant_award"
+)
 
 type MerchantAwardQueryHandler interface {
-	pb.MerchantAwardQueryServiceServer
+	pbmerchant_award.MerchantAwardQueryServiceServer
 }
 
 type MerchantAwardCommandHandler interface {
-	pb.MerchantAwardCommandServiceServer
+	pbmerchant_award.MerchantAwardCommandServiceServer
 }

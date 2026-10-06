@@ -49,7 +49,6 @@ func (r *categoryStatsRepository) GetMonthlyTotalPrice(ctx context.Context, req 
 		return nil, category_errors.ErrGetMonthlyTotalPrice.WithInternal(err)
 	}
 
-
 	return res, nil
 }
 
@@ -59,7 +58,6 @@ func (r *categoryStatsRepository) GetYearlyTotalPrices(ctx context.Context, year
 	if err != nil {
 		return nil, category_errors.ErrGetYearlyTotalPrices.WithInternal(err)
 	}
-
 
 	return res, nil
 }
@@ -73,7 +71,6 @@ func (r *categoryStatsRepository) GetMonthPrice(ctx context.Context, year int) (
 		return nil, category_errors.ErrGetMonthPrice.WithInternal(err)
 	}
 
-
 	return res, nil
 }
 
@@ -85,7 +82,6 @@ func (r *categoryStatsRepository) GetYearPrice(ctx context.Context, year int) ([
 	if err != nil {
 		return nil, category_errors.ErrGetYearPrice.WithInternal(err)
 	}
-
 
 	return res, nil
 }

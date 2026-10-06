@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbCommon "github.com/MamangRust/monolith-ecommerce-pb/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -29,7 +29,7 @@ func ToGrpcError(err error) error {
 
 	st := status.New(grpcCode, apiErr.Message)
 
-	detail := &pb.ErrorResponse{
+	detail := &pbCommon.ErrorResponse{
 		Status:  apiErr.Type.String(),
 		Message: apiErr.Message,
 		Type:    string(apiErr.Type),
@@ -55,7 +55,7 @@ func ParseGrpcError(err error) *AppError {
 	}
 
 	for _, detail := range st.Details() {
-		if res, ok := detail.(*pb.ErrorResponse); ok {
+		if res, ok := detail.(*pbCommon.ErrorResponse); ok {
 			return &AppError{
 				Type:    ErrorType(res.Type),
 				Code:    int(res.Code),
@@ -148,7 +148,7 @@ func NewGrpcError(message string, httpCode int) error {
 
 	st := status.New(grpcCode, message)
 
-	detail := &pb.ErrorResponse{
+	detail := &pbCommon.ErrorResponse{
 		Status:  http.StatusText(httpCode),
 		Message: message,
 		Code:    int32(httpCode),

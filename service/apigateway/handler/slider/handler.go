@@ -2,7 +2,7 @@ package sliderhandler
 
 import (
 	slider_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/slider"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbslider "github.com/MamangRust/monolith-ecommerce-pb/slider"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
@@ -24,7 +24,7 @@ func RegisterSliderHandler(deps *DepsSlider) {
 	cache := slider_cache.NewSliderMencache(deps.Cache)
 
 	NewSliderQueryHandleApi(&sliderQueryHandleDeps{
-		client: pb.NewSliderQueryServiceClient(deps.Client),
+		client: pbslider.NewSliderQueryServiceClient(deps.Client),
 		router: deps.E,
 		logger: deps.Logger,
 		mapper: mapper.QueryMapper(),
@@ -32,12 +32,12 @@ func RegisterSliderHandler(deps *DepsSlider) {
 	})
 
 	NewSliderCommandHandleApi(&sliderCommandHandleDeps{
-		client: pb.NewSliderCommandServiceClient(deps.Client),
-		router: deps.E,
-		logger: deps.Logger,
-		mapper: mapper.CommandMapper(),
+		client:      pbslider.NewSliderCommandServiceClient(deps.Client),
+		router:      deps.E,
+		logger:      deps.Logger,
+		mapper:      mapper.CommandMapper(),
 		queryMapper: mapper.QueryMapper(),
-		cache:  cache.CommandCache(),
-		upload: deps.Upload,
+		cache:       cache.CommandCache(),
+		upload:      deps.Upload,
 	})
 }

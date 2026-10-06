@@ -4,27 +4,27 @@ go 1.25.1
 
 require (
 	github.com/MamangRust/monolith-ecommerce-auth v1.0.0
+	github.com/MamangRust/monolith-ecommerce-banner v0.0.0-00010101000000-000000000000
+	github.com/MamangRust/monolith-ecommerce-cart v1.0.0
+	github.com/MamangRust/monolith-ecommerce-category v0.0.0-00010101000000-000000000000
 	github.com/MamangRust/monolith-ecommerce-grpc-apigateway v0.0.0-00010101000000-000000000000
-	github.com/MamangRust/monolith-ecommerce-grpc-banner v0.0.0-00010101000000-000000000000
-	github.com/MamangRust/monolith-ecommerce-grpc-cart v1.0.0
-	github.com/MamangRust/monolith-ecommerce-grpc-category v0.0.0-00010101000000-000000000000
-	github.com/MamangRust/monolith-ecommerce-grpc-merchant v1.0.0
-	github.com/MamangRust/monolith-ecommerce-grpc-merchant_award v0.0.0-00010101000000-000000000000
-	github.com/MamangRust/monolith-ecommerce-grpc-merchant_business v0.0.0-00010101000000-000000000000
-	github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail v0.0.0-00010101000000-000000000000
-	github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy v0.0.0-00010101000000-000000000000
-	github.com/MamangRust/monolith-ecommerce-grpc-order v0.0.0-00010101000000-000000000000
-	github.com/MamangRust/monolith-ecommerce-grpc-order-item v0.0.0-00010101000000-000000000000
-	github.com/MamangRust/monolith-ecommerce-grpc-product v1.0.0
-	github.com/MamangRust/monolith-ecommerce-grpc-review v0.0.0-00010101000000-000000000000
-	github.com/MamangRust/monolith-ecommerce-grpc-review-detail v0.0.0-00010101000000-000000000000
-	github.com/MamangRust/monolith-ecommerce-grpc-role v1.0.0
-	github.com/MamangRust/monolith-ecommerce-grpc-shipping-address v0.0.0-00010101000000-000000000000
-	github.com/MamangRust/monolith-ecommerce-grpc-slider v0.0.0-00010101000000-000000000000
-	github.com/MamangRust/monolith-ecommerce-grpc-transaction v0.0.0-00010101000000-000000000000
-	github.com/MamangRust/monolith-ecommerce-grpc-user v1.0.0
+	github.com/MamangRust/monolith-ecommerce-merchant v1.0.0
+	github.com/MamangRust/monolith-ecommerce-merchant_award v0.0.0-00010101000000-000000000000
+	github.com/MamangRust/monolith-ecommerce-merchant_business v0.0.0-00010101000000-000000000000
+	github.com/MamangRust/monolith-ecommerce-merchant_detail v0.0.0-00010101000000-000000000000
+	github.com/MamangRust/monolith-ecommerce-merchant_policy v0.0.0-00010101000000-000000000000
+	github.com/MamangRust/monolith-ecommerce-order v0.0.0-00010101000000-000000000000
+	github.com/MamangRust/monolith-ecommerce-order-item v0.0.0-00010101000000-000000000000
 	github.com/MamangRust/monolith-ecommerce-pkg v1.0.28
+	github.com/MamangRust/monolith-ecommerce-product v1.0.0
+	github.com/MamangRust/monolith-ecommerce-review v0.0.0-00010101000000-000000000000
+	github.com/MamangRust/monolith-ecommerce-review-detail v0.0.0-00010101000000-000000000000
+	github.com/MamangRust/monolith-ecommerce-role v1.0.0
 	github.com/MamangRust/monolith-ecommerce-shared v1.0.28
+	github.com/MamangRust/monolith-ecommerce-shipping-address v0.0.0-00010101000000-000000000000
+	github.com/MamangRust/monolith-ecommerce-slider v0.0.0-00010101000000-000000000000
+	github.com/MamangRust/monolith-ecommerce-transaction v0.0.0-00010101000000-000000000000
+	github.com/MamangRust/monolith-ecommerce-user v1.0.0
 	github.com/jackc/pgx/v5 v5.9.1
 	github.com/labstack/echo/v4 v4.15.0
 	github.com/pressly/goose/v3 v3.24.3
@@ -39,11 +39,14 @@ require (
 	google.golang.org/protobuf v1.36.11
 )
 
+require github.com/labstack/echo-jwt/v4 v4.3.1 // indirect
+
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/IBM/sarama v1.46.3 // indirect
+	github.com/MamangRust/monolith-ecommerce-pb v1.0.0
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -54,7 +57,7 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/docker v28.0.4+incompatible // indirect
-	github.com/docker/go-connections v0.5.0 // indirect
+	github.com/docker/go-connections v0.5.0
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/eapache/go-resiliency v1.7.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3 // indirect
@@ -87,7 +90,6 @@ require (
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/klauspost/compress v1.18.3 // indirect
-	github.com/labstack/echo-jwt/v4 v4.3.1 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
@@ -149,25 +151,27 @@ require (
 
 replace (
 	github.com/MamangRust/monolith-ecommerce-auth => ../service/auth
+	github.com/MamangRust/monolith-ecommerce-banner => ../service/banner
+	github.com/MamangRust/monolith-ecommerce-cart => ../service/cart
+	github.com/MamangRust/monolith-ecommerce-category => ../service/category
 	github.com/MamangRust/monolith-ecommerce-grpc-apigateway => ../service/apigateway
-	github.com/MamangRust/monolith-ecommerce-grpc-banner => ../service/banner
-	github.com/MamangRust/monolith-ecommerce-grpc-cart => ../service/cart
-	github.com/MamangRust/monolith-ecommerce-grpc-category => ../service/category
-	github.com/MamangRust/monolith-ecommerce-grpc-merchant => ../service/merchant
-	github.com/MamangRust/monolith-ecommerce-grpc-merchant_award => ../service/merchant_award
-	github.com/MamangRust/monolith-ecommerce-grpc-merchant_business => ../service/merchant_business
-	github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail => ../service/merchant_detail
-	github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy => ../service/merchant_policy
-	github.com/MamangRust/monolith-ecommerce-grpc-order => ../service/order
-	github.com/MamangRust/monolith-ecommerce-grpc-order-item => ../service/order_item
-	github.com/MamangRust/monolith-ecommerce-grpc-product => ../service/product
-	github.com/MamangRust/monolith-ecommerce-grpc-review => ../service/review
-	github.com/MamangRust/monolith-ecommerce-grpc-review-detail => ../service/review_detail
-	github.com/MamangRust/monolith-ecommerce-grpc-role => ../service/role
-	github.com/MamangRust/monolith-ecommerce-grpc-shipping-address => ../service/shipping_address
-	github.com/MamangRust/monolith-ecommerce-grpc-slider => ../service/slider
-	github.com/MamangRust/monolith-ecommerce-grpc-transaction => ../service/transaction
-	github.com/MamangRust/monolith-ecommerce-grpc-user => ../service/user
+	github.com/MamangRust/monolith-ecommerce-merchant => ../service/merchant
+	github.com/MamangRust/monolith-ecommerce-merchant_award => ../service/merchant_award
+	github.com/MamangRust/monolith-ecommerce-merchant_business => ../service/merchant_business
+	github.com/MamangRust/monolith-ecommerce-merchant_detail => ../service/merchant_detail
+	github.com/MamangRust/monolith-ecommerce-merchant_policy => ../service/merchant_policy
+	github.com/MamangRust/monolith-ecommerce-order => ../service/order
+	github.com/MamangRust/monolith-ecommerce-order-item => ../service/order_item
 	github.com/MamangRust/monolith-ecommerce-pkg => ../pkg
+	github.com/MamangRust/monolith-ecommerce-product => ../service/product
+	github.com/MamangRust/monolith-ecommerce-review => ../service/review
+	github.com/MamangRust/monolith-ecommerce-review-detail => ../service/review_detail
+	github.com/MamangRust/monolith-ecommerce-role => ../service/role
 	github.com/MamangRust/monolith-ecommerce-shared => ../shared
+	github.com/MamangRust/monolith-ecommerce-shipping-address => ../service/shipping_address
+	github.com/MamangRust/monolith-ecommerce-slider => ../service/slider
+	github.com/MamangRust/monolith-ecommerce-transaction => ../service/transaction
+	github.com/MamangRust/monolith-ecommerce-user => ../service/user
 )
+
+replace github.com/MamangRust/monolith-ecommerce-pb => ../pb

@@ -2,16 +2,15 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/role_errors"
 )
-
 
 type roleCommandRepository struct {
 	db *db.Queries
@@ -23,17 +22,23 @@ func NewRoleCommandRepository(db *db.Queries) *roleCommandRepository {
 	}
 }
 
+// isUniqueViolation reports whether err is a PostgreSQL unique-constraint
+// violation (SQLSTATE 23505), so duplicate role names surface as a conflict
+// instead of a generic internal error.
+func isUniqueViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23505"
+}
+
 func (r *roleCommandRepository) Create(ctx context.Context, req *requests.CreateRoleRequest) (*db.Role, error) {
 	res, err := r.db.CreateRole(ctx, req.Name)
 
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return nil, role_errors.ErrRoleConflict
+		if isUniqueViolation(err) {
+			return nil, role_errors.ErrRoleConflict.WithInternal(err)
 		}
 		return nil, role_errors.ErrCreateRole.WithInternal(err)
 	}
-
 
 	return res, nil
 }
@@ -45,13 +50,11 @@ func (r *roleCommandRepository) Update(ctx context.Context, req *requests.Update
 	})
 
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return nil, role_errors.ErrRoleConflict
+		if isUniqueViolation(err) {
+			return nil, role_errors.ErrRoleConflict.WithInternal(err)
 		}
 		return nil, role_errors.ErrUpdateRole.WithInternal(err)
 	}
-
 
 	return res, nil
 }
@@ -59,26 +62,24 @@ func (r *roleCommandRepository) Update(ctx context.Context, req *requests.Update
 func (r *roleCommandRepository) Trash(ctx context.Context, id int) (*db.Role, error) {
 	res, err := r.db.TrashRole(ctx, int32(id))
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, role_errors.ErrRoleNotFound
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, role_errors.ErrRoleNotFound.WithInternal(err)
 		}
 		return nil, role_errors.ErrTrashedRole.WithInternal(err)
 	}
 	return res, nil
 }
 
-
 func (r *roleCommandRepository) Restore(ctx context.Context, id int) (*db.Role, error) {
 	res, err := r.db.RestoreRole(ctx, int32(id))
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, role_errors.ErrRoleNotFound
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, role_errors.ErrRoleNotFound.WithInternal(err)
 		}
 		return nil, role_errors.ErrRestoreRole.WithInternal(err)
 	}
 	return res, nil
 }
-
 
 func (r *roleCommandRepository) DeletePermanent(ctx context.Context, role_id int) (bool, error) {
 	err := r.db.DeletePermanentRole(ctx, int32(role_id))
@@ -88,14 +89,12 @@ func (r *roleCommandRepository) DeletePermanent(ctx context.Context, role_id int
 	return true, nil
 }
 
-
 func (r *roleCommandRepository) RestoreAll(ctx context.Context) (bool, error) {
 	err := r.db.RestoreAllRoles(ctx)
 
 	if err != nil {
 		return false, role_errors.ErrRestoreAllRoles.WithInternal(err)
 	}
-
 
 	return true, nil
 }
@@ -106,7 +105,6 @@ func (r *roleCommandRepository) DeleteAll(ctx context.Context) (bool, error) {
 	if err != nil {
 		return false, role_errors.ErrDeleteAllRoles.WithInternal(err)
 	}
-
 
 	return true, nil
 }

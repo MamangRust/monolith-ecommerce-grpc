@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/repository"
+	mencache "github.com/MamangRust/monolith-ecommerce-merchant_policy/cache"
+	"github.com/MamangRust/monolith-ecommerce-merchant_policy/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -101,7 +101,7 @@ func (s *merchantPoliciesCommandService) Trash(ctx context.Context, id int) (*db
 		status = "error"
 		return errorhandler.HandleError[*db.MerchantPolicy](
 			s.logger,
-			err,
+			merchant_policy_errors.ErrFailedTrashedReviewPolicy.WithInternal(err),
 			method,
 			span,
 			zap.Int("merchantPolicy_id", id),
@@ -127,7 +127,7 @@ func (s *merchantPoliciesCommandService) Restore(ctx context.Context, id int) (*
 		status = "error"
 		return errorhandler.HandleError[*db.MerchantPolicy](
 			s.logger,
-			err,
+			merchant_policy_errors.ErrFailedRestoreReviewPolicy.WithInternal(err),
 			method,
 			span,
 			zap.Int("merchantPolicy_id", id),
@@ -153,7 +153,7 @@ func (s *merchantPoliciesCommandService) DeletePermanent(ctx context.Context, id
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			merchant_policy_errors.ErrFailedDeleteReviewPolicyPermanent.WithInternal(err),
 			method,
 			span,
 			zap.Int("merchantPolicy_id", id),
@@ -202,7 +202,7 @@ func (s *merchantPoliciesCommandService) DeleteAll(ctx context.Context) (bool, e
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			merchant_policy_errors.ErrFailedDeleteAllReviewPoliciesPermanent.WithInternal(err),
 			method,
 			span,
 		)

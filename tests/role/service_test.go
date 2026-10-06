@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	role_cache "github.com/MamangRust/monolith-ecommerce-grpc-role/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/service"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	role_cache "github.com/MamangRust/monolith-ecommerce-role/cache"
+	"github.com/MamangRust/monolith-ecommerce-role/repository"
+	"github.com/MamangRust/monolith-ecommerce-role/service"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
@@ -123,7 +123,7 @@ func (s *RoleServiceTestSuite) TestRoleLifecycle() {
 	// 10. RestoreAll & DeleteAll
 	r1, _ := s.roleService.RoleCommand.Create(ctx, &requests.CreateRoleRequest{Name: "R1"})
 	r2, _ := s.roleService.RoleCommand.Create(ctx, &requests.CreateRoleRequest{Name: "R2"})
-	
+
 	s.roleService.RoleCommand.Trash(ctx, int(r1.RoleID))
 	s.roleService.RoleCommand.Trash(ctx, int(r2.RoleID))
 

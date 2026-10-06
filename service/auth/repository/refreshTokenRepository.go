@@ -12,8 +12,6 @@ import (
 	refreshtoken_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/refresh_token_errors"
 )
 
-
-
 type refreshTokenRepository struct {
 	db *db.Queries
 }
@@ -34,10 +32,8 @@ func (r *refreshTokenRepository) FindByToken(ctx context.Context, token string) 
 		return nil, sharedErrors.ErrInternal.WithInternal(err)
 	}
 
-
 	return res, nil
 }
-
 
 func (r *refreshTokenRepository) FindByUserId(ctx context.Context, user_id int) (*db.RefreshToken, error) {
 	res, err := r.db.FindRefreshTokenByUserId(ctx, int32(user_id))
@@ -49,10 +45,8 @@ func (r *refreshTokenRepository) FindByUserId(ctx context.Context, user_id int) 
 		return nil, sharedErrors.ErrInternal.WithInternal(err)
 	}
 
-
 	return res, nil
 }
-
 
 func (r *refreshTokenRepository) CreateRefreshToken(ctx context.Context, req *requests.CreateRefreshToken) (*db.RefreshToken, error) {
 	layout := "2006-01-02 15:04:05"
@@ -73,7 +67,6 @@ func (r *refreshTokenRepository) CreateRefreshToken(ctx context.Context, req *re
 
 	return user, nil
 }
-
 
 func (r *refreshTokenRepository) UpdateRefreshToken(ctx context.Context, req *requests.UpdateRefreshToken) (*db.RefreshToken, error) {
 	layout := "2006-01-02 15:04:05"
@@ -104,7 +97,6 @@ func (r *refreshTokenRepository) DeleteRefreshToken(ctx context.Context, token s
 	return nil
 }
 
-
 func (r *refreshTokenRepository) DeleteRefreshTokenByUserId(ctx context.Context, user_id int) error {
 	err := r.db.DeleteRefreshTokenByUserId(ctx, int32(user_id))
 
@@ -114,4 +106,3 @@ func (r *refreshTokenRepository) DeleteRefreshTokenByUserId(ctx context.Context,
 
 	return nil
 }
-

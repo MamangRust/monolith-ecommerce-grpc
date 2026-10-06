@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/IBM/sarama"
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-role/service"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	"go.uber.org/zap"

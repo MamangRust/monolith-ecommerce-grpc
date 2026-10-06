@@ -5,18 +5,18 @@ import (
 	"strconv"
 
 	merchantawards_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/merchant_awards"
+	pbmerchant_award "github.com/MamangRust/monolith-ecommerce-pb/merchant_award"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	merchantapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_award"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type merchantAwardCommandHandlerApi struct {
-	client         pb.MerchantAwardCommandServiceClient
+	client         pbmerchant_award.MerchantAwardCommandServiceClient
 	logger         logger.LoggerInterface
 	mapper         apimapper.MerchantAwardCommandResponseMapper
 	merchantMapper merchantapimapper.MerchantCommandResponseMapper
@@ -24,7 +24,7 @@ type merchantAwardCommandHandlerApi struct {
 }
 
 type merchantAwardCommandHandleDeps struct {
-	client         pb.MerchantAwardCommandServiceClient
+	client         pbmerchant_award.MerchantAwardCommandServiceClient
 	router         *echo.Echo
 	logger         logger.LoggerInterface
 	mapper         apimapper.MerchantAwardCommandResponseMapper
@@ -67,11 +67,15 @@ func NewMerchantAwardCommandHandleApi(params *merchantAwardCommandHandleDeps) *m
 // @Router /api/merchant-award-command/create [post]
 func (h *merchantAwardCommandHandlerApi) Create(c echo.Context) error {
 	var body requests.CreateMerchantCertificationOrAwardRequest
-	if err := c.Bind(&body); err != nil { return echo.NewHTTPError(http.StatusBadRequest, "Invalid request") }
-	if err := body.Validate(); err != nil { return echo.NewHTTPError(http.StatusBadRequest, err.Error()) }
+	if err := c.Bind(&body); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
+	}
+	if err := body.Validate(); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.Create(ctx, &pb.CreateMerchantAwardRequest{
+	res, err := h.client.Create(ctx, &pbmerchant_award.CreateMerchantAwardRequest{
 		MerchantId:     int32(body.MerchantID),
 		Title:          body.Title,
 		Description:    body.Description,
@@ -102,15 +106,21 @@ func (h *merchantAwardCommandHandlerApi) Create(c echo.Context) error {
 // @Router /api/merchant-award-command/update/{id} [post]
 func (h *merchantAwardCommandHandlerApi) Update(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	var body requests.UpdateMerchantCertificationOrAwardRequest
-	if err := c.Bind(&body); err != nil { return echo.NewHTTPError(http.StatusBadRequest, "Invalid request") }
+	if err := c.Bind(&body); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
+	}
 	body.MerchantCertificationID = &id
-	if err := body.Validate(); err != nil { return echo.NewHTTPError(http.StatusBadRequest, err.Error()) }
+	if err := body.Validate(); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.Update(ctx, &pb.UpdateMerchantAwardRequest{
+	res, err := h.client.Update(ctx, &pbmerchant_award.UpdateMerchantAwardRequest{
 		MerchantCertificationId: int32(id),
 		Title:                   body.Title,
 		Description:             body.Description,
@@ -141,10 +151,12 @@ func (h *merchantAwardCommandHandlerApi) Update(c echo.Context) error {
 // @Router /api/merchant-award-command/trashed/{id} [post]
 func (h *merchantAwardCommandHandlerApi) Trash(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.TrashedMerchantAward(ctx, &pb.FindByIdMerchantAwardRequest{Id: int32(id)})
+	res, err := h.client.TrashedMerchantAward(ctx, &pbmerchant_award.FindByIdMerchantAwardRequest{Id: int32(id)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -167,10 +179,12 @@ func (h *merchantAwardCommandHandlerApi) Trash(c echo.Context) error {
 // @Router /api/merchant-award-command/restore/{id} [post]
 func (h *merchantAwardCommandHandlerApi) Restore(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.RestoreMerchantAward(ctx, &pb.FindByIdMerchantAwardRequest{Id: int32(id)})
+	res, err := h.client.RestoreMerchantAward(ctx, &pbmerchant_award.FindByIdMerchantAwardRequest{Id: int32(id)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -193,10 +207,12 @@ func (h *merchantAwardCommandHandlerApi) Restore(c echo.Context) error {
 // @Router /api/merchant-award-command/permanent/{id} [delete]
 func (h *merchantAwardCommandHandlerApi) DeletePermanent(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.DeleteMerchantAwardPermanent(ctx, &pb.FindByIdMerchantAwardRequest{Id: int32(id)})
+	res, err := h.client.DeleteMerchantAwardPermanent(ctx, &pbmerchant_award.FindByIdMerchantAwardRequest{Id: int32(id)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -243,4 +259,3 @@ func (h *merchantAwardCommandHandlerApi) DeleteAllPermanent(c echo.Context) erro
 
 	return c.JSON(http.StatusOK, h.merchantMapper.ToApiResponseMerchantAll(res))
 }
-

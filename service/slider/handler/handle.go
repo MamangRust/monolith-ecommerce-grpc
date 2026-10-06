@@ -1,9 +1,10 @@
 package handler
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-slider/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/MamangRust/monolith-ecommerce-slider/service"
+
+	pbslider "github.com/MamangRust/monolith-ecommerce-pb/slider"
 )
 
 type Deps struct {
@@ -12,8 +13,8 @@ type Deps struct {
 }
 
 type Handler struct {
-	SliderQuery   pb.SliderQueryServiceServer
-	SliderCommand pb.SliderCommandServiceServer
+	SliderQuery   pbslider.SliderQueryServiceServer
+	SliderCommand pbslider.SliderCommandServiceServer
 }
 
 func NewHandler(deps *Deps) *Handler {

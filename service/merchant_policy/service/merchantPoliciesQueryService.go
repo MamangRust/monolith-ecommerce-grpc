@@ -2,10 +2,9 @@ package service
 
 import (
 	"context"
-	"errors"
 
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/repository"
+	mencache "github.com/MamangRust/monolith-ecommerce-merchant_policy/cache"
+	"github.com/MamangRust/monolith-ecommerce-merchant_policy/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -168,18 +167,9 @@ func (s *merchantPoliciesQueryService) FindByID(ctx context.Context, id int) (*d
 	merchant, err := s.merchantPolicyRepository.FindByID(ctx, id)
 	if err != nil {
 		status = "error"
-		if errors.Is(err, merchant_policy_errors.ErrMerchantPolicyNotFound) {
-			return errorhandler.HandleError[*db.GetMerchantPolicyRow](
-				s.logger,
-				merchant_policy_errors.ErrMerchantPolicyNotFound,
-				method,
-				span,
-				zap.Int("merchantPolicy_id", id),
-			)
-		}
 		return errorhandler.HandleError[*db.GetMerchantPolicyRow](
 			s.logger,
-			merchant_policy_errors.ErrFailedFindMerchantPolicyByID.WithInternal(err),
+			merchant_policy_errors.ErrMerchantPolicyNotFound.WithInternal(err),
 			method,
 			span,
 			zap.Int("merchantPolicy_id", id),

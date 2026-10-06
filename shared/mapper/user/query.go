@@ -1,7 +1,7 @@
 package userapimapper
 
 import (
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	paginationapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/pagination"
 )
@@ -21,12 +21,12 @@ func NewUserQueryResponseMapper() *userQueryResponseMapper {
 // ToApiResponseUser converts a single user response into an API response.
 //
 // Args:
-//   - pbResponse: A pointer to a pb.ApiResponseUser containing the user data.
+//   - pbResponse: A pointer to a pbuser.ApiResponseUser containing the user data.
 //
 // Returns:
 //   - A pointer to a response.ApiResponseUser containing the mapped user data, including
 //     Status, Message, and Data.
-func (u *userQueryResponseMapper) ToApiResponseUser(pbResponse *pb.ApiResponseUser) *response.ApiResponseUser {
+func (u *userQueryResponseMapper) ToApiResponseUser(pbResponse *pbuser.ApiResponseUser) *response.ApiResponseUser {
 	return &response.ApiResponseUser{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -37,11 +37,11 @@ func (u *userQueryResponseMapper) ToApiResponseUser(pbResponse *pb.ApiResponseUs
 // ToApiResponsePaginationUserDeleteAt maps a pagination meta, status, message, and a list of UserResponseDeleteAt
 //
 // Args:
-//   - pbResponse: A pointer to a pb.ApiResponsePaginationUserDeleteAt containing the user data.
+//   - pbResponse: A pointer to a pbuser.ApiResponsePaginationUserDeleteAt containing the user data.
 //
 // Returns:
 //   - A pointer to a response.ApiResponsePaginationUserDeleteAt containing the mapped data.
-func (u *userQueryResponseMapper) ToApiResponsePaginationUserDeleteAt(pbResponse *pb.ApiResponsePaginationUserDeleteAt) *response.ApiResponsePaginationUserDeleteAt {
+func (u *userQueryResponseMapper) ToApiResponsePaginationUserDeleteAt(pbResponse *pbuser.ApiResponsePaginationUserDeleteAt) *response.ApiResponsePaginationUserDeleteAt {
 	return &response.ApiResponsePaginationUserDeleteAt{
 		Status:     pbResponse.Status,
 		Message:    pbResponse.Message,
@@ -53,11 +53,11 @@ func (u *userQueryResponseMapper) ToApiResponsePaginationUserDeleteAt(pbResponse
 // ToApiResponsePaginationUser maps a pagination meta, status, message, and a list of UserResponse
 //
 // Args:
-//   - pbResponse: A pointer to a pb.ApiResponsePaginationUser containing the user data.
+//   - pbResponse: A pointer to a pbuser.ApiResponsePaginationUser containing the user data.
 //
 // Returns:
 //   - A pointer to a response.ApiResponsePaginationUser containing the mapped data.
-func (u *userQueryResponseMapper) ToApiResponsePaginationUser(pbResponse *pb.ApiResponsePaginationUser) *response.ApiResponsePaginationUser {
+func (u *userQueryResponseMapper) ToApiResponsePaginationUser(pbResponse *pbuser.ApiResponsePaginationUser) *response.ApiResponsePaginationUser {
 	return &response.ApiResponsePaginationUser{
 		Status:     pbResponse.Status,
 		Message:    pbResponse.Message,
@@ -69,12 +69,12 @@ func (u *userQueryResponseMapper) ToApiResponsePaginationUser(pbResponse *pb.Api
 // ToApiResponseUserDeleteAt maps a soft-deleted user response into an API response.
 //
 // Args:
-//   - pbResponse: A pointer to a pb.ApiResponseUserDeleteAt containing the user data.
+//   - pbResponse: A pointer to a pbuser.ApiResponseUserDeleteAt containing the user data.
 //
 // Returns:
 //   - A pointer to a response.ApiResponseUserDeleteAt containing the mapped user data, including
 //     Status, Message, and Data.
-func (u *userQueryResponseMapper) ToApiResponseUserDeleteAt(pbResponse *pb.ApiResponseUserDeleteAt) *response.ApiResponseUserDeleteAt {
+func (u *userQueryResponseMapper) ToApiResponseUserDeleteAt(pbResponse *pbuser.ApiResponseUserDeleteAt) *response.ApiResponseUserDeleteAt {
 	return &response.ApiResponseUserDeleteAt{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -85,12 +85,12 @@ func (u *userQueryResponseMapper) ToApiResponseUserDeleteAt(pbResponse *pb.ApiRe
 // ToResponseUser maps a protobuf UserResponse to a domain UserResponse.
 //
 // Args:
-//   - user: A pointer to a pb.UserResponse containing the user data.
+//   - user: A pointer to a pbuser.UserResponse containing the user data.
 //
 // Returns:
 //   - A pointer to a response.UserResponse containing the mapped user data, including
 //     ID, FirstName, LastName, Email, CreatedAt, and UpdatedAt.
-func (u *userQueryResponseMapper) ToResponseUser(user *pb.UserResponse) *response.UserResponse {
+func (u *userQueryResponseMapper) ToResponseUser(user *pbuser.UserResponse) *response.UserResponse {
 	return &response.UserResponse{
 		ID:        int(user.Id),
 		FirstName: user.Firstname,
@@ -101,15 +101,15 @@ func (u *userQueryResponseMapper) ToResponseUser(user *pb.UserResponse) *respons
 	}
 }
 
-// ToResponsesUser maps a slice of pb.UserResponse to a slice of response.UserResponse.
+// ToResponsesUser maps a slice of pbuser.UserResponse to a slice of response.UserResponse.
 //
 // Args:
-//   - users: A slice of pointers to pb.UserResponse to be mapped.
+//   - users: A slice of pointers to pbuser.UserResponse to be mapped.
 //
 // Returns:
 //   - A slice of pointers to response.UserResponse containing the mapped user data for each user, including
 //     ID, FirstName, LastName, Email, CreatedAt, and UpdatedAt.
-func (u *userQueryResponseMapper) ToResponsesUser(users []*pb.UserResponse) []*response.UserResponse {
+func (u *userQueryResponseMapper) ToResponsesUser(users []*pbuser.UserResponse) []*response.UserResponse {
 	var mappedUsers []*response.UserResponse
 
 	for _, user := range users {
@@ -122,12 +122,12 @@ func (u *userQueryResponseMapper) ToResponsesUser(users []*pb.UserResponse) []*r
 // ToResponseUserDeleteAt maps a protobuf UserResponseDeleteAt to a domain UserResponseDeleteAt.
 //
 // Args:
-//   - user: A pointer to a pb.UserResponseDeleteAt containing the user data.
+//   - user: A pointer to a pbuser.UserResponseDeleteAt containing the user data.
 //
 // Returns:
 //   - A pointer to a response.UserResponseDeleteAt containing the mapped user data, including
 //     ID, FirstName, LastName, Email, CreatedAt, UpdatedAt, and potentially DeletedAt, if available.
-func (u *userQueryResponseMapper) ToResponseUserDeleteAt(user *pb.UserResponseDeleteAt) *response.UserResponseDeleteAt {
+func (u *userQueryResponseMapper) ToResponseUserDeleteAt(user *pbuser.UserResponseDeleteAt) *response.UserResponseDeleteAt {
 	var deletedAt string
 	if user.DeletedAt != nil {
 		deletedAt = user.DeletedAt.Value
@@ -147,12 +147,12 @@ func (u *userQueryResponseMapper) ToResponseUserDeleteAt(user *pb.UserResponseDe
 // ToResponsesUserDeleteAt maps a slice of protobuf UserResponseDeleteAt to a slice of domain UserResponseDeleteAt.
 //
 // Args:
-//   - users: A slice of pointers to pb.UserResponseDeleteAt to be mapped.
+//   - users: A slice of pointers to pbuser.UserResponseDeleteAt to be mapped.
 //
 // Returns:
 //   - A slice of pointers to response.UserResponseDeleteAt containing the mapped user data for each user, including
 //     ID, FirstName, LastName, Email, CreatedAt, UpdatedAt, and potentially DeletedAt, if available.
-func (u *userQueryResponseMapper) ToResponsesUserDeleteAt(users []*pb.UserResponseDeleteAt) []*response.UserResponseDeleteAt {
+func (u *userQueryResponseMapper) ToResponsesUserDeleteAt(users []*pbuser.UserResponseDeleteAt) []*response.UserResponseDeleteAt {
 	var mappedUsers []*response.UserResponseDeleteAt
 
 	for _, user := range users {

@@ -2,13 +2,13 @@ package transactionhandler
 
 import (
 	transaction_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/transaction"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbtransaction "github.com/MamangRust/monolith-ecommerce-pb/transaction"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-shared/cache"
+	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/transaction"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc"
-	"github.com/MamangRust/monolith-ecommerce-shared/cache"
-	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 )
 
 type DepsTransaction struct {
@@ -24,10 +24,10 @@ func RegisterTransactionHandler(deps *DepsTransaction) {
 	statsMapper := apimapper.NewTransactionStatsResponseMapper()
 	cache := transaction_cache.NewTransactionMencache(deps.CacheStore)
 
-	queryClient := pb.NewTransactionQueryServiceClient(deps.Client)
-	commandClient := pb.NewTransactionCommandServiceClient(deps.Client)
-	statsClient := pb.NewTransactionStatsServiceClient(deps.Client)
-	statsByMerchantClient := pb.NewTransactionStatsByMerchantServiceClient(deps.Client)
+	queryClient := pbtransaction.NewTransactionQueryServiceClient(deps.Client)
+	commandClient := pbtransaction.NewTransactionCommandServiceClient(deps.Client)
+	statsClient := pbtransaction.NewTransactionStatsServiceClient(deps.Client)
+	statsByMerchantClient := pbtransaction.NewTransactionStatsByMerchantServiceClient(deps.Client)
 
 	NewTransactionQueryHandleApi(&transactionQueryHandleDeps{
 		queryClient: queryClient,

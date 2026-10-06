@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	review_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/review"
+	pbreview "github.com/MamangRust/monolith-ecommerce-pb/review"
+	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/review"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
+	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/review"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"github.com/labstack/echo/v4"
 	"go.opentelemetry.io/otel/trace"
@@ -18,7 +18,7 @@ import (
 )
 
 type reviewCommandHandleApi struct {
-	client        pb.ReviewCommandServiceClient
+	client        pbreview.ReviewCommandServiceClient
 	logger        logger.LoggerInterface
 	mapper        apimapper.ReviewCommandResponseMapper
 	queryMapper   apimapper.ReviewQueryResponseMapper
@@ -27,7 +27,7 @@ type reviewCommandHandleApi struct {
 }
 
 type reviewCommandHandleDeps struct {
-	client        pb.ReviewCommandServiceClient
+	client        pbreview.ReviewCommandServiceClient
 	router        *echo.Echo
 	logger        logger.LoggerInterface
 	mapper        apimapper.ReviewCommandResponseMapper
@@ -84,7 +84,7 @@ func (h *reviewCommandHandleApi) Create(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	grpcReq := &pb.CreateReviewRequest{
+	grpcReq := &pbreview.CreateReviewRequest{
 		UserId:    int32(userID),
 		ProductId: int32(body.ProductID),
 		Comment:   body.Comment,
@@ -135,7 +135,7 @@ func (h *reviewCommandHandleApi) Update(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	grpcReq := &pb.UpdateReviewRequest{
+	grpcReq := &pbreview.UpdateReviewRequest{
 		ReviewId: int32(id),
 		Comment:  body.Comment,
 		Rating:   int32(body.Rating),
@@ -181,7 +181,7 @@ func (h *reviewCommandHandleApi) TrashedReview(c echo.Context) error {
 		end(status)
 	}()
 
-	res, err := h.client.TrashedReview(ctx, &pb.FindByIdReviewRequest{Id: int32(id)})
+	res, err := h.client.TrashedReview(ctx, &pbreview.FindByIdReviewRequest{Id: int32(id)})
 	if err != nil {
 		status = "error"
 		return h.handleError(c, err, span, "Trash")
@@ -216,7 +216,7 @@ func (h *reviewCommandHandleApi) RestoreReview(c echo.Context) error {
 		end(status)
 	}()
 
-	res, err := h.client.RestoreReview(ctx, &pb.FindByIdReviewRequest{Id: int32(id)})
+	res, err := h.client.RestoreReview(ctx, &pbreview.FindByIdReviewRequest{Id: int32(id)})
 	if err != nil {
 		status = "error"
 		return h.handleError(c, err, span, "Restore")
@@ -251,7 +251,7 @@ func (h *reviewCommandHandleApi) DeleteReviewPermanent(c echo.Context) error {
 		end(status)
 	}()
 
-	res, err := h.client.DeleteReviewPermanent(ctx, &pb.FindByIdReviewRequest{Id: int32(id)})
+	res, err := h.client.DeleteReviewPermanent(ctx, &pbreview.FindByIdReviewRequest{Id: int32(id)})
 	if err != nil {
 		status = "error"
 		return h.handleError(c, err, span, "Delete")

@@ -5,11 +5,12 @@ import (
 	"strconv"
 
 	merchantpolicy_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/merchant_policies"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
+	pbmerchant_policy "github.com/MamangRust/monolith-ecommerce-pb/merchant_policy"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_policy"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
+	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_policy"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"github.com/labstack/echo/v4"
 	"go.opentelemetry.io/otel/trace"
@@ -17,7 +18,7 @@ import (
 )
 
 type merchantPolicyQueryHandlerApi struct {
-	client        pb.MerchantPolicyQueryServiceClient
+	client        pbmerchant_policy.MerchantPolicyQueryServiceClient
 	logger        logger.LoggerInterface
 	mapper        apimapper.MerchantPolicyQueryResponseMapper
 	cache         merchantpolicy_cache.MerchantPolicyQueryCache
@@ -25,7 +26,7 @@ type merchantPolicyQueryHandlerApi struct {
 }
 
 type merchantPolicyQueryHandleDeps struct {
-	client        pb.MerchantPolicyQueryServiceClient
+	client        pbmerchant_policy.MerchantPolicyQueryServiceClient
 	router        *echo.Echo
 	logger        logger.LoggerInterface
 	mapper        apimapper.MerchantPolicyQueryResponseMapper
@@ -65,9 +66,13 @@ func NewMerchantPolicyQueryHandleApi(params *merchantPolicyQueryHandleDeps) *mer
 // @Router /api/merchant-policy-query [get]
 func (h *merchantPolicyQueryHandlerApi) FindAll(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -78,7 +83,7 @@ func (h *merchantPolicyQueryHandlerApi) FindAll(c echo.Context) error {
 		end(status)
 	}()
 
-	res, err := h.client.FindAll(ctx, &pb.FindAllMerchantRequest{
+	res, err := h.client.FindAll(ctx, &pbmerchant.FindAllMerchantRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
@@ -106,7 +111,9 @@ func (h *merchantPolicyQueryHandlerApi) FindAll(c echo.Context) error {
 // @Router /api/merchant-policy-query/{id} [get]
 func (h *merchantPolicyQueryHandlerApi) FindById(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	ctx := c.Request().Context()
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(ctx, "FindByIdMerchantPolicy")
@@ -114,7 +121,7 @@ func (h *merchantPolicyQueryHandlerApi) FindById(c echo.Context) error {
 		end(status)
 	}()
 
-	res, err := h.client.FindById(ctx, &pb.FindByIdMerchantPoliciesRequest{Id: int32(id)})
+	res, err := h.client.FindById(ctx, &pbmerchant_policy.FindByIdMerchantPoliciesRequest{Id: int32(id)})
 	if err != nil {
 		status = "error"
 		return h.handleError(c, err, span, "FindById")
@@ -141,9 +148,13 @@ func (h *merchantPolicyQueryHandlerApi) FindById(c echo.Context) error {
 // @Router /api/merchant-policy-query/active [get]
 func (h *merchantPolicyQueryHandlerApi) FindByActive(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -154,7 +165,7 @@ func (h *merchantPolicyQueryHandlerApi) FindByActive(c echo.Context) error {
 		end(status)
 	}()
 
-	res, err := h.client.FindByActive(ctx, &pb.FindAllMerchantRequest{
+	res, err := h.client.FindByActive(ctx, &pbmerchant.FindAllMerchantRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
@@ -183,9 +194,13 @@ func (h *merchantPolicyQueryHandlerApi) FindByActive(c echo.Context) error {
 // @Router /api/merchant-policy-query/trashed [get]
 func (h *merchantPolicyQueryHandlerApi) FindByTrashed(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -196,7 +211,7 @@ func (h *merchantPolicyQueryHandlerApi) FindByTrashed(c echo.Context) error {
 		end(status)
 	}()
 
-	res, err := h.client.FindByTrashed(ctx, &pb.FindAllMerchantRequest{
+	res, err := h.client.FindByTrashed(ctx, &pbmerchant.FindAllMerchantRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {

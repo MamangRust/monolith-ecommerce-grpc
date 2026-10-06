@@ -2,18 +2,24 @@ package apps
 
 import (
 	"fmt"
+	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-user/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-user/handler"
-	"github.com/MamangRust/monolith-ecommerce-grpc-user/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-user/service"
+	"github.com/MamangRust/monolith-ecommerce-pkg/adapter"
 	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
+	"github.com/MamangRust/monolith-ecommerce-pkg/resilience"
 	"github.com/MamangRust/monolith-ecommerce-pkg/server"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/MamangRust/monolith-ecommerce-user/cache"
+	"github.com/MamangRust/monolith-ecommerce-user/handler"
+	"github.com/MamangRust/monolith-ecommerce-user/repository"
+	"github.com/MamangRust/monolith-ecommerce-user/service"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
+	pbuserrole "github.com/MamangRust/monolith-ecommerce-pb/user_role"
 )
 
 func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
@@ -23,7 +29,7 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	}
 
 	roleAddr := viper.GetString("GRPC_ROLE_ADDR")
-	
+
 	roleConn, err := grpc.NewClient(
 		roleAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -32,9 +38,27 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 		return nil, fmt.Errorf("failed to connect to role service: %w", err)
 	}
 
-	roleClient := pb.NewRoleQueryServiceClient(roleConn)
+	roleClient := pbrole.NewRoleQueryServiceClient(roleConn)
+	// The user-role service piggybacks on the role service, so its client
+	// shares the same connection/port.
+	userRoleClient := pbuserrole.NewUserRoleServiceClient(roleConn)
 
-	repos := repository.NewRepositories(srv.DB, roleClient)
+	guardRole := resilience.NewDependencyGuard("role", 5, 30, 100, 3*time.Second, srv.Logger)
+	guardUserRole := resilience.NewDependencyGuard("user_role", 5, 30, 100, 3*time.Second, srv.Logger)
+
+	repos := repository.NewRepositories(&repository.Deps{
+		Db:              srv.DB,
+		RoleQueryClient: roleClient,
+		UserRoleClient:  userRoleClient,
+		Guard: repository.GuardOptions{
+			Role: []adapter.GuardOption{
+				adapter.WithDependencyGuard(guardRole),
+			},
+			UserRole: []adapter.GuardOption{
+				adapter.WithDependencyGuard(guardUserRole),
+			},
+		},
+	})
 	hashing := hash.NewHashingPassword()
 	obs, _ := observability.NewObservability("user-server", srv.Logger)
 	cache := cache.NewMencache(srv.CacheStore)
@@ -53,8 +77,8 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	})
 
 	srv.RegisterServices = func(gs *grpc.Server) {
-		pb.RegisterUserQueryServiceServer(gs, h.UserQuery)
-		pb.RegisterUserCommandServiceServer(gs, h.UserCommand)
+		pbuser.RegisterUserQueryServiceServer(gs, h.UserQuery)
+		pbuser.RegisterUserCommandServiceServer(gs, h.UserCommand)
 	}
 
 	return srv, nil

@@ -5,17 +5,16 @@ import (
 	"strconv"
 
 	product_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/product"
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbproduct "github.com/MamangRust/monolith-ecommerce-pb/product"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/product"
 	"github.com/labstack/echo/v4"
 )
 
-
 type productQueryHandlerApi struct {
-	client pb.ProductQueryServiceClient
+	client pbproduct.ProductQueryServiceClient
 	logger logger.LoggerInterface
 	mapper apimapper.ProductQueryResponseMapper
 	cache  product_cache.ProductQueryCache
@@ -23,7 +22,7 @@ type productQueryHandlerApi struct {
 }
 
 type productQueryHandleDeps struct {
-	client     pb.ProductQueryServiceClient
+	client     pbproduct.ProductQueryServiceClient
 	router     *echo.Echo
 	logger     logger.LoggerInterface
 	mapper     apimapper.ProductQueryResponseMapper
@@ -39,8 +38,6 @@ func NewProductQueryHandleApi(params *productQueryHandleDeps) *productQueryHandl
 		cache:  params.cache,
 		errors: params.apiHandler,
 	}
-
-
 
 	routerProduct := params.router.Group("/api/product-query")
 	routerProduct.GET("", handler.FindAll)
@@ -67,9 +64,13 @@ func NewProductQueryHandleApi(params *productQueryHandleDeps) *productQueryHandl
 // @Router /api/product-query [get]
 func (h *productQueryHandlerApi) FindAll(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -79,13 +80,12 @@ func (h *productQueryHandlerApi) FindAll(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindAll(ctx, &pb.FindAllProductRequest{
+	res, err := h.client.FindAll(ctx, &pbproduct.FindAllProductRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	apiResponse := h.mapper.ToApiResponsePaginationProduct(res)
 	h.cache.SetCachedProducts(ctx, req, apiResponse)
@@ -106,18 +106,19 @@ func (h *productQueryHandlerApi) FindAll(c echo.Context) error {
 // @Router /api/product-query/{id} [get]
 func (h *productQueryHandlerApi) FindById(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid Product ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Product ID")
+	}
 
 	ctx := c.Request().Context()
 	if cachedData, found := h.cache.GetCachedProduct(ctx, id); found {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindById(ctx, &pb.FindByIdProductRequest{Id: int32(id)})
+	res, err := h.client.FindById(ctx, &pbproduct.FindByIdProductRequest{Id: int32(id)})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	apiResponse := h.mapper.ToApiResponseProduct(res)
 	h.cache.SetCachedProduct(ctx, apiResponse)
@@ -141,12 +142,18 @@ func (h *productQueryHandlerApi) FindById(c echo.Context) error {
 // @Router /api/product-query/merchant/{merchant_id} [get]
 func (h *productQueryHandlerApi) FindByMerchant(c echo.Context) error {
 	merchantID, err := strconv.Atoi(c.Param("merchant_id"))
-	if err != nil || merchantID <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid Merchant ID") }
+	if err != nil || merchantID <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Merchant ID")
+	}
 
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -156,13 +163,12 @@ func (h *productQueryHandlerApi) FindByMerchant(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindByMerchant(ctx, &pb.FindAllProductMerchantRequest{
+	res, err := h.client.FindByMerchant(ctx, &pbproduct.FindAllProductMerchantRequest{
 		MerchantId: int32(merchantID), Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	apiResponse := h.mapper.ToApiResponsePaginationProduct(res)
 	h.cache.SetCachedProductsByMerchant(ctx, req, apiResponse)
@@ -186,12 +192,18 @@ func (h *productQueryHandlerApi) FindByMerchant(c echo.Context) error {
 // @Router /api/product-query/category/{category_name} [get]
 func (h *productQueryHandlerApi) FindByCategory(c echo.Context) error {
 	categoryName := c.Param("category_name")
-	if categoryName == "" { return echo.NewHTTPError(http.StatusBadRequest, "Category Name is required") }
+	if categoryName == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Category Name is required")
+	}
 
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -201,13 +213,12 @@ func (h *productQueryHandlerApi) FindByCategory(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindByCategory(ctx, &pb.FindAllProductCategoryRequest{
+	res, err := h.client.FindByCategory(ctx, &pbproduct.FindAllProductCategoryRequest{
 		CategoryName: categoryName, Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	apiResponse := h.mapper.ToApiResponsePaginationProduct(res)
 	h.cache.SetCachedProductsByCategory(ctx, req, apiResponse)
@@ -229,9 +240,13 @@ func (h *productQueryHandlerApi) FindByCategory(c echo.Context) error {
 // @Router /api/product-query/active [get]
 func (h *productQueryHandlerApi) FindByActive(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -241,13 +256,12 @@ func (h *productQueryHandlerApi) FindByActive(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindByActive(ctx, &pb.FindAllProductRequest{
+	res, err := h.client.FindByActive(ctx, &pbproduct.FindAllProductRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
-
 
 	apiResponse := h.mapper.ToApiResponsePaginationProductDeleteAt(res)
 	h.cache.SetCachedProductActive(ctx, req, apiResponse)
@@ -269,9 +283,13 @@ func (h *productQueryHandlerApi) FindByActive(c echo.Context) error {
 // @Router /api/product-query/trashed [get]
 func (h *productQueryHandlerApi) FindByTrashed(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -281,18 +299,15 @@ func (h *productQueryHandlerApi) FindByTrashed(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindByTrashed(ctx, &pb.FindAllProductRequest{
+	res, err := h.client.FindByTrashed(ctx, &pbproduct.FindAllProductRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
 
-
 	apiResponse := h.mapper.ToApiResponsePaginationProductDeleteAt(res)
 	h.cache.SetCachedProductTrashed(ctx, req, apiResponse)
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
-
-

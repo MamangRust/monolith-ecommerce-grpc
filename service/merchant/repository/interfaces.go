@@ -5,7 +5,6 @@ import (
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/jackc/pgx/v5"
 )
 
 type MerchantDocumentQueryRepository interface {
@@ -17,10 +16,8 @@ type MerchantDocumentQueryRepository interface {
 
 type MerchantDocumentCommandRepository interface {
 	Create(ctx context.Context, request *requests.CreateMerchantDocumentRequest) (*db.CreateMerchantDocumentRow, error)
-	CreateInTx(ctx context.Context, tx pgx.Tx, request *requests.CreateMerchantDocumentRequest) (*db.CreateMerchantDocumentRow, error)
 	Update(ctx context.Context, request *requests.UpdateMerchantDocumentRequest) (*db.UpdateMerchantDocumentRow, error)
 	UpdateStatus(ctx context.Context, request *requests.UpdateMerchantDocumentStatusRequest) (*db.UpdateMerchantDocumentStatusRow, error)
-	UpdateStatusInTx(ctx context.Context, tx pgx.Tx, request *requests.UpdateMerchantDocumentStatusRequest) (*db.UpdateMerchantDocumentStatusRow, error)
 	Trash(ctx context.Context, merchant_document_id int) (*db.MerchantDocument, error)
 	Restore(ctx context.Context, merchant_document_id int) (*db.MerchantDocument, error)
 	DeletePermanent(ctx context.Context, merchant_document_id int) (bool, error)
@@ -41,12 +38,6 @@ type MerchantQueryRepository interface {
 type MerchantCommandRepository interface {
 	Create(
 		ctx context.Context,
-		request *requests.CreateMerchantRequest,
-	) (*db.CreateMerchantRow, error)
-
-	CreateInTx(
-		ctx context.Context,
-		tx pgx.Tx,
 		request *requests.CreateMerchantRequest,
 	) (*db.CreateMerchantRow, error)
 
@@ -71,8 +62,6 @@ type MerchantCommandRepository interface {
 	DeleteAll(ctx context.Context) (bool, error)
 
 	UpdateStatus(ctx context.Context, request *requests.UpdateMerchantStatusRequest) (*db.UpdateMerchantStatusRow, error)
-
-	UpdateStatusInTx(ctx context.Context, tx pgx.Tx, request *requests.UpdateMerchantStatusRequest) (*db.UpdateMerchantStatusRow, error)
 }
 
 type UserQueryRepository interface {

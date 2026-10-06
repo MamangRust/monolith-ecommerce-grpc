@@ -1,6 +1,7 @@
 go 1.25.1
 
 use (
+	./pb
 	./pkg
 	./service/apigateway
 	./service/auth
@@ -26,5 +27,4 @@ use (
 	./service/transaction
 	./service/user
 	./shared
-	./tests
 )

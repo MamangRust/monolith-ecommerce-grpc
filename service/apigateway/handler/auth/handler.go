@@ -6,11 +6,11 @@ import (
 
 	"fmt"
 	auth_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/auth"
+	pb "github.com/MamangRust/monolith-ecommerce-pb"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	authapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/auth"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"

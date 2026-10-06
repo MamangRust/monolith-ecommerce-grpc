@@ -3,9 +3,14 @@ package repository
 import (
 	"context"
 
+	shippingaddressadapter "github.com/MamangRust/monolith-ecommerce-pkg/adapter/shipping_address"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 )
+
+// ShippingQueryRepository is the read contract for shipping addresses. It is
+// satisfied by the shared shipping_address gRPC adapter.
+type ShippingQueryRepository = shippingaddressadapter.QueryRepository
 
 type UserQueryRepository interface {
 	FindByID(ctx context.Context, user_id int) (*db.GetUserByIDRow, error)
@@ -21,7 +26,6 @@ type MerchantQueryRepository interface {
 
 type ProductCommandRepository interface {
 	UpdateProductCountStock(ctx context.Context, product_id int, stock int) (*db.UpdateProductCountStockRow, error)
-	AdjustProductStock(ctx context.Context, product_id int, delta int, operationID string) (*db.AdjustProductStockRow, error)
 }
 
 type ShippingAddressCommandRepository interface {
@@ -163,17 +167,6 @@ type OrderCommandRepository interface {
 		ctx context.Context,
 		order_id int,
 	) (bool, error)
-
-	// DeletePermanentWithChildren atomically removes a trashed order and all of
-	// its child rows (stock reservations, order items, transactions, shipping
-	// addresses) in a single SQL statement. It returns ErrOrderNotFound when the
-	// order is not trashed.
-	DeletePermanentWithChildren(
-		ctx context.Context,
-		order_id int,
-	) (bool, error)
-	FindTrashedByID(ctx context.Context, order_id int) (*db.Order, error)
-	FindTrashed(ctx context.Context) ([]*db.Order, error)
 
 	RestoreAll(ctx context.Context) (bool, error)
 	DeleteAll(ctx context.Context) (bool, error)

@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	errorsstd "errors"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -30,7 +32,7 @@ func (r *sliderQueryRepository) FindAll(ctx context.Context, req *requests.FindA
 	res, err := r.db.GetSliders(ctx, reqDb)
 
 	if err != nil {
-		return nil, slider_errors.ErrFindAllSliders
+		return nil, slider_errors.ErrFindAllSliders.WithInternal(err)
 	}
 
 	return res, nil
@@ -48,7 +50,7 @@ func (r *sliderQueryRepository) FindActive(ctx context.Context, req *requests.Fi
 	res, err := r.db.GetSlidersActive(ctx, reqDb)
 
 	if err != nil {
-		return nil, slider_errors.ErrFindActiveSliders
+		return nil, slider_errors.ErrFindActiveSliders.WithInternal(err)
 	}
 
 	return res, nil
@@ -66,7 +68,7 @@ func (r *sliderQueryRepository) FindTrashed(ctx context.Context, req *requests.F
 	res, err := r.db.GetSlidersTrashed(ctx, reqDb)
 
 	if err != nil {
-		return nil, slider_errors.ErrFindTrashedSliders
+		return nil, slider_errors.ErrFindTrashedSliders.WithInternal(err)
 	}
 
 	return res, nil
@@ -76,7 +78,10 @@ func (r *sliderQueryRepository) FindByID(ctx context.Context, slider_id int) (*d
 	res, err := r.db.GetSliderByID(ctx, int32(slider_id))
 
 	if err != nil {
-		return nil, slider_errors.ErrFindSliderByID
+		if errorsstd.Is(err, sql.ErrNoRows) {
+			return nil, slider_errors.ErrSliderNotFound.WithInternal(err)
+		}
+		return nil, slider_errors.ErrFindSliderByID.WithInternal(err)
 	}
 
 	return res, nil

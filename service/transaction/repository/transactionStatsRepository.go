@@ -138,4 +138,3 @@ func (r *transactionStatsRepository) GetYearlyTransactionMethodFailed(ctx contex
 	}
 	return res, nil
 }
-

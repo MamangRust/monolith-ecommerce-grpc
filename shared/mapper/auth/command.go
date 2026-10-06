@@ -1,7 +1,7 @@
 package authapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbauth "github.com/MamangRust/monolith-ecommerce-pb"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
@@ -11,28 +11,28 @@ func NewAuthCommandResponseMapper() AuthCommandResponseMapper {
 	return &authCommandResponseMapper{}
 }
 
-func (s *authCommandResponseMapper) ToResponseVerifyCode(res *pb.ApiResponseVerifyCode) *response.ApiResponseVerifyCode {
+func (s *authCommandResponseMapper) ToResponseVerifyCode(res *pbauth.ApiResponseVerifyCode) *response.ApiResponseVerifyCode {
 	return &response.ApiResponseVerifyCode{
 		Status:  res.Status,
 		Message: res.Message,
 	}
 }
 
-func (s *authCommandResponseMapper) ToResponseForgotPassword(res *pb.ApiResponseForgotPassword) *response.ApiResponseForgotPassword {
+func (s *authCommandResponseMapper) ToResponseForgotPassword(res *pbauth.ApiResponseForgotPassword) *response.ApiResponseForgotPassword {
 	return &response.ApiResponseForgotPassword{
 		Status:  res.Status,
 		Message: res.Message,
 	}
 }
 
-func (s *authCommandResponseMapper) ToResponseResetPassword(res *pb.ApiResponseResetPassword) *response.ApiResponseResetPassword {
+func (s *authCommandResponseMapper) ToResponseResetPassword(res *pbauth.ApiResponseResetPassword) *response.ApiResponseResetPassword {
 	return &response.ApiResponseResetPassword{
 		Status:  res.Status,
 		Message: res.Message,
 	}
 }
 
-func (s *authCommandResponseMapper) ToResponseLogin(res *pb.ApiResponseLogin) *response.ApiResponseLogin {
+func (s *authCommandResponseMapper) ToResponseLogin(res *pbauth.ApiResponseLogin) *response.ApiResponseLogin {
 	if res == nil {
 		return &response.ApiResponseLogin{
 			Status:  "error",
@@ -56,7 +56,7 @@ func (s *authCommandResponseMapper) ToResponseLogin(res *pb.ApiResponseLogin) *r
 	}
 }
 
-func (s *authCommandResponseMapper) ToResponseRegister(res *pb.ApiResponseRegister) *response.ApiResponseRegister {
+func (s *authCommandResponseMapper) ToResponseRegister(res *pbauth.ApiResponseRegister) *response.ApiResponseRegister {
 	if res == nil {
 		return &response.ApiResponseRegister{
 			Status:  "error",
@@ -84,7 +84,7 @@ func (s *authCommandResponseMapper) ToResponseRegister(res *pb.ApiResponseRegist
 	}
 }
 
-func (s *authCommandResponseMapper) ToResponseRefreshToken(res *pb.ApiResponseRefreshToken) *response.ApiResponseRefreshToken {
+func (s *authCommandResponseMapper) ToResponseRefreshToken(res *pbauth.ApiResponseRefreshToken) *response.ApiResponseRefreshToken {
 	if res == nil {
 		return &response.ApiResponseRefreshToken{
 			Status:  "error",

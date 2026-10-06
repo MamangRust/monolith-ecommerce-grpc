@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-transaction/repository"
 	"go.uber.org/zap"
 )
 

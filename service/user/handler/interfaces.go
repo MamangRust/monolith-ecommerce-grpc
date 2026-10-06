@@ -1,13 +1,13 @@
 package handler
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 )
 
 type UserQueryHandler interface {
-	pb.UserQueryServiceServer
+	pbuser.UserQueryServiceServer
 }
 
 type UserCommandHandler interface {
-	pb.UserCommandServiceServer
+	pbuser.UserCommandServiceServer
 }

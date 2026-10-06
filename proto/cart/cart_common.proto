@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package pb;
+package pb.cart;
 
 import "common/api.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/cart";
 
 message CartResponse {
     int32 id = 1;
@@ -53,5 +53,5 @@ message ApiResponsePaginationCart {
     string status = 1;
     string message = 2;
     repeated CartResponse data = 3;
-    PaginationMeta pagination = 4;
+    pb.common.PaginationMeta pagination = 4;
 }

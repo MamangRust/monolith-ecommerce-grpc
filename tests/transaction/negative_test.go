@@ -5,17 +5,17 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	apigatewaymiddlewares "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	pbtransaction "github.com/MamangRust/monolith-ecommerce-pb/transaction"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 )
 
 // gapi: non-existent transaction must map to codes.NotFound (404), not Internal.
 func (s *TransactionGapiTestSuite) TestTransactionGapiNotFound() {
 	ctx := context.Background()
-	_, err := s.queryClient.FindById(ctx, &pb.FindByIdTransactionRequest{Id: 999999})
+	_, err := s.queryClient.FindById(ctx, &pbtransaction.FindByIdTransactionRequest{Id: 999999})
 	s.Require().Error(err)
 	st, ok := status.FromError(err)
 	s.Require().True(ok, "expected a gRPC status error")
@@ -24,7 +24,6 @@ func (s *TransactionGapiTestSuite) TestTransactionGapiNotFound() {
 
 // api: non-existent transaction must map to 404, invalid path ID to 400.
 func (s *TransactionApiTestSuite) TestTransactionApiNotFound() {
-	apigatewaymiddlewares.RegisterErrorHandler(s.echo)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/transaction-query/999999", nil)
 	rec := httptest.NewRecorder()
@@ -33,7 +32,6 @@ func (s *TransactionApiTestSuite) TestTransactionApiNotFound() {
 }
 
 func (s *TransactionApiTestSuite) TestTransactionApiInvalidID() {
-	apigatewaymiddlewares.RegisterErrorHandler(s.echo)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/transaction-query/abc", nil)
 	rec := httptest.NewRecorder()

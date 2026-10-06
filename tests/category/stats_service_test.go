@@ -5,23 +5,24 @@ import (
 	"testing"
 	"time"
 
-	category_cache "github.com/MamangRust/monolith-ecommerce-grpc-category/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/service"
+	"github.com/stretchr/testify/suite"
+
+	category_cache "github.com/MamangRust/monolith-ecommerce-category/cache"
+	"github.com/MamangRust/monolith-ecommerce-category/repository"
+	"github.com/MamangRust/monolith-ecommerce-category/service"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type CategoryStatsServiceTestSuite struct {
 	tests.BaseTestSuite
-	svc             service.CategoryStatsService
-	svcById         service.CategoryStatsByIdService
-	svcByMerchant   service.CategoryStatsByMerchantService
-	categoryID      int
-	merchantID      int
-	userID          int
+	svc           service.CategoryStatsService
+	svcById       service.CategoryStatsByIdService
+	svcByMerchant service.CategoryStatsByMerchantService
+	categoryID    int
+	merchantID    int
+	userID        int
 }
 
 func (s *CategoryStatsServiceTestSuite) SetupSuite() {
@@ -60,7 +61,7 @@ func (s *CategoryStatsServiceTestSuite) SetupSuite() {
 	orderID := s.SeedOrder(ctx, s.userID, s.merchantID, prodID)
 
 	// Ensure created_at is set to current time to be picked up by stats
-	_, err := s.DBPool().Exec(ctx, "UPDATE orders SET created_at = $1 WHERE order_id = $2", 
+	_, err := s.DBPool().Exec(ctx, "UPDATE orders SET created_at = $1 WHERE order_id = $2",
 		time.Now(), orderID)
 	s.Require().NoError(err)
 }

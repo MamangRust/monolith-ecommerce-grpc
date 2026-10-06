@@ -6,18 +6,17 @@ import (
 	"net/http/httptest"
 	"strings"
 
-	apigatewaymiddlewares "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
-	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	pbcart "github.com/MamangRust/monolith-ecommerce-pb/cart"
 )
 
 // gapi: cart has no FindById query; the valid negative path is validation of
 // create payload — quantity 0 must be rejected as InvalidArgument.
 func (s *CartGapiTestSuite) TestCartGapiInvalidQuantity() {
 	ctx := context.Background()
-	_, err := s.commandClient.Create(ctx, &pb.CreateCartRequest{
+	_, err := s.commandClient.Create(ctx, &pbcart.CreateCartRequest{
 		UserId:    1,
 		ProductId: 1,
 		Quantity:  0,
@@ -30,10 +29,9 @@ func (s *CartGapiTestSuite) TestCartGapiInvalidQuantity() {
 
 // api: malformed JSON body on cart create must map to 400.
 func (s *CartApiTestSuite) TestCartApiInvalidBody() {
-	apigatewaymiddlewares.RegisterErrorHandler(s.echo)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/cart-command/create", strings.NewReader("{not-json"))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	s.echo.ServeHTTP(rec, req)
 	s.Equal(http.StatusBadRequest, rec.Code, "malformed cart create body must be 400, got %d: %s", rec.Code, rec.Body.String())

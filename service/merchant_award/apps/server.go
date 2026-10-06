@@ -2,17 +2,22 @@ package apps
 
 import (
 	"fmt"
+	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/handler"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/service"
+	"github.com/MamangRust/monolith-ecommerce-merchant_award/cache"
+	"github.com/MamangRust/monolith-ecommerce-merchant_award/handler"
+	"github.com/MamangRust/monolith-ecommerce-merchant_award/repository"
+	"github.com/MamangRust/monolith-ecommerce-merchant_award/service"
+	"github.com/MamangRust/monolith-ecommerce-pkg/adapter"
+	"github.com/MamangRust/monolith-ecommerce-pkg/resilience"
 	"github.com/MamangRust/monolith-ecommerce-pkg/server"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
+	pbmerchant_award "github.com/MamangRust/monolith-ecommerce-pb/merchant_award"
 )
 
 func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
@@ -31,9 +36,15 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 		return nil, fmt.Errorf("failed to connect to merchant service: %w", err)
 	}
 
-	merchantQueryClient := pb.NewMerchantQueryServiceClient(merchantConn)
+	merchantQueryClient := pbmerchant.NewMerchantQueryServiceClient(merchantConn)
 
-	repos := repository.NewRepositories(srv.DB, merchantQueryClient)
+	repos := repository.NewRepositories(srv.DB, merchantQueryClient,
+		repository.GuardOptions{
+			Merchant: []adapter.GuardOption{
+				adapter.WithDependencyGuard(resilience.NewDependencyGuard("merchant", 5, 30, 100, 3*time.Second, srv.Logger)),
+			},
+		},
+	)
 	observability, _ := observability.NewObservability("merchant_award-server", srv.Logger)
 
 	cache := cache.NewMencache(srv.CacheStore)
@@ -48,8 +59,8 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	h := handler.NewHandler(&handler.Deps{Service: svc, Logger: srv.Logger})
 
 	srv.RegisterServices = func(gs *grpc.Server) {
-		pb.RegisterMerchantAwardQueryServiceServer(gs, h.MerchantAwardQuery)
-		pb.RegisterMerchantAwardCommandServiceServer(gs, h.MerchantAwardCommand)
+		pbmerchant_award.RegisterMerchantAwardQueryServiceServer(gs, h.MerchantAwardQuery)
+		pbmerchant_award.RegisterMerchantAwardCommandServiceServer(gs, h.MerchantAwardCommand)
 	}
 
 	return srv, nil

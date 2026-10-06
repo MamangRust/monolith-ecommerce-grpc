@@ -4,16 +4,22 @@ import (
 	"context"
 	"testing"
 
-	order_cache "github.com/MamangRust/monolith-ecommerce-grpc-order/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-order/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-order/service"
+	"github.com/stretchr/testify/suite"
+
+	order_cache "github.com/MamangRust/monolith-ecommerce-order/cache"
+	"github.com/MamangRust/monolith-ecommerce-order/repository"
+	"github.com/MamangRust/monolith-ecommerce-order/service"
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
+	pborder_item "github.com/MamangRust/monolith-ecommerce-pb/order_item"
+	pbproduct "github.com/MamangRust/monolith-ecommerce-pb/product"
+	pbshipping_address "github.com/MamangRust/monolith-ecommerce-pb/shipping_address"
+	pbtransaction "github.com/MamangRust/monolith-ecommerce-pb/transaction"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type OrderServiceTestSuite struct {
@@ -41,15 +47,15 @@ func (s *OrderServiceTestSuite) SetupSuite() {
 	// Order dependencies
 	mencache := order_cache.NewMencache(cacheStore)
 	repos := repository.NewRepositories(&repository.Deps{
-		DB:                 queries,
-		MerchantQuery:      pb.NewMerchantQueryServiceClient(s.Conns["merchant"]),
-		ProductQuery:       pb.NewProductQueryServiceClient(s.Conns["product"]),
-		ProductCommand:     pb.NewProductCommandServiceClient(s.Conns["product"]),
-		OrderItemQuery:     pb.NewOrderItemQueryServiceClient(s.Conns["order-item"]),
-		OrderItemCommand:   pb.NewOrderItemCommandServiceClient(s.Conns["order-item"]),
-		UserQuery:          pb.NewUserQueryServiceClient(s.Conns["user"]),
-		ShippingCommand:    pb.NewShippingCommandServiceClient(s.Conns["shipping-address"]),
-		TransactionCommand: pb.NewTransactionCommandServiceClient(s.Conns["transaction"]),
+		Db:                       queries,
+		MerchantQueryClient:      pbmerchant.NewMerchantQueryServiceClient(s.Conns["merchant"]),
+		ProductQueryClient:       pbproduct.NewProductQueryServiceClient(s.Conns["product"]),
+		ProductCommandClient:     pbproduct.NewProductCommandServiceClient(s.Conns["product"]),
+		OrderItemQueryClient:     pborder_item.NewOrderItemQueryServiceClient(s.Conns["order-item"]),
+		OrderItemCommandClient:   pborder_item.NewOrderItemCommandServiceClient(s.Conns["order-item"]),
+		UserQueryClient:          pbuser.NewUserQueryServiceClient(s.Conns["user"]),
+		ShippingCommandClient:    pbshipping_address.NewShippingCommandServiceClient(s.Conns["shipping-address"]),
+		TransactionCommandClient: pbtransaction.NewTransactionCommandServiceClient(s.Conns["transaction"]),
 	})
 
 	s.svc = service.NewService(&service.Deps{
@@ -143,7 +149,7 @@ func (s *OrderServiceTestSuite) TestOrderLifecycle() {
 	// 10. RestoreAll & DeleteAll
 	o1, _ := s.svc.OrderCommand.Create(ctx, req)
 	o2, _ := s.svc.OrderCommand.Create(ctx, req)
-	
+
 	s.svc.OrderCommand.Trash(ctx, int(o1.OrderID))
 	s.svc.OrderCommand.Trash(ctx, int(o2.OrderID))
 

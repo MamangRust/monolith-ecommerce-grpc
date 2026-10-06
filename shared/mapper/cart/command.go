@@ -1,7 +1,7 @@
 package cartapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbcart "github.com/MamangRust/monolith-ecommerce-pb/cart"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
@@ -11,8 +11,10 @@ func NewCartCommandResponseMapper() CartCommandResponseMapper {
 	return &cartCommandResponseMapper{}
 }
 
-func (t *cartCommandResponseMapper) ToResponseCart(pbResponse *pb.CartResponse) *response.CartResponse {
-	if pbResponse == nil { return nil }
+func (t *cartCommandResponseMapper) ToResponseCart(pbResponse *pbcart.CartResponse) *response.CartResponse {
+	if pbResponse == nil {
+		return nil
+	}
 	return &response.CartResponse{
 		ID:        int(pbResponse.Id),
 		UserID:    int(pbResponse.UserId),
@@ -27,7 +29,7 @@ func (t *cartCommandResponseMapper) ToResponseCart(pbResponse *pb.CartResponse) 
 	}
 }
 
-func (t *cartCommandResponseMapper) ToResponseCarts(pbResponse []*pb.CartResponse) []*response.CartResponse {
+func (t *cartCommandResponseMapper) ToResponseCarts(pbResponse []*pbcart.CartResponse) []*response.CartResponse {
 	var carts []*response.CartResponse
 	for _, cart := range pbResponse {
 		carts = append(carts, t.ToResponseCart(cart))
@@ -35,7 +37,7 @@ func (t *cartCommandResponseMapper) ToResponseCarts(pbResponse []*pb.CartRespons
 	return carts
 }
 
-func (t *cartCommandResponseMapper) ToApiResponseCart(pbResponse *pb.ApiResponseCart) *response.ApiResponseCart {
+func (t *cartCommandResponseMapper) ToApiResponseCart(pbResponse *pbcart.ApiResponseCart) *response.ApiResponseCart {
 	return &response.ApiResponseCart{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -43,14 +45,14 @@ func (t *cartCommandResponseMapper) ToApiResponseCart(pbResponse *pb.ApiResponse
 	}
 }
 
-func (t *cartCommandResponseMapper) ToApiResponseCartDelete(pbResponse *pb.ApiResponseCartDelete) *response.ApiResponseCartDelete {
+func (t *cartCommandResponseMapper) ToApiResponseCartDelete(pbResponse *pbcart.ApiResponseCartDelete) *response.ApiResponseCartDelete {
 	return &response.ApiResponseCartDelete{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
 	}
 }
 
-func (t *cartCommandResponseMapper) ToApiResponseCartAll(pbResponse *pb.ApiResponseCartAll) *response.ApiResponseCartAll {
+func (t *cartCommandResponseMapper) ToApiResponseCartAll(pbResponse *pbcart.ApiResponseCartAll) *response.ApiResponseCartAll {
 	return &response.ApiResponseCartAll{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,

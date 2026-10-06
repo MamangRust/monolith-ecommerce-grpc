@@ -3,15 +3,16 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-product/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-product/service"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+
+	pbproduct "github.com/MamangRust/monolith-ecommerce-pb/product"
 )
 
 type productQueryHandler struct {
-	pb.UnimplementedProductQueryServiceServer
+	pbproduct.UnimplementedProductQueryServiceServer
 	productService service.ProductQueryService
 	logger         logger.LoggerInterface
 }
@@ -23,7 +24,7 @@ func NewProductQueryHandler(productService service.ProductQueryService, logger l
 	}
 }
 
-func (h *productQueryHandler) FindAll(ctx context.Context, request *pb.FindAllProductRequest) (*pb.ApiResponsePaginationProduct, error) {
+func (h *productQueryHandler) FindAll(ctx context.Context, request *pbproduct.FindAllProductRequest) (*pbproduct.ApiResponsePaginationProduct, error) {
 	page, pageSize := normalizePage(int(request.GetPage()), int(request.GetPageSize()))
 	search := request.GetSearch()
 
@@ -38,14 +39,14 @@ func (h *productQueryHandler) FindAll(ctx context.Context, request *pb.FindAllPr
 		return nil, errors.ToGrpcError(err)
 	}
 
-	pbProducts := make([]*pb.ProductResponse, len(products))
+	pbProducts := make([]*pbproduct.ProductResponse, len(products))
 	for i, product := range products {
 		pbProducts[i] = mapToProtoProductResponse(product)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationProduct{
+	return &pbproduct.ApiResponsePaginationProduct{
 		Status:     "success",
 		Message:    "Successfully fetched products",
 		Data:       pbProducts,
@@ -53,7 +54,7 @@ func (h *productQueryHandler) FindAll(ctx context.Context, request *pb.FindAllPr
 	}, nil
 }
 
-func (h *productQueryHandler) FindByMerchant(ctx context.Context, request *pb.FindAllProductMerchantRequest) (*pb.ApiResponsePaginationProduct, error) {
+func (h *productQueryHandler) FindByMerchant(ctx context.Context, request *pbproduct.FindAllProductMerchantRequest) (*pbproduct.ApiResponsePaginationProduct, error) {
 	page, pageSize := normalizePage(int(request.GetPage()), int(request.GetPageSize()))
 	search := request.GetSearch()
 	merchantId := int(request.GetMerchantId())
@@ -74,14 +75,14 @@ func (h *productQueryHandler) FindByMerchant(ctx context.Context, request *pb.Fi
 		return nil, errors.ToGrpcError(err)
 	}
 
-	pbProducts := make([]*pb.ProductResponse, len(products))
+	pbProducts := make([]*pbproduct.ProductResponse, len(products))
 	for i, product := range products {
 		pbProducts[i] = mapToProtoProductResponse(product)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationProduct{
+	return &pbproduct.ApiResponsePaginationProduct{
 		Status:     "success",
 		Message:    "Successfully fetched merchant products",
 		Data:       pbProducts,
@@ -89,7 +90,7 @@ func (h *productQueryHandler) FindByMerchant(ctx context.Context, request *pb.Fi
 	}, nil
 }
 
-func (h *productQueryHandler) FindByCategory(ctx context.Context, request *pb.FindAllProductCategoryRequest) (*pb.ApiResponsePaginationProduct, error) {
+func (h *productQueryHandler) FindByCategory(ctx context.Context, request *pbproduct.FindAllProductCategoryRequest) (*pbproduct.ApiResponsePaginationProduct, error) {
 	page, pageSize := normalizePage(int(request.GetPage()), int(request.GetPageSize()))
 	search := request.GetSearch()
 	categoryName := request.GetCategoryName()
@@ -110,14 +111,14 @@ func (h *productQueryHandler) FindByCategory(ctx context.Context, request *pb.Fi
 		return nil, errors.ToGrpcError(err)
 	}
 
-	pbProducts := make([]*pb.ProductResponse, len(products))
+	pbProducts := make([]*pbproduct.ProductResponse, len(products))
 	for i, product := range products {
 		pbProducts[i] = mapToProtoProductResponse(product)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationProduct{
+	return &pbproduct.ApiResponsePaginationProduct{
 		Status:     "success",
 		Message:    "Successfully fetched category products",
 		Data:       pbProducts,
@@ -125,7 +126,7 @@ func (h *productQueryHandler) FindByCategory(ctx context.Context, request *pb.Fi
 	}, nil
 }
 
-func (h *productQueryHandler) FindById(ctx context.Context, request *pb.FindByIdProductRequest) (*pb.ApiResponseProduct, error) {
+func (h *productQueryHandler) FindById(ctx context.Context, request *pbproduct.FindByIdProductRequest) (*pbproduct.ApiResponseProduct, error) {
 	id := int(request.GetId())
 
 	product, err := h.productService.FindByID(ctx, id)
@@ -133,14 +134,14 @@ func (h *productQueryHandler) FindById(ctx context.Context, request *pb.FindById
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseProduct{
+	return &pbproduct.ApiResponseProduct{
 		Status:  "success",
 		Message: "Successfully fetched product",
 		Data:    mapToProtoProductResponse(product),
 	}, nil
 }
 
-func (h *productQueryHandler) FindByActive(ctx context.Context, request *pb.FindAllProductRequest) (*pb.ApiResponsePaginationProductDeleteAt, error) {
+func (h *productQueryHandler) FindByActive(ctx context.Context, request *pbproduct.FindAllProductRequest) (*pbproduct.ApiResponsePaginationProductDeleteAt, error) {
 	page, pageSize := normalizePage(int(request.GetPage()), int(request.GetPageSize()))
 	search := request.GetSearch()
 
@@ -155,14 +156,14 @@ func (h *productQueryHandler) FindByActive(ctx context.Context, request *pb.Find
 		return nil, errors.ToGrpcError(err)
 	}
 
-	pbProducts := make([]*pb.ProductResponseDeleteAt, len(products))
+	pbProducts := make([]*pbproduct.ProductResponseDeleteAt, len(products))
 	for i, product := range products {
 		pbProducts[i] = mapToProtoProductResponseDeleteAt(product)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationProductDeleteAt{
+	return &pbproduct.ApiResponsePaginationProductDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched active products",
 		Data:       pbProducts,
@@ -170,7 +171,7 @@ func (h *productQueryHandler) FindByActive(ctx context.Context, request *pb.Find
 	}, nil
 }
 
-func (h *productQueryHandler) FindByTrashed(ctx context.Context, request *pb.FindAllProductRequest) (*pb.ApiResponsePaginationProductDeleteAt, error) {
+func (h *productQueryHandler) FindByTrashed(ctx context.Context, request *pbproduct.FindAllProductRequest) (*pbproduct.ApiResponsePaginationProductDeleteAt, error) {
 	page, pageSize := normalizePage(int(request.GetPage()), int(request.GetPageSize()))
 	search := request.GetSearch()
 
@@ -185,14 +186,14 @@ func (h *productQueryHandler) FindByTrashed(ctx context.Context, request *pb.Fin
 		return nil, errors.ToGrpcError(err)
 	}
 
-	pbProducts := make([]*pb.ProductResponseDeleteAt, len(products))
+	pbProducts := make([]*pbproduct.ProductResponseDeleteAt, len(products))
 	for i, product := range products {
 		pbProducts[i] = mapToProtoProductResponseDeleteAt(product)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationProductDeleteAt{
+	return &pbproduct.ApiResponsePaginationProductDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched trashed products",
 		Data:       pbProducts,

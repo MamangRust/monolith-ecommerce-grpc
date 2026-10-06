@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package pb;
+package pb.role;
 
 import "role/role_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/role";
 
 message FindAllRoleRequest {
     int32 page = 1;

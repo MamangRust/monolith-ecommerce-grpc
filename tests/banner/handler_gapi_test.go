@@ -4,24 +4,25 @@ import (
 	"context"
 	"testing"
 
-	banner_cache "github.com/MamangRust/monolith-ecommerce-grpc-banner/cache"
-	banner_handler "github.com/MamangRust/monolith-ecommerce-grpc-banner/handler"
-	banner_repo "github.com/MamangRust/monolith-ecommerce-grpc-banner/repository"
-	banner_service "github.com/MamangRust/monolith-ecommerce-grpc-banner/service"
-	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/cache"
-	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
-	tests "github.com/MamangRust/monolith-ecommerce-test"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	banner_cache "github.com/MamangRust/monolith-ecommerce-banner/cache"
+	banner_handler "github.com/MamangRust/monolith-ecommerce-banner/handler"
+	banner_repo "github.com/MamangRust/monolith-ecommerce-banner/repository"
+	banner_service "github.com/MamangRust/monolith-ecommerce-banner/service"
+	pbbanner "github.com/MamangRust/monolith-ecommerce-pb/banner"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	"github.com/MamangRust/monolith-ecommerce-shared/cache"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
+	tests "github.com/MamangRust/monolith-ecommerce-test"
 )
 
 type BannerGapiTestSuite struct {
 	tests.BaseTestSuite
-	queryClient   pb.BannerQueryServiceClient
-	commandClient pb.BannerCommandServiceClient
+	queryClient   pbbanner.BannerQueryServiceClient
+	commandClient pbbanner.BannerCommandServiceClient
 }
 
 func (s *BannerGapiTestSuite) SetupSuite() {
@@ -50,21 +51,21 @@ func (s *BannerGapiTestSuite) SetupSuite() {
 
 	// Server
 	server := grpc.NewServer()
-	pb.RegisterBannerQueryServiceServer(server, handler.BannerQuery)
-	pb.RegisterBannerCommandServiceServer(server, handler.BannerCommand)
+	pbbanner.RegisterBannerQueryServiceServer(server, handler.BannerQuery)
+	pbbanner.RegisterBannerCommandServiceServer(server, handler.BannerCommand)
 
 	addr := s.RegisterServer(server)
 	conn := s.GetConnection(addr)
 
-	s.queryClient = pb.NewBannerQueryServiceClient(conn)
-	s.commandClient = pb.NewBannerCommandServiceClient(conn)
+	s.queryClient = pbbanner.NewBannerQueryServiceClient(conn)
+	s.commandClient = pbbanner.NewBannerCommandServiceClient(conn)
 }
 
 func (s *BannerGapiTestSuite) TestBannerGapiLifecycle() {
 	ctx := context.Background()
 
 	// 1. Create
-	createRes, err := s.commandClient.Create(ctx, &pb.CreateBannerRequest{
+	createRes, err := s.commandClient.Create(ctx, &pbbanner.CreateBannerRequest{
 		Name:      "GAPI Sale",
 		StartDate: "2026-01-01",
 		EndDate:   "2026-12-31",
@@ -77,22 +78,22 @@ func (s *BannerGapiTestSuite) TestBannerGapiLifecycle() {
 	bannerID := createRes.Data.BannerId
 
 	// 2. FindById
-	getRes, err := s.queryClient.FindById(ctx, &pb.FindByIdBannerRequest{Id: bannerID})
+	getRes, err := s.queryClient.FindById(ctx, &pbbanner.FindByIdBannerRequest{Id: bannerID})
 	s.Require().NoError(err)
 	s.Equal("GAPI Sale", getRes.Data.Name)
 
 	// 3. FindAll
-	allRes, err := s.queryClient.FindAll(ctx, &pb.FindAllBannerRequest{Page: 1, PageSize: 10})
+	allRes, err := s.queryClient.FindAll(ctx, &pbbanner.FindAllBannerRequest{Page: 1, PageSize: 10})
 	s.Require().NoError(err)
 	s.NotEmpty(allRes.Data)
 
 	// 4. FindByActive
-	activeRes, err := s.queryClient.FindByActive(ctx, &pb.FindAllBannerRequest{Page: 1, PageSize: 10})
+	activeRes, err := s.queryClient.FindByActive(ctx, &pbbanner.FindAllBannerRequest{Page: 1, PageSize: 10})
 	s.Require().NoError(err)
 	s.NotEmpty(activeRes.Data)
 
 	// 5. Update
-	updateRes, err := s.commandClient.Update(ctx, &pb.UpdateBannerRequest{
+	updateRes, err := s.commandClient.Update(ctx, &pbbanner.UpdateBannerRequest{
 		BannerId:  bannerID,
 		Name:      "GAPI Sale Updated",
 		StartDate: "2026-01-01",
@@ -105,21 +106,21 @@ func (s *BannerGapiTestSuite) TestBannerGapiLifecycle() {
 	s.Equal("GAPI Sale Updated", updateRes.Data.Name)
 
 	// 6. Trash
-	_, err = s.commandClient.Trash(ctx, &pb.FindByIdBannerRequest{Id: bannerID})
+	_, err = s.commandClient.Trash(ctx, &pbbanner.FindByIdBannerRequest{Id: bannerID})
 	s.Require().NoError(err)
 
 	// 7. FindByTrashed
-	trashedRes, err := s.queryClient.FindByTrashed(ctx, &pb.FindAllBannerRequest{Page: 1, PageSize: 10})
+	trashedRes, err := s.queryClient.FindByTrashed(ctx, &pbbanner.FindAllBannerRequest{Page: 1, PageSize: 10})
 	s.Require().NoError(err)
 	s.NotEmpty(trashedRes.Data)
 
 	// 8. Restore
-	_, err = s.commandClient.Restore(ctx, &pb.FindByIdBannerRequest{Id: bannerID})
+	_, err = s.commandClient.Restore(ctx, &pbbanner.FindByIdBannerRequest{Id: bannerID})
 	s.Require().NoError(err)
 
 	// 9. DeletePermanent
-	_, _ = s.commandClient.Trash(ctx, &pb.FindByIdBannerRequest{Id: bannerID})
-	_, err = s.commandClient.DeletePermanent(ctx, &pb.FindByIdBannerRequest{Id: bannerID})
+	_, _ = s.commandClient.Trash(ctx, &pbbanner.FindByIdBannerRequest{Id: bannerID})
+	_, err = s.commandClient.DeletePermanent(ctx, &pbbanner.FindByIdBannerRequest{Id: bannerID})
 	s.Require().NoError(err)
 
 	// 10. RestoreAll

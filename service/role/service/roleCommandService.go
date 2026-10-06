@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-role/cache"
+	"github.com/MamangRust/monolith-ecommerce-role/repository"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/role_errors"
@@ -55,7 +55,7 @@ func (s *roleCommandService) Create(ctx context.Context, request *requests.Creat
 		status = "error"
 		return errorhandler.HandleError[*db.Role](
 			s.logger,
-			err,
+			role_errors.ErrCreateRole,
 			method,
 			span,
 			zap.String("name", request.Name),
@@ -81,7 +81,7 @@ func (s *roleCommandService) Update(ctx context.Context, request *requests.Updat
 		status = "error"
 		return errorhandler.HandleError[*db.Role](
 			s.logger,
-			err,
+			role_errors.ErrUpdateRole,
 			method,
 			span,
 			zap.Int("role.id", *request.ID),
@@ -107,7 +107,7 @@ func (s *roleCommandService) Trash(ctx context.Context, id int) (*db.Role, error
 		status = "error"
 		return errorhandler.HandleError[*db.Role](
 			s.logger,
-			err,
+			role_errors.ErrTrashedRole,
 			method,
 			span,
 			zap.Int("role.id", id),
@@ -133,7 +133,7 @@ func (s *roleCommandService) Restore(ctx context.Context, id int) (*db.Role, err
 		status = "error"
 		return errorhandler.HandleError[*db.Role](
 			s.logger,
-			err,
+			role_errors.ErrRestoreRole,
 			method,
 			span,
 			zap.Int("role.id", id),

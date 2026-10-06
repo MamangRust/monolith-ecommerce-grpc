@@ -5,23 +5,24 @@ import (
 	"strconv"
 
 	merchantawards_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/merchant_awards"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
+	pbmerchant_award "github.com/MamangRust/monolith-ecommerce-pb/merchant_award"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_award"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
+	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_award"
 	"github.com/labstack/echo/v4"
 )
 
 type merchantAwardQueryHandlerApi struct {
-	client pb.MerchantAwardQueryServiceClient
+	client pbmerchant_award.MerchantAwardQueryServiceClient
 	logger logger.LoggerInterface
 	mapper apimapper.MerchantAwardQueryResponseMapper
 	cache  merchantawards_cache.MerchantAwardQueryCache
 }
 
 type merchantAwardQueryHandleDeps struct {
-	client pb.MerchantAwardQueryServiceClient
+	client pbmerchant_award.MerchantAwardQueryServiceClient
 	router *echo.Echo
 	logger logger.LoggerInterface
 	mapper apimapper.MerchantAwardQueryResponseMapper
@@ -59,9 +60,13 @@ func NewMerchantAwardQueryHandleApi(params *merchantAwardQueryHandleDeps) *merch
 // @Router /api/merchant-award-query [get]
 func (h *merchantAwardQueryHandlerApi) FindAll(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -71,7 +76,7 @@ func (h *merchantAwardQueryHandlerApi) FindAll(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindAll(ctx, &pb.FindAllMerchantRequest{
+	res, err := h.client.FindAll(ctx, &pbmerchant.FindAllMerchantRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
@@ -97,14 +102,16 @@ func (h *merchantAwardQueryHandlerApi) FindAll(c echo.Context) error {
 // @Router /api/merchant-award-query/{id} [get]
 func (h *merchantAwardQueryHandlerApi) FindById(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	ctx := c.Request().Context()
 	if cachedData, found := h.cache.GetCachedMerchantAward(ctx, id); found {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindById(ctx, &pb.FindByIdMerchantAwardRequest{Id: int32(id)})
+	res, err := h.client.FindById(ctx, &pbmerchant_award.FindByIdMerchantAwardRequest{Id: int32(id)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -129,9 +136,13 @@ func (h *merchantAwardQueryHandlerApi) FindById(c echo.Context) error {
 // @Router /api/merchant-award-query/active [get]
 func (h *merchantAwardQueryHandlerApi) FindByActive(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -141,7 +152,7 @@ func (h *merchantAwardQueryHandlerApi) FindByActive(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindByActive(ctx, &pb.FindAllMerchantRequest{
+	res, err := h.client.FindByActive(ctx, &pbmerchant.FindAllMerchantRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
@@ -168,9 +179,13 @@ func (h *merchantAwardQueryHandlerApi) FindByActive(c echo.Context) error {
 // @Router /api/merchant-award-query/trashed [get]
 func (h *merchantAwardQueryHandlerApi) FindByTrashed(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -180,7 +195,7 @@ func (h *merchantAwardQueryHandlerApi) FindByTrashed(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindByTrashed(ctx, &pb.FindAllMerchantRequest{
+	res, err := h.client.FindByTrashed(ctx, &pbmerchant.FindAllMerchantRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
@@ -192,4 +207,3 @@ func (h *merchantAwardQueryHandlerApi) FindByTrashed(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
-

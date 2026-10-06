@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-cart/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-cart/repository"
+	mencache "github.com/MamangRust/monolith-ecommerce-cart/cache"
+	"github.com/MamangRust/monolith-ecommerce-cart/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"

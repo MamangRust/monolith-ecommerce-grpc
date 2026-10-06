@@ -1,32 +1,32 @@
 package reviewapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbreview "github.com/MamangRust/monolith-ecommerce-pb/review"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
 type ReviewBaseResponseMapper interface {
-	ToResponseReview(pbResponse *pb.ReviewResponse) *response.ReviewResponse
-	ToResponsesReview(pbResponses []*pb.ReviewResponse) []*response.ReviewResponse
-	ToResponseReviewsDetail(pbResponse *pb.ReviewsDetailResponse) *response.ReviewsDetailResponse
-	ToResponsesReviewsDetail(pbResponses []*pb.ReviewsDetailResponse) []*response.ReviewsDetailResponse
+	ToResponseReview(pbResponse *pbreview.ReviewResponse) *response.ReviewResponse
+	ToResponsesReview(pbResponses []*pbreview.ReviewResponse) []*response.ReviewResponse
+	ToResponseReviewsDetail(pbResponse *pbreview.ReviewsDetailResponse) *response.ReviewsDetailResponse
+	ToResponsesReviewsDetail(pbResponses []*pbreview.ReviewsDetailResponse) []*response.ReviewsDetailResponse
 }
 
 type ReviewQueryResponseMapper interface {
 	ReviewBaseResponseMapper
-	ToApiResponseReview(pbResponse *pb.ApiResponseReview) *response.ApiResponseReview
-	ToApiResponsesReview(pbResponse *pb.ApiResponsesReview) *response.ApiResponsesReview
-	ToApiResponsePaginationReview(pbResponse *pb.ApiResponsePaginationReview) *response.ApiResponsePaginationReview
-	ToApiResponsePaginationReviewsDetail(pbResponse *pb.ApiResponsePaginationReviewDetail) *response.ApiResponsePaginationReviewsDetail
-	ToApiResponsePaginationReviewDeleteAt(pbResponse *pb.ApiResponsePaginationReviewDeleteAt) *response.ApiResponsePaginationReviewDeleteAt
+	ToApiResponseReview(pbResponse *pbreview.ApiResponseReview) *response.ApiResponseReview
+	ToApiResponsesReview(pbResponse *pbreview.ApiResponsesReview) *response.ApiResponsesReview
+	ToApiResponsePaginationReview(pbResponse *pbreview.ApiResponsePaginationReview) *response.ApiResponsePaginationReview
+	ToApiResponsePaginationReviewsDetail(pbResponse *pbreview.ApiResponsePaginationReviewDetail) *response.ApiResponsePaginationReviewsDetail
+	ToApiResponsePaginationReviewDeleteAt(pbResponse *pbreview.ApiResponsePaginationReviewDeleteAt) *response.ApiResponsePaginationReviewDeleteAt
 }
 
 type ReviewCommandResponseMapper interface {
 	ReviewBaseResponseMapper
-	ToResponseReviewDeleteAt(pbResponse *pb.ReviewResponseDeleteAt) *response.ReviewResponseDeleteAt
-	ToResponsesReviewDeleteAt(pbResponses []*pb.ReviewResponseDeleteAt) []*response.ReviewResponseDeleteAt
-	ToApiResponseReviewDeleteAt(pbResponse *pb.ApiResponseReviewDeleteAt) *response.ApiResponseReviewDeleteAt
-	ToApiResponseReviewDelete(pbResponse *pb.ApiResponseReviewDelete) *response.ApiResponseReviewDelete
-	ToApiResponseReviewAll(pbResponse *pb.ApiResponseReviewAll) *response.ApiResponseReviewAll
-	ToApiResponsePaginationReviewDeleteAt(pbResponse *pb.ApiResponsePaginationReviewDeleteAt) *response.ApiResponsePaginationReviewDeleteAt
+	ToResponseReviewDeleteAt(pbResponse *pbreview.ReviewResponseDeleteAt) *response.ReviewResponseDeleteAt
+	ToResponsesReviewDeleteAt(pbResponses []*pbreview.ReviewResponseDeleteAt) []*response.ReviewResponseDeleteAt
+	ToApiResponseReviewDeleteAt(pbResponse *pbreview.ApiResponseReviewDeleteAt) *response.ApiResponseReviewDeleteAt
+	ToApiResponseReviewDelete(pbResponse *pbreview.ApiResponseReviewDelete) *response.ApiResponseReviewDelete
+	ToApiResponseReviewAll(pbResponse *pbreview.ApiResponseReviewAll) *response.ApiResponseReviewAll
+	ToApiResponsePaginationReviewDeleteAt(pbResponse *pbreview.ApiResponsePaginationReviewDeleteAt) *response.ApiResponsePaginationReviewDeleteAt
 }

@@ -4,16 +4,17 @@ import (
 	"context"
 	"testing"
 
-	merchant_cache "github.com/MamangRust/monolith-ecommerce-grpc-merchant/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant/service"
+	"github.com/stretchr/testify/suite"
+
+	merchant_cache "github.com/MamangRust/monolith-ecommerce-merchant/cache"
+	"github.com/MamangRust/monolith-ecommerce-merchant/repository"
+	"github.com/MamangRust/monolith-ecommerce-merchant/service"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type MerchantServiceTestSuite struct {
@@ -28,7 +29,7 @@ func (s *MerchantServiceTestSuite) SetupSuite() {
 
 	s.SetupUserService()
 	queries := db.New(s.DBPool())
-	repos := repository.NewRepositories(queries, pb.NewUserQueryServiceClient(s.Conns["user"]))
+	repos := repository.NewRepositories(queries, pbuser.NewUserQueryServiceClient(s.Conns["user"]))
 
 	cacheMetrics, _ := observability.NewCacheMetrics("test")
 	cacheStore := cache.NewCacheStore(s.RedisClient(), s.Log, cacheMetrics)

@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/repository"
+	"github.com/MamangRust/monolith-ecommerce-merchant_detail/cache"
+	"github.com/MamangRust/monolith-ecommerce-merchant_detail/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -16,25 +16,25 @@ import (
 )
 
 type merchantDetailQueryService struct {
-	observability    observability.TraceLoggerObservability
-	cache            cache.MerchantDetailQueryCache
+	observability      observability.TraceLoggerObservability
+	cache              cache.MerchantDetailQueryCache
 	merchantRepository repository.MerchantDetailQueryRepository
-	logger           logger.LoggerInterface
+	logger             logger.LoggerInterface
 }
 
 type MerchantDetailQueryServiceDeps struct {
-	Observability    observability.TraceLoggerObservability
-	Cache            cache.MerchantDetailQueryCache
-	Repository       repository.MerchantDetailQueryRepository
-	Logger           logger.LoggerInterface
+	Observability observability.TraceLoggerObservability
+	Cache         cache.MerchantDetailQueryCache
+	Repository    repository.MerchantDetailQueryRepository
+	Logger        logger.LoggerInterface
 }
 
 func NewMerchantDetailQueryService(deps *MerchantDetailQueryServiceDeps) *merchantDetailQueryService {
 	return &merchantDetailQueryService{
-		observability:    deps.Observability,
-		cache:            deps.Cache,
+		observability:      deps.Observability,
+		cache:              deps.Cache,
 		merchantRepository: deps.Repository,
-		logger:           deps.Logger,
+		logger:             deps.Logger,
 	}
 }
 

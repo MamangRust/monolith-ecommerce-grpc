@@ -2,19 +2,27 @@ package apps
 
 import (
 	"fmt"
+	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/handler"
-	transactionKafka "github.com/MamangRust/monolith-ecommerce-grpc-transaction/kafka"
-	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/service"
+	"github.com/MamangRust/monolith-ecommerce-pkg/adapter"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
+	"github.com/MamangRust/monolith-ecommerce-pkg/resilience"
 	"github.com/MamangRust/monolith-ecommerce-pkg/server"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/MamangRust/monolith-ecommerce-transaction/cache"
+	"github.com/MamangRust/monolith-ecommerce-transaction/handler"
+	"github.com/MamangRust/monolith-ecommerce-transaction/repository"
+	"github.com/MamangRust/monolith-ecommerce-transaction/service"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
+	pborder "github.com/MamangRust/monolith-ecommerce-pb/order"
+	pborder_item "github.com/MamangRust/monolith-ecommerce-pb/order_item"
+	pbshipping_address "github.com/MamangRust/monolith-ecommerce-pb/shipping_address"
+	pbtransaction "github.com/MamangRust/monolith-ecommerce-pb/transaction"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 )
 
 func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
@@ -30,7 +38,7 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to user service: %w", err)
 	}
-	userQueryClient := pb.NewUserQueryServiceClient(userConn)
+	userQueryClient := pbuser.NewUserQueryServiceClient(userConn)
 
 	merchantAddr := viper.GetString("GRPC_MERCHANT_ADDR")
 
@@ -38,7 +46,7 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to merchant service: %w", err)
 	}
-	merchantQueryClient := pb.NewMerchantQueryServiceClient(merchantConn)
+	merchantQueryClient := pbmerchant.NewMerchantQueryServiceClient(merchantConn)
 
 	orderAddr := viper.GetString("GRPC_ORDER_ADDR")
 
@@ -46,35 +54,58 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to order service: %w", err)
 	}
-	orderQueryClient := pb.NewOrderQueryServiceClient(orderConn)
+	orderQueryClient := pborder.NewOrderQueryServiceClient(orderConn)
 
 	orderItemAddr := viper.GetString("GRPC_ORDER_ITEM_ADDR")
 	if orderItemAddr == "" {
-		orderItemAddr = "order-item:50056"
+		orderItemAddr = "localhost:50056"
 	}
 	orderItemConn, err := grpc.NewClient(orderItemAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to order_item service: %w", err)
 	}
-	orderItemQueryClient := pb.NewOrderItemQueryServiceClient(orderItemConn)
+	orderItemQueryClient := pborder_item.NewOrderItemQueryServiceClient(orderItemConn)
 
 	shippingAddr := viper.GetString("GRPC_SHIPPING_ADDRESS_ADDR")
 	if shippingAddr == "" {
-		shippingAddr = "shipping_address:50063"
+		shippingAddr = "localhost:50063"
 	}
 	shippingConn, err := grpc.NewClient(shippingAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to shipping_address service: %w", err)
 	}
-	shippingQueryClient := pb.NewShippingQueryServiceClient(shippingConn)
+	shippingQueryClient := pbshipping_address.NewShippingQueryServiceClient(shippingConn)
+
+	guardUser := resilience.NewDependencyGuard("user", 5, 30, 100, 3*time.Second, srv.Logger)
+	guardMerchant := resilience.NewDependencyGuard("merchant", 5, 30, 100, 3*time.Second, srv.Logger)
+	guardOrder := resilience.NewDependencyGuard("order", 5, 30, 100, 3*time.Second, srv.Logger)
+	guardOrderItem := resilience.NewDependencyGuard("order_item", 5, 30, 100, 3*time.Second, srv.Logger)
+	guardShipping := resilience.NewDependencyGuard("shipping_address", 5, 30, 100, 3*time.Second, srv.Logger)
 
 	repos := repository.NewRepositories(&repository.Deps{
-		DB:             srv.DB,
-		UserQuery:      userQueryClient,
-		MerchantQuery:  merchantQueryClient,
-		OrderQuery:     orderQueryClient,
-		OrderItemQuery: orderItemQueryClient,
-		ShippingQuery:  shippingQueryClient,
+		Db:                   srv.DB,
+		UserQueryClient:      userQueryClient,
+		MerchantQueryClient:  merchantQueryClient,
+		OrderQueryClient:     orderQueryClient,
+		OrderItemQueryClient: orderItemQueryClient,
+		ShippingQueryClient:  shippingQueryClient,
+		Guards: repository.GuardOptions{
+			User: []adapter.GuardOption{
+				adapter.WithDependencyGuard(guardUser),
+			},
+			Merchant: []adapter.GuardOption{
+				adapter.WithDependencyGuard(guardMerchant),
+			},
+			Order: []adapter.GuardOption{
+				adapter.WithDependencyGuard(guardOrder),
+			},
+			OrderItem: []adapter.GuardOption{
+				adapter.WithDependencyGuard(guardOrderItem),
+			},
+			Shipping: []adapter.GuardOption{
+				adapter.WithDependencyGuard(guardShipping),
+			},
+		},
 	})
 	myKafka := kafka.NewKafka(srv.Logger, []string{viper.GetString("KAFKA_BROKERS")})
 	obs, _ := observability.NewObservability("transaction-server", srv.Logger)
@@ -82,7 +113,6 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 
 	svc := service.NewService(&service.Deps{
 		Kafka:         myKafka,
-		Pool:          srv.Pool,
 		Cache:         cache,
 		Logger:        srv.Logger,
 		Repositories:  repos,
@@ -91,19 +121,11 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 
 	h := handler.NewHandler(&handler.Deps{Service: svc, Logger: srv.Logger})
 
-	// Start the outbox relay so events committed after the transaction insert are
-	// published to Kafka with durable retry and dead-letter semantics.
-	go svc.Outbox.Start(srv.Ctx, service.OutboxRelayInterval, service.OutboxRelayBatchSize)
-
-	if err := myKafka.StartConsumersWithContext(srv.Ctx, []string{"transaction-service-topic-merchant-status-event"}, "transaction-service-group", transactionKafka.NewMerchantStatusConsumer(srv.Ctx, cache.TransactionCommandCache, srv.Logger)); err != nil {
-		return nil, fmt.Errorf("failed to start merchant status consumer: %w", err)
-	}
-
 	srv.RegisterServices = func(gs *grpc.Server) {
-		pb.RegisterTransactionQueryServiceServer(gs, h.TransactionQuery)
-		pb.RegisterTransactionCommandServiceServer(gs, h.TransactionCommand)
-		pb.RegisterTransactionStatsServiceServer(gs, h.TransactionStats)
-		pb.RegisterTransactionStatsByMerchantServiceServer(gs, h.TransactionStatsByMerchant)
+		pbtransaction.RegisterTransactionQueryServiceServer(gs, h.TransactionQuery)
+		pbtransaction.RegisterTransactionCommandServiceServer(gs, h.TransactionCommand)
+		pbtransaction.RegisterTransactionStatsServiceServer(gs, h.TransactionStats)
+		pbtransaction.RegisterTransactionStatsByMerchantServiceServer(gs, h.TransactionStatsByMerchant)
 	}
 
 	return srv, nil

@@ -1,14 +1,16 @@
 package apps
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/handler"
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/server"
+	"github.com/MamangRust/monolith-ecommerce-role/cache"
+	"github.com/MamangRust/monolith-ecommerce-role/handler"
+	"github.com/MamangRust/monolith-ecommerce-role/repository"
+	"github.com/MamangRust/monolith-ecommerce-role/service"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/grpc"
+
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
+	pbuserrole "github.com/MamangRust/monolith-ecommerce-pb/user_role"
 )
 
 func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
@@ -34,8 +36,9 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	})
 
 	srv.RegisterServices = func(gs *grpc.Server) {
-		pb.RegisterRoleQueryServiceServer(gs, h.RoleQuery)
-		pb.RegisterRoleCommandServiceServer(gs, h.RoleCommand)
+		pbrole.RegisterRoleQueryServiceServer(gs, h.RoleQuery)
+		pbrole.RegisterRoleCommandServiceServer(gs, h.RoleCommand)
+		pbuserrole.RegisterUserRoleServiceServer(gs, h.UserRole)
 	}
 
 	return srv, nil

@@ -5,12 +5,12 @@ import (
 	"strconv"
 
 	merchantpolicy_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/merchant_policies"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant_policy "github.com/MamangRust/monolith-ecommerce-pb/merchant_policy"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_policy"
-	merchantapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
+	merchantapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant"
+	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_policy"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"github.com/labstack/echo/v4"
 	"go.opentelemetry.io/otel/trace"
@@ -19,7 +19,7 @@ import (
 )
 
 type merchantPolicyCommandHandlerApi struct {
-	client         pb.MerchantPolicyCommandServiceClient
+	client         pbmerchant_policy.MerchantPolicyCommandServiceClient
 	logger         logger.LoggerInterface
 	mapper         apimapper.MerchantPolicyCommandResponseMapper
 	merchantMapper merchantapimapper.MerchantCommandResponseMapper
@@ -28,7 +28,7 @@ type merchantPolicyCommandHandlerApi struct {
 }
 
 type merchantPolicyCommandHandleDeps struct {
-	client         pb.MerchantPolicyCommandServiceClient
+	client         pbmerchant_policy.MerchantPolicyCommandServiceClient
 	router         *echo.Echo
 	logger         logger.LoggerInterface
 	mapper         apimapper.MerchantPolicyCommandResponseMapper
@@ -73,8 +73,12 @@ func NewMerchantPolicyCommandHandleApi(params *merchantPolicyCommandHandleDeps) 
 // @Router /api/merchant-policy-command/create [post]
 func (h *merchantPolicyCommandHandlerApi) Create(c echo.Context) error {
 	var body requests.CreateMerchantPolicyRequest
-	if err := c.Bind(&body); err != nil { return echo.NewHTTPError(http.StatusBadRequest, "Invalid request") }
-	if err := body.Validate(); err != nil { return echo.NewHTTPError(http.StatusBadRequest, err.Error()) }
+	if err := c.Bind(&body); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
+	}
+	if err := body.Validate(); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
 	ctx := c.Request().Context()
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(ctx, "CreateMerchantPolicy")
@@ -82,7 +86,7 @@ func (h *merchantPolicyCommandHandlerApi) Create(c echo.Context) error {
 		end(status)
 	}()
 
-	res, err := h.client.Create(ctx, &pb.CreateMerchantPoliciesRequest{
+	res, err := h.client.Create(ctx, &pbmerchant_policy.CreateMerchantPoliciesRequest{
 		MerchantId:  int32(body.MerchantID),
 		PolicyType:  body.PolicyType,
 		Title:       body.Title,
@@ -112,12 +116,18 @@ func (h *merchantPolicyCommandHandlerApi) Create(c echo.Context) error {
 // @Router /api/merchant-policy-command/update/{id} [post]
 func (h *merchantPolicyCommandHandlerApi) Update(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	var body requests.UpdateMerchantPolicyRequest
-	if err := c.Bind(&body); err != nil { return echo.NewHTTPError(http.StatusBadRequest, "Invalid request") }
+	if err := c.Bind(&body); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
+	}
 	body.MerchantPolicyID = &id
-	if err := body.Validate(); err != nil { return echo.NewHTTPError(http.StatusBadRequest, err.Error()) }
+	if err := body.Validate(); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
 	ctx := c.Request().Context()
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(ctx, "UpdateMerchantPolicy")
@@ -125,7 +135,7 @@ func (h *merchantPolicyCommandHandlerApi) Update(c echo.Context) error {
 		end(status)
 	}()
 
-	res, err := h.client.Update(ctx, &pb.UpdateMerchantPoliciesRequest{
+	res, err := h.client.Update(ctx, &pbmerchant_policy.UpdateMerchantPoliciesRequest{
 		MerchantPolicyId: int32(id),
 		PolicyType:       body.PolicyType,
 		Title:            body.Title,
@@ -155,7 +165,9 @@ func (h *merchantPolicyCommandHandlerApi) Update(c echo.Context) error {
 // @Router /api/merchant-policy-command/trashed/{id} [post]
 func (h *merchantPolicyCommandHandlerApi) Trash(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	ctx := c.Request().Context()
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(ctx, "TrashedMerchantPolicy")
@@ -163,7 +175,7 @@ func (h *merchantPolicyCommandHandlerApi) Trash(c echo.Context) error {
 		end(status)
 	}()
 
-	res, err := h.client.TrashedMerchantPolicies(ctx, &pb.FindByIdMerchantPoliciesRequest{Id: int32(id)})
+	res, err := h.client.TrashedMerchantPolicies(ctx, &pbmerchant_policy.FindByIdMerchantPoliciesRequest{Id: int32(id)})
 	if err != nil {
 		status = "error"
 		return h.handleError(c, err, span, "Trash")
@@ -188,7 +200,9 @@ func (h *merchantPolicyCommandHandlerApi) Trash(c echo.Context) error {
 // @Router /api/merchant-policy-command/restore/{id} [post]
 func (h *merchantPolicyCommandHandlerApi) Restore(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	ctx := c.Request().Context()
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(ctx, "RestoreMerchantPolicy")
@@ -196,7 +210,7 @@ func (h *merchantPolicyCommandHandlerApi) Restore(c echo.Context) error {
 		end(status)
 	}()
 
-	res, err := h.client.RestoreMerchantPolicies(ctx, &pb.FindByIdMerchantPoliciesRequest{Id: int32(id)})
+	res, err := h.client.RestoreMerchantPolicies(ctx, &pbmerchant_policy.FindByIdMerchantPoliciesRequest{Id: int32(id)})
 	if err != nil {
 		status = "error"
 		return h.handleError(c, err, span, "Restore")
@@ -221,7 +235,9 @@ func (h *merchantPolicyCommandHandlerApi) Restore(c echo.Context) error {
 // @Router /api/merchant-policy-command/permanent/{id} [delete]
 func (h *merchantPolicyCommandHandlerApi) DeletePermanent(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
 	ctx := c.Request().Context()
 	ctx, span, end, status, logSuccess := h.observability.StartTracingAndLogging(ctx, "DeleteMerchantPolicyPermanent")
@@ -229,7 +245,7 @@ func (h *merchantPolicyCommandHandlerApi) DeletePermanent(c echo.Context) error 
 		end(status)
 	}()
 
-	res, err := h.client.DeleteMerchantPoliciesPermanent(ctx, &pb.FindByIdMerchantPoliciesRequest{Id: int32(id)})
+	res, err := h.client.DeleteMerchantPoliciesPermanent(ctx, &pbmerchant_policy.FindByIdMerchantPoliciesRequest{Id: int32(id)})
 	if err != nil {
 		status = "error"
 		return h.handleError(c, err, span, "DeletePermanent")

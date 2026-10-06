@@ -3,28 +3,29 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-role/service"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/role_errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
 )
 
 type roleQueryHandler struct {
-	pb.UnimplementedRoleQueryServiceServer
+	pbrole.UnimplementedRoleQueryServiceServer
 	roleQuery service.RoleQueryService
 	logger    logger.LoggerInterface
 }
 
-func NewRoleQueryHandler(roleQuery service.RoleQueryService, logger logger.LoggerInterface) pb.RoleQueryServiceServer {
+func NewRoleQueryHandler(roleQuery service.RoleQueryService, logger logger.LoggerInterface) pbrole.RoleQueryServiceServer {
 	return &roleQueryHandler{
 		roleQuery: roleQuery,
 		logger:    logger,
 	}
 }
 
-func (s *roleQueryHandler) FindAllRole(ctx context.Context, req *pb.FindAllRoleRequest) (*pb.ApiResponsePaginationRole, error) {
+func (s *roleQueryHandler) FindAllRole(ctx context.Context, req *pbrole.FindAllRoleRequest) (*pbrole.ApiResponsePaginationRole, error) {
 	page, pageSize := normalizePage(int(req.GetPage()), int(req.GetPageSize()))
 	search := req.GetSearch()
 
@@ -39,14 +40,14 @@ func (s *roleQueryHandler) FindAllRole(ctx context.Context, req *pb.FindAllRoleR
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoRoles := make([]*pb.RoleResponse, len(roles))
+	protoRoles := make([]*pbrole.RoleResponse, len(roles))
 	for i, role := range roles {
 		protoRoles[i] = mapToProtoRoleResponse(role)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationRole{
+	return &pbrole.ApiResponsePaginationRole{
 		Status:     "success",
 		Message:    "Successfully fetched role records",
 		Data:       protoRoles,
@@ -54,7 +55,7 @@ func (s *roleQueryHandler) FindAllRole(ctx context.Context, req *pb.FindAllRoleR
 	}, nil
 }
 
-func (s *roleQueryHandler) FindByActive(ctx context.Context, req *pb.FindAllRoleRequest) (*pb.ApiResponsePaginationRoleDeleteAt, error) {
+func (s *roleQueryHandler) FindByActive(ctx context.Context, req *pbrole.FindAllRoleRequest) (*pbrole.ApiResponsePaginationRoleDeleteAt, error) {
 	page, pageSize := normalizePage(int(req.GetPage()), int(req.GetPageSize()))
 	search := req.GetSearch()
 
@@ -69,14 +70,14 @@ func (s *roleQueryHandler) FindByActive(ctx context.Context, req *pb.FindAllRole
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoRoles := make([]*pb.RoleResponseDeleteAt, len(roles))
+	protoRoles := make([]*pbrole.RoleResponseDeleteAt, len(roles))
 	for i, role := range roles {
 		protoRoles[i] = mapToProtoRoleResponseDeleteAt(role)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationRoleDeleteAt{
+	return &pbrole.ApiResponsePaginationRoleDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched active roles",
 		Data:       protoRoles,
@@ -84,7 +85,7 @@ func (s *roleQueryHandler) FindByActive(ctx context.Context, req *pb.FindAllRole
 	}, nil
 }
 
-func (s *roleQueryHandler) FindByTrashed(ctx context.Context, req *pb.FindAllRoleRequest) (*pb.ApiResponsePaginationRoleDeleteAt, error) {
+func (s *roleQueryHandler) FindByTrashed(ctx context.Context, req *pbrole.FindAllRoleRequest) (*pbrole.ApiResponsePaginationRoleDeleteAt, error) {
 	page, pageSize := normalizePage(int(req.GetPage()), int(req.GetPageSize()))
 	search := req.GetSearch()
 
@@ -99,14 +100,14 @@ func (s *roleQueryHandler) FindByTrashed(ctx context.Context, req *pb.FindAllRol
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoRoles := make([]*pb.RoleResponseDeleteAt, len(roles))
+	protoRoles := make([]*pbrole.RoleResponseDeleteAt, len(roles))
 	for i, role := range roles {
 		protoRoles[i] = mapToProtoRoleResponseDeleteAt(role)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationRoleDeleteAt{
+	return &pbrole.ApiResponsePaginationRoleDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched trashed roles",
 		Data:       protoRoles,
@@ -114,7 +115,7 @@ func (s *roleQueryHandler) FindByTrashed(ctx context.Context, req *pb.FindAllRol
 	}, nil
 }
 
-func (s *roleQueryHandler) FindByIdRole(ctx context.Context, req *pb.FindByIdRoleRequest) (*pb.ApiResponseRole, error) {
+func (s *roleQueryHandler) FindByIdRole(ctx context.Context, req *pbrole.FindByIdRoleRequest) (*pbrole.ApiResponseRole, error) {
 	roleID := int(req.GetRoleId())
 	if roleID == 0 {
 		return nil, role_errors.ErrGrpcRoleInvalidId
@@ -125,14 +126,14 @@ func (s *roleQueryHandler) FindByIdRole(ctx context.Context, req *pb.FindByIdRol
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseRole{
+	return &pbrole.ApiResponseRole{
 		Status:  "success",
 		Message: "Successfully fetched role",
 		Data:    mapToProtoRoleResponse(role),
 	}, nil
 }
 
-func (s *roleQueryHandler) FindByNameRole(ctx context.Context, req *pb.FindByNameRoleRequest) (*pb.ApiResponseRole, error) {
+func (s *roleQueryHandler) FindByNameRole(ctx context.Context, req *pbrole.FindByNameRoleRequest) (*pbrole.ApiResponseRole, error) {
 	name := req.GetName()
 	if name == "" {
 		return nil, role_errors.ErrGrpcRoleInvalidId // Or and appropriate error for empty name
@@ -143,14 +144,14 @@ func (s *roleQueryHandler) FindByNameRole(ctx context.Context, req *pb.FindByNam
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseRole{
+	return &pbrole.ApiResponseRole{
 		Status:  "success",
 		Message: "Successfully fetched role by name",
 		Data:    mapToProtoRoleResponse(role),
 	}, nil
 }
 
-func (s *roleQueryHandler) FindByUserId(ctx context.Context, req *pb.FindByIdUserRoleRequest) (*pb.ApiResponsesRole, error) {
+func (s *roleQueryHandler) FindByUserId(ctx context.Context, req *pbrole.FindByIdUserRoleRequest) (*pbrole.ApiResponsesRole, error) {
 	userID := int(req.GetUserId())
 	if userID == 0 {
 		return nil, role_errors.ErrGrpcRoleInvalidId
@@ -161,12 +162,12 @@ func (s *roleQueryHandler) FindByUserId(ctx context.Context, req *pb.FindByIdUse
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoRoles := make([]*pb.RoleResponse, len(roles))
+	protoRoles := make([]*pbrole.RoleResponse, len(roles))
 	for i, role := range roles {
 		protoRoles[i] = mapToProtoRoleResponse(role)
 	}
 
-	return &pb.ApiResponsesRole{
+	return &pbrole.ApiResponsesRole{
 		Status:  "success",
 		Message: "Successfully fetched role by user id",
 		Data:    protoRoles,

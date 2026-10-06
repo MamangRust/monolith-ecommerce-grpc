@@ -5,21 +5,22 @@ import (
 	"testing"
 	"time"
 
-	order_cache "github.com/MamangRust/monolith-ecommerce-grpc-order/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-order/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-order/service"
+	"github.com/stretchr/testify/suite"
+
+	order_cache "github.com/MamangRust/monolith-ecommerce-order/cache"
+	"github.com/MamangRust/monolith-ecommerce-order/repository"
+	"github.com/MamangRust/monolith-ecommerce-order/service"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type OrderStatsServiceTestSuite struct {
 	tests.BaseTestSuite
-	svc             service.OrderStatsService
-	svcByMerchant   service.OrderStatsByMerchantService
-	merchantID      int
-	userID          int
+	svc           service.OrderStatsService
+	svcByMerchant service.OrderStatsByMerchantService
+	merchantID    int
+	userID        int
 }
 
 func (s *OrderStatsServiceTestSuite) SetupSuite() {
@@ -36,7 +37,7 @@ func (s *OrderStatsServiceTestSuite) SetupSuite() {
 
 	queries := db.New(s.DBPool())
 	repos := repository.NewRepositories(&repository.Deps{
-		DB: queries,
+		Db: queries,
 	})
 	cacheStore := s.GetCacheStore()
 	mencache := order_cache.NewMencache(cacheStore)
@@ -65,7 +66,7 @@ func (s *OrderStatsServiceTestSuite) SetupSuite() {
 	orderID := s.SeedOrder(ctx, s.userID, s.merchantID, prodID)
 
 	// Ensure created_at is set to current time to be picked up by stats
-	_, err := s.DBPool().Exec(ctx, "UPDATE orders SET created_at = $1 WHERE order_id = $2", 
+	_, err := s.DBPool().Exec(ctx, "UPDATE orders SET created_at = $1 WHERE order_id = $2",
 		time.Now(), orderID)
 	s.Require().NoError(err)
 }

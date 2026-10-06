@@ -3,17 +3,19 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_business/service"
+	"github.com/MamangRust/monolith-ecommerce-merchant_business/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	merchantbusiness_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant_business"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
+	pbmerchant_business "github.com/MamangRust/monolith-ecommerce-pb/merchant_business"
 )
 
 type merchantBusinessCommandHandler struct {
-	pb.UnimplementedMerchantBusinessCommandServiceServer
+	pbmerchant_business.UnimplementedMerchantBusinessCommandServiceServer
 	merchantBusinessCommand service.MerchantBusinessCommandService
 	logger                  logger.LoggerInterface
 }
@@ -25,7 +27,7 @@ func NewMerchantBusinessCommandHandler(svc service.MerchantBusinessCommandServic
 	}
 }
 
-func (s *merchantBusinessCommandHandler) Create(ctx context.Context, request *pb.CreateMerchantBusinessRequest) (*pb.ApiResponseMerchantBusiness, error) {
+func (s *merchantBusinessCommandHandler) Create(ctx context.Context, request *pbmerchant_business.CreateMerchantBusinessRequest) (*pbmerchant_business.ApiResponseMerchantBusiness, error) {
 	req := &requests.CreateMerchantBusinessInformationRequest{
 		MerchantID:        int(request.GetMerchantId()),
 		BusinessType:      request.GetBusinessType(),
@@ -44,14 +46,14 @@ func (s *merchantBusinessCommandHandler) Create(ctx context.Context, request *pb
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseMerchantBusiness{
+	return &pbmerchant_business.ApiResponseMerchantBusiness{
 		Status:  "success",
 		Message: "Successfully created merchant business",
 		Data:    mapToProtoMerchantBusinessResponse(merchant),
 	}, nil
 }
 
-func (s *merchantBusinessCommandHandler) Update(ctx context.Context, request *pb.UpdateMerchantBusinessRequest) (*pb.ApiResponseMerchantBusiness, error) {
+func (s *merchantBusinessCommandHandler) Update(ctx context.Context, request *pbmerchant_business.UpdateMerchantBusinessRequest) (*pbmerchant_business.ApiResponseMerchantBusiness, error) {
 	id := int(request.GetMerchantBusinessInfoId())
 	req := &requests.UpdateMerchantBusinessInformationRequest{
 		MerchantBusinessInfoID: &id,
@@ -71,14 +73,14 @@ func (s *merchantBusinessCommandHandler) Update(ctx context.Context, request *pb
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseMerchantBusiness{
+	return &pbmerchant_business.ApiResponseMerchantBusiness{
 		Status:  "success",
 		Message: "Successfully updated merchant business",
 		Data:    mapToProtoMerchantBusinessResponse(merchant),
 	}, nil
 }
 
-func (s *merchantBusinessCommandHandler) TrashedMerchantBusiness(ctx context.Context, request *pb.FindByIdMerchantBusinessRequest) (*pb.ApiResponseMerchantBusinessDeleteAt, error) {
+func (s *merchantBusinessCommandHandler) TrashedMerchantBusiness(ctx context.Context, request *pbmerchant_business.FindByIdMerchantBusinessRequest) (*pbmerchant_business.ApiResponseMerchantBusinessDeleteAt, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -90,14 +92,14 @@ func (s *merchantBusinessCommandHandler) TrashedMerchantBusiness(ctx context.Con
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseMerchantBusinessDeleteAt{
+	return &pbmerchant_business.ApiResponseMerchantBusinessDeleteAt{
 		Status:  "success",
 		Message: "Successfully trashed merchant business",
 		Data:    mapToProtoMerchantBusinessResponseDeleteAt(merchant),
 	}, nil
 }
 
-func (s *merchantBusinessCommandHandler) RestoreMerchantBusiness(ctx context.Context, request *pb.FindByIdMerchantBusinessRequest) (*pb.ApiResponseMerchantBusinessDeleteAt, error) {
+func (s *merchantBusinessCommandHandler) RestoreMerchantBusiness(ctx context.Context, request *pbmerchant_business.FindByIdMerchantBusinessRequest) (*pbmerchant_business.ApiResponseMerchantBusinessDeleteAt, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -109,14 +111,14 @@ func (s *merchantBusinessCommandHandler) RestoreMerchantBusiness(ctx context.Con
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseMerchantBusinessDeleteAt{
+	return &pbmerchant_business.ApiResponseMerchantBusinessDeleteAt{
 		Status:  "success",
 		Message: "Successfully restored merchant business",
 		Data:    mapToProtoMerchantBusinessResponseDeleteAt(merchant),
 	}, nil
 }
 
-func (s *merchantBusinessCommandHandler) DeleteMerchantBusinessPermanent(ctx context.Context, request *pb.FindByIdMerchantBusinessRequest) (*pb.ApiResponseMerchantDelete, error) {
+func (s *merchantBusinessCommandHandler) DeleteMerchantBusinessPermanent(ctx context.Context, request *pbmerchant_business.FindByIdMerchantBusinessRequest) (*pbmerchant.ApiResponseMerchantDelete, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -128,31 +130,31 @@ func (s *merchantBusinessCommandHandler) DeleteMerchantBusinessPermanent(ctx con
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseMerchantDelete{
+	return &pbmerchant.ApiResponseMerchantDelete{
 		Status:  "success",
 		Message: "Successfully deleted merchant business permanently",
 	}, nil
 }
 
-func (s *merchantBusinessCommandHandler) RestoreAllMerchantBusiness(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseMerchantAll, error) {
+func (s *merchantBusinessCommandHandler) RestoreAllMerchantBusiness(ctx context.Context, _ *emptypb.Empty) (*pbmerchant.ApiResponseMerchantAll, error) {
 	_, err := s.merchantBusinessCommand.RestoreAll(ctx)
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseMerchantAll{
+	return &pbmerchant.ApiResponseMerchantAll{
 		Status:  "success",
 		Message: "Successfully restored all trashed merchant businesses",
 	}, nil
 }
 
-func (s *merchantBusinessCommandHandler) DeleteAllMerchantBusinessPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseMerchantAll, error) {
+func (s *merchantBusinessCommandHandler) DeleteAllMerchantBusinessPermanent(ctx context.Context, _ *emptypb.Empty) (*pbmerchant.ApiResponseMerchantAll, error) {
 	_, err := s.merchantBusinessCommand.DeleteAll(ctx)
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseMerchantAll{
+	return &pbmerchant.ApiResponseMerchantAll{
 		Status:  "success",
 		Message: "Successfully deleted all merchant businesses permanently",
 	}, nil

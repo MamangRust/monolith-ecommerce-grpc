@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	orderAllCacheKey     = "order:all:page:%d:pageSize:%d:search:%s"
-	orderByIdCacheKey    = "order:id:%d"
-	orderActiveCacheKey  = "order:active:page:%d:pageSize:%d:search:%s"
-	orderTrashedCacheKey = "order:trashed:page:%d:pageSize:%d:search:%s"
+	orderAllCacheKey        = "order:all:page:%d:pageSize:%d:search:%s"
+	orderByIdCacheKey       = "order:id:%d"
+	orderActiveCacheKey     = "order:active:page:%d:pageSize:%d:search:%s"
+	orderTrashedCacheKey    = "order:trashed:page:%d:pageSize:%d:search:%s"
 	orderByMerchantCacheKey = "order:merchant:merchantID:%d:page:%d:pageSize:%d:search:%s"
 
 	ttlDefault = 5 * time.Minute

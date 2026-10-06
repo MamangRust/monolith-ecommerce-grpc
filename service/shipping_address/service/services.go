@@ -1,10 +1,10 @@
 package service
 
 import (
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
+	mencache "github.com/MamangRust/monolith-ecommerce-shipping-address/cache"
+	"github.com/MamangRust/monolith-ecommerce-shipping-address/repository"
 )
 
 type Service struct {

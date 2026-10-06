@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package pb;
+package pb.merchant_document;
 
 import "merchant_document/merchant_document_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/merchant_document";
 
 message FindMerchantDocumentByIdRequest {
     int32 document_id = 1;

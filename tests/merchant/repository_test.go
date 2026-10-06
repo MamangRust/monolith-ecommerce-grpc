@@ -4,12 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant/repository"
-	user_repo "github.com/MamangRust/monolith-ecommerce-grpc-user/repository"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/MamangRust/monolith-ecommerce-merchant/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
+	user_repo "github.com/MamangRust/monolith-ecommerce-user/repository"
 )
 
 type MerchantRepositoryTestSuite struct {

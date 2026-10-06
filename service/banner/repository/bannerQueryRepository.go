@@ -86,4 +86,3 @@ func (r *bannerQueryRepository) FindByID(ctx context.Context, bannerID int) (*db
 
 	return res, nil
 }
-

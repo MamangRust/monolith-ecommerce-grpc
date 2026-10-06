@@ -2,7 +2,7 @@ package userhandler
 
 import (
 	user_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/user"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
@@ -41,7 +41,7 @@ func RegisterUserHandler(deps *DepsUser) {
 func setupUserQueryHandler(deps *DepsUser, mapper apimapper.UserQueryResponseMapper, cache user_cache.UserMencache) func() {
 	return func() {
 		NewUserQueryHandleApi(&userQueryHandleDeps{
-			client:     pb.NewUserQueryServiceClient(deps.Client),
+			client:     pbuser.NewUserQueryServiceClient(deps.Client),
 			router:     deps.E,
 			logger:     deps.Logger,
 			mapper:     mapper,
@@ -54,7 +54,7 @@ func setupUserQueryHandler(deps *DepsUser, mapper apimapper.UserQueryResponseMap
 func setupUserCommandHandler(deps *DepsUser, mapper apimapper.UserCommandResponseMapper, cache user_cache.UserMencache) func() {
 	return func() {
 		NewUserCommandHandleApi(&userCommandHandleDeps{
-			client:     pb.NewUserCommandServiceClient(deps.Client),
+			client:     pbuser.NewUserCommandServiceClient(deps.Client),
 			router:     deps.E,
 			logger:     deps.Logger,
 			mapper:     mapper,

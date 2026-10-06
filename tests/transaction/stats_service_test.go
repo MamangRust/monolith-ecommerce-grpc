@@ -5,21 +5,22 @@ import (
 	"testing"
 	"time"
 
-	transaction_cache "github.com/MamangRust/monolith-ecommerce-grpc-transaction/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/service"
+	"github.com/stretchr/testify/suite"
+
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
+	transaction_cache "github.com/MamangRust/monolith-ecommerce-transaction/cache"
+	"github.com/MamangRust/monolith-ecommerce-transaction/repository"
+	"github.com/MamangRust/monolith-ecommerce-transaction/service"
 )
 
 type TransactionStatsServiceTestSuite struct {
 	tests.BaseTestSuite
-	svc             service.TransactionStatsService
-	svcByMerchant   service.TransactionStatsByMerchantService
-	merchantID      int
-	userID          int
+	svc           service.TransactionStatsService
+	svcByMerchant service.TransactionStatsByMerchantService
+	merchantID    int
+	userID        int
 }
 
 func (s *TransactionStatsServiceTestSuite) SetupSuite() {
@@ -36,7 +37,7 @@ func (s *TransactionStatsServiceTestSuite) SetupSuite() {
 
 	queries := db.New(s.DBPool())
 	repos := repository.NewRepositories(&repository.Deps{
-		DB: queries,
+		Db: queries,
 	})
 	cacheStore := s.GetCacheStore()
 	mencache := transaction_cache.NewMencache(cacheStore)

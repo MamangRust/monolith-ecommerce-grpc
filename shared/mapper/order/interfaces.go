@@ -1,44 +1,44 @@
 package orderapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pborder "github.com/MamangRust/monolith-ecommerce-pb/order"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
 type OrderBaseResponseMapper interface {
-	ToResponseOrder(order *pb.OrderResponse) *response.OrderResponse
-	ToResponsesOrder(orders []*pb.OrderResponse) []*response.OrderResponse
-	ToApiResponseOrder(pbResponse *pb.ApiResponseOrder) *response.ApiResponseOrder
+	ToResponseOrder(order *pborder.OrderResponse) *response.OrderResponse
+	ToResponsesOrder(orders []*pborder.OrderResponse) []*response.OrderResponse
+	ToApiResponseOrder(pbResponse *pborder.ApiResponseOrder) *response.ApiResponseOrder
 }
 
 type OrderQueryResponseMapper interface {
 	OrderBaseResponseMapper
-	ToApiResponsesOrder(pbResponse *pb.ApiResponsesOrder) *response.ApiResponsesOrder
-	ToApiResponsePaginationOrder(pbResponse *pb.ApiResponsePaginationOrder) *response.ApiResponsePaginationOrder
-	ToApiResponsePaginationOrderDeleteAt(pbResponse *pb.ApiResponsePaginationOrderDeleteAt) *response.ApiResponsePaginationOrderDeleteAt
+	ToApiResponsesOrder(pbResponse *pborder.ApiResponsesOrder) *response.ApiResponsesOrder
+	ToApiResponsePaginationOrder(pbResponse *pborder.ApiResponsePaginationOrder) *response.ApiResponsePaginationOrder
+	ToApiResponsePaginationOrderDeleteAt(pbResponse *pborder.ApiResponsePaginationOrderDeleteAt) *response.ApiResponsePaginationOrderDeleteAt
 }
 
 type OrderCommandResponseMapper interface {
 	OrderBaseResponseMapper
-	ToResponseOrderDeleteAt(order *pb.OrderResponseDeleteAt) *response.OrderResponseDeleteAt
-	ToResponsesOrderDeleteAt(orders []*pb.OrderResponseDeleteAt) []*response.OrderResponseDeleteAt
-	ToApiResponseOrderDeleteAt(pbResponse *pb.ApiResponseOrderDeleteAt) *response.ApiResponseOrderDeleteAt
-	ToApiResponseOrderDelete(pbResponse *pb.ApiResponseOrderDelete) *response.ApiResponseOrderDelete
-	ToApiResponseOrderAll(pbResponse *pb.ApiResponseOrderAll) *response.ApiResponseOrderAll
+	ToResponseOrderDeleteAt(order *pborder.OrderResponseDeleteAt) *response.OrderResponseDeleteAt
+	ToResponsesOrderDeleteAt(orders []*pborder.OrderResponseDeleteAt) []*response.OrderResponseDeleteAt
+	ToApiResponseOrderDeleteAt(pbResponse *pborder.ApiResponseOrderDeleteAt) *response.ApiResponseOrderDeleteAt
+	ToApiResponseOrderDelete(pbResponse *pborder.ApiResponseOrderDelete) *response.ApiResponseOrderDelete
+	ToApiResponseOrderAll(pbResponse *pborder.ApiResponseOrderAll) *response.ApiResponseOrderAll
 }
 
 type OrderStatsResponseMapper interface {
-	ToOrderMonthlyPrice(category *pb.OrderMonthlyResponse) *response.OrderMonthlyResponse
-	ToOrderMonthlyPrices(c []*pb.OrderMonthlyResponse) []*response.OrderMonthlyResponse
-	ToOrderYearlyPrice(category *pb.OrderYearlyResponse) *response.OrderYearlyResponse
-	ToOrderYearlyPrices(c []*pb.OrderYearlyResponse) []*response.OrderYearlyResponse
-	ToResponseOrderMonthlyTotalRevenue(c *pb.OrderMonthlyTotalRevenueResponse) *response.OrderMonthlyTotalRevenueResponse
-	ToResponseOrderMonthlyTotalRevenues(c []*pb.OrderMonthlyTotalRevenueResponse) []*response.OrderMonthlyTotalRevenueResponse
-	ToResponseOrderYearlyTotalRevenue(c *pb.OrderYearlyTotalRevenueResponse) *response.OrderYearlyTotalRevenueResponse
-	ToResponseOrderYearlyTotalRevenues(c []*pb.OrderYearlyTotalRevenueResponse) []*response.OrderYearlyTotalRevenueResponse
+	ToOrderMonthlyPrice(category *pborder.OrderMonthlyResponse) *response.OrderMonthlyResponse
+	ToOrderMonthlyPrices(c []*pborder.OrderMonthlyResponse) []*response.OrderMonthlyResponse
+	ToOrderYearlyPrice(category *pborder.OrderYearlyResponse) *response.OrderYearlyResponse
+	ToOrderYearlyPrices(c []*pborder.OrderYearlyResponse) []*response.OrderYearlyResponse
+	ToResponseOrderMonthlyTotalRevenue(c *pborder.OrderMonthlyTotalRevenueResponse) *response.OrderMonthlyTotalRevenueResponse
+	ToResponseOrderMonthlyTotalRevenues(c []*pborder.OrderMonthlyTotalRevenueResponse) []*response.OrderMonthlyTotalRevenueResponse
+	ToResponseOrderYearlyTotalRevenue(c *pborder.OrderYearlyTotalRevenueResponse) *response.OrderYearlyTotalRevenueResponse
+	ToResponseOrderYearlyTotalRevenues(c []*pborder.OrderYearlyTotalRevenueResponse) []*response.OrderYearlyTotalRevenueResponse
 
-	ToApiResponseMonthlyOrder(pbResponse *pb.ApiResponseOrderMonthly) *response.ApiResponseOrderMonthly
-	ToApiResponseYearlyOrder(pbResponse *pb.ApiResponseOrderYearly) *response.ApiResponseOrderYearly
-	ToApiResponseMonthlyTotalRevenue(pbResponse *pb.ApiResponseOrderMonthlyTotalRevenue) *response.ApiResponseOrderMonthlyTotalRevenue
-	ToApiResponseYearlyTotalRevenue(pbResponse *pb.ApiResponseOrderYearlyTotalRevenue) *response.ApiResponseOrderYearlyTotalRevenue
+	ToApiResponseMonthlyOrder(pbResponse *pborder.ApiResponseOrderMonthly) *response.ApiResponseOrderMonthly
+	ToApiResponseYearlyOrder(pbResponse *pborder.ApiResponseOrderYearly) *response.ApiResponseOrderYearly
+	ToApiResponseMonthlyTotalRevenue(pbResponse *pborder.ApiResponseOrderMonthlyTotalRevenue) *response.ApiResponseOrderMonthlyTotalRevenue
+	ToApiResponseYearlyTotalRevenue(pbResponse *pborder.ApiResponseOrderYearlyTotalRevenue) *response.ApiResponseOrderYearlyTotalRevenue
 }

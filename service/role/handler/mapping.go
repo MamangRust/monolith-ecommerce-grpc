@@ -4,9 +4,11 @@ import (
 	"math"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
 )
 
 func normalizePage(page, pageSize int) (int, int) {
@@ -19,9 +21,9 @@ func normalizePage(page, pageSize int) (int, int) {
 	return page, pageSize
 }
 
-func createPaginationMeta(page, pageSize, totalRecords int) *pb.PaginationMeta {
+func createPaginationMeta(page, pageSize, totalRecords int) *pbcommon.PaginationMeta {
 	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
-	return &pb.PaginationMeta{
+	return &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
@@ -43,17 +45,17 @@ func formatTimestamp(v interface{}) string {
 	return ""
 }
 
-func mapToProtoRoleResponse(m interface{}) *pb.RoleResponse {
+func mapToProtoRoleResponse(m interface{}) *pbrole.RoleResponse {
 	switch v := m.(type) {
 	case *db.Role:
-		return &pb.RoleResponse{
+		return &pbrole.RoleResponse{
 			Id:        v.RoleID,
 			Name:      v.RoleName,
 			CreatedAt: formatTimestamp(v.CreatedAt),
 			UpdatedAt: formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetRolesRow:
-		return &pb.RoleResponse{
+		return &pbrole.RoleResponse{
 			Id:        v.RoleID,
 			Name:      v.RoleName,
 			CreatedAt: formatTimestamp(v.CreatedAt),
@@ -64,13 +66,13 @@ func mapToProtoRoleResponse(m interface{}) *pb.RoleResponse {
 	}
 }
 
-func mapToProtoRoleResponseDeleteAt(m interface{}) *pb.RoleResponseDeleteAt {
-	var res *pb.RoleResponseDeleteAt
+func mapToProtoRoleResponseDeleteAt(m interface{}) *pbrole.RoleResponseDeleteAt {
+	var res *pbrole.RoleResponseDeleteAt
 	var deletedAt interface{}
 
 	switch v := m.(type) {
 	case *db.Role:
-		res = &pb.RoleResponseDeleteAt{
+		res = &pbrole.RoleResponseDeleteAt{
 			Id:        v.RoleID,
 			Name:      v.RoleName,
 			CreatedAt: formatTimestamp(v.CreatedAt),
@@ -78,7 +80,7 @@ func mapToProtoRoleResponseDeleteAt(m interface{}) *pb.RoleResponseDeleteAt {
 		}
 		deletedAt = v.DeletedAt
 	case *db.GetActiveRolesRow:
-		res = &pb.RoleResponseDeleteAt{
+		res = &pbrole.RoleResponseDeleteAt{
 			Id:        v.RoleID,
 			Name:      v.RoleName,
 			CreatedAt: formatTimestamp(v.CreatedAt),
@@ -86,7 +88,7 @@ func mapToProtoRoleResponseDeleteAt(m interface{}) *pb.RoleResponseDeleteAt {
 		}
 		deletedAt = v.DeletedAt
 	case *db.GetTrashedRolesRow:
-		res = &pb.RoleResponseDeleteAt{
+		res = &pbrole.RoleResponseDeleteAt{
 			Id:        v.RoleID,
 			Name:      v.RoleName,
 			CreatedAt: formatTimestamp(v.CreatedAt),
@@ -103,11 +105,11 @@ func mapToProtoRoleResponseDeleteAt(m interface{}) *pb.RoleResponseDeleteAt {
 
 	return res
 }
-func mapToProtoUserRoleResponse(v *db.UserRole) *pb.UserRoleResponse {
+func mapToProtoUserRoleResponse(v *db.UserRole) *pbrole.UserRoleResponse {
 	if v == nil {
 		return nil
 	}
-	return &pb.UserRoleResponse{
+	return &pbrole.UserRoleResponse{
 		UserRoleId: v.UserRoleID,
 		UserId:     v.UserID,
 		RoleId:     v.RoleID,

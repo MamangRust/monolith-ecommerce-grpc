@@ -5,14 +5,14 @@ import (
 	"strconv"
 	"strings"
 
+	reviewdetail_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/review_detail"
+	pbreview_detail "github.com/MamangRust/monolith-ecommerce-pb/review_detail"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
-	reviewdetail_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/review_detail"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/review_detail"
-	reviewapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/review"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
+	reviewapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/review"
+	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/review_detail"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"github.com/labstack/echo/v4"
 	"go.opentelemetry.io/otel/trace"
@@ -21,7 +21,7 @@ import (
 )
 
 type reviewDetailCommandHandleApi struct {
-	client        pb.ReviewDetailCommandServiceClient
+	client        pbreview_detail.ReviewDetailCommandServiceClient
 	logger        logger.LoggerInterface
 	mapper        apimapper.ReviewDetailCommandResponseMapper
 	queryMapper   apimapper.ReviewDetailQueryResponseMapper
@@ -32,7 +32,7 @@ type reviewDetailCommandHandleApi struct {
 }
 
 type reviewDetailCommandHandleDeps struct {
-	client        pb.ReviewDetailCommandServiceClient
+	client        pbreview_detail.ReviewDetailCommandServiceClient
 	router        *echo.Echo
 	logger        logger.LoggerInterface
 	mapper        apimapper.ReviewDetailCommandResponseMapper
@@ -87,7 +87,7 @@ func (h *reviewDetailCommandHandleApi) Create(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	grpcReq := &pb.CreateReviewDetailRequest{
+	grpcReq := &pbreview_detail.CreateReviewDetailRequest{
 		ReviewId: int32(formData.ReviewID),
 		Type:     formData.Type,
 		Url:      formData.Url,
@@ -136,7 +136,7 @@ func (h *reviewDetailCommandHandleApi) Update(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	grpcReq := &pb.UpdateReviewDetailRequest{
+	grpcReq := &pbreview_detail.UpdateReviewDetailRequest{
 		ReviewDetailId: int32(id),
 		Type:           formData.Type,
 		Url:            formData.Url,
@@ -183,7 +183,7 @@ func (h *reviewDetailCommandHandleApi) TrashedReviewDetail(c echo.Context) error
 		end(status)
 	}()
 
-	res, err := h.client.TrashedReviewDetail(ctx, &pb.FindByIdReviewDetailRequest{Id: int32(id)})
+	res, err := h.client.TrashedReviewDetail(ctx, &pbreview_detail.FindByIdReviewDetailRequest{Id: int32(id)})
 	if err != nil {
 		status = "error"
 		return h.handleError(c, err, span, "Trash")
@@ -218,7 +218,7 @@ func (h *reviewDetailCommandHandleApi) RestoreReviewDetail(c echo.Context) error
 		end(status)
 	}()
 
-	res, err := h.client.RestoreReviewDetail(ctx, &pb.FindByIdReviewDetailRequest{Id: int32(id)})
+	res, err := h.client.RestoreReviewDetail(ctx, &pbreview_detail.FindByIdReviewDetailRequest{Id: int32(id)})
 	if err != nil {
 		status = "error"
 		return h.handleError(c, err, span, "Restore")
@@ -253,7 +253,7 @@ func (h *reviewDetailCommandHandleApi) DeleteReviewDetailPermanent(c echo.Contex
 		end(status)
 	}()
 
-	res, err := h.client.DeleteReviewDetailPermanent(ctx, &pb.FindByIdReviewDetailRequest{Id: int32(id)})
+	res, err := h.client.DeleteReviewDetailPermanent(ctx, &pbreview_detail.FindByIdReviewDetailRequest{Id: int32(id)})
 	if err != nil {
 		status = "error"
 		return h.handleError(c, err, span, "Delete")
@@ -341,7 +341,7 @@ func (h *reviewDetailCommandHandleApi) parseReviewDetailForm(c echo.Context) (re
 
 	file, err := c.FormFile("url")
 	if err == nil {
-		uploadPath, err := h.upload.ProcessImageUpload(c, "uploads/review_detail", file, false)
+		uploadPath, err := h.upload.ProcessImageUpload("uploads/review_detail", file, false)
 		if err != nil {
 			return formData, err
 		}

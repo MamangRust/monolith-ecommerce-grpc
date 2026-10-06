@@ -2,11 +2,11 @@ package merchantpolicyhandler
 
 import (
 	merchantpolicy_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/merchant_policies"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant_policy "github.com/MamangRust/monolith-ecommerce-pb/merchant_policy"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_policy"
-	merchantapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
+	merchantapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant"
+	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_policy"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc"
@@ -26,7 +26,7 @@ func RegisterMerchantPolicyHandler(deps *DepsMerchantPolicy) {
 	cache := merchantpolicy_cache.NewMerchantPoliciesMencache(deps.CacheStore)
 
 	NewMerchantPolicyQueryHandleApi(&merchantPolicyQueryHandleDeps{
-		client:        pb.NewMerchantPolicyQueryServiceClient(deps.Client),
+		client:        pbmerchant_policy.NewMerchantPolicyQueryServiceClient(deps.Client),
 		router:        deps.E,
 		logger:        deps.Logger,
 		mapper:        mapper.QueryMapper(),
@@ -35,7 +35,7 @@ func RegisterMerchantPolicyHandler(deps *DepsMerchantPolicy) {
 	})
 
 	NewMerchantPolicyCommandHandleApi(&merchantPolicyCommandHandleDeps{
-		client:         pb.NewMerchantPolicyCommandServiceClient(deps.Client),
+		client:         pbmerchant_policy.NewMerchantPolicyCommandServiceClient(deps.Client),
 		router:         deps.E,
 		logger:         deps.Logger,
 		mapper:         mapper.CommandMapper(),

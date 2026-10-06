@@ -16,6 +16,7 @@ require (
 )
 
 require (
+	github.com/MamangRust/monolith-ecommerce-pb v0.0.0-00010101000000-000000000000
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
@@ -45,3 +46,5 @@ require (
 	golang.org/x/text v0.35.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9 // indirect
 )
+
+replace github.com/MamangRust/monolith-ecommerce-pb => ../pb

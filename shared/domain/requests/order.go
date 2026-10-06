@@ -83,23 +83,31 @@ type UpdateOrderRequest struct {
 
 type CreateOrderItemRequest struct {
 	ProductID int `json:"product_id" validate:"required"`
-	Quantity  int `json:"quantity" validate:"required,gt=0"`
-	Price     int `json:"price" validate:"required,gte=0"`
+	Quantity  int `json:"quantity" validate:"required"`
+	Price     int `json:"price" validate:"required"`
 }
 
 type UpdateOrderItemRequest struct {
 	OrderItemID int `json:"order_item_id"`
 	ProductID   int `json:"product_id" validate:"required"`
-	Quantity    int `json:"quantity" validate:"required,gt=0"`
-	Price       int `json:"price" validate:"required,gte=0"`
+	Quantity    int `json:"quantity" validate:"required"`
+	Price       int `json:"price" validate:"required"`
 }
 
 func (r *CreateOrderRequest) Validate() error {
 	validate := validator.New()
-	return validate.Struct(r)
+	err := validate.Struct(r)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *UpdateOrderRequest) Validate() error {
 	validate := validator.New()
-	return validate.Struct(r)
+	err := validate.Struct(r)
+	if err != nil {
+		return err
+	}
+	return nil
 }

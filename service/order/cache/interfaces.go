@@ -54,5 +54,4 @@ type OrderQueryCache interface {
 
 type OrderCommandCache interface {
 	DeleteOrderCache(ctx context.Context, orderID int)
-	InvalidateOrderCache(ctx context.Context)
 }

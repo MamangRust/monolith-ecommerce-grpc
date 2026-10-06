@@ -4,8 +4,8 @@ import (
 	"context"
 	"os"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/repository"
+	"github.com/MamangRust/monolith-ecommerce-merchant_detail/cache"
+	"github.com/MamangRust/monolith-ecommerce-merchant_detail/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -124,7 +124,7 @@ func (s *merchantDetailCommandService) Trash(ctx context.Context, merchantID int
 		status = "error"
 		return errorhandler.HandleError[*db.MerchantDetail](
 			s.logger,
-			err,
+			merchantdetail_errors.ErrTrashMerchantDetail,
 			method,
 			span,
 			zap.Int("merchantDetailID", merchantID),
@@ -152,7 +152,7 @@ func (s *merchantDetailCommandService) Restore(ctx context.Context, merchantID i
 		status = "error"
 		return errorhandler.HandleError[*db.MerchantDetail](
 			s.logger,
-			err,
+			merchantdetail_errors.ErrRestoreMerchantDetail,
 			method,
 			span,
 			zap.Int("merchantDetailID", merchantID),
@@ -185,7 +185,7 @@ func (s *merchantDetailCommandService) DeletePermanent(ctx context.Context, merc
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			merchantdetail_errors.ErrDeletePermanentMerchantDetail,
 			method,
 			span,
 			zap.Int("merchantDetailID", merchantID),
@@ -246,7 +246,7 @@ func (s *merchantDetailCommandService) DeleteAll(ctx context.Context) (bool, err
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			merchantdetail_errors.ErrDeleteAllPermanentMerchantDetails,
 			method,
 			span,
 		)

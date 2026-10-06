@@ -9,17 +9,19 @@ import (
 	"testing"
 
 	userhandler "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/handler/user"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	user_cache "github.com/MamangRust/monolith-ecommerce-user/cache"
+	gapi "github.com/MamangRust/monolith-ecommerce-user/handler"
+	"github.com/MamangRust/monolith-ecommerce-user/repository"
+	"github.com/MamangRust/monolith-ecommerce-user/service"
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
+	pbuserrole "github.com/MamangRust/monolith-ecommerce-pb/user_role"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	user_cache "github.com/MamangRust/monolith-ecommerce-grpc-user/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	app_errors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	gapi "github.com/MamangRust/monolith-ecommerce-grpc-user/handler"
-	"github.com/MamangRust/monolith-ecommerce-grpc-user/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-user/service"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
@@ -29,20 +31,24 @@ import (
 
 type UserHandlerTestSuite struct {
 	tests.BaseTestSuite
-	client      pb.UserCommandServiceClient
-	router      *echo.Echo
-	userID      int
-	userEmail   string
+	client    pbuser.UserCommandServiceClient
+	router    *echo.Echo
+	userID    int
+	userEmail string
 }
 
 func (s *UserHandlerTestSuite) SetupSuite() {
 	s.BaseTestSuite.SetupSuite()
 
 	s.SetupRoleService()
-	roleClient := pb.NewRoleQueryServiceClient(s.Conns["role"])
+	roleClient := pbrole.NewRoleQueryServiceClient(s.Conns["role"])
 
 	queries := db.New(s.DBPool())
-	repos := repository.NewRepositories(queries, roleClient)
+	repos := repository.NewRepositories(&repository.Deps{
+		Db:              queries,
+		RoleQueryClient: roleClient,
+		UserRoleClient:  pbuserrole.NewUserRoleServiceClient(s.Conns["role"]),
+	})
 
 	logger.ResetInstance()
 	lp := sdklog.NewLoggerProvider()
@@ -65,12 +71,12 @@ func (s *UserHandlerTestSuite) SetupSuite() {
 		Logger:  log,
 	})
 	server := grpc.NewServer()
-	pb.RegisterUserQueryServiceServer(server, userHandler.UserQuery)
-	pb.RegisterUserCommandServiceServer(server, userHandler.UserCommand)
+	pbuser.RegisterUserQueryServiceServer(server, userHandler.UserQuery)
+	pbuser.RegisterUserCommandServiceServer(server, userHandler.UserCommand)
 
 	addr := s.RegisterServer(server)
 	conn := s.GetConnection(addr)
-	s.client = pb.NewUserCommandServiceClient(conn)
+	s.client = pbuser.NewUserCommandServiceClient(conn)
 
 	// Setup Echo
 	s.router = echo.New()

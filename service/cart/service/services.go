@@ -1,8 +1,8 @@
 package service
 
 import (
-	mencache "github.com/MamangRust/monolith-ecommerce-grpc-cart/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-cart/repository"
+	mencache "github.com/MamangRust/monolith-ecommerce-cart/cache"
+	"github.com/MamangRust/monolith-ecommerce-cart/repository"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 )
@@ -29,10 +29,10 @@ func NewService(deps *Deps) *Service {
 		}),
 		CartCommand: NewCartCommandService(&CartCommandServiceDeps{
 			Observability:          deps.Observability,
-			Mencache:               deps.Cache,
 			CartCommandRepository:  deps.Repositories.CartCommand,
 			ProductQueryRepository: deps.Repositories.ProductQuery,
 			UserQueryRepository:    deps.Repositories.UserQuery,
+			Cache:                  deps.Cache,
 			Logger:                 deps.Logger,
 		}),
 	}

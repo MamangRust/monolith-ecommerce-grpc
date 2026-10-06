@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	"github.com/MamangRust/monolith-ecommerce-role/repository"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/role_errors"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/MamangRust/monolith-ecommerce-grpc-role/repository"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/suite"

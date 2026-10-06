@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-review/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-review/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-review/cache"
+	"github.com/MamangRust/monolith-ecommerce-review/repository"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/product_errors"
@@ -165,7 +165,7 @@ func (s *reviewCommandService) Trash(ctx context.Context, reviewID int) (*db.Rev
 		status = "error"
 		return errorhandler.HandleError[*db.Review](
 			s.logger,
-			err,
+			review_errors.ErrFailedTrashedReview.WithInternal(err),
 			method,
 			span,
 
@@ -196,7 +196,7 @@ func (s *reviewCommandService) Restore(ctx context.Context, reviewID int) (*db.R
 		status = "error"
 		return errorhandler.HandleError[*db.Review](
 			s.logger,
-			err,
+			review_errors.ErrFailedRestoreReview.WithInternal(err),
 			method,
 			span,
 
@@ -227,7 +227,7 @@ func (s *reviewCommandService) DeletePermanent(ctx context.Context, reviewID int
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			review_errors.ErrFailedDeletePermanentReview.WithInternal(err),
 			method,
 			span,
 
@@ -282,7 +282,7 @@ func (s *reviewCommandService) DeleteAll(ctx context.Context) (bool, error) {
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			review_errors.ErrFailedDeleteAllPermanentReviews.WithInternal(err),
 			method,
 			span,
 		)

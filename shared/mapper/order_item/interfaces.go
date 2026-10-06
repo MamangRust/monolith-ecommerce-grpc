@@ -1,29 +1,29 @@
 package orderitemapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pborder_item "github.com/MamangRust/monolith-ecommerce-pb/order_item"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
 type OrderItemBaseResponseMapper interface {
-	ToResponseOrderItem(orderItem *pb.OrderItemResponse) *response.OrderItemResponse
-	ToResponsesOrderItem(orderItems []*pb.OrderItemResponse) []*response.OrderItemResponse
+	ToResponseOrderItem(orderItem *pborder_item.OrderItemResponse) *response.OrderItemResponse
+	ToResponsesOrderItem(orderItems []*pborder_item.OrderItemResponse) []*response.OrderItemResponse
 }
 
 type OrderItemQueryResponseMapper interface {
 	OrderItemBaseResponseMapper
-	ToApiResponseOrderItem(pbResponse *pb.ApiResponseOrderItem) *response.ApiResponseOrderItem
-	ToApiResponsesOrderItem(pbResponse *pb.ApiResponsesOrderItem) *response.ApiResponsesOrderItem
-	ToApiResponsePaginationOrderItem(pbResponse *pb.ApiResponsePaginationOrderItem) *response.ApiResponsePaginationOrderItem
-	ToApiResponsePaginationOrderItemDeleteAt(pbResponse *pb.ApiResponsePaginationOrderItemDeleteAt) *response.ApiResponsePaginationOrderItemDeleteAt
+	ToApiResponseOrderItem(pbResponse *pborder_item.ApiResponseOrderItem) *response.ApiResponseOrderItem
+	ToApiResponsesOrderItem(pbResponse *pborder_item.ApiResponsesOrderItem) *response.ApiResponsesOrderItem
+	ToApiResponsePaginationOrderItem(pbResponse *pborder_item.ApiResponsePaginationOrderItem) *response.ApiResponsePaginationOrderItem
+	ToApiResponsePaginationOrderItemDeleteAt(pbResponse *pborder_item.ApiResponsePaginationOrderItemDeleteAt) *response.ApiResponsePaginationOrderItemDeleteAt
 }
 
 type OrderItemCommandResponseMapper interface {
 	OrderItemBaseResponseMapper
-	ToApiResponseOrderItem(pbResponse *pb.ApiResponseOrderItem) *response.ApiResponseOrderItem
-	ToResponseOrderItemDeleteAt(orderItem *pb.OrderItemResponseDeleteAt) *response.OrderItemResponseDeleteAt
-	ToResponsesOrderItemDeleteAt(orderItems []*pb.OrderItemResponseDeleteAt) []*response.OrderItemResponseDeleteAt
-	ToApiResponseOrderItemDelete(pbResponse *pb.ApiResponseOrderItemDelete) *response.ApiResponseOrderItemDelete
-	ToApiResponseOrderItemAll(pbResponse *pb.ApiResponseOrderItemAll) *response.ApiResponseOrderItemAll
-	ToApiResponsePaginationOrderItemDeleteAt(pbResponse *pb.ApiResponsePaginationOrderItemDeleteAt) *response.ApiResponsePaginationOrderItemDeleteAt
+	ToApiResponseOrderItem(pbResponse *pborder_item.ApiResponseOrderItem) *response.ApiResponseOrderItem
+	ToResponseOrderItemDeleteAt(orderItem *pborder_item.OrderItemResponseDeleteAt) *response.OrderItemResponseDeleteAt
+	ToResponsesOrderItemDeleteAt(orderItems []*pborder_item.OrderItemResponseDeleteAt) []*response.OrderItemResponseDeleteAt
+	ToApiResponseOrderItemDelete(pbResponse *pborder_item.ApiResponseOrderItemDelete) *response.ApiResponseOrderItemDelete
+	ToApiResponseOrderItemAll(pbResponse *pborder_item.ApiResponseOrderItemAll) *response.ApiResponseOrderItemAll
+	ToApiResponsePaginationOrderItemDeleteAt(pbResponse *pborder_item.ApiResponsePaginationOrderItemDeleteAt) *response.ApiResponsePaginationOrderItemDeleteAt
 }

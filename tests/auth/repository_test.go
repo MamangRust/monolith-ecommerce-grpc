@@ -6,32 +6,35 @@ import (
 	"time"
 
 	"github.com/MamangRust/monolith-ecommerce-auth/repository"
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
+	pbuserrole "github.com/MamangRust/monolith-ecommerce-pb/user_role"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
 
+	"net"
+
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/suite"
+	sdklog "go.opentelemetry.io/otel/sdk/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"net"
-	"github.com/redis/go-redis/v9"
-	sdklog "go.opentelemetry.io/otel/sdk/log"
 
 	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 
-	user_handler "github.com/MamangRust/monolith-ecommerce-grpc-user/handler"
-	user_service "github.com/MamangRust/monolith-ecommerce-grpc-user/service"
-	user_repo "github.com/MamangRust/monolith-ecommerce-grpc-user/repository"
-	role_handler "github.com/MamangRust/monolith-ecommerce-grpc-role/handler"
-	role_service "github.com/MamangRust/monolith-ecommerce-grpc-role/service"
-	role_repo "github.com/MamangRust/monolith-ecommerce-grpc-role/repository"
-	user_cache "github.com/MamangRust/monolith-ecommerce-grpc-user/cache"
-	role_cache "github.com/MamangRust/monolith-ecommerce-grpc-role/cache"
+	role_cache "github.com/MamangRust/monolith-ecommerce-role/cache"
+	role_handler "github.com/MamangRust/monolith-ecommerce-role/handler"
+	role_repo "github.com/MamangRust/monolith-ecommerce-role/repository"
+	role_service "github.com/MamangRust/monolith-ecommerce-role/service"
+	user_cache "github.com/MamangRust/monolith-ecommerce-user/cache"
+	user_handler "github.com/MamangRust/monolith-ecommerce-user/handler"
+	user_repo "github.com/MamangRust/monolith-ecommerce-user/repository"
+	user_service "github.com/MamangRust/monolith-ecommerce-user/service"
 )
 
 type AuthRepositoryTestSuite struct {
@@ -58,7 +61,7 @@ func (s *AuthRepositoryTestSuite) SetupSuite() {
 	s.redisClient = redis.NewClient(opts)
 
 	queries := db.New(pool)
-	
+
 	logger.ResetInstance()
 	lp := sdklog.NewLoggerProvider()
 	log, _ := logger.NewLogger("test", lp)
@@ -81,20 +84,25 @@ func (s *AuthRepositoryTestSuite) SetupSuite() {
 		Logger:  log,
 	})
 	roleServer := grpc.NewServer()
-	pb.RegisterRoleQueryServiceServer(roleServer, roleGapi.RoleQuery)
-	pb.RegisterRoleCommandServiceServer(roleServer, roleGapi.RoleCommand)
+	pbrole.RegisterRoleQueryServiceServer(roleServer, roleGapi.RoleQuery)
+	pbrole.RegisterRoleCommandServiceServer(roleServer, roleGapi.RoleCommand)
+	pbuserrole.RegisterUserRoleServiceServer(roleServer, roleGapi.UserRole)
 	roleLis, _ := net.Listen("tcp", "localhost:0")
 	go roleServer.Serve(roleLis)
 	roleConn, _ := grpc.NewClient(roleLis.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	// 2. Setup User Service & gRPC Server
 	userMencache := user_cache.NewMencache(cacheStore)
-	roleQueryClientForUser := pb.NewRoleQueryServiceClient(roleConn)
-	userRepos := user_repo.NewRepositories(queries, roleQueryClientForUser)
+	roleQueryClientForUser := pbrole.NewRoleQueryServiceClient(roleConn)
+	userRepos := user_repo.NewRepositories(&user_repo.Deps{
+		Db:              queries,
+		RoleQueryClient: roleQueryClientForUser,
+		UserRoleClient:  pbuserrole.NewUserRoleServiceClient(roleConn),
+	})
 	userSvc := user_service.NewService(&user_service.Deps{
 		Repositories:  userRepos,
 		Logger:        log,
-		Hash:         hasher,
+		Hash:          hasher,
 		Cache:         userMencache,
 		Observability: obs,
 	})
@@ -103,19 +111,26 @@ func (s *AuthRepositoryTestSuite) SetupSuite() {
 		Logger:  log,
 	})
 	userServer := grpc.NewServer()
-	pb.RegisterUserQueryServiceServer(userServer, userGapi.UserQuery)
-	pb.RegisterUserCommandServiceServer(userServer, userGapi.UserCommand)
+	pbuser.RegisterUserQueryServiceServer(userServer, userGapi.UserQuery)
+	pbuser.RegisterUserCommandServiceServer(userServer, userGapi.UserCommand)
 	userLis, _ := net.Listen("tcp", "localhost:0")
 	go userServer.Serve(userLis)
 	userConn, _ := grpc.NewClient(userLis.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	// 3. Setup Auth Repository with gRPC clients
-	userQueryClient := pb.NewUserQueryServiceClient(userConn)
-	userCommandClient := pb.NewUserCommandServiceClient(userConn)
-	roleQueryClient := pb.NewRoleQueryServiceClient(roleConn)
-	roleCommandClient := pb.NewRoleCommandServiceClient(roleConn)
+	userQueryClient := pbuser.NewUserQueryServiceClient(userConn)
+	userCommandClient := pbuser.NewUserCommandServiceClient(userConn)
+	roleQueryClient := pbrole.NewRoleQueryServiceClient(roleConn)
+	roleCommandClient := pbrole.NewRoleCommandServiceClient(roleConn)
 
-	s.repo = repository.NewRepositories(queries, userQueryClient, userCommandClient, roleQueryClient, roleCommandClient)
+	s.repo = repository.NewRepositories(&repository.Deps{
+		Db:                queries,
+		UserQueryClient:   userQueryClient,
+		UserCommandClient: userCommandClient,
+		RoleQueryClient:   roleQueryClient,
+		RoleCommandClient: roleCommandClient,
+		UserRoleClient:    pbuserrole.NewUserRoleServiceClient(roleConn),
+	})
 	s.email = "auth.repo.test@example.com"
 }
 
@@ -174,7 +189,7 @@ func (s *AuthRepositoryTestSuite) Test4_RefreshToken() {
 
 	token := "test-refresh-token"
 	expiresAt := time.Now().Add(24 * time.Hour).Format("2006-01-02 15:04:05")
-	
+
 	req := &requests.CreateRefreshToken{
 		UserId:    s.userID,
 		Token:     token,

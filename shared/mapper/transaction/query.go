@@ -1,7 +1,7 @@
 package transactionapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbtransaction "github.com/MamangRust/monolith-ecommerce-pb/transaction"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	paginationapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/pagination"
 )
@@ -12,8 +12,10 @@ func NewTransactionQueryResponseMapper() TransactionQueryResponseMapper {
 	return &transactionQueryResponseMapper{}
 }
 
-func (t *transactionQueryResponseMapper) ToResponseTransaction(transaction *pb.TransactionResponse) *response.TransactionResponse {
-	if transaction == nil { return nil }
+func (t *transactionQueryResponseMapper) ToResponseTransaction(transaction *pbtransaction.TransactionResponse) *response.TransactionResponse {
+	if transaction == nil {
+		return nil
+	}
 	return &response.TransactionResponse{
 		ID:            int(transaction.Id),
 		OrderID:       int(transaction.OrderId),
@@ -26,7 +28,7 @@ func (t *transactionQueryResponseMapper) ToResponseTransaction(transaction *pb.T
 	}
 }
 
-func (t *transactionQueryResponseMapper) ToResponsesTransaction(transactions []*pb.TransactionResponse) []*response.TransactionResponse {
+func (t *transactionQueryResponseMapper) ToResponsesTransaction(transactions []*pbtransaction.TransactionResponse) []*response.TransactionResponse {
 	var mappedTransactions []*response.TransactionResponse
 	for _, transaction := range transactions {
 		mappedTransactions = append(mappedTransactions, t.ToResponseTransaction(transaction))
@@ -34,7 +36,7 @@ func (t *transactionQueryResponseMapper) ToResponsesTransaction(transactions []*
 	return mappedTransactions
 }
 
-func (t *transactionQueryResponseMapper) ToApiResponseTransaction(pbResponse *pb.ApiResponseTransaction) *response.ApiResponseTransaction {
+func (t *transactionQueryResponseMapper) ToApiResponseTransaction(pbResponse *pbtransaction.ApiResponseTransaction) *response.ApiResponseTransaction {
 	return &response.ApiResponseTransaction{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -42,7 +44,7 @@ func (t *transactionQueryResponseMapper) ToApiResponseTransaction(pbResponse *pb
 	}
 }
 
-func (t *transactionQueryResponseMapper) ToApiResponsesTransaction(pbResponse *pb.ApiResponsesTransaction) *response.ApiResponsesTransaction {
+func (t *transactionQueryResponseMapper) ToApiResponsesTransaction(pbResponse *pbtransaction.ApiResponsesTransaction) *response.ApiResponsesTransaction {
 	return &response.ApiResponsesTransaction{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -50,7 +52,7 @@ func (t *transactionQueryResponseMapper) ToApiResponsesTransaction(pbResponse *p
 	}
 }
 
-func (t *transactionQueryResponseMapper) ToApiResponsePaginationTransaction(pbResponse *pb.ApiResponsePaginationTransaction) *response.ApiResponsePaginationTransaction {
+func (t *transactionQueryResponseMapper) ToApiResponsePaginationTransaction(pbResponse *pbtransaction.ApiResponsePaginationTransaction) *response.ApiResponsePaginationTransaction {
 	return &response.ApiResponsePaginationTransaction{
 		Status:     pbResponse.Status,
 		Message:    pbResponse.Message,
@@ -59,7 +61,7 @@ func (t *transactionQueryResponseMapper) ToApiResponsePaginationTransaction(pbRe
 	}
 }
 
-func (t *transactionQueryResponseMapper) ToApiResponsePaginationTransactionDeleteAt(pbResponse *pb.ApiResponsePaginationTransactionDeleteAt) *response.ApiResponsePaginationTransactionDeleteAt {
+func (t *transactionQueryResponseMapper) ToApiResponsePaginationTransactionDeleteAt(pbResponse *pbtransaction.ApiResponsePaginationTransactionDeleteAt) *response.ApiResponsePaginationTransactionDeleteAt {
 	var mappedData []*response.TransactionResponseDeleteAt
 	for _, tr := range pbResponse.Data {
 		var deletedAt string

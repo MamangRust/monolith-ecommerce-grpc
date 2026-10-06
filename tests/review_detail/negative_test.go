@@ -5,17 +5,17 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	apigatewaymiddlewares "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	pbreview_detail "github.com/MamangRust/monolith-ecommerce-pb/review_detail"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 )
 
 // gapi: non-existent review detail must map to codes.NotFound (404), not Internal.
 func (s *ReviewDetailGapiTestSuite) TestReviewDetailGapiNotFound() {
 	ctx := context.Background()
-	_, err := s.queryClient.FindById(ctx, &pb.FindByIdReviewDetailRequest{Id: 999999})
+	_, err := s.queryClient.FindById(ctx, &pbreview_detail.FindByIdReviewDetailRequest{Id: 999999})
 	s.Require().Error(err)
 	st, ok := status.FromError(err)
 	s.Require().True(ok, "expected a gRPC status error")
@@ -24,7 +24,6 @@ func (s *ReviewDetailGapiTestSuite) TestReviewDetailGapiNotFound() {
 
 // api: non-existent review detail must map to 404, invalid path ID to 400.
 func (s *ReviewDetailApiTestSuite) TestReviewDetailApiNotFound() {
-	apigatewaymiddlewares.RegisterErrorHandler(s.echo)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/review-detail-query/999999", nil)
 	rec := httptest.NewRecorder()
@@ -33,7 +32,6 @@ func (s *ReviewDetailApiTestSuite) TestReviewDetailApiNotFound() {
 }
 
 func (s *ReviewDetailApiTestSuite) TestReviewDetailApiInvalidID() {
-	apigatewaymiddlewares.RegisterErrorHandler(s.echo)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/review-detail-query/abc", nil)
 	rec := httptest.NewRecorder()

@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package pb;
+package pb.cart;
 
 import "cart/cart_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/cart";
 
 message CreateCartRequest {
     int32 quantity = 1;

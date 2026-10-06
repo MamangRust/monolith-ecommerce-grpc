@@ -2,13 +2,13 @@ package merchantbusinesshandler
 
 import (
 	merchantbusiness_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/merchant_business"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant_business "github.com/MamangRust/monolith-ecommerce-pb/merchant_business"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_business"
+	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	merchantapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant"
+	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_business"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc"
-	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 )
 
 type DepsMerchantBusiness struct {
@@ -24,7 +24,7 @@ func RegisterMerchantBusinessHandler(deps *DepsMerchantBusiness) {
 	cache := merchantbusiness_cache.NewMerchantBusinessMencache(deps.CacheStore)
 
 	NewMerchantBusinessQueryHandleApi(&merchantBusinessQueryHandleDeps{
-		client: pb.NewMerchantBusinessQueryServiceClient(deps.Client),
+		client: pbmerchant_business.NewMerchantBusinessQueryServiceClient(deps.Client),
 		router: deps.E,
 		logger: deps.Logger,
 		mapper: mapper.QueryMapper(),
@@ -32,7 +32,7 @@ func RegisterMerchantBusinessHandler(deps *DepsMerchantBusiness) {
 	})
 
 	NewMerchantBusinessCommandHandleApi(&merchantBusinessCommandHandleDeps{
-		client:         pb.NewMerchantBusinessCommandServiceClient(deps.Client),
+		client:         pbmerchant_business.NewMerchantBusinessCommandServiceClient(deps.Client),
 		router:         deps.E,
 		logger:         deps.Logger,
 		mapper:         mapper.CommandMapper(),

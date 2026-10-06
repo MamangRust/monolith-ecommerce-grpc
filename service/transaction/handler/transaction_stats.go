@@ -3,15 +3,16 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
+	"github.com/MamangRust/monolith-ecommerce-transaction/service"
+
+	pbtransaction "github.com/MamangRust/monolith-ecommerce-pb/transaction"
 )
 
 type transactionStatsHandler struct {
-	pb.UnimplementedTransactionStatsServiceServer
+	pbtransaction.UnimplementedTransactionStatsServiceServer
 	service service.TransactionStatsService
 	logger  logger.LoggerInterface
 }
@@ -23,7 +24,7 @@ func NewTransactionStatsHandler(service service.TransactionStatsService, logger 
 	}
 }
 
-func (h *transactionStatsHandler) GetMonthlyAmountSuccess(ctx context.Context, req *pb.MonthAmountTransactionRequest) (*pb.ApiResponseTransactionMonthAmountSuccess, error) {
+func (h *transactionStatsHandler) GetMonthlyAmountSuccess(ctx context.Context, req *pbtransaction.MonthAmountTransactionRequest) (*pbtransaction.ApiResponseTransactionMonthAmountSuccess, error) {
 	request := &requests.MonthAmountTransaction{
 		Year:  int(req.GetYear()),
 		Month: int(req.GetMonth()),
@@ -34,9 +35,9 @@ func (h *transactionStatsHandler) GetMonthlyAmountSuccess(ctx context.Context, r
 		return nil, errors.ToGrpcError(err)
 	}
 
-	var stats []*pb.TransactionMonthlyAmountSuccess
+	var stats []*pbtransaction.TransactionMonthlyAmountSuccess
 	for _, v := range data {
-		stats = append(stats, &pb.TransactionMonthlyAmountSuccess{
+		stats = append(stats, &pbtransaction.TransactionMonthlyAmountSuccess{
 			Year:         v.Year,
 			Month:        v.Month,
 			TotalSuccess: int32(v.TotalSuccess),
@@ -44,36 +45,36 @@ func (h *transactionStatsHandler) GetMonthlyAmountSuccess(ctx context.Context, r
 		})
 	}
 
-	return &pb.ApiResponseTransactionMonthAmountSuccess{
+	return &pbtransaction.ApiResponseTransactionMonthAmountSuccess{
 		Status:  "success",
 		Message: "Successfully fetched monthly amount success stats",
 		Data:    stats,
 	}, nil
 }
 
-func (h *transactionStatsHandler) GetYearlyAmountSuccess(ctx context.Context, req *pb.YearAmountTransactionRequest) (*pb.ApiResponseTransactionYearAmountSuccess, error) {
+func (h *transactionStatsHandler) GetYearlyAmountSuccess(ctx context.Context, req *pbtransaction.YearAmountTransactionRequest) (*pbtransaction.ApiResponseTransactionYearAmountSuccess, error) {
 	data, err := h.service.FindYearlyAmountSuccess(ctx, int(req.GetYear()))
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	var stats []*pb.TransactionYearlyAmountSuccess
+	var stats []*pbtransaction.TransactionYearlyAmountSuccess
 	for _, v := range data {
-		stats = append(stats, &pb.TransactionYearlyAmountSuccess{
+		stats = append(stats, &pbtransaction.TransactionYearlyAmountSuccess{
 			Year:         v.Year,
 			TotalSuccess: int32(v.TotalSuccess),
 			TotalAmount:  int32(v.TotalAmount),
 		})
 	}
 
-	return &pb.ApiResponseTransactionYearAmountSuccess{
+	return &pbtransaction.ApiResponseTransactionYearAmountSuccess{
 		Status:  "success",
 		Message: "Successfully fetched yearly amount success stats",
 		Data:    stats,
 	}, nil
 }
 
-func (h *transactionStatsHandler) GetMonthlyAmountFailed(ctx context.Context, req *pb.MonthAmountTransactionRequest) (*pb.ApiResponseTransactionMonthAmountFailed, error) {
+func (h *transactionStatsHandler) GetMonthlyAmountFailed(ctx context.Context, req *pbtransaction.MonthAmountTransactionRequest) (*pbtransaction.ApiResponseTransactionMonthAmountFailed, error) {
 	request := &requests.MonthAmountTransaction{
 		Year:  int(req.GetYear()),
 		Month: int(req.GetMonth()),
@@ -84,9 +85,9 @@ func (h *transactionStatsHandler) GetMonthlyAmountFailed(ctx context.Context, re
 		return nil, errors.ToGrpcError(err)
 	}
 
-	var stats []*pb.TransactionMonthlyAmountFailed
+	var stats []*pbtransaction.TransactionMonthlyAmountFailed
 	for _, v := range data {
-		stats = append(stats, &pb.TransactionMonthlyAmountFailed{
+		stats = append(stats, &pbtransaction.TransactionMonthlyAmountFailed{
 			Year:        v.Year,
 			Month:       v.Month,
 			TotalFailed: int32(v.TotalFailed),
@@ -94,36 +95,36 @@ func (h *transactionStatsHandler) GetMonthlyAmountFailed(ctx context.Context, re
 		})
 	}
 
-	return &pb.ApiResponseTransactionMonthAmountFailed{
+	return &pbtransaction.ApiResponseTransactionMonthAmountFailed{
 		Status:  "success",
 		Message: "Successfully fetched monthly amount failed stats",
 		Data:    stats,
 	}, nil
 }
 
-func (h *transactionStatsHandler) GetYearlyAmountFailed(ctx context.Context, req *pb.YearAmountTransactionRequest) (*pb.ApiResponseTransactionYearAmountFailed, error) {
+func (h *transactionStatsHandler) GetYearlyAmountFailed(ctx context.Context, req *pbtransaction.YearAmountTransactionRequest) (*pbtransaction.ApiResponseTransactionYearAmountFailed, error) {
 	data, err := h.service.FindYearlyAmountFailed(ctx, int(req.GetYear()))
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	var stats []*pb.TransactionYearlyAmountFailed
+	var stats []*pbtransaction.TransactionYearlyAmountFailed
 	for _, v := range data {
-		stats = append(stats, &pb.TransactionYearlyAmountFailed{
+		stats = append(stats, &pbtransaction.TransactionYearlyAmountFailed{
 			Year:        v.Year,
 			TotalFailed: int32(v.TotalFailed),
 			TotalAmount: int32(v.TotalAmount),
 		})
 	}
 
-	return &pb.ApiResponseTransactionYearAmountFailed{
+	return &pbtransaction.ApiResponseTransactionYearAmountFailed{
 		Status:  "success",
 		Message: "Successfully fetched yearly amount failed stats",
 		Data:    stats,
 	}, nil
 }
 
-func (h *transactionStatsHandler) GetMonthlyTransactionMethodSuccess(ctx context.Context, req *pb.MonthMethodTransactionRequest) (*pb.ApiResponseTransactionMonthPaymentMethod, error) {
+func (h *transactionStatsHandler) GetMonthlyTransactionMethodSuccess(ctx context.Context, req *pbtransaction.MonthMethodTransactionRequest) (*pbtransaction.ApiResponseTransactionMonthPaymentMethod, error) {
 	request := &requests.MonthMethodTransaction{
 		Year:  int(req.GetYear()),
 		Month: int(req.GetMonth()),
@@ -134,9 +135,9 @@ func (h *transactionStatsHandler) GetMonthlyTransactionMethodSuccess(ctx context
 		return nil, errors.ToGrpcError(err)
 	}
 
-	var stats []*pb.TransactionMonthlyMethod
+	var stats []*pbtransaction.TransactionMonthlyMethod
 	for _, v := range data {
-		stats = append(stats, &pb.TransactionMonthlyMethod{
+		stats = append(stats, &pbtransaction.TransactionMonthlyMethod{
 			Month:             v.Month,
 			PaymentMethod:     v.PaymentMethod,
 			TotalTransactions: int32(v.TotalTransactions),
@@ -144,22 +145,22 @@ func (h *transactionStatsHandler) GetMonthlyTransactionMethodSuccess(ctx context
 		})
 	}
 
-	return &pb.ApiResponseTransactionMonthPaymentMethod{
+	return &pbtransaction.ApiResponseTransactionMonthPaymentMethod{
 		Status:  "success",
 		Message: "Successfully fetched monthly transaction method success stats",
 		Data:    stats,
 	}, nil
 }
 
-func (h *transactionStatsHandler) GetYearlyTransactionMethodSuccess(ctx context.Context, req *pb.YearMethodTransactionRequest) (*pb.ApiResponseTransactionYearPaymentmethod, error) {
+func (h *transactionStatsHandler) GetYearlyTransactionMethodSuccess(ctx context.Context, req *pbtransaction.YearMethodTransactionRequest) (*pbtransaction.ApiResponseTransactionYearPaymentmethod, error) {
 	data, err := h.service.FindYearlyMethodSuccess(ctx, int(req.GetYear()))
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	var stats []*pb.TransactionYearlyMethod
+	var stats []*pbtransaction.TransactionYearlyMethod
 	for _, v := range data {
-		stats = append(stats, &pb.TransactionYearlyMethod{
+		stats = append(stats, &pbtransaction.TransactionYearlyMethod{
 			Year:              v.Year,
 			PaymentMethod:     v.PaymentMethod,
 			TotalTransactions: int32(v.TotalTransactions),
@@ -167,14 +168,14 @@ func (h *transactionStatsHandler) GetYearlyTransactionMethodSuccess(ctx context.
 		})
 	}
 
-	return &pb.ApiResponseTransactionYearPaymentmethod{
+	return &pbtransaction.ApiResponseTransactionYearPaymentmethod{
 		Status:  "success",
 		Message: "Successfully fetched yearly transaction method success stats",
 		Data:    stats,
 	}, nil
 }
 
-func (h *transactionStatsHandler) GetMonthlyTransactionMethodFailed(ctx context.Context, req *pb.MonthMethodTransactionRequest) (*pb.ApiResponseTransactionMonthPaymentMethod, error) {
+func (h *transactionStatsHandler) GetMonthlyTransactionMethodFailed(ctx context.Context, req *pbtransaction.MonthMethodTransactionRequest) (*pbtransaction.ApiResponseTransactionMonthPaymentMethod, error) {
 	request := &requests.MonthMethodTransaction{
 		Year:  int(req.GetYear()),
 		Month: int(req.GetMonth()),
@@ -185,9 +186,9 @@ func (h *transactionStatsHandler) GetMonthlyTransactionMethodFailed(ctx context.
 		return nil, errors.ToGrpcError(err)
 	}
 
-	var stats []*pb.TransactionMonthlyMethod
+	var stats []*pbtransaction.TransactionMonthlyMethod
 	for _, v := range data {
-		stats = append(stats, &pb.TransactionMonthlyMethod{
+		stats = append(stats, &pbtransaction.TransactionMonthlyMethod{
 			Month:             v.Month,
 			PaymentMethod:     v.PaymentMethod,
 			TotalTransactions: int32(v.TotalTransactions),
@@ -195,22 +196,22 @@ func (h *transactionStatsHandler) GetMonthlyTransactionMethodFailed(ctx context.
 		})
 	}
 
-	return &pb.ApiResponseTransactionMonthPaymentMethod{
+	return &pbtransaction.ApiResponseTransactionMonthPaymentMethod{
 		Status:  "success",
 		Message: "Successfully fetched monthly transaction method failed stats",
 		Data:    stats,
 	}, nil
 }
 
-func (h *transactionStatsHandler) GetYearlyTransactionMethodFailed(ctx context.Context, req *pb.YearMethodTransactionRequest) (*pb.ApiResponseTransactionYearPaymentmethod, error) {
+func (h *transactionStatsHandler) GetYearlyTransactionMethodFailed(ctx context.Context, req *pbtransaction.YearMethodTransactionRequest) (*pbtransaction.ApiResponseTransactionYearPaymentmethod, error) {
 	data, err := h.service.FindYearlyMethodFailed(ctx, int(req.GetYear()))
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	var stats []*pb.TransactionYearlyMethod
+	var stats []*pbtransaction.TransactionYearlyMethod
 	for _, v := range data {
-		stats = append(stats, &pb.TransactionYearlyMethod{
+		stats = append(stats, &pbtransaction.TransactionYearlyMethod{
 			Year:              v.Year,
 			PaymentMethod:     v.PaymentMethod,
 			TotalTransactions: int32(v.TotalTransactions),
@@ -218,7 +219,7 @@ func (h *transactionStatsHandler) GetYearlyTransactionMethodFailed(ctx context.C
 		})
 	}
 
-	return &pb.ApiResponseTransactionYearPaymentmethod{
+	return &pbtransaction.ApiResponseTransactionYearPaymentmethod{
 		Status:  "success",
 		Message: "Successfully fetched yearly transaction method failed stats",
 		Data:    stats,

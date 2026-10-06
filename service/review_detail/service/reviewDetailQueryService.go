@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-review-detail/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-review-detail/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-review-detail/cache"
+	"github.com/MamangRust/monolith-ecommerce-review-detail/repository"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
 	review_detail_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/review_detail"

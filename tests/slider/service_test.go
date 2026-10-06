@@ -4,15 +4,16 @@ import (
 	"context"
 	"testing"
 
-	slider_cache "github.com/MamangRust/monolith-ecommerce-grpc-slider/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-slider/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-slider/service"
+	"github.com/stretchr/testify/suite"
+
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
+	slider_cache "github.com/MamangRust/monolith-ecommerce-slider/cache"
+	"github.com/MamangRust/monolith-ecommerce-slider/repository"
+	"github.com/MamangRust/monolith-ecommerce-slider/service"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type SliderServiceTestSuite struct {
@@ -104,7 +105,7 @@ func (s *SliderServiceTestSuite) TestSliderLifecycle() {
 	// 10. RestoreAll & DeleteAll
 	s1, _ := s.svc.SliderCommand.Create(ctx, &requests.CreateSliderRequest{Nama: "S1", FilePath: "G1"})
 	s2, _ := s.svc.SliderCommand.Create(ctx, &requests.CreateSliderRequest{Nama: "S2", FilePath: "G2"})
-	
+
 	s.svc.SliderCommand.Trash(ctx, int(s1.SliderID))
 	s.svc.SliderCommand.Trash(ctx, int(s2.SliderID))
 

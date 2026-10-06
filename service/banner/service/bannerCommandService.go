@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-banner/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-banner/repository"
+	"github.com/MamangRust/monolith-ecommerce-banner/cache"
+	"github.com/MamangRust/monolith-ecommerce-banner/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
@@ -107,7 +107,7 @@ func (s *bannerCommandService) Trash(ctx context.Context, bannerID int) (*db.Ban
 		status = "error"
 		return errorhandler.HandleError[*db.Banner](
 			s.logger,
-			err,
+			banner_errors.ErrFailedTrashedBanner.WithInternal(err),
 			method,
 			span,
 
@@ -136,7 +136,7 @@ func (s *bannerCommandService) Restore(ctx context.Context, bannerID int) (*db.B
 		status = "error"
 		return errorhandler.HandleError[*db.Banner](
 			s.logger,
-			err,
+			banner_errors.ErrFailedRestoreBanner.WithInternal(err),
 			method,
 			span,
 
@@ -165,7 +165,7 @@ func (s *bannerCommandService) DeletePermanent(ctx context.Context, bannerID int
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			banner_errors.ErrFailedDeleteBanner.WithInternal(err),
 			method,
 			span,
 
@@ -217,7 +217,7 @@ func (s *bannerCommandService) DeleteAll(ctx context.Context) (bool, error) {
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			banner_errors.ErrFailedDeleteAllBanners.WithInternal(err),
 			method,
 			span,
 		)

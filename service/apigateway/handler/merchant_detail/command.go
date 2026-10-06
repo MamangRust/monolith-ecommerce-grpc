@@ -5,19 +5,19 @@ import (
 	"strconv"
 
 	merchant_detail_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/merchant_detail"
-	merchantapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant"
-	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_detail"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant_detail "github.com/MamangRust/monolith-ecommerce-pb/merchant_detail"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
+	merchantapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant"
+	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_detail"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type merchantDetailCommandHandlerApi struct {
-	client         pb.MerchantDetailCommandServiceClient
+	client         pbmerchant_detail.MerchantDetailCommandServiceClient
 	logger         logger.LoggerInterface
 	mapper         apimapper.MerchantDetailCommandResponseMapper
 	merchantMapper merchantapimapper.MerchantCommandResponseMapper
@@ -27,7 +27,7 @@ type merchantDetailCommandHandlerApi struct {
 }
 
 type merchantDetailCommandHandleDeps struct {
-	client         pb.MerchantDetailCommandServiceClient
+	client         pbmerchant_detail.MerchantDetailCommandServiceClient
 	router         *echo.Echo
 	logger         logger.LoggerInterface
 	mapper         apimapper.MerchantDetailCommandResponseMapper
@@ -74,10 +74,12 @@ func NewMerchantDetailCommandHandleApi(params *merchantDetailCommandHandleDeps) 
 // @Router /api/merchant-detail-command/create [post]
 func (h *merchantDetailCommandHandlerApi) Create(c echo.Context) error {
 	var req requests.CreateMerchantDetailRequest
-	if err := c.Bind(&req); err != nil { return sharedErrors.NewBadRequestError("invalid request").WithInternal(err) }
+	if err := c.Bind(&req); err != nil {
+		return sharedErrors.NewBadRequestError("invalid request").WithInternal(err)
+	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.Create(ctx, &pb.CreateMerchantDetailRequest{
+	res, err := h.client.Create(ctx, &pbmerchant_detail.CreateMerchantDetailRequest{
 		MerchantId:       int32(req.MerchantID),
 		DisplayName:      req.DisplayName,
 		CoverImageUrl:    req.CoverImageUrl,
@@ -107,15 +109,21 @@ func (h *merchantDetailCommandHandlerApi) Create(c echo.Context) error {
 // @Router /api/merchant-detail-command/update/{id} [post]
 func (h *merchantDetailCommandHandlerApi) Update(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil { return sharedErrors.NewBadRequestError("id is required") }
+	if err != nil {
+		return sharedErrors.NewBadRequestError("id is required")
+	}
 
 	var req requests.UpdateMerchantDetailRequest
-	if err := c.Bind(&req); err != nil { return sharedErrors.NewBadRequestError("invalid request").WithInternal(err) }
+	if err := c.Bind(&req); err != nil {
+		return sharedErrors.NewBadRequestError("invalid request").WithInternal(err)
+	}
 	req.MerchantDetailID = &id
-	if err := req.Validate(); err != nil { return sharedErrors.NewBadRequestError(err.Error()) }
+	if err := req.Validate(); err != nil {
+		return sharedErrors.NewBadRequestError(err.Error())
+	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.Update(ctx, &pb.UpdateMerchantDetailRequest{
+	res, err := h.client.Update(ctx, &pbmerchant_detail.UpdateMerchantDetailRequest{
 		MerchantDetailId: int32(id),
 		DisplayName:      req.DisplayName,
 		CoverImageUrl:    req.CoverImageUrl,
@@ -145,10 +153,12 @@ func (h *merchantDetailCommandHandlerApi) Update(c echo.Context) error {
 // @Router /api/merchant-detail-command/trashed/{id} [post]
 func (h *merchantDetailCommandHandlerApi) Trashed(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil { return sharedErrors.NewBadRequestError("id is required") }
+	if err != nil {
+		return sharedErrors.NewBadRequestError("id is required")
+	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.TrashedMerchantDetail(ctx, &pb.FindByIdMerchantDetailRequest{Id: int32(id)})
+	res, err := h.client.TrashedMerchantDetail(ctx, &pbmerchant_detail.FindByIdMerchantDetailRequest{Id: int32(id)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -171,10 +181,12 @@ func (h *merchantDetailCommandHandlerApi) Trashed(c echo.Context) error {
 // @Router /api/merchant-detail-command/restore/{id} [post]
 func (h *merchantDetailCommandHandlerApi) Restore(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil { return sharedErrors.NewBadRequestError("id is required") }
+	if err != nil {
+		return sharedErrors.NewBadRequestError("id is required")
+	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.RestoreMerchantDetail(ctx, &pb.FindByIdMerchantDetailRequest{Id: int32(id)})
+	res, err := h.client.RestoreMerchantDetail(ctx, &pbmerchant_detail.FindByIdMerchantDetailRequest{Id: int32(id)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -197,10 +209,12 @@ func (h *merchantDetailCommandHandlerApi) Restore(c echo.Context) error {
 // @Router /api/merchant-detail-command/permanent/{id} [delete]
 func (h *merchantDetailCommandHandlerApi) DeletePermanent(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil { return sharedErrors.NewBadRequestError("id is required") }
+	if err != nil {
+		return sharedErrors.NewBadRequestError("id is required")
+	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.DeleteMerchantDetailPermanent(ctx, &pb.FindByIdMerchantDetailRequest{Id: int32(id)})
+	res, err := h.client.DeleteMerchantDetailPermanent(ctx, &pbmerchant_detail.FindByIdMerchantDetailRequest{Id: int32(id)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -247,4 +261,3 @@ func (h *merchantDetailCommandHandlerApi) DeleteAllPermanent(c echo.Context) err
 
 	return c.JSON(http.StatusOK, h.merchantMapper.ToApiResponseMerchantAll(res))
 }
-

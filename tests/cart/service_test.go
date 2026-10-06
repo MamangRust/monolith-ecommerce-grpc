@@ -4,16 +4,18 @@ import (
 	"context"
 	"testing"
 
-	cart_cache "github.com/MamangRust/monolith-ecommerce-grpc-cart/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-cart/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-cart/service"
+	"github.com/stretchr/testify/suite"
+
+	cart_cache "github.com/MamangRust/monolith-ecommerce-cart/cache"
+	"github.com/MamangRust/monolith-ecommerce-cart/repository"
+	"github.com/MamangRust/monolith-ecommerce-cart/service"
+	pbproduct "github.com/MamangRust/monolith-ecommerce-pb/product"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type CartServiceTestSuite struct {
@@ -39,8 +41,8 @@ func (s *CartServiceTestSuite) SetupSuite() {
 	mencache := cart_cache.NewMencache(cacheStore)
 	repos := repository.NewRepositories(
 		queries,
-		pb.NewUserQueryServiceClient(s.Conns["user"]),
-		pb.NewProductQueryServiceClient(s.Conns["product"]),
+		pbuser.NewUserQueryServiceClient(s.Conns["user"]),
+		pbproduct.NewProductQueryServiceClient(s.Conns["product"]),
 	)
 
 	s.svc = service.NewService(&service.Deps{

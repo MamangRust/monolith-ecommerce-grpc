@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package pb;
+package pb.merchant_social_link;
 
 import "merchant_social_link/merchant_social_link_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/merchant_social_link";
 
 message CreateMerchantSocialRequest {
     int32 merchant_detail_id = 1;

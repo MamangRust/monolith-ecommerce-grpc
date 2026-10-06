@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package pb;
+package pb.slider;
 
 import "common/api.proto";
 import "google/protobuf/wrappers.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/slider";
 
 message FindByIdSliderRequest {
     int32 id = 1;
@@ -60,12 +60,12 @@ message ApiResponsePaginationSlider {
     string status = 1;
     string message = 2;
     repeated SliderResponse data = 3;
-    PaginationMeta pagination = 4;
+    pb.common.PaginationMeta pagination = 4;
 }
 
 message ApiResponsePaginationSliderDeleteAt {
     string status = 1;
     string message = 2;
     repeated SliderResponseDeleteAt data = 3;
-    PaginationMeta pagination = 4;
+    pb.common.PaginationMeta pagination = 4;
 }

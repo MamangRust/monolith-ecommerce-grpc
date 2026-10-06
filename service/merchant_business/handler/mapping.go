@@ -4,9 +4,11 @@ import (
 	"math"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
+	pbmerchant_business "github.com/MamangRust/monolith-ecommerce-pb/merchant_business"
 )
 
 func normalizePage(page, pageSize int) (int, int) {
@@ -19,9 +21,9 @@ func normalizePage(page, pageSize int) (int, int) {
 	return page, pageSize
 }
 
-func createPaginationMeta(page, pageSize, totalRecords int) *pb.PaginationMeta {
+func createPaginationMeta(page, pageSize, totalRecords int) *pbcommon.PaginationMeta {
 	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
-	return &pb.PaginationMeta{
+	return &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
@@ -57,10 +59,10 @@ func formatTimestamp(v interface{}) string {
 	return ""
 }
 
-func mapToProtoMerchantBusinessResponse(m interface{}) *pb.MerchantBusinessResponse {
+func mapToProtoMerchantBusinessResponse(m interface{}) *pbmerchant_business.MerchantBusinessResponse {
 	switch v := m.(type) {
 	case *db.MerchantBusinessInformation:
-		return &pb.MerchantBusinessResponse{
+		return &pbmerchant_business.MerchantBusinessResponse{
 			Id:                v.MerchantBusinessInfoID,
 			MerchantId:        v.MerchantID,
 			BusinessType:      getString(v.BusinessType),
@@ -72,7 +74,7 @@ func mapToProtoMerchantBusinessResponse(m interface{}) *pb.MerchantBusinessRespo
 			UpdatedAt:         formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetMerchantsBusinessInformationRow:
-		return &pb.MerchantBusinessResponse{
+		return &pbmerchant_business.MerchantBusinessResponse{
 			Id:                v.MerchantBusinessInfoID,
 			MerchantId:        v.MerchantID,
 			BusinessType:      getString(v.BusinessType),
@@ -84,7 +86,7 @@ func mapToProtoMerchantBusinessResponse(m interface{}) *pb.MerchantBusinessRespo
 			UpdatedAt:         formatTimestamp(v.UpdatedAt),
 		}
 	case *db.CreateMerchantBusinessInformationRow:
-		return &pb.MerchantBusinessResponse{
+		return &pbmerchant_business.MerchantBusinessResponse{
 			Id:                v.MerchantBusinessInfoID,
 			MerchantId:        v.MerchantID,
 			BusinessType:      getString(v.BusinessType),
@@ -96,7 +98,7 @@ func mapToProtoMerchantBusinessResponse(m interface{}) *pb.MerchantBusinessRespo
 			UpdatedAt:         formatTimestamp(v.UpdatedAt),
 		}
 	case *db.UpdateMerchantBusinessInformationRow:
-		return &pb.MerchantBusinessResponse{
+		return &pbmerchant_business.MerchantBusinessResponse{
 			Id:                v.MerchantBusinessInfoID,
 			MerchantId:        v.MerchantID,
 			BusinessType:      getString(v.BusinessType),
@@ -108,7 +110,7 @@ func mapToProtoMerchantBusinessResponse(m interface{}) *pb.MerchantBusinessRespo
 			UpdatedAt:         formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetMerchantBusinessInformationRow:
-		return &pb.MerchantBusinessResponse{
+		return &pbmerchant_business.MerchantBusinessResponse{
 			Id:                v.MerchantBusinessInfoID,
 			MerchantId:        v.MerchantID,
 			BusinessType:      getString(v.BusinessType),
@@ -124,13 +126,13 @@ func mapToProtoMerchantBusinessResponse(m interface{}) *pb.MerchantBusinessRespo
 	}
 }
 
-func mapToProtoMerchantBusinessResponseDeleteAt(m interface{}) *pb.MerchantBusinessResponseDeleteAt {
-	var res *pb.MerchantBusinessResponseDeleteAt
+func mapToProtoMerchantBusinessResponseDeleteAt(m interface{}) *pbmerchant_business.MerchantBusinessResponseDeleteAt {
+	var res *pbmerchant_business.MerchantBusinessResponseDeleteAt
 	var deletedAt interface{}
 
 	switch v := m.(type) {
 	case *db.MerchantBusinessInformation:
-		res = &pb.MerchantBusinessResponseDeleteAt{
+		res = &pbmerchant_business.MerchantBusinessResponseDeleteAt{
 			Id:                v.MerchantBusinessInfoID,
 			MerchantId:        v.MerchantID,
 			BusinessType:      getString(v.BusinessType),
@@ -143,7 +145,7 @@ func mapToProtoMerchantBusinessResponseDeleteAt(m interface{}) *pb.MerchantBusin
 		}
 		deletedAt = v.DeletedAt
 	case *db.GetMerchantsBusinessInformationActiveRow:
-		res = &pb.MerchantBusinessResponseDeleteAt{
+		res = &pbmerchant_business.MerchantBusinessResponseDeleteAt{
 			Id:                v.MerchantBusinessInfoID,
 			MerchantId:        v.MerchantID,
 			BusinessType:      getString(v.BusinessType),
@@ -156,7 +158,7 @@ func mapToProtoMerchantBusinessResponseDeleteAt(m interface{}) *pb.MerchantBusin
 		}
 		deletedAt = v.DeletedAt
 	case *db.GetMerchantsBusinessInformationTrashedRow:
-		res = &pb.MerchantBusinessResponseDeleteAt{
+		res = &pbmerchant_business.MerchantBusinessResponseDeleteAt{
 			Id:                v.MerchantBusinessInfoID,
 			MerchantId:        v.MerchantID,
 			BusinessType:      getString(v.BusinessType),

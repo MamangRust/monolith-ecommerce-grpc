@@ -2,9 +2,11 @@ package handler
 
 import (
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
+	pbtransaction "github.com/MamangRust/monolith-ecommerce-pb/transaction"
 )
 
 func getStringValue(v interface{}) *wrapperspb.StringValue {
@@ -37,9 +39,9 @@ func normalizePage(page, pageSize int) (int, int) {
 	return page, pageSize
 }
 
-func createPaginationMeta(page, pageSize, totalRecords int) *pb.PaginationMeta {
+func createPaginationMeta(page, pageSize, totalRecords int) *pbcommon.PaginationMeta {
 	totalPages := (totalRecords + pageSize - 1) / pageSize
-	return &pb.PaginationMeta{
+	return &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
@@ -47,10 +49,10 @@ func createPaginationMeta(page, pageSize, totalRecords int) *pb.PaginationMeta {
 	}
 }
 
-func mapToProtoTransactionResponse(m interface{}) *pb.TransactionResponse {
+func mapToProtoTransactionResponse(m interface{}) *pbtransaction.TransactionResponse {
 	switch v := m.(type) {
 	case *db.Transaction:
-		return &pb.TransactionResponse{
+		return &pbtransaction.TransactionResponse{
 			Id:            v.TransactionID,
 			OrderId:       v.OrderID,
 			MerchantId:    v.MerchantID,
@@ -61,7 +63,7 @@ func mapToProtoTransactionResponse(m interface{}) *pb.TransactionResponse {
 			UpdatedAt:     formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetTransactionsRow:
-		return &pb.TransactionResponse{
+		return &pbtransaction.TransactionResponse{
 			Id:            v.TransactionID,
 			OrderId:       v.OrderID,
 			MerchantId:    v.MerchantID,
@@ -72,7 +74,7 @@ func mapToProtoTransactionResponse(m interface{}) *pb.TransactionResponse {
 			UpdatedAt:     formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetTransactionsActiveRow:
-		return &pb.TransactionResponse{
+		return &pbtransaction.TransactionResponse{
 			Id:            v.TransactionID,
 			OrderId:       v.OrderID,
 			MerchantId:    v.MerchantID,
@@ -83,7 +85,7 @@ func mapToProtoTransactionResponse(m interface{}) *pb.TransactionResponse {
 			UpdatedAt:     formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetTransactionByIDRow:
-		return &pb.TransactionResponse{
+		return &pbtransaction.TransactionResponse{
 			Id:            v.TransactionID,
 			OrderId:       v.OrderID,
 			MerchantId:    v.MerchantID,
@@ -94,7 +96,7 @@ func mapToProtoTransactionResponse(m interface{}) *pb.TransactionResponse {
 			UpdatedAt:     formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetTransactionByOrderIDRow:
-		return &pb.TransactionResponse{
+		return &pbtransaction.TransactionResponse{
 			Id:            v.TransactionID,
 			OrderId:       v.OrderID,
 			MerchantId:    v.MerchantID,
@@ -105,7 +107,7 @@ func mapToProtoTransactionResponse(m interface{}) *pb.TransactionResponse {
 			UpdatedAt:     formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetTransactionByMerchantRow:
-		return &pb.TransactionResponse{
+		return &pbtransaction.TransactionResponse{
 			Id:            v.TransactionID,
 			OrderId:       v.OrderID,
 			MerchantId:    v.MerchantID,
@@ -116,7 +118,7 @@ func mapToProtoTransactionResponse(m interface{}) *pb.TransactionResponse {
 			UpdatedAt:     formatTimestamp(v.UpdatedAt),
 		}
 	case *db.CreateTransactionRow:
-		return &pb.TransactionResponse{
+		return &pbtransaction.TransactionResponse{
 			Id:            v.TransactionID,
 			OrderId:       v.OrderID,
 			MerchantId:    v.MerchantID,
@@ -127,7 +129,7 @@ func mapToProtoTransactionResponse(m interface{}) *pb.TransactionResponse {
 			UpdatedAt:     formatTimestamp(v.UpdatedAt),
 		}
 	case *db.UpdateTransactionRow:
-		return &pb.TransactionResponse{
+		return &pbtransaction.TransactionResponse{
 			Id:            v.TransactionID,
 			OrderId:       v.OrderID,
 			MerchantId:    v.MerchantID,
@@ -142,10 +144,10 @@ func mapToProtoTransactionResponse(m interface{}) *pb.TransactionResponse {
 	}
 }
 
-func mapToProtoTransactionResponseDeleteAt(m interface{}) *pb.TransactionResponseDeleteAt {
+func mapToProtoTransactionResponseDeleteAt(m interface{}) *pbtransaction.TransactionResponseDeleteAt {
 	switch v := m.(type) {
 	case *db.Transaction:
-		return &pb.TransactionResponseDeleteAt{
+		return &pbtransaction.TransactionResponseDeleteAt{
 			Id:            v.TransactionID,
 			OrderId:       v.OrderID,
 			MerchantId:    v.MerchantID,
@@ -157,7 +159,7 @@ func mapToProtoTransactionResponseDeleteAt(m interface{}) *pb.TransactionRespons
 			DeletedAt:     getStringValue(v.DeletedAt),
 		}
 	case *db.GetTransactionsActiveRow:
-		return &pb.TransactionResponseDeleteAt{
+		return &pbtransaction.TransactionResponseDeleteAt{
 			Id:            v.TransactionID,
 			OrderId:       v.OrderID,
 			MerchantId:    v.MerchantID,
@@ -169,7 +171,7 @@ func mapToProtoTransactionResponseDeleteAt(m interface{}) *pb.TransactionRespons
 			DeletedAt:     getStringValue(v.DeletedAt),
 		}
 	case *db.GetTransactionsTrashedRow:
-		return &pb.TransactionResponseDeleteAt{
+		return &pbtransaction.TransactionResponseDeleteAt{
 			Id:            v.TransactionID,
 			OrderId:       v.OrderID,
 			MerchantId:    v.MerchantID,

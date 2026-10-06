@@ -1,7 +1,7 @@
 package categoryapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbcategory "github.com/MamangRust/monolith-ecommerce-pb/category"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
@@ -11,7 +11,7 @@ func NewCategoryStatsResponseMapper() CategoryStatsResponseMapper {
 	return &categoryStatsResponseMapper{}
 }
 
-func (m *categoryStatsResponseMapper) ToResponseCategoryMonthlyPrice(category *pb.CategoryMonthPriceResponse) *response.CategoryMonthPriceResponse {
+func (m *categoryStatsResponseMapper) ToResponseCategoryMonthlyPrice(category *pbcategory.CategoryMonthPriceResponse) *response.CategoryMonthPriceResponse {
 	return &response.CategoryMonthPriceResponse{
 		Month:        category.Month,
 		CategoryID:   int(category.CategoryId),
@@ -22,7 +22,7 @@ func (m *categoryStatsResponseMapper) ToResponseCategoryMonthlyPrice(category *p
 	}
 }
 
-func (m *categoryStatsResponseMapper) ToResponseCategoryMonthlyPrices(c []*pb.CategoryMonthPriceResponse) []*response.CategoryMonthPriceResponse {
+func (m *categoryStatsResponseMapper) ToResponseCategoryMonthlyPrices(c []*pbcategory.CategoryMonthPriceResponse) []*response.CategoryMonthPriceResponse {
 	var mapped []*response.CategoryMonthPriceResponse
 	for _, item := range c {
 		mapped = append(mapped, m.ToResponseCategoryMonthlyPrice(item))
@@ -30,7 +30,7 @@ func (m *categoryStatsResponseMapper) ToResponseCategoryMonthlyPrices(c []*pb.Ca
 	return mapped
 }
 
-func (m *categoryStatsResponseMapper) ToResponseCategoryYearlyPrice(category *pb.CategoryYearPriceResponse) *response.CategoryYearPriceResponse {
+func (m *categoryStatsResponseMapper) ToResponseCategoryYearlyPrice(category *pbcategory.CategoryYearPriceResponse) *response.CategoryYearPriceResponse {
 	return &response.CategoryYearPriceResponse{
 		Year:               category.Year,
 		CategoryID:         int(category.CategoryId),
@@ -42,7 +42,7 @@ func (m *categoryStatsResponseMapper) ToResponseCategoryYearlyPrice(category *pb
 	}
 }
 
-func (m *categoryStatsResponseMapper) ToResponseCategoryYearlyPrices(c []*pb.CategoryYearPriceResponse) []*response.CategoryYearPriceResponse {
+func (m *categoryStatsResponseMapper) ToResponseCategoryYearlyPrices(c []*pbcategory.CategoryYearPriceResponse) []*response.CategoryYearPriceResponse {
 	var mapped []*response.CategoryYearPriceResponse
 	for _, item := range c {
 		mapped = append(mapped, m.ToResponseCategoryYearlyPrice(item))
@@ -50,7 +50,7 @@ func (m *categoryStatsResponseMapper) ToResponseCategoryYearlyPrices(c []*pb.Cat
 	return mapped
 }
 
-func (m *categoryStatsResponseMapper) ToResponseCashierMonthlyTotalPrice(c *pb.CategoriesMonthlyTotalPriceResponse) *response.CategoriesMonthlyTotalPriceResponse {
+func (m *categoryStatsResponseMapper) ToResponseCashierMonthlyTotalPrice(c *pbcategory.CategoriesMonthlyTotalPriceResponse) *response.CategoriesMonthlyTotalPriceResponse {
 	return &response.CategoriesMonthlyTotalPriceResponse{
 		Year:         c.Year,
 		Month:        c.Month,
@@ -58,7 +58,7 @@ func (m *categoryStatsResponseMapper) ToResponseCashierMonthlyTotalPrice(c *pb.C
 	}
 }
 
-func (m *categoryStatsResponseMapper) ToResponseCategoryMonthlyTotalPrices(c []*pb.CategoriesMonthlyTotalPriceResponse) []*response.CategoriesMonthlyTotalPriceResponse {
+func (m *categoryStatsResponseMapper) ToResponseCategoryMonthlyTotalPrices(c []*pbcategory.CategoriesMonthlyTotalPriceResponse) []*response.CategoriesMonthlyTotalPriceResponse {
 	var mapped []*response.CategoriesMonthlyTotalPriceResponse
 	for _, item := range c {
 		mapped = append(mapped, m.ToResponseCashierMonthlyTotalPrice(item))
@@ -66,14 +66,14 @@ func (m *categoryStatsResponseMapper) ToResponseCategoryMonthlyTotalPrices(c []*
 	return mapped
 }
 
-func (m *categoryStatsResponseMapper) ToResponseCategoryYearlyTotalSale(c *pb.CategoriesYearlyTotalPriceResponse) *response.CategoriesYearlyTotalPriceResponse {
+func (m *categoryStatsResponseMapper) ToResponseCategoryYearlyTotalSale(c *pbcategory.CategoriesYearlyTotalPriceResponse) *response.CategoriesYearlyTotalPriceResponse {
 	return &response.CategoriesYearlyTotalPriceResponse{
 		Year:         c.Year,
 		TotalRevenue: int(c.TotalRevenue),
 	}
 }
 
-func (m *categoryStatsResponseMapper) ToResponseCategoryYearlyTotalPrices(c []*pb.CategoriesYearlyTotalPriceResponse) []*response.CategoriesYearlyTotalPriceResponse {
+func (m *categoryStatsResponseMapper) ToResponseCategoryYearlyTotalPrices(c []*pbcategory.CategoriesYearlyTotalPriceResponse) []*response.CategoriesYearlyTotalPriceResponse {
 	var mapped []*response.CategoriesYearlyTotalPriceResponse
 	for _, item := range c {
 		mapped = append(mapped, m.ToResponseCategoryYearlyTotalSale(item))
@@ -81,7 +81,7 @@ func (m *categoryStatsResponseMapper) ToResponseCategoryYearlyTotalPrices(c []*p
 	return mapped
 }
 
-func (m *categoryStatsResponseMapper) ToApiResponseCategoryMonthPrice(pbResponse *pb.ApiResponseCategoryMonthPrice) *response.ApiResponseCategoryMonthPrice {
+func (m *categoryStatsResponseMapper) ToApiResponseCategoryMonthPrice(pbResponse *pbcategory.ApiResponseCategoryMonthPrice) *response.ApiResponseCategoryMonthPrice {
 	return &response.ApiResponseCategoryMonthPrice{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -89,7 +89,7 @@ func (m *categoryStatsResponseMapper) ToApiResponseCategoryMonthPrice(pbResponse
 	}
 }
 
-func (m *categoryStatsResponseMapper) ToApiResponseCategoryYearPrice(pbResponse *pb.ApiResponseCategoryYearPrice) *response.ApiResponseCategoryYearPrice {
+func (m *categoryStatsResponseMapper) ToApiResponseCategoryYearPrice(pbResponse *pbcategory.ApiResponseCategoryYearPrice) *response.ApiResponseCategoryYearPrice {
 	return &response.ApiResponseCategoryYearPrice{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -97,7 +97,7 @@ func (m *categoryStatsResponseMapper) ToApiResponseCategoryYearPrice(pbResponse 
 	}
 }
 
-func (m *categoryStatsResponseMapper) ToApiResponseCategoryMonthlyTotalPrice(pbResponse *pb.ApiResponseCategoryMonthlyTotalPrice) *response.ApiResponseCategoryMonthlyTotalPrice {
+func (m *categoryStatsResponseMapper) ToApiResponseCategoryMonthlyTotalPrice(pbResponse *pbcategory.ApiResponseCategoryMonthlyTotalPrice) *response.ApiResponseCategoryMonthlyTotalPrice {
 	return &response.ApiResponseCategoryMonthlyTotalPrice{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -105,7 +105,7 @@ func (m *categoryStatsResponseMapper) ToApiResponseCategoryMonthlyTotalPrice(pbR
 	}
 }
 
-func (m *categoryStatsResponseMapper) ToApiResponseCategoryYearlyTotalPrice(pbResponse *pb.ApiResponseCategoryYearlyTotalPrice) *response.ApiResponseCategoryYearlyTotalPrice {
+func (m *categoryStatsResponseMapper) ToApiResponseCategoryYearlyTotalPrice(pbResponse *pbcategory.ApiResponseCategoryYearlyTotalPrice) *response.ApiResponseCategoryYearlyTotalPrice {
 	return &response.ApiResponseCategoryYearlyTotalPrice{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,

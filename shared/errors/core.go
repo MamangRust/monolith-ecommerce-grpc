@@ -39,6 +39,13 @@ func (e *AppError) Error() string {
 	return fmt.Sprintf("[%s] %s", e.Type, e.Message)
 }
 
+func (e *AppError) Is(target error) bool {
+	if t, ok := target.(*AppError); ok {
+		return e.Type == t.Type && e.Message == t.Message
+	}
+	return false
+}
+
 func (e *AppError) Unwrap() error {
 	return e.Internal
 }

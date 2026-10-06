@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package pb;
+package pb.order_item;
 
 import "common/api.proto";
 import "google/protobuf/wrappers.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/order_item";
 
 message OrderItemResponse {
     int32 id = 1;
@@ -54,14 +54,14 @@ message ApiResponsePaginationOrderItemDeleteAt {
     string status = 1;
     string message = 2;
     repeated OrderItemResponseDeleteAt data = 3;
-    PaginationMeta pagination = 4;
+    pb.common.PaginationMeta pagination = 4;
 }
 
 message ApiResponsePaginationOrderItem {
     string status = 1;
     string message = 2;
     repeated OrderItemResponse data = 3;
-    PaginationMeta pagination = 4;
+    pb.common.PaginationMeta pagination = 4;
 }
 
 message FindByIdOrderItemRequest {

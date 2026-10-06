@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	transaction_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/transaction"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbtransaction "github.com/MamangRust/monolith-ecommerce-pb/transaction"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
@@ -14,7 +14,7 @@ import (
 )
 
 type transactionQueryHandlerApi struct {
-	queryClient pb.TransactionQueryServiceClient
+	queryClient pbtransaction.TransactionQueryServiceClient
 	logger      logger.LoggerInterface
 	mapper      apimapper.TransactionQueryResponseMapper
 	cache       transaction_cache.TransactionQueryCache
@@ -22,7 +22,7 @@ type transactionQueryHandlerApi struct {
 }
 
 type transactionQueryHandleDeps struct {
-	queryClient pb.TransactionQueryServiceClient
+	queryClient pbtransaction.TransactionQueryServiceClient
 	router      *echo.Echo
 	logger      logger.LoggerInterface
 	mapper      apimapper.TransactionQueryResponseMapper
@@ -63,9 +63,13 @@ func NewTransactionQueryHandleApi(params *transactionQueryHandleDeps) *transacti
 // @Router /api/transaction-query [get]
 func (h *transactionQueryHandlerApi) FindAll(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -75,7 +79,7 @@ func (h *transactionQueryHandlerApi) FindAll(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.queryClient.FindAllTransactions(ctx, &pb.FindAllTransactionRequest{
+	res, err := h.queryClient.FindAllTransactions(ctx, &pbtransaction.FindAllTransactionRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
@@ -101,14 +105,16 @@ func (h *transactionQueryHandlerApi) FindAll(c echo.Context) error {
 // @Router /api/transaction-query/{id} [get]
 func (h *transactionQueryHandlerApi) FindById(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid Transaction ID") }
+	if err != nil || id <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Transaction ID")
+	}
 
 	ctx := c.Request().Context()
 	if cachedData, found := h.cache.GetCachedTransactionCache(ctx, id); found {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.queryClient.FindById(ctx, &pb.FindByIdTransactionRequest{Id: int32(id)})
+	res, err := h.queryClient.FindById(ctx, &pbtransaction.FindByIdTransactionRequest{Id: int32(id)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -135,12 +141,18 @@ func (h *transactionQueryHandlerApi) FindById(c echo.Context) error {
 // @Router /api/transaction-query/merchant/{merchant_id} [get]
 func (h *transactionQueryHandlerApi) FindByMerchant(c echo.Context) error {
 	merchantID, err := strconv.Atoi(c.Param("merchant_id"))
-	if err != nil || merchantID <= 0 { return echo.NewHTTPError(http.StatusBadRequest, "Invalid Merchant ID") }
+	if err != nil || merchantID <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Merchant ID")
+	}
 
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -150,7 +162,7 @@ func (h *transactionQueryHandlerApi) FindByMerchant(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.queryClient.FindByMerchant(ctx, &pb.FindAllTransactionByMerchantRequest{
+	res, err := h.queryClient.FindByMerchant(ctx, &pbtransaction.FindAllTransactionByMerchantRequest{
 		MerchantId: int32(merchantID), Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
@@ -177,9 +189,13 @@ func (h *transactionQueryHandlerApi) FindByMerchant(c echo.Context) error {
 // @Router /api/transaction-query/active [get]
 func (h *transactionQueryHandlerApi) FindByActive(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -189,7 +205,7 @@ func (h *transactionQueryHandlerApi) FindByActive(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.queryClient.FindByActive(ctx, &pb.FindAllTransactionRequest{
+	res, err := h.queryClient.FindByActive(ctx, &pbtransaction.FindAllTransactionRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
@@ -216,9 +232,13 @@ func (h *transactionQueryHandlerApi) FindByActive(c echo.Context) error {
 // @Router /api/transaction-query/trashed [get]
 func (h *transactionQueryHandlerApi) FindByTrashed(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
-	if page <= 0 { page = 1 }
+	if page <= 0 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
-	if pageSize <= 0 { pageSize = 10 }
+	if pageSize <= 0 {
+		pageSize = 10
+	}
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
@@ -228,7 +248,7 @@ func (h *transactionQueryHandlerApi) FindByTrashed(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.queryClient.FindByTrashed(ctx, &pb.FindAllTransactionRequest{
+	res, err := h.queryClient.FindByTrashed(ctx, &pbtransaction.FindAllTransactionRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {

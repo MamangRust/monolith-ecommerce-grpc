@@ -4,29 +4,31 @@ import (
 	"context"
 	"testing"
 
-	detail_cache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/cache"
-	detail_handler "github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/handler"
-	detail_repo "github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/repository"
-	detail_service "github.com/MamangRust/monolith-ecommerce-grpc-merchant_detail/service"
-	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/cache"
-	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
-	"github.com/MamangRust/monolith-ecommerce-test"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	detail_cache "github.com/MamangRust/monolith-ecommerce-merchant_detail/cache"
+	detail_handler "github.com/MamangRust/monolith-ecommerce-merchant_detail/handler"
+	detail_repo "github.com/MamangRust/monolith-ecommerce-merchant_detail/repository"
+	detail_service "github.com/MamangRust/monolith-ecommerce-merchant_detail/service"
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
+	pbmerchant_detail "github.com/MamangRust/monolith-ecommerce-pb/merchant_detail"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	"github.com/MamangRust/monolith-ecommerce-shared/cache"
+	"github.com/MamangRust/monolith-ecommerce-shared/observability"
+	tests "github.com/MamangRust/monolith-ecommerce-test"
 )
 
 type MerchantDetailGapiTestSuite struct {
 	tests.BaseTestSuite
-	queryClient   pb.MerchantDetailQueryServiceClient
-	commandClient pb.MerchantDetailCommandServiceClient
+	queryClient   pbmerchant_detail.MerchantDetailQueryServiceClient
+	commandClient pbmerchant_detail.MerchantDetailCommandServiceClient
 }
 
 func (s *MerchantDetailGapiTestSuite) SetupSuite() {
 	s.BaseTestSuite.SetupSuite()
-	
+
 	// Setup dependencies
 	s.SetupUserService()
 	s.SetupMerchantService()
@@ -40,7 +42,7 @@ func (s *MerchantDetailGapiTestSuite) SetupSuite() {
 	mencache := detail_cache.NewMencache(cacheStore)
 	repos := detail_repo.NewRepositories(
 		queries,
-		pb.NewMerchantQueryServiceClient(s.Conns["merchant"]),
+		pbmerchant.NewMerchantQueryServiceClient(s.Conns["merchant"]),
 	)
 	svc := detail_service.NewService(&detail_service.Deps{
 		Cache:         mencache,
@@ -57,14 +59,14 @@ func (s *MerchantDetailGapiTestSuite) SetupSuite() {
 
 	// Server
 	server := grpc.NewServer()
-	pb.RegisterMerchantDetailQueryServiceServer(server, handler.MerchantDetailQuery)
-	pb.RegisterMerchantDetailCommandServiceServer(server, handler.MerchantDetailCommand)
-	
+	pbmerchant_detail.RegisterMerchantDetailQueryServiceServer(server, handler.MerchantDetailQuery)
+	pbmerchant_detail.RegisterMerchantDetailCommandServiceServer(server, handler.MerchantDetailCommand)
+
 	addr := s.RegisterServer(server)
 	conn := s.GetConnection(addr)
 
-	s.queryClient = pb.NewMerchantDetailQueryServiceClient(conn)
-	s.commandClient = pb.NewMerchantDetailCommandServiceClient(conn)
+	s.queryClient = pbmerchant_detail.NewMerchantDetailQueryServiceClient(conn)
+	s.commandClient = pbmerchant_detail.NewMerchantDetailCommandServiceClient(conn)
 }
 
 func (s *MerchantDetailGapiTestSuite) TestMerchantDetailGapiLifecycle() {
@@ -75,9 +77,9 @@ func (s *MerchantDetailGapiTestSuite) TestMerchantDetailGapiLifecycle() {
 	merchID := int32(s.SeedMerchant(ctx, userID))
 
 	// 2. Create
-	createRes, err := s.commandClient.Create(ctx, &pb.CreateMerchantDetailRequest{
-		MerchantId:      merchID,
-		DisplayName:     "GAPI Detail",
+	createRes, err := s.commandClient.Create(ctx, &pbmerchant_detail.CreateMerchantDetailRequest{
+		MerchantId:       merchID,
+		DisplayName:      "GAPI Detail",
 		ShortDescription: "GAPI Description",
 		WebsiteUrl:       "https://gapi.com",
 	})
@@ -86,22 +88,22 @@ func (s *MerchantDetailGapiTestSuite) TestMerchantDetailGapiLifecycle() {
 	detailID := createRes.Data.Id
 
 	// 3. FindById
-	getRes, err := s.queryClient.FindById(ctx, &pb.FindByIdMerchantDetailRequest{Id: detailID})
+	getRes, err := s.queryClient.FindById(ctx, &pbmerchant_detail.FindByIdMerchantDetailRequest{Id: detailID})
 	s.NoError(err)
 	s.Equal("GAPI Detail", getRes.Data.DisplayName)
 
 	// 4. FindAll
-	allRes, err := s.queryClient.FindAll(ctx, &pb.FindAllMerchantRequest{Page: 1, PageSize: 10})
+	allRes, err := s.queryClient.FindAll(ctx, &pbmerchant.FindAllMerchantRequest{Page: 1, PageSize: 10})
 	s.NoError(err)
 	s.NotEmpty(allRes.Data)
 
 	// 5. FindByActive
-	activeRes, err := s.queryClient.FindByActive(ctx, &pb.FindAllMerchantRequest{Page: 1, PageSize: 10})
+	activeRes, err := s.queryClient.FindByActive(ctx, &pbmerchant.FindAllMerchantRequest{Page: 1, PageSize: 10})
 	s.NoError(err)
 	s.NotEmpty(activeRes.Data)
 
 	// 6. Update
-	updateRes, err := s.commandClient.Update(ctx, &pb.UpdateMerchantDetailRequest{
+	updateRes, err := s.commandClient.Update(ctx, &pbmerchant_detail.UpdateMerchantDetailRequest{
 		MerchantDetailId: detailID,
 		DisplayName:      "GAPI Detail Updated",
 		ShortDescription: "Updated Description",
@@ -111,21 +113,21 @@ func (s *MerchantDetailGapiTestSuite) TestMerchantDetailGapiLifecycle() {
 	s.Equal("GAPI Detail Updated", updateRes.Data.DisplayName)
 
 	// 7. Trash
-	_, err = s.commandClient.TrashedMerchantDetail(ctx, &pb.FindByIdMerchantDetailRequest{Id: detailID})
+	_, err = s.commandClient.TrashedMerchantDetail(ctx, &pbmerchant_detail.FindByIdMerchantDetailRequest{Id: detailID})
 	s.NoError(err)
 
 	// 8. FindByTrashed
-	trashedRes, err := s.queryClient.FindByTrashed(ctx, &pb.FindAllMerchantRequest{Page: 1, PageSize: 10})
+	trashedRes, err := s.queryClient.FindByTrashed(ctx, &pbmerchant.FindAllMerchantRequest{Page: 1, PageSize: 10})
 	s.NoError(err)
 	s.NotEmpty(trashedRes.Data)
 
 	// 9. Restore
-	_, err = s.commandClient.RestoreMerchantDetail(ctx, &pb.FindByIdMerchantDetailRequest{Id: detailID})
+	_, err = s.commandClient.RestoreMerchantDetail(ctx, &pbmerchant_detail.FindByIdMerchantDetailRequest{Id: detailID})
 	s.NoError(err)
 
 	// 10. DeletePermanent
-	_, _ = s.commandClient.TrashedMerchantDetail(ctx, &pb.FindByIdMerchantDetailRequest{Id: detailID})
-	_, err = s.commandClient.DeleteMerchantDetailPermanent(ctx, &pb.FindByIdMerchantDetailRequest{Id: detailID})
+	_, _ = s.commandClient.TrashedMerchantDetail(ctx, &pbmerchant_detail.FindByIdMerchantDetailRequest{Id: detailID})
+	_, err = s.commandClient.DeleteMerchantDetailPermanent(ctx, &pbmerchant_detail.FindByIdMerchantDetailRequest{Id: detailID})
 	s.NoError(err)
 
 	// 11. RestoreAll

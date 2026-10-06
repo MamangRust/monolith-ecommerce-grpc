@@ -4,27 +4,29 @@ import (
 	"context"
 	"math"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/service"
+	"github.com/MamangRust/monolith-ecommerce-category/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	category_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/category_errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+
+	pbcategory "github.com/MamangRust/monolith-ecommerce-pb/category"
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
 )
 
 type categoryQueryHandler struct {
-	pb.UnimplementedCategoryQueryServiceServer
+	pbcategory.UnimplementedCategoryQueryServiceServer
 	service service.CategoryQueryService
 	logger  logger.LoggerInterface
 }
 
-func NewCategoryQueryHandler(service service.CategoryQueryService, logger logger.LoggerInterface) pb.CategoryQueryServiceServer {
+func NewCategoryQueryHandler(service service.CategoryQueryService, logger logger.LoggerInterface) pbcategory.CategoryQueryServiceServer {
 	return &categoryQueryHandler{
 		service: service,
 		logger:  logger,
 	}
 }
 
-func (h *categoryQueryHandler) FindAll(ctx context.Context, request *pb.FindAllCategoryRequest) (*pb.ApiResponsePaginationCategory, error) {
+func (h *categoryQueryHandler) FindAll(ctx context.Context, request *pbcategory.FindAllCategoryRequest) (*pbcategory.ApiResponsePaginationCategory, error) {
 	page := int(request.GetPage())
 	pageSize := int(request.GetPageSize())
 	search := request.GetSearch()
@@ -47,19 +49,19 @@ func (h *categoryQueryHandler) FindAll(ctx context.Context, request *pb.FindAllC
 		return nil, category_errors.ErrGrpcFindAllCategory
 	}
 
-	paginationMeta := &pb.PaginationMeta{
+	paginationMeta := &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(math.Ceil(float64(*totalRecords) / float64(pageSize))),
 		TotalRecords: int32(*totalRecords),
 	}
 
-	results := make([]*pb.CategoryResponse, len(categories))
+	results := make([]*pbcategory.CategoryResponse, len(categories))
 	for i, v := range categories {
-		results[i] = (&Handler{}).mapToCategoryResponse(v).(*pb.CategoryResponse)
+		results[i] = (&Handler{}).mapToCategoryResponse(v).(*pbcategory.CategoryResponse)
 	}
 
-	return &pb.ApiResponsePaginationCategory{
+	return &pbcategory.ApiResponsePaginationCategory{
 		Status:     "success",
 		Message:    "Successfully fetched categories",
 		Data:       results,
@@ -67,7 +69,7 @@ func (h *categoryQueryHandler) FindAll(ctx context.Context, request *pb.FindAllC
 	}, nil
 }
 
-func (h *categoryQueryHandler) FindById(ctx context.Context, request *pb.FindByIdCategoryRequest) (*pb.ApiResponseCategory, error) {
+func (h *categoryQueryHandler) FindById(ctx context.Context, request *pbcategory.FindByIdCategoryRequest) (*pbcategory.ApiResponseCategory, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -79,14 +81,14 @@ func (h *categoryQueryHandler) FindById(ctx context.Context, request *pb.FindByI
 		return nil, category_errors.ErrGrpcCategoryNotFound
 	}
 
-	return &pb.ApiResponseCategory{
+	return &pbcategory.ApiResponseCategory{
 		Status:  "success",
 		Message: "Successfully fetched category",
-		Data:    (&Handler{}).mapToCategoryResponse(category).(*pb.CategoryResponse),
+		Data:    (&Handler{}).mapToCategoryResponse(category).(*pbcategory.CategoryResponse),
 	}, nil
 }
 
-func (h *categoryQueryHandler) FindByActive(ctx context.Context, request *pb.FindAllCategoryRequest) (*pb.ApiResponsePaginationCategoryDeleteAt, error) {
+func (h *categoryQueryHandler) FindByActive(ctx context.Context, request *pbcategory.FindAllCategoryRequest) (*pbcategory.ApiResponsePaginationCategoryDeleteAt, error) {
 	page := int(request.GetPage())
 	pageSize := int(request.GetPageSize())
 	search := request.GetSearch()
@@ -109,19 +111,19 @@ func (h *categoryQueryHandler) FindByActive(ctx context.Context, request *pb.Fin
 		return nil, category_errors.ErrGrpcFindAllCategory
 	}
 
-	paginationMeta := &pb.PaginationMeta{
+	paginationMeta := &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(math.Ceil(float64(*totalRecords) / float64(pageSize))),
 		TotalRecords: int32(*totalRecords),
 	}
 
-	results := make([]*pb.CategoryResponseDeleteAt, len(categories))
+	results := make([]*pbcategory.CategoryResponseDeleteAt, len(categories))
 	for i, v := range categories {
-		results[i] = (&Handler{}).mapToCategoryResponse(v).(*pb.CategoryResponseDeleteAt)
+		results[i] = (&Handler{}).mapToCategoryResponse(v).(*pbcategory.CategoryResponseDeleteAt)
 	}
 
-	return &pb.ApiResponsePaginationCategoryDeleteAt{
+	return &pbcategory.ApiResponsePaginationCategoryDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched active categories",
 		Data:       results,
@@ -129,7 +131,7 @@ func (h *categoryQueryHandler) FindByActive(ctx context.Context, request *pb.Fin
 	}, nil
 }
 
-func (h *categoryQueryHandler) FindByTrashed(ctx context.Context, request *pb.FindAllCategoryRequest) (*pb.ApiResponsePaginationCategoryDeleteAt, error) {
+func (h *categoryQueryHandler) FindByTrashed(ctx context.Context, request *pbcategory.FindAllCategoryRequest) (*pbcategory.ApiResponsePaginationCategoryDeleteAt, error) {
 	page := int(request.GetPage())
 	pageSize := int(request.GetPageSize())
 	search := request.GetSearch()
@@ -152,19 +154,19 @@ func (h *categoryQueryHandler) FindByTrashed(ctx context.Context, request *pb.Fi
 		return nil, category_errors.ErrGrpcFindAllCategory
 	}
 
-	paginationMeta := &pb.PaginationMeta{
+	paginationMeta := &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(math.Ceil(float64(*totalRecords) / float64(pageSize))),
 		TotalRecords: int32(*totalRecords),
 	}
 
-	results := make([]*pb.CategoryResponseDeleteAt, len(categories))
+	results := make([]*pbcategory.CategoryResponseDeleteAt, len(categories))
 	for i, v := range categories {
-		results[i] = (&Handler{}).mapToCategoryResponse(v).(*pb.CategoryResponseDeleteAt)
+		results[i] = (&Handler{}).mapToCategoryResponse(v).(*pbcategory.CategoryResponseDeleteAt)
 	}
 
-	return &pb.ApiResponsePaginationCategoryDeleteAt{
+	return &pbcategory.ApiResponsePaginationCategoryDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched trashed categories",
 		Data:       results,

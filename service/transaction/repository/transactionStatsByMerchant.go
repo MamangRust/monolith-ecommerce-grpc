@@ -162,4 +162,3 @@ func (r *transactionStatsByMerchantRepository) GetYearlyTransactionMethodByMerch
 
 	return res, nil
 }
-

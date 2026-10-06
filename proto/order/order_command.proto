@@ -1,20 +1,20 @@
 syntax = "proto3";
 
-package pb;
+package pb.order;
 
 import "google/protobuf/empty.proto";
 import "order/order_common.proto";
 
 import "shipping_address/shipping_address_command.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/order";
 
 message CreateOrderRequest {
     int32 merchant_id = 1;
     int32 user_id = 2;
     int32 total_price = 3;
     repeated CreateOrderItemRequest items = 4;
-    CreateShippingAddressRequest shipping = 5;
+    pb.shipping_address.CreateShippingAddressRequest shipping = 5;
 }
 
 message UpdateOrderRequest {
@@ -22,7 +22,7 @@ message UpdateOrderRequest {
     int32 user_id = 2;
     int32 total_price = 3;
     repeated UpdateOrderItemRequest items = 4;
-    UpdateShippingAddressRequest shipping = 5;
+    pb.shipping_address.UpdateShippingAddressRequest shipping = 5;
 }
 
 message CreateOrderItemRequest {

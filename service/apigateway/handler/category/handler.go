@@ -2,7 +2,7 @@ package categoryhandler
 
 import (
 	category_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/category"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbcategory "github.com/MamangRust/monolith-ecommerce-pb/category"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
@@ -13,12 +13,12 @@ import (
 )
 
 type DepsCategory struct {
-	Client *grpc.ClientConn
-	E      *echo.Echo
-	Logger logger.LoggerInterface
-	CacheStore *cache.CacheStore
+	Client      *grpc.ClientConn
+	E           *echo.Echo
+	Logger      logger.LoggerInterface
+	CacheStore  *cache.CacheStore
 	UploadImage upload_image.ImageUploads
-	ApiHandler errors.ApiHandler
+	ApiHandler  errors.ApiHandler
 }
 
 func RegisterCategoryHandler(deps *DepsCategory) {
@@ -39,7 +39,7 @@ func RegisterCategoryHandler(deps *DepsCategory) {
 func setupCategoryQueryHandler(deps *DepsCategory, mapper apimapper.CategoryQueryResponseMapper, cache category_cache.CategoryMencache) func() {
 	return func() {
 		NewCategoryQueryHandleApi(&categoryQueryHandleDeps{
-			client:     pb.NewCategoryQueryServiceClient(deps.Client),
+			client:     pbcategory.NewCategoryQueryServiceClient(deps.Client),
 			router:     deps.E,
 			logger:     deps.Logger,
 			mapper:     mapper,
@@ -52,22 +52,22 @@ func setupCategoryQueryHandler(deps *DepsCategory, mapper apimapper.CategoryQuer
 func setupCategoryCommandHandler(deps *DepsCategory, mapper apimapper.CategoryCommandResponseMapper, cache category_cache.CategoryMencache) func() {
 	return func() {
 		NewCategoryCommandHandleApi(&categoryCommandHandleDeps{
-			client:     pb.NewCategoryCommandServiceClient(deps.Client),
-			router:     deps.E,
-			logger:     deps.Logger,
-			mapper:     mapper,
-			cache:      cache,
+			client:       pbcategory.NewCategoryCommandServiceClient(deps.Client),
+			router:       deps.E,
+			logger:       deps.Logger,
+			mapper:       mapper,
+			cache:        cache,
 			upload_image: deps.UploadImage,
-			apiHandler: deps.ApiHandler,
+			apiHandler:   deps.ApiHandler,
 		})
 	}
 }
 func setupCategoryStatsHandler(deps *DepsCategory, mapper apimapper.CategoryStatsResponseMapper, cache category_cache.CategoryMencache) func() {
 	return func() {
 		NewCategoryStatsHandleApi(&categoryStatsHandleDeps{
-			statsClient:           pb.NewCategoryStatsServiceClient(deps.Client),
-			statsByIdClient:       pb.NewCategoryStatsByIdServiceClient(deps.Client),
-			statsByMerchantClient: pb.NewCategoryStatsByMerchantServiceClient(deps.Client),
+			statsClient:           pbcategory.NewCategoryStatsServiceClient(deps.Client),
+			statsByIdClient:       pbcategory.NewCategoryStatsByIdServiceClient(deps.Client),
+			statsByMerchantClient: pbcategory.NewCategoryStatsByMerchantServiceClient(deps.Client),
 			router:                deps.E,
 			logger:                deps.Logger,
 			mapper:                mapper,

@@ -1,7 +1,7 @@
 package categoryapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbcategory "github.com/MamangRust/monolith-ecommerce-pb/category"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	paginationapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/pagination"
 )
@@ -18,7 +18,7 @@ func NewCategoryQueryResponseMapper() CategoryQueryResponseMapper {
 	}
 }
 
-func (c *categoryQueryResponseMapper) ToResponseCategory(category *pb.CategoryResponse) *response.CategoryResponse {
+func (c *categoryQueryResponseMapper) ToResponseCategory(category *pbcategory.CategoryResponse) *response.CategoryResponse {
 	return &response.CategoryResponse{
 		ID:            int(category.Id),
 		Name:          category.Name,
@@ -30,7 +30,7 @@ func (c *categoryQueryResponseMapper) ToResponseCategory(category *pb.CategoryRe
 	}
 }
 
-func (c *categoryQueryResponseMapper) ToResponsesCategory(categories []*pb.CategoryResponse) []*response.CategoryResponse {
+func (c *categoryQueryResponseMapper) ToResponsesCategory(categories []*pbcategory.CategoryResponse) []*response.CategoryResponse {
 	var mappedCategories []*response.CategoryResponse
 	for _, category := range categories {
 		mappedCategories = append(mappedCategories, c.ToResponseCategory(category))
@@ -38,7 +38,7 @@ func (c *categoryQueryResponseMapper) ToResponsesCategory(categories []*pb.Categ
 	return mappedCategories
 }
 
-func (c *categoryQueryResponseMapper) ToApiResponseCategory(pbResponse *pb.ApiResponseCategory) *response.ApiResponseCategory {
+func (c *categoryQueryResponseMapper) ToApiResponseCategory(pbResponse *pbcategory.ApiResponseCategory) *response.ApiResponseCategory {
 	return &response.ApiResponseCategory{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -46,7 +46,7 @@ func (c *categoryQueryResponseMapper) ToApiResponseCategory(pbResponse *pb.ApiRe
 	}
 }
 
-func (c *categoryQueryResponseMapper) ToApiResponsesCategory(pbResponse *pb.ApiResponsesCategory) *response.ApiResponsesCategory {
+func (c *categoryQueryResponseMapper) ToApiResponsesCategory(pbResponse *pbcategory.ApiResponsesCategory) *response.ApiResponsesCategory {
 	return &response.ApiResponsesCategory{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -54,7 +54,7 @@ func (c *categoryQueryResponseMapper) ToApiResponsesCategory(pbResponse *pb.ApiR
 	}
 }
 
-func (c *categoryQueryResponseMapper) ToApiResponsePaginationCategory(pbResponse *pb.ApiResponsePaginationCategory) *response.ApiResponsePaginationCategory {
+func (c *categoryQueryResponseMapper) ToApiResponsePaginationCategory(pbResponse *pbcategory.ApiResponsePaginationCategory) *response.ApiResponsePaginationCategory {
 	return &response.ApiResponsePaginationCategory{
 		Status:     pbResponse.Status,
 		Message:    pbResponse.Message,

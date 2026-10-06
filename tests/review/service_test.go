@@ -4,16 +4,18 @@ import (
 	"context"
 	"testing"
 
-	review_cache "github.com/MamangRust/monolith-ecommerce-grpc-review/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-review/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-review/service"
+	"github.com/stretchr/testify/suite"
+
+	pbproduct "github.com/MamangRust/monolith-ecommerce-pb/product"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	review_cache "github.com/MamangRust/monolith-ecommerce-review/cache"
+	"github.com/MamangRust/monolith-ecommerce-review/repository"
+	"github.com/MamangRust/monolith-ecommerce-review/service"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type ReviewServiceTestSuite struct {
@@ -39,8 +41,8 @@ func (s *ReviewServiceTestSuite) SetupSuite() {
 	mencache := review_cache.NewMencache(cacheStore)
 	repos := repository.NewRepositories(
 		queries,
-		pb.NewUserQueryServiceClient(s.Conns["user"]),
-		pb.NewProductQueryServiceClient(s.Conns["product"]),
+		pbuser.NewUserQueryServiceClient(s.Conns["user"]),
+		pbproduct.NewProductQueryServiceClient(s.Conns["product"]),
 	)
 
 	s.svc = service.NewService(&service.Deps{
@@ -129,7 +131,7 @@ func (s *ReviewServiceTestSuite) TestReviewLifecycle() {
 	// 11. RestoreAll & DeleteAll
 	r1, _ := s.svc.ReviewCommand.Create(ctx, &requests.CreateReviewRequest{UserID: userID, ProductID: productID, Rating: 4, Comment: "C1"})
 	r2, _ := s.svc.ReviewCommand.Create(ctx, &requests.CreateReviewRequest{UserID: userID, ProductID: productID, Rating: 4, Comment: "C2"})
-	
+
 	s.svc.ReviewCommand.Trash(ctx, int(r1.ReviewID))
 	s.svc.ReviewCommand.Trash(ctx, int(r2.ReviewID))
 

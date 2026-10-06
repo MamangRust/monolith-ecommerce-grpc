@@ -1,27 +1,27 @@
 package merchantdocumentsapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant_document "github.com/MamangRust/monolith-ecommerce-pb/merchant_document"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
 type MerchantDocumentBaseResponseMapper interface {
-	MapMerchantDocument(doc *pb.MerchantDocument) *response.MerchantDocumentResponse
-	MapMerchantDocuments(docs []*pb.MerchantDocument) []*response.MerchantDocumentResponse
-	ToApiResponseMerchantDocument(doc *pb.ApiResponseMerchantDocument) *response.ApiResponseMerchantDocument
+	MapMerchantDocument(doc *pbmerchant_document.MerchantDocument) *response.MerchantDocumentResponse
+	MapMerchantDocuments(docs []*pbmerchant_document.MerchantDocument) []*response.MerchantDocumentResponse
+	ToApiResponseMerchantDocument(doc *pbmerchant_document.ApiResponseMerchantDocument) *response.ApiResponseMerchantDocument
 }
 
 type MerchantDocumentQueryResponseMapper interface {
 	MerchantDocumentBaseResponseMapper
-	ToApiResponsesMerchantDocument(docs *pb.ApiResponsesMerchantDocument) *response.ApiResponsesMerchantDocument
-	ToApiResponsePaginationMerchantDocument(docs *pb.ApiResponsePaginationMerchantDocument) *response.ApiResponsePaginationMerchantDocument
-	ToApiResponsePaginationMerchantDocumentDeleteAt(docs *pb.ApiResponsePaginationMerchantDocumentAt) *response.ApiResponsePaginationMerchantDocumentDeleteAt
+	ToApiResponsesMerchantDocument(docs *pbmerchant_document.ApiResponsesMerchantDocument) *response.ApiResponsesMerchantDocument
+	ToApiResponsePaginationMerchantDocument(docs *pbmerchant_document.ApiResponsePaginationMerchantDocument) *response.ApiResponsePaginationMerchantDocument
+	ToApiResponsePaginationMerchantDocumentDeleteAt(docs *pbmerchant_document.ApiResponsePaginationMerchantDocumentAt) *response.ApiResponsePaginationMerchantDocumentDeleteAt
 }
 
 type MerchantDocumentCommandResponseMapper interface {
 	MerchantDocumentBaseResponseMapper
-	MapMerchantDocumentDeletedAt(doc *pb.MerchantDocumentDeleteAt) *response.MerchantDocumentResponseDeleteAt
-	MapMerchantDocumentsDeletedAt(docs []*pb.MerchantDocumentDeleteAt) []*response.MerchantDocumentResponseDeleteAt
-	ToApiResponseMerchantDocumentAll(resp *pb.ApiResponseMerchantDocumentAll) *response.ApiResponseMerchantDocumentAll
-	ToApiResponseMerchantDocumentDeleteAt(resp *pb.ApiResponseMerchantDocumentDelete) *response.ApiResponseMerchantDocumentDelete
+	MapMerchantDocumentDeletedAt(doc *pbmerchant_document.MerchantDocumentDeleteAt) *response.MerchantDocumentResponseDeleteAt
+	MapMerchantDocumentsDeletedAt(docs []*pbmerchant_document.MerchantDocumentDeleteAt) []*response.MerchantDocumentResponseDeleteAt
+	ToApiResponseMerchantDocumentAll(resp *pbmerchant_document.ApiResponseMerchantDocumentAll) *response.ApiResponseMerchantDocumentAll
+	ToApiResponseMerchantDocumentDeleteAt(resp *pbmerchant_document.ApiResponseMerchantDocumentDelete) *response.ApiResponseMerchantDocumentDelete
 }

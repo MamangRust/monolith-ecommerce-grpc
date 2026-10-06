@@ -1,16 +1,16 @@
 syntax = "proto3";
 
-package pb;
+package pb.merchant_award;
 
 import "merchant_award/merchant_award_common.proto";
 import "merchant/merchant_query.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/merchant_award";
 
 service MerchantAwardQueryService {
-    rpc FindAll(FindAllMerchantRequest) returns (ApiResponsePaginationMerchantAward);
+    rpc FindAll(pb.merchant.FindAllMerchantRequest) returns (ApiResponsePaginationMerchantAward);
     rpc FindById(FindByIdMerchantAwardRequest) returns (ApiResponseMerchantAward);
 
-    rpc FindByActive(FindAllMerchantRequest) returns (ApiResponsePaginationMerchantAwardDeleteAt);
-    rpc FindByTrashed(FindAllMerchantRequest) returns (ApiResponsePaginationMerchantAwardDeleteAt);
+    rpc FindByActive(pb.merchant.FindAllMerchantRequest) returns (ApiResponsePaginationMerchantAwardDeleteAt);
+    rpc FindByTrashed(pb.merchant.FindAllMerchantRequest) returns (ApiResponsePaginationMerchantAwardDeleteAt);
 }

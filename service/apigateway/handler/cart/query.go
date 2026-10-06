@@ -5,23 +5,23 @@ import (
 	"strconv"
 
 	cart_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/cart"
+	pbcart "github.com/MamangRust/monolith-ecommerce-pb/cart"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/cart"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 )
 
 type cartQueryHandlerApi struct {
-	client pb.CartQueryServiceClient
+	client pbcart.CartQueryServiceClient
 	logger logger.LoggerInterface
 	mapper apimapper.CartQueryResponseMapper
 	cache  cart_cache.CartQueryCache
 }
 
 type cartQueryHandleDeps struct {
-	client pb.CartQueryServiceClient
+	client pbcart.CartQueryServiceClient
 	router *echo.Echo
 	logger logger.LoggerInterface
 	mapper apimapper.CartQueryResponseMapper
@@ -78,7 +78,7 @@ func (h *cartQueryHandlerApi) FindAll(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindAll(ctx, &pb.FindAllCartRequest{
+	res, err := h.client.FindAll(ctx, &pbcart.FindAllCartRequest{
 		UserId:   int32(userID),
 		Page:     int32(page),
 		PageSize: int32(pageSize),

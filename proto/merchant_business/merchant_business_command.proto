@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package pb;
+package pb.merchant_business;
 
 import "google/protobuf/empty.proto";
 import "merchant_business/merchant_business_common.proto";
 import "merchant/merchant_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/merchant_business";
 
 message CreateMerchantBusinessRequest {
     int32 merchant_id = 1;
@@ -31,8 +31,8 @@ service MerchantBusinessCommandService {
     rpc Update(UpdateMerchantBusinessRequest) returns (ApiResponseMerchantBusiness);
     rpc TrashedMerchantBusiness(FindByIdMerchantBusinessRequest) returns (ApiResponseMerchantBusinessDeleteAt);
     rpc RestoreMerchantBusiness(FindByIdMerchantBusinessRequest) returns (ApiResponseMerchantBusinessDeleteAt);
-    rpc DeleteMerchantBusinessPermanent(FindByIdMerchantBusinessRequest) returns (ApiResponseMerchantDelete);
+    rpc DeleteMerchantBusinessPermanent(FindByIdMerchantBusinessRequest) returns (pb.merchant.ApiResponseMerchantDelete);
 
-    rpc RestoreAllMerchantBusiness(google.protobuf.Empty) returns (ApiResponseMerchantAll);
-    rpc DeleteAllMerchantBusinessPermanent(google.protobuf.Empty) returns (ApiResponseMerchantAll);
+    rpc RestoreAllMerchantBusiness(google.protobuf.Empty) returns (pb.merchant.ApiResponseMerchantAll);
+    rpc DeleteAllMerchantBusinessPermanent(google.protobuf.Empty) returns (pb.merchant.ApiResponseMerchantAll);
 }

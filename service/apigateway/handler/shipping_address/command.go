@@ -5,24 +5,24 @@ import (
 	"strconv"
 
 	shippingaddress_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/shipping_address"
+	pbshipping_address "github.com/MamangRust/monolith-ecommerce-pb/shipping_address"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/shipping_address"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type shippingAddressCommandHandleApi struct {
-	client pb.ShippingCommandServiceClient
+	client pbshipping_address.ShippingCommandServiceClient
 	logger logger.LoggerInterface
 	mapper apimapper.ShippingAddressCommandResponseMapper
 	cache  shippingaddress_cache.ShippingAddressCommandCache
 }
 
 type shippingAddressCommandHandleDeps struct {
-	client pb.ShippingCommandServiceClient
+	client pbshipping_address.ShippingCommandServiceClient
 	router *echo.Echo
 	logger logger.LoggerInterface
 	mapper apimapper.ShippingAddressCommandResponseMapper
@@ -63,7 +63,7 @@ func (h *shippingAddressCommandHandleApi) TrashedShippingAddress(c echo.Context)
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.TrashedShipping(ctx, &pb.FindByIdShippingRequest{Id: int32(id)})
+	res, err := h.client.TrashedShipping(ctx, &pbshipping_address.FindByIdShippingRequest{Id: int32(id)})
 	if err != nil {
 		return h.handleGrpcError(err, "Trash")
 	}
@@ -91,7 +91,7 @@ func (h *shippingAddressCommandHandleApi) RestoreShippingAddress(c echo.Context)
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.RestoreShipping(ctx, &pb.FindByIdShippingRequest{Id: int32(id)})
+	res, err := h.client.RestoreShipping(ctx, &pbshipping_address.FindByIdShippingRequest{Id: int32(id)})
 	if err != nil {
 		return h.handleGrpcError(err, "Restore")
 	}
@@ -119,7 +119,7 @@ func (h *shippingAddressCommandHandleApi) DeleteShippingAddressPermanent(c echo.
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.DeleteShippingPermanent(ctx, &pb.FindByIdShippingRequest{Id: int32(id)})
+	res, err := h.client.DeleteShippingPermanent(ctx, &pbshipping_address.FindByIdShippingRequest{Id: int32(id)})
 	if err != nil {
 		return h.handleGrpcError(err, "Delete")
 	}

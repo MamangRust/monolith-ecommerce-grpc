@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package pb;
+package pb.merchant_detail;
 
 import "merchant_detail/merchant_detail_common.proto";
 
 import "merchant/merchant_query.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/merchant_detail";
 
 message FindAllMerchantDetailRequest {
     int32 page = 1;
@@ -15,8 +15,8 @@ message FindAllMerchantDetailRequest {
 }
 
 service MerchantDetailQueryService {
-    rpc FindAll(FindAllMerchantRequest) returns (ApiResponsePaginationMerchantDetail);
+    rpc FindAll(pb.merchant.FindAllMerchantRequest) returns (ApiResponsePaginationMerchantDetail);
     rpc FindById(FindByIdMerchantDetailRequest) returns (ApiResponseMerchantDetail);
-    rpc FindByActive(FindAllMerchantRequest) returns (ApiResponsePaginationMerchantDetailDeleteAt);
-    rpc FindByTrashed(FindAllMerchantRequest) returns (ApiResponsePaginationMerchantDetailDeleteAt);
+    rpc FindByActive(pb.merchant.FindAllMerchantRequest) returns (ApiResponsePaginationMerchantDetailDeleteAt);
+    rpc FindByTrashed(pb.merchant.FindAllMerchantRequest) returns (ApiResponsePaginationMerchantDetailDeleteAt);
 }

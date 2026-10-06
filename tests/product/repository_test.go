@@ -4,13 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-product/repository"
+	"github.com/stretchr/testify/suite"
+
+	pbcategory "github.com/MamangRust/monolith-ecommerce-pb/category"
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	"github.com/MamangRust/monolith-ecommerce-product/repository"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type ProductRepositoryTestSuite struct {
@@ -30,8 +32,8 @@ func (s *ProductRepositoryTestSuite) SetupSuite() {
 	queries := db.New(s.DBPool())
 	s.repo = repository.NewRepositories(
 		queries,
-		pb.NewCategoryQueryServiceClient(s.Conns["category"]),
-		pb.NewMerchantQueryServiceClient(s.Conns["merchant"]),
+		pbcategory.NewCategoryQueryServiceClient(s.Conns["category"]),
+		pbmerchant.NewMerchantQueryServiceClient(s.Conns["merchant"]),
 	)
 }
 

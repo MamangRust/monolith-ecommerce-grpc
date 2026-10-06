@@ -4,21 +4,21 @@ import (
 	"net/http"
 	"strconv"
 
+	pbmerchant_document "github.com/MamangRust/monolith-ecommerce-pb/merchant_document"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_documents"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 )
 
 type merchantDocumentQueryHandlerApi struct {
-	client pb.MerchantDocumentQueryServiceClient
+	client pbmerchant_document.MerchantDocumentQueryServiceClient
 	logger logger.LoggerInterface
 	mapper apimapper.MerchantDocumentQueryResponseMapper
 }
 
 type merchantDocumentQueryHandleDeps struct {
-	client pb.MerchantDocumentQueryServiceClient
+	client pbmerchant_document.MerchantDocumentQueryServiceClient
 	router *echo.Echo
 	logger logger.LoggerInterface
 	mapper apimapper.MerchantDocumentQueryResponseMapper
@@ -64,7 +64,7 @@ func (h *merchantDocumentQueryHandlerApi) FindAll(c echo.Context) error {
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
-	res, err := h.client.FindAll(ctx, &pb.FindAllMerchantDocumentsRequest{
+	res, err := h.client.FindAll(ctx, &pbmerchant_document.FindAllMerchantDocumentsRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
@@ -92,7 +92,7 @@ func (h *merchantDocumentQueryHandlerApi) FindById(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.FindById(ctx, &pb.FindMerchantDocumentByIdRequest{DocumentId: int32(id)})
+	res, err := h.client.FindById(ctx, &pbmerchant_document.FindMerchantDocumentByIdRequest{DocumentId: int32(id)})
 	if err != nil {
 		return h.handleGrpcError(err, "FindById")
 	}
@@ -124,7 +124,7 @@ func (h *merchantDocumentQueryHandlerApi) FindByActive(c echo.Context) error {
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
-	res, err := h.client.FindAllActive(ctx, &pb.FindAllMerchantDocumentsRequest{
+	res, err := h.client.FindAllActive(ctx, &pbmerchant_document.FindAllMerchantDocumentsRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {
@@ -158,7 +158,7 @@ func (h *merchantDocumentQueryHandlerApi) FindByTrashed(c echo.Context) error {
 	search := c.QueryParam("search")
 
 	ctx := c.Request().Context()
-	res, err := h.client.FindAllTrashed(ctx, &pb.FindAllMerchantDocumentsRequest{
+	res, err := h.client.FindAllTrashed(ctx, &pbmerchant_document.FindAllMerchantDocumentsRequest{
 		Page: int32(page), PageSize: int32(pageSize), Search: search,
 	})
 	if err != nil {

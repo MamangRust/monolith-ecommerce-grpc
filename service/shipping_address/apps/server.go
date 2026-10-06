@@ -1,14 +1,15 @@
 package apps
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/handler"
-	"github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-shipping-address/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/server"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/MamangRust/monolith-ecommerce-shipping-address/cache"
+	"github.com/MamangRust/monolith-ecommerce-shipping-address/handler"
+	"github.com/MamangRust/monolith-ecommerce-shipping-address/repository"
+	"github.com/MamangRust/monolith-ecommerce-shipping-address/service"
 	"google.golang.org/grpc"
+
+	pbshipping_address "github.com/MamangRust/monolith-ecommerce-pb/shipping_address"
 )
 
 func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
@@ -34,8 +35,8 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	})
 
 	srv.RegisterServices = func(gs *grpc.Server) {
-		pb.RegisterShippingQueryServiceServer(gs, h.ShippingQuery)
-		pb.RegisterShippingCommandServiceServer(gs, h.ShippingCommand)
+		pbshipping_address.RegisterShippingQueryServiceServer(gs, h.ShippingQuery)
+		pbshipping_address.RegisterShippingCommandServiceServer(gs, h.ShippingCommand)
 	}
 
 	return srv, nil

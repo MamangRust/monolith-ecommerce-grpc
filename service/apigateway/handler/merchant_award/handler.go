@@ -2,13 +2,13 @@ package merchantawardhandler
 
 import (
 	merchantaward_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/merchant_awards"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant_award "github.com/MamangRust/monolith-ecommerce-pb/merchant_award"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_award"
+	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	merchantapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant"
+	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_award"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc"
-	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 )
 
 type DepsMerchantAward struct {
@@ -24,7 +24,7 @@ func RegisterMerchantAwardHandler(deps *DepsMerchantAward) {
 	cache := merchantaward_cache.NewMerchantAward(deps.CacheStore)
 
 	NewMerchantAwardQueryHandleApi(&merchantAwardQueryHandleDeps{
-		client: pb.NewMerchantAwardQueryServiceClient(deps.Client),
+		client: pbmerchant_award.NewMerchantAwardQueryServiceClient(deps.Client),
 		router: deps.E,
 		logger: deps.Logger,
 		mapper: mapper.QueryMapper(),
@@ -32,7 +32,7 @@ func RegisterMerchantAwardHandler(deps *DepsMerchantAward) {
 	})
 
 	NewMerchantAwardCommandHandleApi(&merchantAwardCommandHandleDeps{
-		client:         pb.NewMerchantAwardCommandServiceClient(deps.Client),
+		client:         pbmerchant_award.NewMerchantAwardCommandServiceClient(deps.Client),
 		router:         deps.E,
 		logger:         deps.Logger,
 		mapper:         mapper.CommandMapper(),

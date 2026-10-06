@@ -3,29 +3,30 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-order/service"
+	"github.com/MamangRust/monolith-ecommerce-order/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/order_errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	pborder "github.com/MamangRust/monolith-ecommerce-pb/order"
 )
 
 type orderCommandHandler struct {
-	pb.UnimplementedOrderCommandServiceServer
+	pborder.UnimplementedOrderCommandServiceServer
 	orderCommand service.OrderCommandService
 	logger       logger.LoggerInterface
 }
 
-func NewOrderCommandHandler(orderCommand service.OrderCommandService, logger logger.LoggerInterface) pb.OrderCommandServiceServer {
+func NewOrderCommandHandler(orderCommand service.OrderCommandService, logger logger.LoggerInterface) pborder.OrderCommandServiceServer {
 	return &orderCommandHandler{
 		orderCommand: orderCommand,
 		logger:       logger,
 	}
 }
 
-func (s *orderCommandHandler) Create(ctx context.Context, request *pb.CreateOrderRequest) (*pb.ApiResponseOrder, error) {
+func (s *orderCommandHandler) Create(ctx context.Context, request *pborder.CreateOrderRequest) (*pborder.ApiResponseOrder, error) {
 	var items []requests.CreateOrderItemRequest
 	for _, item := range request.GetItems() {
 		items = append(items, requests.CreateOrderItemRequest{
@@ -60,14 +61,14 @@ func (s *orderCommandHandler) Create(ctx context.Context, request *pb.CreateOrde
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseOrder{
+	return &pborder.ApiResponseOrder{
 		Status:  "success",
 		Message: "Successfully created order",
 		Data:    mapToProtoOrderResponse(order),
 	}, nil
 }
 
-func (s *orderCommandHandler) Update(ctx context.Context, request *pb.UpdateOrderRequest) (*pb.ApiResponseOrder, error) {
+func (s *orderCommandHandler) Update(ctx context.Context, request *pborder.UpdateOrderRequest) (*pborder.ApiResponseOrder, error) {
 	var items []requests.UpdateOrderItemRequest
 	for _, item := range request.GetItems() {
 		items = append(items, requests.UpdateOrderItemRequest{
@@ -79,6 +80,13 @@ func (s *orderCommandHandler) Update(ctx context.Context, request *pb.UpdateOrde
 	}
 
 	orderID := int(request.GetOrderId())
+
+	var shippingID *int
+	if request.GetShipping() != nil && request.GetShipping().GetShippingId() > 0 {
+		id := int(request.GetShipping().GetShippingId())
+		shippingID = &id
+	}
+
 	req := &requests.UpdateOrderRequest{
 		OrderID:    &orderID,
 		UserID:     int(request.GetUserId()),
@@ -87,7 +95,7 @@ func (s *orderCommandHandler) Update(ctx context.Context, request *pb.UpdateOrde
 	}
 	if shipping := request.GetShipping(); shipping != nil {
 		req.ShippingAddress = &requests.UpdateShippingAddressRequest{
-			ShippingID:     pointerIntToInt(int(shipping.GetShippingId())),
+			ShippingID:     shippingID,
 			Alamat:         shipping.GetAlamat(),
 			Provinsi:       shipping.GetProvinsi(),
 			Kota:           shipping.GetKota(),
@@ -107,21 +115,14 @@ func (s *orderCommandHandler) Update(ctx context.Context, request *pb.UpdateOrde
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseOrder{
+	return &pborder.ApiResponseOrder{
 		Status:  "success",
 		Message: "Successfully updated order",
 		Data:    mapToProtoOrderResponse(order),
 	}, nil
 }
 
-func pointerIntToInt(v int) *int {
-	if v <= 0 {
-		return nil
-	}
-	return &v
-}
-
-func (s *orderCommandHandler) TrashedOrder(ctx context.Context, request *pb.FindByIdOrderRequest) (*pb.ApiResponseOrderDeleteAt, error) {
+func (s *orderCommandHandler) TrashedOrder(ctx context.Context, request *pborder.FindByIdOrderRequest) (*pborder.ApiResponseOrderDeleteAt, error) {
 	id := int(request.GetId())
 	if id == 0 {
 		return nil, order_errors.ErrGrpcFailedInvalidId
@@ -132,14 +133,14 @@ func (s *orderCommandHandler) TrashedOrder(ctx context.Context, request *pb.Find
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseOrderDeleteAt{
+	return &pborder.ApiResponseOrderDeleteAt{
 		Status:  "success",
 		Message: "Successfully trashed order",
 		Data:    mapToProtoOrderResponseDeleteAt(order),
 	}, nil
 }
 
-func (s *orderCommandHandler) RestoreOrder(ctx context.Context, request *pb.FindByIdOrderRequest) (*pb.ApiResponseOrderDeleteAt, error) {
+func (s *orderCommandHandler) RestoreOrder(ctx context.Context, request *pborder.FindByIdOrderRequest) (*pborder.ApiResponseOrderDeleteAt, error) {
 	id := int(request.GetId())
 	if id == 0 {
 		return nil, order_errors.ErrGrpcFailedInvalidId
@@ -150,14 +151,14 @@ func (s *orderCommandHandler) RestoreOrder(ctx context.Context, request *pb.Find
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseOrderDeleteAt{
+	return &pborder.ApiResponseOrderDeleteAt{
 		Status:  "success",
 		Message: "Successfully restored order",
 		Data:    mapToProtoOrderResponseDeleteAt(order),
 	}, nil
 }
 
-func (s *orderCommandHandler) DeleteOrderPermanent(ctx context.Context, request *pb.FindByIdOrderRequest) (*pb.ApiResponseOrderDelete, error) {
+func (s *orderCommandHandler) DeleteOrderPermanent(ctx context.Context, request *pborder.FindByIdOrderRequest) (*pborder.ApiResponseOrderDelete, error) {
 	id := int(request.GetId())
 	if id == 0 {
 		return nil, order_errors.ErrGrpcFailedInvalidId
@@ -168,31 +169,31 @@ func (s *orderCommandHandler) DeleteOrderPermanent(ctx context.Context, request 
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseOrderDelete{
+	return &pborder.ApiResponseOrderDelete{
 		Status:  "success",
 		Message: "Successfully deleted order permanently",
 	}, nil
 }
 
-func (s *orderCommandHandler) RestoreAllOrder(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseOrderAll, error) {
+func (s *orderCommandHandler) RestoreAllOrder(ctx context.Context, _ *emptypb.Empty) (*pborder.ApiResponseOrderAll, error) {
 	_, err := s.orderCommand.RestoreAll(ctx)
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseOrderAll{
+	return &pborder.ApiResponseOrderAll{
 		Status:  "success",
 		Message: "Successfully restored all orders",
 	}, nil
 }
 
-func (s *orderCommandHandler) DeleteAllOrderPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseOrderAll, error) {
+func (s *orderCommandHandler) DeleteAllOrderPermanent(ctx context.Context, _ *emptypb.Empty) (*pborder.ApiResponseOrderAll, error) {
 	_, err := s.orderCommand.DeleteAll(ctx)
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseOrderAll{
+	return &pborder.ApiResponseOrderAll{
 		Status:  "success",
 		Message: "Successfully deleted all orders permanently",
 	}, nil

@@ -5,18 +5,18 @@ import (
 	"strconv"
 
 	category_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/category"
+	pbcategory "github.com/MamangRust/monolith-ecommerce-pb/category"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/category"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 )
 
 type categoryStatsHandlerApi struct {
-	statsClient           pb.CategoryStatsServiceClient
-	statsByIdClient       pb.CategoryStatsByIdServiceClient
-	statsByMerchantClient pb.CategoryStatsByMerchantServiceClient
+	statsClient           pbcategory.CategoryStatsServiceClient
+	statsByIdClient       pbcategory.CategoryStatsByIdServiceClient
+	statsByMerchantClient pbcategory.CategoryStatsByMerchantServiceClient
 	logger                logger.LoggerInterface
 	mapper                apimapper.CategoryStatsResponseMapper
 	cache                 category_cache.CategoryMencache
@@ -24,9 +24,9 @@ type categoryStatsHandlerApi struct {
 }
 
 type categoryStatsHandleDeps struct {
-	statsClient           pb.CategoryStatsServiceClient
-	statsByIdClient       pb.CategoryStatsByIdServiceClient
-	statsByMerchantClient pb.CategoryStatsByMerchantServiceClient
+	statsClient           pbcategory.CategoryStatsServiceClient
+	statsByIdClient       pbcategory.CategoryStatsByIdServiceClient
+	statsByMerchantClient pbcategory.CategoryStatsByMerchantServiceClient
 	router                *echo.Echo
 	logger                logger.LoggerInterface
 	mapper                apimapper.CategoryStatsResponseMapper
@@ -87,7 +87,7 @@ func (h *categoryStatsHandlerApi) FindMonthTotalPrice(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	res, err := h.statsClient.FindMonthlyTotalPrices(ctx, &pb.FindYearMonthTotalPrices{Year: int32(year), Month: int32(month)})
+	res, err := h.statsClient.FindMonthlyTotalPrices(ctx, &pbcategory.FindYearMonthTotalPrices{Year: int32(year), Month: int32(month)})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
@@ -116,7 +116,7 @@ func (h *categoryStatsHandlerApi) FindYearTotalPrice(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	res, err := h.statsClient.FindYearlyTotalPrices(ctx, &pb.FindYearTotalPrices{Year: int32(year)})
+	res, err := h.statsClient.FindYearlyTotalPrices(ctx, &pbcategory.FindYearTotalPrices{Year: int32(year)})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
@@ -151,7 +151,7 @@ func (h *categoryStatsHandlerApi) FindMonthTotalPriceByMerchant(c echo.Context) 
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	res, err := h.statsByMerchantClient.FindMonthlyTotalPricesByMerchant(ctx, &pb.FindYearMonthTotalPriceByMerchant{
+	res, err := h.statsByMerchantClient.FindMonthlyTotalPricesByMerchant(ctx, &pbcategory.FindYearMonthTotalPriceByMerchant{
 		Year: int32(year), Month: int32(month), MerchantId: int32(merchantId),
 	})
 	if err != nil {
@@ -186,7 +186,7 @@ func (h *categoryStatsHandlerApi) FindYearTotalPriceByMerchant(c echo.Context) e
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	res, err := h.statsByMerchantClient.FindYearlyTotalPricesByMerchant(ctx, &pb.FindYearTotalPriceByMerchant{
+	res, err := h.statsByMerchantClient.FindYearlyTotalPricesByMerchant(ctx, &pbcategory.FindYearTotalPriceByMerchant{
 		Year: int32(year), MerchantId: int32(merchantId),
 	})
 	if err != nil {
@@ -223,7 +223,7 @@ func (h *categoryStatsHandlerApi) FindMonthTotalPriceById(c echo.Context) error 
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	res, err := h.statsByIdClient.FindMonthlyTotalPricesById(ctx, &pb.FindYearMonthTotalPriceById{
+	res, err := h.statsByIdClient.FindMonthlyTotalPricesById(ctx, &pbcategory.FindYearMonthTotalPriceById{
 		Year: int32(year), Month: int32(month), CategoryId: int32(categoryId),
 	})
 	if err != nil {
@@ -258,7 +258,7 @@ func (h *categoryStatsHandlerApi) FindYearTotalPriceById(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	res, err := h.statsByIdClient.FindYearlyTotalPricesById(ctx, &pb.FindYearTotalPriceById{
+	res, err := h.statsByIdClient.FindYearlyTotalPricesById(ctx, &pbcategory.FindYearTotalPriceById{
 		Year: int32(year), CategoryId: int32(categoryId),
 	})
 	if err != nil {
@@ -291,7 +291,7 @@ func (h *categoryStatsHandlerApi) FindMonthPrice(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	res, err := h.statsClient.FindMonthPrice(ctx, &pb.FindYearCategory{Year: int32(year)})
+	res, err := h.statsClient.FindMonthPrice(ctx, &pbcategory.FindYearCategory{Year: int32(year)})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
@@ -320,7 +320,7 @@ func (h *categoryStatsHandlerApi) FindYearPrice(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	res, err := h.statsClient.FindYearPrice(ctx, &pb.FindYearCategory{Year: int32(year)})
+	res, err := h.statsClient.FindYearPrice(ctx, &pbcategory.FindYearCategory{Year: int32(year)})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
@@ -353,7 +353,7 @@ func (h *categoryStatsHandlerApi) FindMonthPriceByMerchant(c echo.Context) error
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	res, err := h.statsByMerchantClient.FindMonthPriceByMerchant(ctx, &pb.FindYearCategoryByMerchant{
+	res, err := h.statsByMerchantClient.FindMonthPriceByMerchant(ctx, &pbcategory.FindYearCategoryByMerchant{
 		Year: int32(year), MerchantId: int32(merchantId),
 	})
 	if err != nil {
@@ -388,7 +388,7 @@ func (h *categoryStatsHandlerApi) FindYearPriceByMerchant(c echo.Context) error 
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	res, err := h.statsByMerchantClient.FindYearPriceByMerchant(ctx, &pb.FindYearCategoryByMerchant{
+	res, err := h.statsByMerchantClient.FindYearPriceByMerchant(ctx, &pbcategory.FindYearCategoryByMerchant{
 		Year: int32(year), MerchantId: int32(merchantId),
 	})
 	if err != nil {
@@ -423,7 +423,7 @@ func (h *categoryStatsHandlerApi) FindMonthPriceById(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	res, err := h.statsByIdClient.FindMonthPriceById(ctx, &pb.FindYearCategoryById{
+	res, err := h.statsByIdClient.FindMonthPriceById(ctx, &pbcategory.FindYearCategoryById{
 		Year: int32(year), CategoryId: int32(categoryId),
 	})
 	if err != nil {
@@ -458,7 +458,7 @@ func (h *categoryStatsHandlerApi) FindYearPriceById(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	res, err := h.statsByIdClient.FindYearPriceById(ctx, &pb.FindYearCategoryById{
+	res, err := h.statsByIdClient.FindYearPriceById(ctx, &pbcategory.FindYearCategoryById{
 		Year: int32(year), CategoryId: int32(categoryId),
 	})
 	if err != nil {

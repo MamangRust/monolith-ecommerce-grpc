@@ -2,7 +2,7 @@ package shippingaddresshandler
 
 import (
 	shippingaddress_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/shipping_address"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbshipping_address "github.com/MamangRust/monolith-ecommerce-pb/shipping_address"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/shipping_address"
@@ -22,7 +22,7 @@ func RegisterShippingAddressHandler(deps *DepsShippingAddress) {
 	cache := shippingaddress_cache.NewShippingAddressMencache(deps.Cache)
 
 	NewShippingAddressQueryHandleApi(&shippingAddressQueryHandleDeps{
-		client: pb.NewShippingQueryServiceClient(deps.Client),
+		client: pbshipping_address.NewShippingQueryServiceClient(deps.Client),
 		router: deps.E,
 		logger: deps.Logger,
 		mapper: mapper.QueryMapper(),
@@ -30,7 +30,7 @@ func RegisterShippingAddressHandler(deps *DepsShippingAddress) {
 	})
 
 	NewShippingAddressCommandHandleApi(&shippingAddressCommandHandleDeps{
-		client: pb.NewShippingCommandServiceClient(deps.Client),
+		client: pbshipping_address.NewShippingCommandServiceClient(deps.Client),
 		router: deps.E,
 		logger: deps.Logger,
 		mapper: mapper.CommandMapper(),

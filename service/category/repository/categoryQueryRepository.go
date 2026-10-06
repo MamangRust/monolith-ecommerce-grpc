@@ -35,7 +35,6 @@ func (r *categoryQueryRepository) FindAll(ctx context.Context, req *requests.Fin
 		return nil, category_errors.ErrFindAllCategory.WithInternal(err)
 	}
 
-
 	return res, nil
 }
 
@@ -53,7 +52,6 @@ func (r *categoryQueryRepository) FindActive(ctx context.Context, req *requests.
 	if err != nil {
 		return nil, category_errors.ErrFindByActiveCategory.WithInternal(err)
 	}
-
 
 	return res, nil
 }
@@ -73,7 +71,6 @@ func (r *categoryQueryRepository) FindTrashed(ctx context.Context, req *requests
 		return nil, category_errors.ErrFindByTrashedCategory.WithInternal(err)
 	}
 
-
 	return res, nil
 }
 
@@ -87,7 +84,6 @@ func (r *categoryQueryRepository) FindByID(ctx context.Context, category_id int)
 		return nil, category_errors.ErrFindCategoryById.WithInternal(err)
 	}
 
-
 	return res, nil
 }
 
@@ -100,7 +96,6 @@ func (r *categoryQueryRepository) FindByIDTrashed(ctx context.Context, category_
 		}
 		return nil, category_errors.ErrFindCategoryByIdTrashed.WithInternal(err)
 	}
-
 
 	return res, nil
 }

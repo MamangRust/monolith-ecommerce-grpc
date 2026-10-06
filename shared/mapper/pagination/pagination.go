@@ -1,11 +1,11 @@
 package paginationapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
-func MapPaginationMeta(s *pb.PaginationMeta) *response.PaginationMeta {
+func MapPaginationMeta(s *pbcommon.PaginationMeta) *response.PaginationMeta {
 	if s == nil {
 		return nil
 	}

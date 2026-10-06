@@ -5,17 +5,17 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	apigatewaymiddlewares "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 )
 
 // gapi: non-existent user must map to codes.NotFound (404), not Internal.
 func (s *UserGapiTestSuite) TestUserGapiNotFound() {
 	ctx := context.Background()
-	_, err := s.queryClient.FindById(ctx, &pb.FindByIdUserRequest{Id: 999999})
+	_, err := s.queryClient.FindById(ctx, &pbuser.FindByIdUserRequest{Id: 999999})
 	s.Require().Error(err)
 	st, ok := status.FromError(err)
 	s.Require().True(ok, "expected a gRPC status error")
@@ -24,7 +24,6 @@ func (s *UserGapiTestSuite) TestUserGapiNotFound() {
 
 // api: non-existent user must map to 404, invalid path ID to 400.
 func (s *UserHandlerTestSuite) TestUserApiNotFound() {
-	apigatewaymiddlewares.RegisterErrorHandler(s.router)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/user-query/999999", nil)
 	rec := httptest.NewRecorder()
@@ -33,7 +32,6 @@ func (s *UserHandlerTestSuite) TestUserApiNotFound() {
 }
 
 func (s *UserHandlerTestSuite) TestUserApiInvalidID() {
-	apigatewaymiddlewares.RegisterErrorHandler(s.router)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/user-query/abc", nil)
 	rec := httptest.NewRecorder()

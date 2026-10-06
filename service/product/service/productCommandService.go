@@ -4,11 +4,11 @@ import (
 	"context"
 	"os"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-product/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-product/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/utils"
+	"github.com/MamangRust/monolith-ecommerce-product/cache"
+	"github.com/MamangRust/monolith-ecommerce-product/repository"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/product_errors"
@@ -179,16 +179,6 @@ func (s *productCommandService) UpdateProductCountStock(ctx context.Context, pro
 		end(status)
 	}()
 
-	if productID <= 0 || stock < 0 {
-		status = "error"
-		return errorhandler.HandleError[*db.UpdateProductCountStockRow](
-			s.logger,
-			product_errors.ErrFailedCountStock,
-			method,
-			span,
-		)
-	}
-
 	product, err := s.productRepository.UpdateProductCountStock(ctx, productID, stock)
 	if err != nil {
 		status = "error"
@@ -208,34 +198,6 @@ func (s *productCommandService) UpdateProductCountStock(ctx context.Context, pro
 		zap.Int("product_id", productID),
 		zap.Int("new_stock", stock))
 
-	return product, nil
-}
-
-func (s *productCommandService) AdjustProductStock(ctx context.Context, productID int, delta int, operationID string) (*db.AdjustProductStockRow, error) {
-	const method = "AdjustProductStock"
-
-	ctx, span, end, status, logSuccess := s.observability.StartTracingAndLogging(ctx, method,
-		attribute.Int("product_id", productID),
-		attribute.Int("delta", delta),
-		attribute.String("operation_id", operationID))
-
-	defer func() {
-		end(status)
-	}()
-
-	if productID <= 0 || delta == 0 || operationID == "" {
-		status = "error"
-		return errorhandler.HandleError[*db.AdjustProductStockRow](s.logger, product_errors.ErrFailedCountStock, method, span)
-	}
-
-	product, err := s.productRepository.AdjustProductStock(ctx, productID, delta, operationID)
-	if err != nil {
-		status = "error"
-		return errorhandler.HandleError[*db.AdjustProductStockRow](s.logger, err, method, span)
-	}
-
-	s.cache.DeleteCachedProduct(ctx, productID)
-	logSuccess("Successfully adjusted product stock", zap.Int("product_id", productID), zap.Int("delta", delta))
 	return product, nil
 }
 
@@ -394,7 +356,7 @@ func (s *productCommandService) DeleteAll(ctx context.Context) (bool, error) {
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			product_errors.ErrFailedDeleteAllProductsPermanent,
 			method,
 			span,
 		)

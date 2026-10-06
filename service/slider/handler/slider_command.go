@@ -3,17 +3,18 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-slider/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors/slider_errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors/slider_errors"
+	"github.com/MamangRust/monolith-ecommerce-slider/service"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	pbslider "github.com/MamangRust/monolith-ecommerce-pb/slider"
 )
 
 type sliderCommandHandler struct {
-	pb.UnimplementedSliderCommandServiceServer
+	pbslider.UnimplementedSliderCommandServiceServer
 	sliderCommand service.SliderCommandService
 	logger        logger.LoggerInterface
 }
@@ -25,7 +26,7 @@ func NewSliderCommandHandler(sliderCommand service.SliderCommandService, logger 
 	}
 }
 
-func (s *sliderCommandHandler) Create(ctx context.Context, request *pb.CreateSliderRequest) (*pb.ApiResponseSlider, error) {
+func (s *sliderCommandHandler) Create(ctx context.Context, request *pbslider.CreateSliderRequest) (*pbslider.ApiResponseSlider, error) {
 	req := &requests.CreateSliderRequest{
 		Nama:     request.GetName(),
 		FilePath: request.GetImage(),
@@ -40,14 +41,14 @@ func (s *sliderCommandHandler) Create(ctx context.Context, request *pb.CreateSli
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseSlider{
+	return &pbslider.ApiResponseSlider{
 		Status:  "success",
 		Message: "Successfully created slider",
 		Data:    MapToSliderResponseCreateSliderRow(slider),
 	}, nil
 }
 
-func (s *sliderCommandHandler) Update(ctx context.Context, request *pb.UpdateSliderRequest) (*pb.ApiResponseSlider, error) {
+func (s *sliderCommandHandler) Update(ctx context.Context, request *pbslider.UpdateSliderRequest) (*pbslider.ApiResponseSlider, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -69,14 +70,14 @@ func (s *sliderCommandHandler) Update(ctx context.Context, request *pb.UpdateSli
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseSlider{
+	return &pbslider.ApiResponseSlider{
 		Status:  "success",
 		Message: "Successfully updated slider",
 		Data:    MapToSliderResponseUpdateSliderRow(slider),
 	}, nil
 }
 
-func (s *sliderCommandHandler) TrashedSlider(ctx context.Context, request *pb.FindByIdSliderRequest) (*pb.ApiResponseSliderDeleteAt, error) {
+func (s *sliderCommandHandler) TrashedSlider(ctx context.Context, request *pbslider.FindByIdSliderRequest) (*pbslider.ApiResponseSliderDeleteAt, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -88,14 +89,14 @@ func (s *sliderCommandHandler) TrashedSlider(ctx context.Context, request *pb.Fi
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseSliderDeleteAt{
+	return &pbslider.ApiResponseSliderDeleteAt{
 		Status:  "success",
 		Message: "Successfully trashed slider",
 		Data:    MapToSliderResponseDeleteAt(slider),
 	}, nil
 }
 
-func (s *sliderCommandHandler) RestoreSlider(ctx context.Context, request *pb.FindByIdSliderRequest) (*pb.ApiResponseSliderDeleteAt, error) {
+func (s *sliderCommandHandler) RestoreSlider(ctx context.Context, request *pbslider.FindByIdSliderRequest) (*pbslider.ApiResponseSliderDeleteAt, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -107,14 +108,14 @@ func (s *sliderCommandHandler) RestoreSlider(ctx context.Context, request *pb.Fi
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseSliderDeleteAt{
+	return &pbslider.ApiResponseSliderDeleteAt{
 		Status:  "success",
 		Message: "Successfully restored slider",
 		Data:    MapToSliderResponseDeleteAt(slider),
 	}, nil
 }
 
-func (s *sliderCommandHandler) DeleteSliderPermanent(ctx context.Context, request *pb.FindByIdSliderRequest) (*pb.ApiResponseSliderDelete, error) {
+func (s *sliderCommandHandler) DeleteSliderPermanent(ctx context.Context, request *pbslider.FindByIdSliderRequest) (*pbslider.ApiResponseSliderDelete, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -126,31 +127,31 @@ func (s *sliderCommandHandler) DeleteSliderPermanent(ctx context.Context, reques
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseSliderDelete{
+	return &pbslider.ApiResponseSliderDelete{
 		Status:  "success",
 		Message: "Successfully deleted slider permanently",
 	}, nil
 }
 
-func (s *sliderCommandHandler) RestoreAllSlider(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseSliderAll, error) {
+func (s *sliderCommandHandler) RestoreAllSlider(ctx context.Context, _ *emptypb.Empty) (*pbslider.ApiResponseSliderAll, error) {
 	_, err := s.sliderCommand.RestoreAll(ctx)
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseSliderAll{
+	return &pbslider.ApiResponseSliderAll{
 		Status:  "success",
 		Message: "Successfully restored all sliders",
 	}, nil
 }
 
-func (s *sliderCommandHandler) DeleteAllSliderPermanent(ctx context.Context, _ *emptypb.Empty) (*pb.ApiResponseSliderAll, error) {
+func (s *sliderCommandHandler) DeleteAllSliderPermanent(ctx context.Context, _ *emptypb.Empty) (*pbslider.ApiResponseSliderAll, error) {
 	_, err := s.sliderCommand.DeleteAll(ctx)
 	if err != nil {
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseSliderAll{
+	return &pbslider.ApiResponseSliderAll{
 		Status:  "success",
 		Message: "Successfully deleted all sliders permanently",
 	}, nil

@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package pb;
+package pb.review;
 
 import "review/review_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/review";
 
 message FindAllReviewProductRequest {
     int32 product_id = 1;

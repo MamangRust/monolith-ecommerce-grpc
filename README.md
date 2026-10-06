@@ -278,7 +278,7 @@ graph TB
     APPS --> OBS
 ```
 
-> Generated protobuf code lives in the `shared/pb/` module (source: `proto/`), and is imported by services and the gateway alike.
+> Generated protobuf code lives in the `pb/` module (source: `proto/`), and is imported by services and the gateway alike.
 
 ---
 
@@ -862,7 +862,7 @@ The project uses a single `justfile` as its task runner:
 | `just migrate-down` | Rollback database migrations |
 | `just seeder` | Seed the database with sample data |
 | `just build` | Build all services to `bin/` |
-| `just generate-proto` | Regenerate Go code from `.proto` definitions (`proto/` → `shared/pb/`) |
+| `just generate-proto` | Regenerate Go code from `.proto` definitions (`proto/` → `pb/`) |
 | `just generate-sql` | Regenerate Go code from SQL queries (sqlc) |
 | `just generate-swagger` | Regenerate Swagger docs via `swag init -g service/apigateway/cmd/main.go -o service/apigateway/docs` (248 ops / 19 domain) |
 | `just build-image` | Build Docker images for all services (context = repo root; docker or podman) |

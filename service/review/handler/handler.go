@@ -1,9 +1,10 @@
 package handler
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-review/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	"github.com/MamangRust/monolith-ecommerce-review/service"
+
+	pbreview "github.com/MamangRust/monolith-ecommerce-pb/review"
 )
 
 type Deps struct {
@@ -12,8 +13,8 @@ type Deps struct {
 }
 
 type Handler struct {
-	ReviewQuery   pb.ReviewQueryServiceServer
-	ReviewCommand pb.ReviewCommandServiceServer
+	ReviewQuery   pbreview.ReviewQueryServiceServer
+	ReviewCommand pbreview.ReviewCommandServiceServer
 }
 
 func NewHandler(deps *Deps) *Handler {

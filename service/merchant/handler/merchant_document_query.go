@@ -3,28 +3,29 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant/service"
+	"github.com/MamangRust/monolith-ecommerce-merchant/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	merchant_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/merchant"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+
+	pbmerchant_document "github.com/MamangRust/monolith-ecommerce-pb/merchant_document"
 )
 
 type merchantDocumentQueryHandler struct {
-	pb.UnimplementedMerchantDocumentQueryServiceServer
+	pbmerchant_document.UnimplementedMerchantDocumentQueryServiceServer
 	merchantDocumentQuery service.MerchantDocumentQueryService
 	logger                logger.LoggerInterface
 }
 
-func NewMerchantDocumentQueryHandler(svc service.MerchantDocumentQueryService, logger logger.LoggerInterface) pb.MerchantDocumentQueryServiceServer {
+func NewMerchantDocumentQueryHandler(svc service.MerchantDocumentQueryService, logger logger.LoggerInterface) pbmerchant_document.MerchantDocumentQueryServiceServer {
 	return &merchantDocumentQueryHandler{
 		merchantDocumentQuery: svc,
 		logger:                logger,
 	}
 }
 
-func (s *merchantDocumentQueryHandler) FindAll(ctx context.Context, req *pb.FindAllMerchantDocumentsRequest) (*pb.ApiResponsePaginationMerchantDocument, error) {
+func (s *merchantDocumentQueryHandler) FindAll(ctx context.Context, req *pbmerchant_document.FindAllMerchantDocumentsRequest) (*pbmerchant_document.ApiResponsePaginationMerchantDocument, error) {
 	page, pageSize := normalizePage(int(req.GetPage()), int(req.GetPageSize()))
 	search := req.GetSearch()
 
@@ -39,14 +40,14 @@ func (s *merchantDocumentQueryHandler) FindAll(ctx context.Context, req *pb.Find
 		return nil, errors.ToGrpcError(err)
 	}
 
-	pbDocuments := make([]*pb.MerchantDocument, len(documents))
+	pbDocuments := make([]*pbmerchant_document.MerchantDocument, len(documents))
 	for i, d := range documents {
 		pbDocuments[i] = mapToProtoMerchantDocumentResponse(d)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationMerchantDocument{
+	return &pbmerchant_document.ApiResponsePaginationMerchantDocument{
 		Status:     "success",
 		Message:    "Successfully fetched merchant documents",
 		Data:       pbDocuments,
@@ -54,7 +55,7 @@ func (s *merchantDocumentQueryHandler) FindAll(ctx context.Context, req *pb.Find
 	}, nil
 }
 
-func (s *merchantDocumentQueryHandler) FindById(ctx context.Context, req *pb.FindMerchantDocumentByIdRequest) (*pb.ApiResponseMerchantDocument, error) {
+func (s *merchantDocumentQueryHandler) FindById(ctx context.Context, req *pbmerchant_document.FindMerchantDocumentByIdRequest) (*pbmerchant_document.ApiResponseMerchantDocument, error) {
 	id := int(req.GetDocumentId())
 	if id == 0 {
 		return nil, merchant_errors.ErrGrpcMerchantInvalidID
@@ -65,14 +66,14 @@ func (s *merchantDocumentQueryHandler) FindById(ctx context.Context, req *pb.Fin
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseMerchantDocument{
+	return &pbmerchant_document.ApiResponseMerchantDocument{
 		Status:  "success",
 		Message: "Successfully fetched merchant document",
 		Data:    mapToProtoMerchantDocumentResponse(document),
 	}, nil
 }
 
-func (s *merchantDocumentQueryHandler) FindAllActive(ctx context.Context, req *pb.FindAllMerchantDocumentsRequest) (*pb.ApiResponsePaginationMerchantDocument, error) {
+func (s *merchantDocumentQueryHandler) FindByActive(ctx context.Context, req *pbmerchant_document.FindAllMerchantDocumentsRequest) (*pbmerchant_document.ApiResponsePaginationMerchantDocument, error) {
 	page, pageSize := normalizePage(int(req.GetPage()), int(req.GetPageSize()))
 	search := req.GetSearch()
 
@@ -87,14 +88,14 @@ func (s *merchantDocumentQueryHandler) FindAllActive(ctx context.Context, req *p
 		return nil, errors.ToGrpcError(err)
 	}
 
-	pbDocuments := make([]*pb.MerchantDocument, len(documents))
+	pbDocuments := make([]*pbmerchant_document.MerchantDocument, len(documents))
 	for i, d := range documents {
 		pbDocuments[i] = mapToProtoMerchantDocumentResponse(d)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationMerchantDocument{
+	return &pbmerchant_document.ApiResponsePaginationMerchantDocument{
 		Status:     "success",
 		Message:    "Successfully fetched active merchant documents",
 		Data:       pbDocuments,
@@ -102,7 +103,7 @@ func (s *merchantDocumentQueryHandler) FindAllActive(ctx context.Context, req *p
 	}, nil
 }
 
-func (s *merchantDocumentQueryHandler) FindAllTrashed(ctx context.Context, req *pb.FindAllMerchantDocumentsRequest) (*pb.ApiResponsePaginationMerchantDocumentAt, error) {
+func (s *merchantDocumentQueryHandler) FindByTrashed(ctx context.Context, req *pbmerchant_document.FindAllMerchantDocumentsRequest) (*pbmerchant_document.ApiResponsePaginationMerchantDocumentAt, error) {
 	page, pageSize := normalizePage(int(req.GetPage()), int(req.GetPageSize()))
 	search := req.GetSearch()
 
@@ -117,14 +118,14 @@ func (s *merchantDocumentQueryHandler) FindAllTrashed(ctx context.Context, req *
 		return nil, errors.ToGrpcError(err)
 	}
 
-	pbDocuments := make([]*pb.MerchantDocumentDeleteAt, len(documents))
+	pbDocuments := make([]*pbmerchant_document.MerchantDocumentDeleteAt, len(documents))
 	for i, d := range documents {
 		pbDocuments[i] = mapToProtoMerchantDocumentResponseAt(d)
 	}
 
 	paginationMeta := createPaginationMeta(page, pageSize, *totalRecords)
 
-	return &pb.ApiResponsePaginationMerchantDocumentAt{
+	return &pbmerchant_document.ApiResponsePaginationMerchantDocumentAt{
 		Status:     "success",
 		Message:    "Successfully fetched trashed merchant documents",
 		Data:       pbDocuments,

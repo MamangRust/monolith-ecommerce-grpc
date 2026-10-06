@@ -2,12 +2,12 @@ package reviewdetailhandler
 
 import (
 	reviewdetail_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/review_detail"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbreview_detail "github.com/MamangRust/monolith-ecommerce-pb/review_detail"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
-	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/review_detail"
 	reviewapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/review"
+	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/review_detail"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc"
@@ -28,7 +28,7 @@ func RegisterReviewDetailHandler(deps *DepsReviewDetail) {
 	cache := reviewdetail_cache.NewReviewDetailMencache(deps.Cache)
 
 	NewReviewDetailQueryHandleApi(&reviewDetailQueryHandleDeps{
-		client:        pb.NewReviewDetailQueryServiceClient(deps.Client),
+		client:        pbreview_detail.NewReviewDetailQueryServiceClient(deps.Client),
 		router:        deps.E,
 		logger:        deps.Logger,
 		mapper:        mapper.QueryMapper(),
@@ -37,7 +37,7 @@ func RegisterReviewDetailHandler(deps *DepsReviewDetail) {
 	})
 
 	NewReviewDetailCommandHandleApi(&reviewDetailCommandHandleDeps{
-		client:        pb.NewReviewDetailCommandServiceClient(deps.Client),
+		client:        pbreview_detail.NewReviewDetailCommandServiceClient(deps.Client),
 		router:        deps.E,
 		logger:        deps.Logger,
 		mapper:        mapper.CommandMapper(),

@@ -5,8 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	apigatewaymiddlewares "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pborder_item "github.com/MamangRust/monolith-ecommerce-pb/order_item"
 )
 
 // order_item has no single-record lookup: FindOrderItemByOrder returns an empty
@@ -15,7 +14,7 @@ import (
 // gapi: a non-existent order must return an empty result, not an error.
 func (s *OrderItemGapiTestSuite) TestOrderItemGapiEmptyResult() {
 	ctx := context.Background()
-	res, err := s.queryClient.FindOrderItemByOrder(ctx, &pb.FindByIdOrderItemRequest{Id: 999999})
+	res, err := s.queryClient.FindOrderItemByOrder(ctx, &pborder_item.FindByIdOrderItemRequest{Id: 999999})
 	s.NoError(err)
 	s.NotNil(res)
 	s.Empty(res.Data)
@@ -23,7 +22,6 @@ func (s *OrderItemGapiTestSuite) TestOrderItemGapiEmptyResult() {
 
 // api: a non-existent order returns 200 with empty data; invalid ID maps to 400.
 func (s *OrderItemApiTestSuite) TestOrderItemApiEmptyResult() {
-	apigatewaymiddlewares.RegisterErrorHandler(s.echo)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/order-item/order/999999", nil)
 	rec := httptest.NewRecorder()
@@ -32,7 +30,6 @@ func (s *OrderItemApiTestSuite) TestOrderItemApiEmptyResult() {
 }
 
 func (s *OrderItemApiTestSuite) TestOrderItemApiInvalidID() {
-	apigatewaymiddlewares.RegisterErrorHandler(s.echo)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/order-item/order/abc", nil)
 	rec := httptest.NewRecorder()

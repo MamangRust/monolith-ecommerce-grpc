@@ -5,23 +5,23 @@ import (
 	"strconv"
 
 	orderitem_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/order_item"
+	pborder_item "github.com/MamangRust/monolith-ecommerce-pb/order_item"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/order_item"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type orderItemCommandHandlerApi struct {
-	client pb.OrderItemCommandServiceClient
+	client pborder_item.OrderItemCommandServiceClient
 	logger logger.LoggerInterface
 	mapper apimapper.OrderItemCommandResponseMapper
 	cache  orderitem_cache.OrderItemCommandCache
 }
 
 type orderItemCommandHandleDeps struct {
-	client pb.OrderItemCommandServiceClient
+	client pborder_item.OrderItemCommandServiceClient
 	router *echo.Echo
 	logger logger.LoggerInterface
 	mapper apimapper.OrderItemCommandResponseMapper
@@ -64,7 +64,7 @@ func (h *orderItemCommandHandlerApi) Trash(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.TrashOrderItem(ctx, &pb.FindByIdOrderItemRequest{Id: int32(id)})
+	res, err := h.client.TrashOrderItem(ctx, &pborder_item.FindByIdOrderItemRequest{Id: int32(id)})
 	if err != nil {
 		return h.handleGrpcError(err, "Trash")
 	}
@@ -93,7 +93,7 @@ func (h *orderItemCommandHandlerApi) Restore(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.RestoreOrderItem(ctx, &pb.FindByIdOrderItemRequest{Id: int32(id)})
+	res, err := h.client.RestoreOrderItem(ctx, &pborder_item.FindByIdOrderItemRequest{Id: int32(id)})
 	if err != nil {
 		return h.handleGrpcError(err, "Restore")
 	}
@@ -121,7 +121,7 @@ func (h *orderItemCommandHandlerApi) DeletePermanent(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.DeleteOrderItemPermanent(ctx, &pb.FindByIdOrderItemRequest{Id: int32(id)})
+	res, err := h.client.DeleteOrderItemPermanent(ctx, &pborder_item.FindByIdOrderItemRequest{Id: int32(id)})
 	if err != nil {
 		return h.handleGrpcError(err, "Delete")
 	}

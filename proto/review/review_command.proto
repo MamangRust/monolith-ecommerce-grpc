@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package pb;
+package pb.review;
 
 import "review/review_common.proto";
 import "google/protobuf/empty.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/review";
 
 message CreateReviewRequest {
     int32 user_id = 1;

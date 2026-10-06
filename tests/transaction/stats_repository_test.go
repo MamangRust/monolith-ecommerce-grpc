@@ -5,24 +5,25 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/repository"
+	"github.com/stretchr/testify/suite"
+
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
+	"github.com/MamangRust/monolith-ecommerce-transaction/repository"
 )
 
 type TransactionStatsRepositoryTestSuite struct {
 	tests.BaseTestSuite
-	repo          repository.TransactionStatsRepository
+	repo           repository.TransactionStatsRepository
 	repoByMerchant repository.TransactionStatsByMerchantRepository
-	testYear      int
-	testMonth     int
-	userID        int
-	merchantID    int
-	categoryID    int
-	productID     int
-	orderID       int
+	testYear       int
+	testMonth      int
+	userID         int
+	merchantID     int
+	categoryID     int
+	productID      int
+	orderID        int
 }
 
 func (s *TransactionStatsRepositoryTestSuite) SetupSuite() {

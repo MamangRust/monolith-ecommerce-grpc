@@ -1,11 +1,13 @@
 package handler
 
-import "github.com/MamangRust/monolith-ecommerce-shared/pb"
+import (
+	pbproduct "github.com/MamangRust/monolith-ecommerce-pb/product"
+)
 
 type ProductQueryHandler interface {
-	pb.ProductQueryServiceServer
+	pbproduct.ProductQueryServiceServer
 }
 
 type ProductCommandHandler interface {
-	pb.ProductCommandServiceServer
+	pbproduct.ProductCommandServiceServer
 }

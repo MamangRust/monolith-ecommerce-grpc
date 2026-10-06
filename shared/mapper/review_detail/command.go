@@ -1,7 +1,7 @@
 package reviewdetailapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbreview_detail "github.com/MamangRust/monolith-ecommerce-pb/review_detail"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	paginationapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/pagination"
 )
@@ -12,7 +12,7 @@ func NewReviewDetailCommandResponseMapper() ReviewDetailCommandResponseMapper {
 	return &reviewDetailCommandResponseMapper{}
 }
 
-func (m *reviewDetailCommandResponseMapper) ToResponseReviewDetail(reviewDetail *pb.ReviewDetailsResponse) *response.ReviewDetailsResponse {
+func (m *reviewDetailCommandResponseMapper) ToResponseReviewDetail(reviewDetail *pbreview_detail.ReviewDetailsResponse) *response.ReviewDetailsResponse {
 	return &response.ReviewDetailsResponse{
 		ID:        int(reviewDetail.Id),
 		ReviewID:  int(reviewDetail.ReviewId),
@@ -24,7 +24,7 @@ func (m *reviewDetailCommandResponseMapper) ToResponseReviewDetail(reviewDetail 
 	}
 }
 
-func (m *reviewDetailCommandResponseMapper) ToResponsesReviewDetail(ReviewDetails []*pb.ReviewDetailsResponse) []*response.ReviewDetailsResponse {
+func (m *reviewDetailCommandResponseMapper) ToResponsesReviewDetail(ReviewDetails []*pbreview_detail.ReviewDetailsResponse) []*response.ReviewDetailsResponse {
 	var mappedReviewDetails []*response.ReviewDetailsResponse
 	for _, ReviewDetail := range ReviewDetails {
 		mappedReviewDetails = append(mappedReviewDetails, m.ToResponseReviewDetail(ReviewDetail))
@@ -32,7 +32,7 @@ func (m *reviewDetailCommandResponseMapper) ToResponsesReviewDetail(ReviewDetail
 	return mappedReviewDetails
 }
 
-func (m *reviewDetailCommandResponseMapper) ToResponseReviewDetailDeleteAt(reviewDetail *pb.ReviewDetailsResponseDeleteAt) *response.ReviewDetailsResponseDeleteAt {
+func (m *reviewDetailCommandResponseMapper) ToResponseReviewDetailDeleteAt(reviewDetail *pbreview_detail.ReviewDetailsResponseDeleteAt) *response.ReviewDetailsResponseDeleteAt {
 	var deletedAt string
 	if reviewDetail.DeletedAt != nil {
 		deletedAt = reviewDetail.DeletedAt.Value
@@ -50,7 +50,7 @@ func (m *reviewDetailCommandResponseMapper) ToResponseReviewDetailDeleteAt(revie
 	}
 }
 
-func (m *reviewDetailCommandResponseMapper) ToResponsesReviewDetailDeleteAt(ReviewDetails []*pb.ReviewDetailsResponseDeleteAt) []*response.ReviewDetailsResponseDeleteAt {
+func (m *reviewDetailCommandResponseMapper) ToResponsesReviewDetailDeleteAt(ReviewDetails []*pbreview_detail.ReviewDetailsResponseDeleteAt) []*response.ReviewDetailsResponseDeleteAt {
 	var mappedReviewDetails []*response.ReviewDetailsResponseDeleteAt
 	for _, ReviewDetail := range ReviewDetails {
 		mappedReviewDetails = append(mappedReviewDetails, m.ToResponseReviewDetailDeleteAt(ReviewDetail))
@@ -58,7 +58,7 @@ func (m *reviewDetailCommandResponseMapper) ToResponsesReviewDetailDeleteAt(Revi
 	return mappedReviewDetails
 }
 
-func (m *reviewDetailCommandResponseMapper) ToApiResponseReviewDetailDeleteAt(pbResponse *pb.ApiResponseReviewDetailDeleteAt) *response.ApiResponseReviewDetailDeleteAt {
+func (m *reviewDetailCommandResponseMapper) ToApiResponseReviewDetailDeleteAt(pbResponse *pbreview_detail.ApiResponseReviewDetailDeleteAt) *response.ApiResponseReviewDetailDeleteAt {
 	return &response.ApiResponseReviewDetailDeleteAt{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -66,7 +66,7 @@ func (m *reviewDetailCommandResponseMapper) ToApiResponseReviewDetailDeleteAt(pb
 	}
 }
 
-func (m *reviewDetailCommandResponseMapper) ToApiResponsePaginationReviewDetailDeleteAt(pbResponse *pb.ApiResponsePaginationReviewDetailsDeleteAt) *response.ApiResponsePaginationReviewDetailsDeleteAt {
+func (m *reviewDetailCommandResponseMapper) ToApiResponsePaginationReviewDetailDeleteAt(pbResponse *pbreview_detail.ApiResponsePaginationReviewDetailsDeleteAt) *response.ApiResponsePaginationReviewDetailsDeleteAt {
 	return &response.ApiResponsePaginationReviewDetailsDeleteAt{
 		Status:     pbResponse.Status,
 		Message:    pbResponse.Message,

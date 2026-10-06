@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/IBM/sarama"
-	merchantCache "github.com/MamangRust/monolith-ecommerce-grpc-merchant/cache"
+	merchantCache "github.com/MamangRust/monolith-ecommerce-merchant/cache"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"go.uber.org/zap"
 )

@@ -12,7 +12,6 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/role_errors"
 )
 
-
 type roleQueryRepository struct {
 	db *db.Queries
 }
@@ -60,7 +59,6 @@ func (r *roleQueryRepository) FindByID(ctx context.Context, id int) (*db.Role, e
 	return res, nil
 }
 
-
 func (r *roleQueryRepository) FindByName(ctx context.Context, name string) (*db.Role, error) {
 	res, err := r.db.GetRoleByName(ctx, name)
 	if err != nil {
@@ -74,7 +72,6 @@ func (r *roleQueryRepository) FindByName(ctx context.Context, name string) (*db.
 	return res, nil
 }
 
-
 func (r *roleQueryRepository) FindByUserId(ctx context.Context, user_id int) ([]*db.Role, error) {
 	res, err := r.db.GetUserRoles(ctx, int32(user_id))
 	if err != nil {
@@ -87,7 +84,6 @@ func (r *roleQueryRepository) FindByUserId(ctx context.Context, user_id int) ([]
 
 	return res, nil
 }
-
 
 func (r *roleQueryRepository) FindActive(ctx context.Context, req *requests.FindAllRole) ([]*db.GetActiveRolesRow, error) {
 	offset := (req.Page - 1) * req.PageSize
@@ -103,7 +99,6 @@ func (r *roleQueryRepository) FindActive(ctx context.Context, req *requests.Find
 	if err != nil {
 		return nil, role_errors.ErrFindActiveRoles.WithInternal(err)
 	}
-
 
 	return res, nil
 }
@@ -122,7 +117,6 @@ func (r *roleQueryRepository) FindTrashed(ctx context.Context, req *requests.Fin
 	if err != nil {
 		return nil, role_errors.ErrFindTrashedRoles.WithInternal(err)
 	}
-
 
 	return res, nil
 }

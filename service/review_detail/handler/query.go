@@ -4,29 +4,32 @@ import (
 	"context"
 	"math"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-review-detail/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-review-detail/service"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	reviewdetail_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/review_detail"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
+	pbreview "github.com/MamangRust/monolith-ecommerce-pb/review"
+	pbreview_detail "github.com/MamangRust/monolith-ecommerce-pb/review_detail"
 )
 
 type reviewDetailQueryHandler struct {
-	pb.UnimplementedReviewDetailQueryServiceServer
+	pbreview_detail.UnimplementedReviewDetailQueryServiceServer
 	service service.ReviewDetailQueryService
 	logger  logger.LoggerInterface
 }
 
-func NewReviewDetailQueryHandler(service service.ReviewDetailQueryService, logger logger.LoggerInterface) pb.ReviewDetailQueryServiceServer {
+func NewReviewDetailQueryHandler(service service.ReviewDetailQueryService, logger logger.LoggerInterface) pbreview_detail.ReviewDetailQueryServiceServer {
 	return &reviewDetailQueryHandler{
 		service: service,
 		logger:  logger,
 	}
 }
 
-func (s *reviewDetailQueryHandler) FindAll(ctx context.Context, request *pb.FindAllReviewRequest) (*pb.ApiResponsePaginationReviewDetails, error) {
+func (s *reviewDetailQueryHandler) FindAll(ctx context.Context, request *pbreview.FindAllReviewRequest) (*pbreview_detail.ApiResponsePaginationReviewDetails, error) {
 	page := int(request.GetPage())
 	pageSize := int(request.GetPageSize())
 	search := request.GetSearch()
@@ -49,9 +52,9 @@ func (s *reviewDetailQueryHandler) FindAll(ctx context.Context, request *pb.Find
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoReviewDetails := make([]*pb.ReviewDetailsResponse, len(reviewDetails))
+	protoReviewDetails := make([]*pbreview_detail.ReviewDetailsResponse, len(reviewDetails))
 	for i, reviewDetail := range reviewDetails {
-		protoReviewDetails[i] = &pb.ReviewDetailsResponse{
+		protoReviewDetails[i] = &pbreview_detail.ReviewDetailsResponse{
 			Id:        int32(reviewDetail.ReviewDetailID),
 			ReviewId:  int32(reviewDetail.ReviewID),
 			Type:      reviewDetail.Type,
@@ -64,14 +67,14 @@ func (s *reviewDetailQueryHandler) FindAll(ctx context.Context, request *pb.Find
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
-	paginationMeta := &pb.PaginationMeta{
+	paginationMeta := &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
 		TotalRecords: int32(*totalRecords),
 	}
 
-	return &pb.ApiResponsePaginationReviewDetails{
+	return &pbreview_detail.ApiResponsePaginationReviewDetails{
 		Status:     "success",
 		Message:    "Successfully fetched review details",
 		Data:       protoReviewDetails,
@@ -79,7 +82,7 @@ func (s *reviewDetailQueryHandler) FindAll(ctx context.Context, request *pb.Find
 	}, nil
 }
 
-func (s *reviewDetailQueryHandler) FindById(ctx context.Context, request *pb.FindByIdReviewDetailRequest) (*pb.ApiResponseReviewDetail, error) {
+func (s *reviewDetailQueryHandler) FindById(ctx context.Context, request *pbreview_detail.FindByIdReviewDetailRequest) (*pbreview_detail.ApiResponseReviewDetail, error) {
 	id := int(request.GetId())
 
 	if id == 0 {
@@ -91,7 +94,7 @@ func (s *reviewDetailQueryHandler) FindById(ctx context.Context, request *pb.Fin
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoReviewDetail := &pb.ReviewDetailsResponse{
+	protoReviewDetail := &pbreview_detail.ReviewDetailsResponse{
 		Id:        int32(reviewDetail.ReviewDetailID),
 		ReviewId:  int32(reviewDetail.ReviewID),
 		Type:      reviewDetail.Type,
@@ -101,14 +104,14 @@ func (s *reviewDetailQueryHandler) FindById(ctx context.Context, request *pb.Fin
 		UpdatedAt: reviewDetail.UpdatedAt.Time.Format("2006-01-02"),
 	}
 
-	return &pb.ApiResponseReviewDetail{
+	return &pbreview_detail.ApiResponseReviewDetail{
 		Status:  "success",
 		Message: "Successfully fetched review detail",
 		Data:    protoReviewDetail,
 	}, nil
 }
 
-func (s *reviewDetailQueryHandler) FindByActive(ctx context.Context, request *pb.FindAllReviewRequest) (*pb.ApiResponsePaginationReviewDetailsDeleteAt, error) {
+func (s *reviewDetailQueryHandler) FindByActive(ctx context.Context, request *pbreview.FindAllReviewRequest) (*pbreview_detail.ApiResponsePaginationReviewDetailsDeleteAt, error) {
 	page := int(request.GetPage())
 	pageSize := int(request.GetPageSize())
 	search := request.GetSearch()
@@ -131,14 +134,14 @@ func (s *reviewDetailQueryHandler) FindByActive(ctx context.Context, request *pb
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoReviewDetails := make([]*pb.ReviewDetailsResponseDeleteAt, len(reviewDetails))
+	protoReviewDetails := make([]*pbreview_detail.ReviewDetailsResponseDeleteAt, len(reviewDetails))
 	for i, reviewDetail := range reviewDetails {
 		var deletedAt string
 		if reviewDetail.DeletedAt.Valid {
 			deletedAt = reviewDetail.DeletedAt.Time.Format("2006-01-02")
 		}
 
-		protoReviewDetails[i] = &pb.ReviewDetailsResponseDeleteAt{
+		protoReviewDetails[i] = &pbreview_detail.ReviewDetailsResponseDeleteAt{
 			Id:        int32(reviewDetail.ReviewDetailID),
 			ReviewId:  int32(reviewDetail.ReviewID),
 			Type:      reviewDetail.Type,
@@ -152,14 +155,14 @@ func (s *reviewDetailQueryHandler) FindByActive(ctx context.Context, request *pb
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
-	paginationMeta := &pb.PaginationMeta{
+	paginationMeta := &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
 		TotalRecords: int32(*totalRecords),
 	}
 
-	return &pb.ApiResponsePaginationReviewDetailsDeleteAt{
+	return &pbreview_detail.ApiResponsePaginationReviewDetailsDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched active review details",
 		Data:       protoReviewDetails,
@@ -167,7 +170,7 @@ func (s *reviewDetailQueryHandler) FindByActive(ctx context.Context, request *pb
 	}, nil
 }
 
-func (s *reviewDetailQueryHandler) FindByTrashed(ctx context.Context, request *pb.FindAllReviewRequest) (*pb.ApiResponsePaginationReviewDetailsDeleteAt, error) {
+func (s *reviewDetailQueryHandler) FindByTrashed(ctx context.Context, request *pbreview.FindAllReviewRequest) (*pbreview_detail.ApiResponsePaginationReviewDetailsDeleteAt, error) {
 	page := int(request.GetPage())
 	pageSize := int(request.GetPageSize())
 	search := request.GetSearch()
@@ -190,14 +193,14 @@ func (s *reviewDetailQueryHandler) FindByTrashed(ctx context.Context, request *p
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoReviewDetails := make([]*pb.ReviewDetailsResponseDeleteAt, len(reviewDetails))
+	protoReviewDetails := make([]*pbreview_detail.ReviewDetailsResponseDeleteAt, len(reviewDetails))
 	for i, reviewDetail := range reviewDetails {
 		var deletedAt string
 		if reviewDetail.DeletedAt.Valid {
 			deletedAt = reviewDetail.DeletedAt.Time.Format("2006-01-02")
 		}
 
-		protoReviewDetails[i] = &pb.ReviewDetailsResponseDeleteAt{
+		protoReviewDetails[i] = &pbreview_detail.ReviewDetailsResponseDeleteAt{
 			Id:        int32(reviewDetail.ReviewDetailID),
 			ReviewId:  int32(reviewDetail.ReviewID),
 			Type:      reviewDetail.Type,
@@ -211,14 +214,14 @@ func (s *reviewDetailQueryHandler) FindByTrashed(ctx context.Context, request *p
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
-	paginationMeta := &pb.PaginationMeta{
+	paginationMeta := &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
 		TotalRecords: int32(*totalRecords),
 	}
 
-	return &pb.ApiResponsePaginationReviewDetailsDeleteAt{
+	return &pbreview_detail.ApiResponsePaginationReviewDetailsDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched trashed review details",
 		Data:       protoReviewDetails,

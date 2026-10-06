@@ -1,14 +1,15 @@
 package apps
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-review-detail/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-review-detail/handler"
-	"github.com/MamangRust/monolith-ecommerce-grpc-review-detail/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-review-detail/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/server"
+	"github.com/MamangRust/monolith-ecommerce-review-detail/cache"
+	"github.com/MamangRust/monolith-ecommerce-review-detail/handler"
+	"github.com/MamangRust/monolith-ecommerce-review-detail/repository"
+	"github.com/MamangRust/monolith-ecommerce-review-detail/service"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/grpc"
+
+	pbreview_detail "github.com/MamangRust/monolith-ecommerce-pb/review_detail"
 )
 
 func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
@@ -32,8 +33,8 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	h := handler.NewHandler(&handler.Deps{Service: svc, Logger: srv.Logger})
 
 	srv.RegisterServices = func(gs *grpc.Server) {
-		pb.RegisterReviewDetailQueryServiceServer(gs, h.ReviewDetailQuery)
-		pb.RegisterReviewDetailCommandServiceServer(gs, h.ReviewDetailCommand)
+		pbreview_detail.RegisterReviewDetailQueryServiceServer(gs, h.ReviewDetailQuery)
+		pbreview_detail.RegisterReviewDetailCommandServiceServer(gs, h.ReviewDetailCommand)
 	}
 
 	return srv, nil

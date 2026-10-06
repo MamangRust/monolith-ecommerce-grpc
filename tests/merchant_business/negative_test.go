@@ -5,17 +5,18 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	apigatewaymiddlewares "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	apigatewaymiddlewares "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
+	pbmerchant_business "github.com/MamangRust/monolith-ecommerce-pb/merchant_business"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 )
 
 // gapi: non-existent merchant business must map to codes.NotFound (404), not Internal.
 func (s *MerchantBusinessGapiTestSuite) TestMerchantBusinessGapiNotFound() {
 	ctx := context.Background()
-	_, err := s.queryClient.FindById(ctx, &pb.FindByIdMerchantBusinessRequest{Id: 999999})
+	_, err := s.queryClient.FindById(ctx, &pbmerchant_business.FindByIdMerchantBusinessRequest{Id: 999999})
 	s.Require().Error(err)
 	st, ok := status.FromError(err)
 	s.Require().True(ok, "expected a gRPC status error")

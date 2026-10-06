@@ -4,16 +4,21 @@ import (
 	"context"
 	"testing"
 
-	trans_cache "github.com/MamangRust/monolith-ecommerce-grpc-transaction/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-transaction/service"
+	"github.com/stretchr/testify/suite"
+
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
+	pborder "github.com/MamangRust/monolith-ecommerce-pb/order"
+	pborder_item "github.com/MamangRust/monolith-ecommerce-pb/order_item"
+	pbshipping_address "github.com/MamangRust/monolith-ecommerce-pb/shipping_address"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
+	trans_cache "github.com/MamangRust/monolith-ecommerce-transaction/cache"
+	"github.com/MamangRust/monolith-ecommerce-transaction/repository"
+	"github.com/MamangRust/monolith-ecommerce-transaction/service"
 )
 
 type TransactionServiceTestSuite struct {
@@ -42,17 +47,16 @@ func (s *TransactionServiceTestSuite) SetupSuite() {
 	// Transaction dependencies
 	mencache := trans_cache.NewMencache(cacheStore)
 	repos := repository.NewRepositories(&repository.Deps{
-		DB:             queries,
-		UserQuery:      pb.NewUserQueryServiceClient(s.Conns["user"]),
-		MerchantQuery:  pb.NewMerchantQueryServiceClient(s.Conns["merchant"]),
-		OrderQuery:     pb.NewOrderQueryServiceClient(s.Conns["order"]),
-		OrderItemQuery: pb.NewOrderItemQueryServiceClient(s.Conns["order-item"]),
-		ShippingQuery:  pb.NewShippingQueryServiceClient(s.Conns["shipping-address"]),
+		Db:                   queries,
+		UserQueryClient:      pbuser.NewUserQueryServiceClient(s.Conns["user"]),
+		MerchantQueryClient:  pbmerchant.NewMerchantQueryServiceClient(s.Conns["merchant"]),
+		OrderQueryClient:     pborder.NewOrderQueryServiceClient(s.Conns["order"]),
+		OrderItemQueryClient: pborder_item.NewOrderItemQueryServiceClient(s.Conns["order-item"]),
+		ShippingQueryClient:  pbshipping_address.NewShippingQueryServiceClient(s.Conns["shipping-address"]),
 	})
 
 	s.svc = service.NewService(&service.Deps{
 		Kafka:         nil,
-		Pool:          s.DBPool(), // exercises the transactional outbox path (single commit)
 		Cache:         mencache,
 		Repositories:  repos,
 		Logger:        s.Log,

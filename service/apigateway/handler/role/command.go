@@ -7,19 +7,19 @@ import (
 	mencache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache"
 	role_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/role"
 	"github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/role"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type roleCommandHandlerApi struct {
 	kafka      *kafka.Kafka
-	role       pb.RoleCommandServiceClient
+	role       pbrole.RoleCommandServiceClient
 	logger     logger.LoggerInterface
 	mapper     apimapper.RoleCommandResponseMapper
 	cache      role_cache.RoleCommandCache
@@ -27,8 +27,8 @@ type roleCommandHandlerApi struct {
 }
 
 type roleCommandHandleDeps struct {
-	client      pb.RoleCommandServiceClient
-	queryClient pb.RoleQueryServiceClient
+	client      pbrole.RoleCommandServiceClient
+	queryClient pbrole.RoleQueryServiceClient
 	router      *echo.Echo
 	logger      logger.LoggerInterface
 	mapper      apimapper.RoleCommandResponseMapper
@@ -82,7 +82,7 @@ func (h *roleCommandHandlerApi) Create(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.role.CreateRole(ctx, &pb.CreateRoleRequest{Name: body.Name})
+	res, err := h.role.CreateRole(ctx, &pbrole.CreateRoleRequest{Name: body.Name})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
@@ -115,7 +115,7 @@ func (h *roleCommandHandlerApi) Update(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.role.UpdateRole(ctx, &pb.UpdateRoleRequest{Id: int32(roleID), Name: body.Name})
+	res, err := h.role.UpdateRole(ctx, &pbrole.UpdateRoleRequest{Id: int32(roleID), Name: body.Name})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
@@ -143,7 +143,7 @@ func (h *roleCommandHandlerApi) Trash(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.role.TrashedRole(ctx, &pb.FindByIdRoleRequest{RoleId: int32(roleID)})
+	res, err := h.role.TrashedRole(ctx, &pbrole.FindByIdRoleRequest{RoleId: int32(roleID)})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
@@ -171,7 +171,7 @@ func (h *roleCommandHandlerApi) Restore(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.role.RestoreRole(ctx, &pb.FindByIdRoleRequest{RoleId: int32(roleID)})
+	res, err := h.role.RestoreRole(ctx, &pbrole.FindByIdRoleRequest{RoleId: int32(roleID)})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}
@@ -199,7 +199,7 @@ func (h *roleCommandHandlerApi) DeletePermanent(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.role.DeleteRolePermanent(ctx, &pb.FindByIdRoleRequest{RoleId: int32(roleID)})
+	res, err := h.role.DeleteRolePermanent(ctx, &pbrole.FindByIdRoleRequest{RoleId: int32(roleID)})
 	if err != nil {
 		return errors.ParseGrpcError(err)
 	}

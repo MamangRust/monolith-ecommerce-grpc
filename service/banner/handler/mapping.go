@@ -5,9 +5,11 @@ import (
 	"math"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	pbbanner "github.com/MamangRust/monolith-ecommerce-pb/banner"
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
 )
 
 func normalizePage(page, pageSize int) (int, int) {
@@ -20,9 +22,9 @@ func normalizePage(page, pageSize int) (int, int) {
 	return page, pageSize
 }
 
-func createPaginationMeta(page, pageSize, totalRecords int) *pb.PaginationMeta {
+func createPaginationMeta(page, pageSize, totalRecords int) *pbcommon.PaginationMeta {
 	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
-	return &pb.PaginationMeta{
+	return &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
@@ -54,12 +56,12 @@ func formatTime(v interface{}) (string, bool) {
 	return "", false
 }
 
-func mapToProtoBannerResponse(m interface{}) *pb.BannerResponse {
-	var res *pb.BannerResponse
+func mapToProtoBannerResponse(m interface{}) *pbbanner.BannerResponse {
+	var res *pbbanner.BannerResponse
 
 	switch v := m.(type) {
 	case *db.Banner:
-		res = &pb.BannerResponse{
+		res = &pbbanner.BannerResponse{
 			BannerId:  int32(v.BannerID),
 			Name:      v.Name,
 			IsActive:  *v.IsActive,
@@ -79,7 +81,7 @@ func mapToProtoBannerResponse(m interface{}) *pb.BannerResponse {
 			res.EndTime = val
 		}
 	case *db.GetBannersRow:
-		res = &pb.BannerResponse{
+		res = &pbbanner.BannerResponse{
 			BannerId:  v.BannerID,
 			Name:      v.Name,
 			IsActive:  *v.IsActive,
@@ -99,7 +101,7 @@ func mapToProtoBannerResponse(m interface{}) *pb.BannerResponse {
 			res.EndTime = val
 		}
 	case *db.GetBannerRow:
-		res = &pb.BannerResponse{
+		res = &pbbanner.BannerResponse{
 			BannerId:  v.BannerID,
 			Name:      v.Name,
 			IsActive:  *v.IsActive,
@@ -119,7 +121,7 @@ func mapToProtoBannerResponse(m interface{}) *pb.BannerResponse {
 			res.EndTime = val
 		}
 	case *db.CreateBannerRow:
-		res = &pb.BannerResponse{
+		res = &pbbanner.BannerResponse{
 			BannerId:  v.BannerID,
 			Name:      v.Name,
 			IsActive:  *v.IsActive,
@@ -139,7 +141,7 @@ func mapToProtoBannerResponse(m interface{}) *pb.BannerResponse {
 			res.EndTime = val
 		}
 	case *db.UpdateBannerRow:
-		res = &pb.BannerResponse{
+		res = &pbbanner.BannerResponse{
 			BannerId:  v.BannerID,
 			Name:      v.Name,
 			IsActive:  *v.IsActive,
@@ -165,12 +167,12 @@ func mapToProtoBannerResponse(m interface{}) *pb.BannerResponse {
 	return res
 }
 
-func mapToProtoBannerResponseDeleteAt(m interface{}) *pb.BannerResponseDeleteAt {
-	var res *pb.BannerResponseDeleteAt
+func mapToProtoBannerResponseDeleteAt(m interface{}) *pbbanner.BannerResponseDeleteAt {
+	var res *pbbanner.BannerResponseDeleteAt
 
 	switch v := m.(type) {
 	case *db.Banner:
-		res = &pb.BannerResponseDeleteAt{
+		res = &pbbanner.BannerResponseDeleteAt{
 			BannerId:  int32(v.BannerID),
 			Name:      v.Name,
 			IsActive:  *v.IsActive,
@@ -193,7 +195,7 @@ func mapToProtoBannerResponseDeleteAt(m interface{}) *pb.BannerResponseDeleteAt 
 			res.DeletedAt = &wrapperspb.StringValue{Value: val}
 		}
 	case *db.GetBannersActiveRow:
-		res = &pb.BannerResponseDeleteAt{
+		res = &pbbanner.BannerResponseDeleteAt{
 			BannerId:  v.BannerID,
 			Name:      v.Name,
 			IsActive:  *v.IsActive,
@@ -216,7 +218,7 @@ func mapToProtoBannerResponseDeleteAt(m interface{}) *pb.BannerResponseDeleteAt 
 			res.DeletedAt = &wrapperspb.StringValue{Value: val}
 		}
 	case *db.GetBannersTrashedRow:
-		res = &pb.BannerResponseDeleteAt{
+		res = &pbbanner.BannerResponseDeleteAt{
 			BannerId:  v.BannerID,
 			Name:      v.Name,
 			IsActive:  *v.IsActive,

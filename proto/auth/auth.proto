@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb";
 
 package pb;
 
@@ -68,13 +68,13 @@ message ApiResponseRefreshToken {
 message ApiResponseRegister {
   string status = 1;
   string message = 2;
-  UserResponse data = 3;
+  pb.user.UserResponse data = 3;
 }
 
 message ApiResponseGetMe {
   string status = 1;
   string message = 2;
-  UserResponse data = 3;
+  pb.user.UserResponse data = 3;
 }
 
 service AuthService {

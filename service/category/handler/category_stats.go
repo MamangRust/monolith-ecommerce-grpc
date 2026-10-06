@@ -3,15 +3,16 @@ package handler
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/service"
+	"github.com/MamangRust/monolith-ecommerce-category/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	category_errors "github.com/MamangRust/monolith-ecommerce-shared/errors/category_errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+
+	pbcategory "github.com/MamangRust/monolith-ecommerce-pb/category"
 )
 
 type categoryStatsHandler struct {
-	pb.UnimplementedCategoryStatsServiceServer
+	pbcategory.UnimplementedCategoryStatsServiceServer
 	categoryStats service.CategoryStatsService
 	logger        logger.LoggerInterface
 }
@@ -23,7 +24,7 @@ func NewCategoryStatsHandler(categoryStats service.CategoryStatsService, logger 
 	}
 }
 
-func (h *categoryStatsHandler) FindMonthlyTotalPrices(ctx context.Context, req *pb.FindYearMonthTotalPrices) (*pb.ApiResponseCategoryMonthlyTotalPrice, error) {
+func (h *categoryStatsHandler) FindMonthlyTotalPrices(ctx context.Context, req *pbcategory.FindYearMonthTotalPrices) (*pbcategory.ApiResponseCategoryMonthlyTotalPrice, error) {
 	year := int(req.GetYear())
 	month := int(req.GetMonth())
 
@@ -44,19 +45,19 @@ func (h *categoryStatsHandler) FindMonthlyTotalPrices(ctx context.Context, req *
 		return nil, category_errors.ErrGrpcCategoryStats
 	}
 
-	data := make([]*pb.CategoriesMonthlyTotalPriceResponse, len(serviceResults))
+	data := make([]*pbcategory.CategoriesMonthlyTotalPriceResponse, len(serviceResults))
 	for i, result := range serviceResults {
-		data[i] = mapToCategoryResponse(result).(*pb.CategoriesMonthlyTotalPriceResponse)
+		data[i] = mapToCategoryResponse(result).(*pbcategory.CategoriesMonthlyTotalPriceResponse)
 	}
 
-	return &pb.ApiResponseCategoryMonthlyTotalPrice{
+	return &pbcategory.ApiResponseCategoryMonthlyTotalPrice{
 		Status:  "success",
 		Message: "Monthly sales retrieved successfully",
 		Data:    data,
 	}, nil
 }
 
-func (h *categoryStatsHandler) FindYearlyTotalPrices(ctx context.Context, req *pb.FindYearTotalPrices) (*pb.ApiResponseCategoryYearlyTotalPrice, error) {
+func (h *categoryStatsHandler) FindYearlyTotalPrices(ctx context.Context, req *pbcategory.FindYearTotalPrices) (*pbcategory.ApiResponseCategoryYearlyTotalPrice, error) {
 	year := int(req.GetYear())
 
 	if year <= 0 {
@@ -68,19 +69,19 @@ func (h *categoryStatsHandler) FindYearlyTotalPrices(ctx context.Context, req *p
 		return nil, category_errors.ErrGrpcCategoryStats
 	}
 
-	data := make([]*pb.CategoriesYearlyTotalPriceResponse, len(serviceResults))
+	data := make([]*pbcategory.CategoriesYearlyTotalPriceResponse, len(serviceResults))
 	for i, result := range serviceResults {
-		data[i] = mapToCategoryResponse(result).(*pb.CategoriesYearlyTotalPriceResponse)
+		data[i] = mapToCategoryResponse(result).(*pbcategory.CategoriesYearlyTotalPriceResponse)
 	}
 
-	return &pb.ApiResponseCategoryYearlyTotalPrice{
+	return &pbcategory.ApiResponseCategoryYearlyTotalPrice{
 		Status:  "success",
 		Message: "Yearly payment methods retrieved successfully",
 		Data:    data,
 	}, nil
 }
 
-func (h *categoryStatsHandler) FindMonthPrice(ctx context.Context, req *pb.FindYearCategory) (*pb.ApiResponseCategoryMonthPrice, error) {
+func (h *categoryStatsHandler) FindMonthPrice(ctx context.Context, req *pbcategory.FindYearCategory) (*pbcategory.ApiResponseCategoryMonthPrice, error) {
 	year := int(req.GetYear())
 
 	if year <= 0 {
@@ -92,19 +93,19 @@ func (h *categoryStatsHandler) FindMonthPrice(ctx context.Context, req *pb.FindY
 		return nil, category_errors.ErrGrpcCategoryStats
 	}
 
-	data := make([]*pb.CategoryMonthPriceResponse, len(serviceResults))
+	data := make([]*pbcategory.CategoryMonthPriceResponse, len(serviceResults))
 	for i, result := range serviceResults {
-		data[i] = mapToCategoryResponse(result).(*pb.CategoryMonthPriceResponse)
+		data[i] = mapToCategoryResponse(result).(*pbcategory.CategoryMonthPriceResponse)
 	}
 
-	return &pb.ApiResponseCategoryMonthPrice{
+	return &pbcategory.ApiResponseCategoryMonthPrice{
 		Status:  "success",
 		Message: "Monthly payment methods retrieved successfully",
 		Data:    data,
 	}, nil
 }
 
-func (h *categoryStatsHandler) FindYearPrice(ctx context.Context, req *pb.FindYearCategory) (*pb.ApiResponseCategoryYearPrice, error) {
+func (h *categoryStatsHandler) FindYearPrice(ctx context.Context, req *pbcategory.FindYearCategory) (*pbcategory.ApiResponseCategoryYearPrice, error) {
 	year := int(req.GetYear())
 
 	if year <= 0 {
@@ -116,12 +117,12 @@ func (h *categoryStatsHandler) FindYearPrice(ctx context.Context, req *pb.FindYe
 		return nil, category_errors.ErrGrpcCategoryStats
 	}
 
-	data := make([]*pb.CategoryYearPriceResponse, len(serviceResults))
+	data := make([]*pbcategory.CategoryYearPriceResponse, len(serviceResults))
 	for i, result := range serviceResults {
-		data[i] = mapToCategoryResponse(result).(*pb.CategoryYearPriceResponse)
+		data[i] = mapToCategoryResponse(result).(*pbcategory.CategoryYearPriceResponse)
 	}
 
-	return &pb.ApiResponseCategoryYearPrice{
+	return &pbcategory.ApiResponseCategoryYearPrice{
 		Status:  "success",
 		Message: "Yearly payment methods retrieved successfully",
 		Data:    data,

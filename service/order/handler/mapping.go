@@ -4,9 +4,11 @@ import (
 	"math"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
+	pborder "github.com/MamangRust/monolith-ecommerce-pb/order"
 )
 
 func normalizePage(page, pageSize int) (int, int) {
@@ -19,9 +21,9 @@ func normalizePage(page, pageSize int) (int, int) {
 	return page, pageSize
 }
 
-func createPaginationMeta(page, pageSize, totalRecords int) *pb.PaginationMeta {
+func createPaginationMeta(page, pageSize, totalRecords int) *pbcommon.PaginationMeta {
 	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
-	return &pb.PaginationMeta{
+	return &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
@@ -43,10 +45,10 @@ func formatTimestamp(v interface{}) string {
 	return ""
 }
 
-func mapToProtoOrderResponse(m interface{}) *pb.OrderResponse {
+func mapToProtoOrderResponse(m interface{}) *pborder.OrderResponse {
 	switch v := m.(type) {
 	case *db.Order:
-		return &pb.OrderResponse{
+		return &pborder.OrderResponse{
 			Id:         v.OrderID,
 			MerchantId: v.MerchantID,
 			UserId:     v.UserID,
@@ -55,7 +57,7 @@ func mapToProtoOrderResponse(m interface{}) *pb.OrderResponse {
 			UpdatedAt:  formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetOrdersRow:
-		return &pb.OrderResponse{
+		return &pborder.OrderResponse{
 			Id:         v.OrderID,
 			MerchantId: v.MerchantID,
 			UserId:     v.UserID,
@@ -64,7 +66,7 @@ func mapToProtoOrderResponse(m interface{}) *pb.OrderResponse {
 			UpdatedAt:  formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetOrderByIDRow:
-		return &pb.OrderResponse{
+		return &pborder.OrderResponse{
 			Id:         v.OrderID,
 			MerchantId: v.MerchantID,
 			UserId:     v.UserID,
@@ -73,7 +75,7 @@ func mapToProtoOrderResponse(m interface{}) *pb.OrderResponse {
 			UpdatedAt:  formatTimestamp(v.UpdatedAt),
 		}
 	case *db.CreateOrderRow:
-		return &pb.OrderResponse{
+		return &pborder.OrderResponse{
 			Id:         v.OrderID,
 			MerchantId: v.MerchantID,
 			UserId:     v.UserID,
@@ -82,7 +84,7 @@ func mapToProtoOrderResponse(m interface{}) *pb.OrderResponse {
 			UpdatedAt:  formatTimestamp(v.UpdatedAt),
 		}
 	case *db.UpdateOrderRow:
-		return &pb.OrderResponse{
+		return &pborder.OrderResponse{
 			Id:         v.OrderID,
 			MerchantId: v.MerchantID,
 			UserId:     v.UserID,
@@ -95,13 +97,13 @@ func mapToProtoOrderResponse(m interface{}) *pb.OrderResponse {
 	}
 }
 
-func mapToProtoOrderResponseDeleteAt(m interface{}) *pb.OrderResponseDeleteAt {
-	var res *pb.OrderResponseDeleteAt
+func mapToProtoOrderResponseDeleteAt(m interface{}) *pborder.OrderResponseDeleteAt {
+	var res *pborder.OrderResponseDeleteAt
 	var deletedAt interface{}
 
 	switch v := m.(type) {
 	case *db.Order:
-		res = &pb.OrderResponseDeleteAt{
+		res = &pborder.OrderResponseDeleteAt{
 			Id:         v.OrderID,
 			MerchantId: v.MerchantID,
 			UserId:     v.UserID,
@@ -111,7 +113,7 @@ func mapToProtoOrderResponseDeleteAt(m interface{}) *pb.OrderResponseDeleteAt {
 		}
 		deletedAt = v.DeletedAt
 	case *db.GetOrdersActiveRow:
-		res = &pb.OrderResponseDeleteAt{
+		res = &pborder.OrderResponseDeleteAt{
 			Id:         v.OrderID,
 			MerchantId: v.MerchantID,
 			UserId:     v.UserID,
@@ -121,7 +123,7 @@ func mapToProtoOrderResponseDeleteAt(m interface{}) *pb.OrderResponseDeleteAt {
 		}
 		deletedAt = v.DeletedAt
 	case *db.GetOrdersTrashedRow:
-		res = &pb.OrderResponseDeleteAt{
+		res = &pborder.OrderResponseDeleteAt{
 			Id:         v.OrderID,
 			MerchantId: v.MerchantID,
 			UserId:     v.UserID,
@@ -141,16 +143,16 @@ func mapToProtoOrderResponseDeleteAt(m interface{}) *pb.OrderResponseDeleteAt {
 	return res
 }
 
-func mapToProtoOrderMonthlyTotalRevenueResponse(m interface{}) *pb.OrderMonthlyTotalRevenueResponse {
+func mapToProtoOrderMonthlyTotalRevenueResponse(m interface{}) *pborder.OrderMonthlyTotalRevenueResponse {
 	switch v := m.(type) {
 	case *db.GetMonthlyTotalRevenueRow:
-		return &pb.OrderMonthlyTotalRevenueResponse{
+		return &pborder.OrderMonthlyTotalRevenueResponse{
 			Year:         v.Year,
 			Month:        v.Month,
 			TotalRevenue: int32(v.TotalRevenue),
 		}
 	case *db.GetMonthlyTotalRevenueByMerchantRow:
-		return &pb.OrderMonthlyTotalRevenueResponse{
+		return &pborder.OrderMonthlyTotalRevenueResponse{
 			Year:         v.Year,
 			Month:        v.Month,
 			TotalRevenue: int32(v.TotalRevenue),
@@ -160,15 +162,15 @@ func mapToProtoOrderMonthlyTotalRevenueResponse(m interface{}) *pb.OrderMonthlyT
 	}
 }
 
-func mapToProtoOrderYearlyTotalRevenueResponse(m interface{}) *pb.OrderYearlyTotalRevenueResponse {
+func mapToProtoOrderYearlyTotalRevenueResponse(m interface{}) *pborder.OrderYearlyTotalRevenueResponse {
 	switch v := m.(type) {
 	case *db.GetYearlyTotalRevenueRow:
-		return &pb.OrderYearlyTotalRevenueResponse{
+		return &pborder.OrderYearlyTotalRevenueResponse{
 			Year:         v.Year,
 			TotalRevenue: int32(v.TotalRevenue),
 		}
 	case *db.GetYearlyTotalRevenueByMerchantRow:
-		return &pb.OrderYearlyTotalRevenueResponse{
+		return &pborder.OrderYearlyTotalRevenueResponse{
 			Year:         v.Year,
 			TotalRevenue: int32(v.TotalRevenue),
 		}
@@ -177,17 +179,17 @@ func mapToProtoOrderYearlyTotalRevenueResponse(m interface{}) *pb.OrderYearlyTot
 	}
 }
 
-func mapToProtoOrderMonthlyResponse(m interface{}) *pb.OrderMonthlyResponse {
+func mapToProtoOrderMonthlyResponse(m interface{}) *pborder.OrderMonthlyResponse {
 	switch v := m.(type) {
 	case *db.GetMonthlyOrderRow:
-		return &pb.OrderMonthlyResponse{
+		return &pborder.OrderMonthlyResponse{
 			Month:          v.Month,
 			OrderCount:     int32(v.OrderCount),
 			TotalRevenue:   int32(v.TotalRevenue),
 			TotalItemsSold: int32(v.TotalItemsSold),
 		}
 	case *db.GetMonthlyOrderByMerchantRow:
-		return &pb.OrderMonthlyResponse{
+		return &pborder.OrderMonthlyResponse{
 			Month:          v.Month,
 			OrderCount:     int32(v.OrderCount),
 			TotalRevenue:   int32(v.TotalRevenue),
@@ -198,10 +200,10 @@ func mapToProtoOrderMonthlyResponse(m interface{}) *pb.OrderMonthlyResponse {
 	}
 }
 
-func mapToProtoOrderYearlyResponse(m interface{}) *pb.OrderYearlyResponse {
+func mapToProtoOrderYearlyResponse(m interface{}) *pborder.OrderYearlyResponse {
 	switch v := m.(type) {
 	case *db.GetYearlyOrderRow:
-		return &pb.OrderYearlyResponse{
+		return &pborder.OrderYearlyResponse{
 			Year:               v.Year,
 			OrderCount:         int32(v.OrderCount),
 			TotalRevenue:       int32(v.TotalRevenue),
@@ -209,7 +211,7 @@ func mapToProtoOrderYearlyResponse(m interface{}) *pb.OrderYearlyResponse {
 			UniqueProductsSold: int32(v.UniqueProductsSold),
 		}
 	case *db.GetYearlyOrderByMerchantRow:
-		return &pb.OrderYearlyResponse{
+		return &pborder.OrderYearlyResponse{
 			Year:               v.Year,
 			OrderCount:         int32(v.OrderCount),
 			TotalRevenue:       int32(v.TotalRevenue),

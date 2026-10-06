@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package pb;
+package pb.transaction;
 
 import "transaction/transaction_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/transaction";
 
 message FindAllTransactionRequest {
     int32 page = 1;

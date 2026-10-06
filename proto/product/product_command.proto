@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package pb;
+package pb.product;
 
 import "google/protobuf/empty.proto";
 import "product/product_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/product";
 
 message CreateProductRequest {
     int32 merchant_id = 1;

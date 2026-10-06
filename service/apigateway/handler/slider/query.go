@@ -5,24 +5,24 @@ import (
 	"strconv"
 
 	slider_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/slider"
+	pbslider "github.com/MamangRust/monolith-ecommerce-pb/slider"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/slider"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
 type sliderQueryHandleApi struct {
-	client pb.SliderQueryServiceClient
+	client pbslider.SliderQueryServiceClient
 	logger logger.LoggerInterface
 	mapper apimapper.SliderQueryResponseMapper
 	cache  slider_cache.SliderQueryCache
 }
 
 type sliderQueryHandleDeps struct {
-	client pb.SliderQueryServiceClient
+	client pbslider.SliderQueryServiceClient
 	router *echo.Echo
 	logger logger.LoggerInterface
 	mapper apimapper.SliderQueryResponseMapper
@@ -78,7 +78,7 @@ func (h *sliderQueryHandleApi) FindAll(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	grpcReq := &pb.FindAllSliderRequest{
+	grpcReq := &pbslider.FindAllSliderRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,
@@ -117,7 +117,7 @@ func (h *sliderQueryHandleApi) FindById(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	res, err := h.client.FindById(ctx, &pb.FindByIdSliderRequest{Id: int32(id)})
+	res, err := h.client.FindById(ctx, &pbslider.FindByIdSliderRequest{Id: int32(id)})
 	if err != nil {
 		return h.handleGrpcError(err, "FindById")
 	}
@@ -162,7 +162,7 @@ func (h *sliderQueryHandleApi) FindByActive(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	grpcReq := &pb.FindAllSliderRequest{
+	grpcReq := &pbslider.FindAllSliderRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,
@@ -213,7 +213,7 @@ func (h *sliderQueryHandleApi) FindByTrashed(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	grpcReq := &pb.FindAllSliderRequest{
+	grpcReq := &pbslider.FindAllSliderRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,

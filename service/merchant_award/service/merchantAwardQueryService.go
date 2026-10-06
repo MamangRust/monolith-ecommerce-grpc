@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/repository"
+	"github.com/MamangRust/monolith-ecommerce-merchant_award/cache"
+	"github.com/MamangRust/monolith-ecommerce-merchant_award/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"

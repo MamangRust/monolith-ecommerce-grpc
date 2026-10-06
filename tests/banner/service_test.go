@@ -4,15 +4,16 @@ import (
 	"context"
 	"testing"
 
-	banner_cache "github.com/MamangRust/monolith-ecommerce-grpc-banner/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-banner/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-banner/service"
+	"github.com/stretchr/testify/suite"
+
+	banner_cache "github.com/MamangRust/monolith-ecommerce-banner/cache"
+	"github.com/MamangRust/monolith-ecommerce-banner/repository"
+	"github.com/MamangRust/monolith-ecommerce-banner/service"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type BannerServiceTestSuite struct {
@@ -118,7 +119,7 @@ func (s *BannerServiceTestSuite) TestBannerLifecycle() {
 	// Create multiple
 	b1, _ := s.svc.BannerCommand.Create(ctx, &requests.CreateBannerRequest{Name: "B1", StartDate: "2026-01-01", EndDate: "2026-12-31", IsActive: true, StartTime: "00:00:00", EndTime: "23:59:59"})
 	b2, _ := s.svc.BannerCommand.Create(ctx, &requests.CreateBannerRequest{Name: "B2", StartDate: "2026-01-01", EndDate: "2026-12-31", IsActive: true, StartTime: "00:00:00", EndTime: "23:59:59"})
-	
+
 	s.svc.BannerCommand.Trash(ctx, int(b1.BannerID))
 	s.svc.BannerCommand.Trash(ctx, int(b2.BannerID))
 

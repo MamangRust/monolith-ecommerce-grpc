@@ -4,16 +4,18 @@ import (
 	"context"
 	"testing"
 
-	prod_cache "github.com/MamangRust/monolith-ecommerce-grpc-product/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-product/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-product/service"
+	"github.com/stretchr/testify/suite"
+
+	pbcategory "github.com/MamangRust/monolith-ecommerce-pb/category"
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	prod_cache "github.com/MamangRust/monolith-ecommerce-product/cache"
+	"github.com/MamangRust/monolith-ecommerce-product/repository"
+	"github.com/MamangRust/monolith-ecommerce-product/service"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type ProductServiceTestSuite struct {
@@ -39,8 +41,8 @@ func (s *ProductServiceTestSuite) SetupSuite() {
 	mencache := prod_cache.NewMencache(cacheStore)
 	repos := repository.NewRepositories(
 		queries,
-		pb.NewCategoryQueryServiceClient(s.Conns["category"]),
-		pb.NewMerchantQueryServiceClient(s.Conns["merchant"]),
+		pbcategory.NewCategoryQueryServiceClient(s.Conns["category"]),
+		pbmerchant.NewMerchantQueryServiceClient(s.Conns["merchant"]),
 	)
 
 	s.svc = service.NewService(&service.Deps{
@@ -147,7 +149,7 @@ func (s *ProductServiceTestSuite) TestProductLifecycle() {
 	// 11. RestoreAll & DeleteAll
 	p1, _ := s.svc.ProductCommand.Create(ctx, &requests.CreateProductRequest{MerchantID: merchantID, CategoryID: categoryID, Name: "P1", Description: "D1", Price: 1, CountInStock: 1, Brand: "B1", Weight: 1, Rating: &rating, SlugProduct: &slug, ImageProduct: "I1"})
 	p2, _ := s.svc.ProductCommand.Create(ctx, &requests.CreateProductRequest{MerchantID: merchantID, CategoryID: categoryID, Name: "P2", Description: "D2", Price: 2, CountInStock: 2, Brand: "B2", Weight: 2, Rating: &rating, SlugProduct: &slug, ImageProduct: "I2"})
-	
+
 	s.svc.ProductCommand.Trash(ctx, int(p1.ProductID))
 	s.svc.ProductCommand.Trash(ctx, int(p2.ProductID))
 

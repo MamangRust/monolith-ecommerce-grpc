@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package pb;
+package pb.merchant;
 
 import "google/protobuf/empty.proto";
 import "merchant/merchant_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/merchant";
 
 message CreateMerchantRequest {
     int32 user_id = 1;

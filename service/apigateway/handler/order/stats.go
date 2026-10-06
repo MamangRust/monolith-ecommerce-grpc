@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	order_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/order"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pborder "github.com/MamangRust/monolith-ecommerce-pb/order"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
@@ -14,29 +14,32 @@ import (
 )
 
 type orderStatsHandlerApi struct {
-	client            pb.OrderStatsServiceClient
-	logger            logger.LoggerInterface
-	mapper            apimapper.OrderStatsResponseMapper
-	cache             order_cache.OrderStatsCache
-	merchantStatsCache order_cache.OrderStatsByMerchantCache
+	statsClient           pborder.OrderStatsServiceClient
+	statsByMerchantClient pborder.OrderStatsByMerchantServiceClient
+	logger                logger.LoggerInterface
+	mapper                apimapper.OrderStatsResponseMapper
+	cache                 order_cache.OrderStatsCache
+	merchantStatsCache    order_cache.OrderStatsByMerchantCache
 }
 
 type orderStatsHandleDeps struct {
-	client            pb.OrderStatsServiceClient
-	router            *echo.Echo
-	logger            logger.LoggerInterface
-	mapper            apimapper.OrderStatsResponseMapper
-	cache             order_cache.OrderStatsCache
-	merchantStatsCache order_cache.OrderStatsByMerchantCache
+	statsClient           pborder.OrderStatsServiceClient
+	statsByMerchantClient pborder.OrderStatsByMerchantServiceClient
+	router                *echo.Echo
+	logger                logger.LoggerInterface
+	mapper                apimapper.OrderStatsResponseMapper
+	cache                 order_cache.OrderStatsCache
+	merchantStatsCache    order_cache.OrderStatsByMerchantCache
 }
 
 func NewOrderStatsHandleApi(params *orderStatsHandleDeps) *orderStatsHandlerApi {
 	handler := &orderStatsHandlerApi{
-		client:            params.client,
-		logger:            params.logger,
-		mapper:            params.mapper,
-		cache:             params.cache,
-		merchantStatsCache: params.merchantStatsCache,
+		statsClient:           params.statsClient,
+		statsByMerchantClient: params.statsByMerchantClient,
+		logger:                params.logger,
+		mapper:                params.mapper,
+		cache:                 params.cache,
+		merchantStatsCache:    params.merchantStatsCache,
 	}
 
 	routerOrder := params.router.Group("/api/order")
@@ -75,7 +78,7 @@ func (h *orderStatsHandlerApi) FindMonthlyTotalRevenue(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindMonthlyTotalRevenue(ctx, &pb.FindYearMonthTotalRevenue{
+	res, err := h.statsClient.FindMonthlyTotalRevenue(ctx, &pborder.FindYearMonthTotalRevenue{
 		Year: int32(year), Month: int32(month),
 	})
 	if err != nil {
@@ -106,7 +109,7 @@ func (h *orderStatsHandlerApi) FindYearlyTotalRevenue(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindYearlyTotalRevenue(ctx, &pb.FindYearTotalRevenue{Year: int32(year)})
+	res, err := h.statsClient.FindYearlyTotalRevenue(ctx, &pborder.FindYearTotalRevenue{Year: int32(year)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -141,7 +144,7 @@ func (h *orderStatsHandlerApi) FindMonthlyTotalRevenueByMerchant(c echo.Context)
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindMonthlyTotalRevenueByMerchant(ctx, &pb.FindYearMonthTotalRevenueByMerchant{
+	res, err := h.statsByMerchantClient.FindMonthlyTotalRevenueByMerchant(ctx, &pborder.FindYearMonthTotalRevenueByMerchant{
 		Year: int32(year), Month: int32(month), MerchantId: int32(merchantId),
 	})
 	if err != nil {
@@ -176,7 +179,7 @@ func (h *orderStatsHandlerApi) FindYearlyTotalRevenueByMerchant(c echo.Context) 
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindYearlyTotalRevenueByMerchant(ctx, &pb.FindYearTotalRevenueByMerchant{
+	res, err := h.statsByMerchantClient.FindYearlyTotalRevenueByMerchant(ctx, &pborder.FindYearTotalRevenueByMerchant{
 		Year: int32(year), MerchantId: int32(merchantId),
 	})
 	if err != nil {
@@ -207,7 +210,7 @@ func (h *orderStatsHandlerApi) FindMonthlyRevenue(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindMonthlyRevenue(ctx, &pb.FindYearOrder{Year: int32(year)})
+	res, err := h.statsClient.FindMonthlyRevenue(ctx, &pborder.FindYearOrder{Year: int32(year)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -236,7 +239,7 @@ func (h *orderStatsHandlerApi) FindYearlyRevenue(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindYearlyRevenue(ctx, &pb.FindYearOrder{Year: int32(year)})
+	res, err := h.statsClient.FindYearlyRevenue(ctx, &pborder.FindYearOrder{Year: int32(year)})
 	if err != nil {
 		return sharedErrors.ParseGrpcError(err)
 	}
@@ -269,7 +272,7 @@ func (h *orderStatsHandlerApi) FindMonthlyRevenueByMerchant(c echo.Context) erro
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindMonthlyRevenueByMerchant(ctx, &pb.FindYearOrderByMerchant{
+	res, err := h.statsByMerchantClient.FindMonthlyRevenueByMerchant(ctx, &pborder.FindYearOrderByMerchant{
 		Year: int32(year), MerchantId: int32(merchantId),
 	})
 	if err != nil {
@@ -304,7 +307,7 @@ func (h *orderStatsHandlerApi) FindYearlyRevenueByMerchant(c echo.Context) error
 		return c.JSON(http.StatusOK, cachedData)
 	}
 
-	res, err := h.client.FindYearlyRevenueByMerchant(ctx, &pb.FindYearOrderByMerchant{
+	res, err := h.statsByMerchantClient.FindYearlyRevenueByMerchant(ctx, &pborder.FindYearOrderByMerchant{
 		Year: int32(year), MerchantId: int32(merchantId),
 	})
 	if err != nil {
@@ -316,4 +319,3 @@ func (h *orderStatsHandlerApi) FindYearlyRevenueByMerchant(c echo.Context) error
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
-

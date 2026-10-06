@@ -1,34 +1,29 @@
 package apps
 
 import (
-	"context"
 	"fmt"
+	"time"
 
 	"github.com/MamangRust/monolith-ecommerce-auth/cache"
 	"github.com/MamangRust/monolith-ecommerce-auth/handler"
 	"github.com/MamangRust/monolith-ecommerce-auth/repository"
 	"github.com/MamangRust/monolith-ecommerce-auth/service"
+	"github.com/MamangRust/monolith-ecommerce-pkg/adapter"
 	"github.com/MamangRust/monolith-ecommerce-pkg/auth"
 	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
 	"github.com/MamangRust/monolith-ecommerce-pkg/kafka"
-	"github.com/MamangRust/monolith-ecommerce-pkg/outbox"
+	"github.com/MamangRust/monolith-ecommerce-pkg/resilience"
 	"github.com/MamangRust/monolith-ecommerce-pkg/server"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	pb "github.com/MamangRust/monolith-ecommerce-pb"
+	pbrole "github.com/MamangRust/monolith-ecommerce-pb/role"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
+	pbuserrole "github.com/MamangRust/monolith-ecommerce-pb/user_role"
 )
-
-// kafkaOutboxPublisher adapts the ecommerce *kafka.Kafka (whose SendMessage
-// takes no context) to the outbox.OutboxPublisher contract.
-type kafkaOutboxPublisher struct {
-	k *kafka.Kafka
-}
-
-func (p kafkaOutboxPublisher) SendMessage(_ context.Context, topic, key string, value []byte) error {
-	return p.k.SendMessage(topic, key, value)
-}
 
 func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	srv, err := server.New(cfg)
@@ -61,20 +56,42 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 		return nil, fmt.Errorf("failed to connect to user service: %w", err)
 	}
 
-	roleQueryClient := pb.NewRoleQueryServiceClient(roleConn)
-	roleCommandClient := pb.NewRoleCommandServiceClient(roleConn)
-	userQueryClient := pb.NewUserQueryServiceClient(userConn)
-	userCommandClient := pb.NewUserCommandServiceClient(userConn)
+	roleQueryClient := pbrole.NewRoleQueryServiceClient(roleConn)
+	roleCommandClient := pbrole.NewRoleCommandServiceClient(roleConn)
+	userQueryClient := pbuser.NewUserQueryServiceClient(userConn)
+	userCommandClient := pbuser.NewUserCommandServiceClient(userConn)
+	userRoleClient := pbuserrole.NewUserRoleServiceClient(roleConn)
+
+	guardUser := resilience.NewDependencyGuard("user", 5, 30, 100, 3*time.Second, srv.Logger)
+	guardRole := resilience.NewDependencyGuard("role", 5, 30, 100, 3*time.Second, srv.Logger)
+	guardUserRole := resilience.NewDependencyGuard("user_role", 5, 30, 100, 3*time.Second, srv.Logger)
 
 	hasher := hash.NewHashingPassword()
-	repositories := repository.NewRepositories(srv.DB, userQueryClient, userCommandClient, roleQueryClient, roleCommandClient)
+
+	repositories := repository.NewRepositories(&repository.Deps{
+		Db:                srv.DB,
+		UserQueryClient:   userQueryClient,
+		UserCommandClient: userCommandClient,
+		RoleQueryClient:   roleQueryClient,
+		RoleCommandClient: roleCommandClient,
+		UserRoleClient:    userRoleClient,
+		Guard: repository.GuardOptions{
+			User: []adapter.GuardOption{
+				adapter.WithDependencyGuard(guardUser),
+			},
+			Role: []adapter.GuardOption{
+				adapter.WithDependencyGuard(guardRole),
+			},
+			UserRole: []adapter.GuardOption{
+				adapter.WithDependencyGuard(guardUserRole),
+			},
+		},
+	})
 	myKafka := kafka.NewKafka(srv.Logger, []string{viper.GetString("KAFKA_BROKERS")})
 
 	observability, _ := observability.NewObservability("auth-server", srv.Logger)
 
 	cache := cache.NewMencache(srv.CacheStore)
-
-	outboxService := outbox.NewOutboxService(srv.DB, kafkaOutboxPublisher{k: myKafka}, srv.Logger)
 
 	services := service.NewService(&service.Deps{
 		Mencache:      cache,
@@ -83,8 +100,6 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 		Hash:          hasher,
 		Logger:        srv.Logger,
 		Kafka:         myKafka,
-		Pool:          srv.Pool,
-		Outbox:        outboxService,
 		Observability: observability,
 	})
 
@@ -93,10 +108,6 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	srv.RegisterServices = func(gs *grpc.Server) {
 		pb.RegisterAuthServiceServer(gs, handlers.Auth)
 	}
-
-	// Start the outbox relay so enqueued events are published to Kafka with
-	// durable retry and dead-letter semantics.
-	go outboxService.Start(srv.Ctx, outbox.OutboxRelayInterval, outbox.OutboxRelayBatchSize)
 
 	return srv, nil
 }

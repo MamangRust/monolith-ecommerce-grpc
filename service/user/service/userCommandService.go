@@ -3,8 +3,6 @@ package service
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-user/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-user/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
@@ -12,6 +10,8 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/user_errors"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
+	"github.com/MamangRust/monolith-ecommerce-user/cache"
+	"github.com/MamangRust/monolith-ecommerce-user/repository"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 )
@@ -190,7 +190,7 @@ func (s *userCommandService) Trash(ctx context.Context, user_id int) (*db.TrashU
 		status = "error"
 		return errorhandler.HandleError[*db.TrashUserRow](
 			s.logger,
-			err,
+			user_errors.ErrFailedTrashedUser,
 			method,
 			span,
 
@@ -220,7 +220,7 @@ func (s *userCommandService) Restore(ctx context.Context, user_id int) (*db.Rest
 		status = "error"
 		return errorhandler.HandleError[*db.RestoreUserRow](
 			s.logger,
-			err,
+			user_errors.ErrFailedRestoreUser,
 			method,
 			span,
 
@@ -250,7 +250,7 @@ func (s *userCommandService) DeletePermanent(ctx context.Context, user_id int) (
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			user_errors.ErrFailedDeletePermanent,
 			method,
 			span,
 
@@ -306,7 +306,7 @@ func (s *userCommandService) DeleteAll(ctx context.Context) (bool, error) {
 		status = "error"
 		return errorhandler.HandleError[bool](
 			s.logger,
-			err,
+			user_errors.ErrFailedDeleteAll,
 			method,
 			span,
 		)

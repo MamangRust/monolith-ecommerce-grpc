@@ -1,7 +1,7 @@
 package sliderapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbslider "github.com/MamangRust/monolith-ecommerce-pb/slider"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 	paginationapimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/pagination"
 )
@@ -12,7 +12,7 @@ func NewSliderQueryResponseMapper() SliderQueryResponseMapper {
 	return &sliderQueryResponseMapper{}
 }
 
-func (s *sliderQueryResponseMapper) ToResponseSlider(pbResponse *pb.SliderResponse) *response.SliderResponse {
+func (s *sliderQueryResponseMapper) ToResponseSlider(pbResponse *pbslider.SliderResponse) *response.SliderResponse {
 	return &response.SliderResponse{
 		ID:        int(pbResponse.Id),
 		Name:      pbResponse.Name,
@@ -22,7 +22,7 @@ func (s *sliderQueryResponseMapper) ToResponseSlider(pbResponse *pb.SliderRespon
 	}
 }
 
-func (s *sliderQueryResponseMapper) ToResponsesSlider(pbResponses []*pb.SliderResponse) []*response.SliderResponse {
+func (s *sliderQueryResponseMapper) ToResponsesSlider(pbResponses []*pbslider.SliderResponse) []*response.SliderResponse {
 	var sliders []*response.SliderResponse
 	for _, slider := range pbResponses {
 		sliders = append(sliders, s.ToResponseSlider(slider))
@@ -30,7 +30,7 @@ func (s *sliderQueryResponseMapper) ToResponsesSlider(pbResponses []*pb.SliderRe
 	return sliders
 }
 
-func (s *sliderQueryResponseMapper) ToApiResponseSlider(pbResponse *pb.ApiResponseSlider) *response.ApiResponseSlider {
+func (s *sliderQueryResponseMapper) ToApiResponseSlider(pbResponse *pbslider.ApiResponseSlider) *response.ApiResponseSlider {
 	return &response.ApiResponseSlider{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -38,7 +38,7 @@ func (s *sliderQueryResponseMapper) ToApiResponseSlider(pbResponse *pb.ApiRespon
 	}
 }
 
-func (s *sliderQueryResponseMapper) ToApiResponsesSlider(pbResponse *pb.ApiResponsesSlider) *response.ApiResponsesSlider {
+func (s *sliderQueryResponseMapper) ToApiResponsesSlider(pbResponse *pbslider.ApiResponsesSlider) *response.ApiResponsesSlider {
 	return &response.ApiResponsesSlider{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -46,7 +46,7 @@ func (s *sliderQueryResponseMapper) ToApiResponsesSlider(pbResponse *pb.ApiRespo
 	}
 }
 
-func (s *sliderQueryResponseMapper) ToApiResponsePaginationSlider(pbResponse *pb.ApiResponsePaginationSlider) *response.ApiResponsePaginationSlider {
+func (s *sliderQueryResponseMapper) ToApiResponsePaginationSlider(pbResponse *pbslider.ApiResponsePaginationSlider) *response.ApiResponsePaginationSlider {
 	return &response.ApiResponsePaginationSlider{
 		Status:     pbResponse.Status,
 		Message:    pbResponse.Message,
@@ -55,7 +55,7 @@ func (s *sliderQueryResponseMapper) ToApiResponsePaginationSlider(pbResponse *pb
 	}
 }
 
-func (s *sliderQueryResponseMapper) ToApiResponsePaginationSliderDeleteAt(pbResponse *pb.ApiResponsePaginationSliderDeleteAt) *response.ApiResponsePaginationSliderDeleteAt {
+func (s *sliderQueryResponseMapper) ToApiResponsePaginationSliderDeleteAt(pbResponse *pbslider.ApiResponsePaginationSliderDeleteAt) *response.ApiResponsePaginationSliderDeleteAt {
 	return &response.ApiResponsePaginationSliderDeleteAt{
 		Status:     pbResponse.Status,
 		Message:    pbResponse.Message,
@@ -64,7 +64,7 @@ func (s *sliderQueryResponseMapper) ToApiResponsePaginationSliderDeleteAt(pbResp
 	}
 }
 
-func (s *sliderQueryResponseMapper) ToResponseSliderDeleteAt(pbResponse *pb.SliderResponseDeleteAt) *response.SliderResponseDeleteAt {
+func (s *sliderQueryResponseMapper) ToResponseSliderDeleteAt(pbResponse *pbslider.SliderResponseDeleteAt) *response.SliderResponseDeleteAt {
 	var deletedAt *string
 	if pbResponse.DeletedAt != nil {
 		val := pbResponse.DeletedAt.Value
@@ -81,7 +81,7 @@ func (s *sliderQueryResponseMapper) ToResponseSliderDeleteAt(pbResponse *pb.Slid
 	}
 }
 
-func (s *sliderQueryResponseMapper) ToResponsesSliderDeleteAt(pbResponses []*pb.SliderResponseDeleteAt) []*response.SliderResponseDeleteAt {
+func (s *sliderQueryResponseMapper) ToResponsesSliderDeleteAt(pbResponses []*pbslider.SliderResponseDeleteAt) []*response.SliderResponseDeleteAt {
 	var sliders []*response.SliderResponseDeleteAt
 	for _, slider := range pbResponses {
 		sliders = append(sliders, s.ToResponseSliderDeleteAt(slider))

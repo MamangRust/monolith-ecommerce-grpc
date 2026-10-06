@@ -4,9 +4,11 @@ import (
 	"math"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
+	pbmerchant_detail "github.com/MamangRust/monolith-ecommerce-pb/merchant_detail"
 )
 
 func normalizePage(page, pageSize int) (int, int) {
@@ -19,9 +21,9 @@ func normalizePage(page, pageSize int) (int, int) {
 	return page, pageSize
 }
 
-func createPaginationMeta(page, pageSize, totalRecords int) *pb.PaginationMeta {
+func createPaginationMeta(page, pageSize, totalRecords int) *pbcommon.PaginationMeta {
 	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
-	return &pb.PaginationMeta{
+	return &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
@@ -46,10 +48,10 @@ func formatTimestamp(v interface{}) string {
 	return ""
 }
 
-func mapToProtoMerchantDetailResponse(m interface{}) *pb.MerchantDetailResponse {
+func mapToProtoMerchantDetailResponse(m interface{}) *pbmerchant_detail.MerchantDetailResponse {
 	switch v := m.(type) {
 	case *db.MerchantDetail:
-		return &pb.MerchantDetailResponse{
+		return &pbmerchant_detail.MerchantDetailResponse{
 			Id:               v.MerchantDetailID,
 			MerchantId:       v.MerchantID,
 			DisplayName:      getString(v.DisplayName),
@@ -61,7 +63,7 @@ func mapToProtoMerchantDetailResponse(m interface{}) *pb.MerchantDetailResponse 
 			UpdatedAt:        formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetMerchantDetailRow:
-		return &pb.MerchantDetailResponse{
+		return &pbmerchant_detail.MerchantDetailResponse{
 			Id:               v.MerchantDetailID,
 			MerchantId:       v.MerchantID,
 			DisplayName:      getString(v.DisplayName),
@@ -73,7 +75,7 @@ func mapToProtoMerchantDetailResponse(m interface{}) *pb.MerchantDetailResponse 
 			UpdatedAt:        formatTimestamp(v.UpdatedAt),
 		}
 	case *db.CreateMerchantDetailRow:
-		return &pb.MerchantDetailResponse{
+		return &pbmerchant_detail.MerchantDetailResponse{
 			Id:               v.MerchantDetailID,
 			MerchantId:       v.MerchantID,
 			DisplayName:      getString(v.DisplayName),
@@ -85,7 +87,7 @@ func mapToProtoMerchantDetailResponse(m interface{}) *pb.MerchantDetailResponse 
 			UpdatedAt:        formatTimestamp(v.UpdatedAt),
 		}
 	case *db.UpdateMerchantDetailRow:
-		return &pb.MerchantDetailResponse{
+		return &pbmerchant_detail.MerchantDetailResponse{
 			Id:               v.MerchantDetailID,
 			MerchantId:       v.MerchantID,
 			DisplayName:      getString(v.DisplayName),
@@ -97,7 +99,7 @@ func mapToProtoMerchantDetailResponse(m interface{}) *pb.MerchantDetailResponse 
 			UpdatedAt:        formatTimestamp(v.UpdatedAt),
 		}
 	case *db.GetMerchantDetailsRow:
-		return &pb.MerchantDetailResponse{
+		return &pbmerchant_detail.MerchantDetailResponse{
 			Id:               v.MerchantDetailID,
 			MerchantId:       v.MerchantID,
 			DisplayName:      getString(v.DisplayName),
@@ -113,13 +115,13 @@ func mapToProtoMerchantDetailResponse(m interface{}) *pb.MerchantDetailResponse 
 	}
 }
 
-func mapToProtoMerchantDetailResponseDeleteAt(m interface{}) *pb.MerchantDetailResponseDeleteAt {
-	var res *pb.MerchantDetailResponseDeleteAt
+func mapToProtoMerchantDetailResponseDeleteAt(m interface{}) *pbmerchant_detail.MerchantDetailResponseDeleteAt {
+	var res *pbmerchant_detail.MerchantDetailResponseDeleteAt
 	var deletedAt interface{}
 
 	switch v := m.(type) {
 	case *db.MerchantDetail:
-		res = &pb.MerchantDetailResponseDeleteAt{
+		res = &pbmerchant_detail.MerchantDetailResponseDeleteAt{
 			Id:               v.MerchantDetailID,
 			MerchantId:       v.MerchantID,
 			DisplayName:      getString(v.DisplayName),
@@ -132,7 +134,7 @@ func mapToProtoMerchantDetailResponseDeleteAt(m interface{}) *pb.MerchantDetailR
 		}
 		deletedAt = v.DeletedAt
 	case *db.GetMerchantDetailsActiveRow:
-		res = &pb.MerchantDetailResponseDeleteAt{
+		res = &pbmerchant_detail.MerchantDetailResponseDeleteAt{
 			Id:               v.MerchantDetailID,
 			MerchantId:       v.MerchantID,
 			DisplayName:      getString(v.DisplayName),
@@ -145,7 +147,7 @@ func mapToProtoMerchantDetailResponseDeleteAt(m interface{}) *pb.MerchantDetailR
 		}
 		deletedAt = v.DeletedAt
 	case *db.GetMerchantDetailsTrashedRow:
-		res = &pb.MerchantDetailResponseDeleteAt{
+		res = &pbmerchant_detail.MerchantDetailResponseDeleteAt{
 			Id:               v.MerchantDetailID,
 			MerchantId:       v.MerchantID,
 			DisplayName:      getString(v.DisplayName),
@@ -168,10 +170,10 @@ func mapToProtoMerchantDetailResponseDeleteAt(m interface{}) *pb.MerchantDetailR
 	return res
 }
 
-func mapToProtoMerchantSocialLinkResponse(m interface{}) *pb.MerchantSocialMediaLinkResponse {
+func mapToProtoMerchantSocialLinkResponse(m interface{}) *pbmerchant_detail.MerchantSocialMediaLinkResponse {
 	switch v := m.(type) {
 	case *db.MerchantSocialMediaLink:
-		return &pb.MerchantSocialMediaLinkResponse{
+		return &pbmerchant_detail.MerchantSocialMediaLinkResponse{
 			Id:               v.MerchantSocialID,
 			MerchantDetailId: v.MerchantDetailID,
 			Platform:         v.Platform,
@@ -180,7 +182,7 @@ func mapToProtoMerchantSocialLinkResponse(m interface{}) *pb.MerchantSocialMedia
 			UpdatedAt:        formatTimestamp(v.UpdatedAt),
 		}
 	case *db.CreateMerchantSocialMediaLinkRow:
-		return &pb.MerchantSocialMediaLinkResponse{
+		return &pbmerchant_detail.MerchantSocialMediaLinkResponse{
 			Id:               v.MerchantSocialID,
 			MerchantDetailId: v.MerchantDetailID,
 			Platform:         v.Platform,
@@ -189,7 +191,7 @@ func mapToProtoMerchantSocialLinkResponse(m interface{}) *pb.MerchantSocialMedia
 			UpdatedAt:        formatTimestamp(v.UpdatedAt),
 		}
 	case *db.UpdateMerchantSocialMediaLinkRow:
-		return &pb.MerchantSocialMediaLinkResponse{
+		return &pbmerchant_detail.MerchantSocialMediaLinkResponse{
 			Id:               v.MerchantSocialID,
 			MerchantDetailId: v.MerchantDetailID,
 			Platform:         v.Platform,

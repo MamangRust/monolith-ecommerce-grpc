@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package pb;
+package pb.shipping_address;
 
 import "google/protobuf/empty.proto";
 import "shipping_address/shipping_address_common.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/shipping_address";
 
 message CreateShippingAddressRequest {
     int32 order_id = 1;

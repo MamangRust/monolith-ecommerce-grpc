@@ -4,16 +4,17 @@ import (
 	"context"
 	"testing"
 
-	award_cache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_award/service"
+	"github.com/stretchr/testify/suite"
+
+	award_cache "github.com/MamangRust/monolith-ecommerce-merchant_award/cache"
+	"github.com/MamangRust/monolith-ecommerce-merchant_award/repository"
+	"github.com/MamangRust/monolith-ecommerce-merchant_award/service"
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type MerchantAwardServiceTestSuite struct {
@@ -37,7 +38,7 @@ func (s *MerchantAwardServiceTestSuite) SetupSuite() {
 	mencache := award_cache.NewMencache(cacheStore)
 	repos := repository.NewRepositories(
 		queries,
-		pb.NewMerchantQueryServiceClient(s.Conns["merchant"]),
+		pbmerchant.NewMerchantQueryServiceClient(s.Conns["merchant"]),
 	)
 
 	s.svc = service.NewService(&service.Deps{
@@ -59,11 +60,11 @@ func (s *MerchantAwardServiceTestSuite) TestMerchantAwardLifecycle() {
 
 	// 1. Create
 	req := &requests.CreateMerchantCertificationOrAwardRequest{
-		MerchantID:     int(merchantID),
-		Title:          "Initial Award",
-		Description:    "Initial Description",
-		IssuedBy:       "Test Issuer",
-		IssueDate:      "2026-0" + "1-02",
+		MerchantID:  int(merchantID),
+		Title:       "Initial Award",
+		Description: "Initial Description",
+		IssuedBy:    "Test Issuer",
+		IssueDate:   "2026-0" + "1-02",
 	}
 	created, err := s.svc.MerchantAwardCommand.Create(ctx, req)
 	s.Require().NoError(err)
@@ -123,7 +124,7 @@ func (s *MerchantAwardServiceTestSuite) TestMerchantAwardLifecycle() {
 	// 10. RestoreAll & DeleteAll
 	a1, _ := s.svc.MerchantAwardCommand.Create(ctx, &requests.CreateMerchantCertificationOrAwardRequest{MerchantID: int(merchantID), Title: "A1", Description: "D1", IssuedBy: "I1", IssueDate: "2026-01-01"})
 	a2, _ := s.svc.MerchantAwardCommand.Create(ctx, &requests.CreateMerchantCertificationOrAwardRequest{MerchantID: int(merchantID), Title: "A2", Description: "D2", IssuedBy: "I2", IssueDate: "2026-01-01"})
-	
+
 	s.svc.MerchantAwardCommand.Trash(ctx, int(a1.MerchantCertificationID))
 	s.svc.MerchantAwardCommand.Trash(ctx, int(a2.MerchantCertificationID))
 

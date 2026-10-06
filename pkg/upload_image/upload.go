@@ -4,17 +4,15 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 
-	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
@@ -28,7 +26,7 @@ func getAllowedList(allowed map[string]bool) string {
 
 type ImageUploads interface {
 	EnsureUploadDirectory(uploadDir string) error
-	ProcessImageUpload(c echo.Context, uploadDir string, file *multipart.FileHeader, isDocument bool) (string, error)
+	ProcessImageUpload(uploadDir string, file *multipart.FileHeader, isDocument bool) (string, error)
 	CleanupImageOnFailure(imagePath string)
 	SaveUploadedFile(file *multipart.FileHeader, dst string) error
 }
@@ -54,7 +52,7 @@ func (h *ImageUpload) EnsureUploadDirectory(uploadDir string) error {
 	return nil
 }
 
-func (h *ImageUpload) ProcessImageUpload(c echo.Context, uploadDir string, file *multipart.FileHeader, isDocument bool) (string, error) {
+func (h *ImageUpload) ProcessImageUpload(uploadDir string, file *multipart.FileHeader, isDocument bool) (string, error) {
 	var allowedTypes map[string]bool
 	var maxSize int64
 
@@ -76,28 +74,16 @@ func (h *ImageUpload) ProcessImageUpload(c echo.Context, uploadDir string, file 
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	if !allowedTypes[ext] {
 		allowedList := getAllowedList(allowedTypes)
-		return "", c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_file_type",
-			Message: fmt.Sprintf("Only %s are allowed", allowedList),
-			Code:    http.StatusBadRequest,
-		})
+		return "", errors.NewBadRequestError(fmt.Sprintf("Only %s are allowed", allowedList))
 	}
 
 	if file.Size > maxSize {
 		sizeMB := float64(maxSize) / (1 << 20)
-		return "", c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_file_size",
-			Message: fmt.Sprintf("File size must be less than %.0fMB", sizeMB),
-			Code:    http.StatusBadRequest,
-		})
+		return "", errors.NewBadRequestError(fmt.Sprintf("File size must be less than %.0fMB", sizeMB))
 	}
 
 	if err := h.EnsureUploadDirectory(uploadDir); err != nil {
-		return "", c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "server_error",
-			Message: "Failed to prepare storage for upload",
-			Code:    http.StatusInternalServerError,
-		})
+		return "", errors.NewInternalError(fmt.Errorf("failed to prepare storage for upload: %w", err))
 	}
 
 	// Gunakan ekstensi yang valid
@@ -109,11 +95,7 @@ func (h *ImageUpload) ProcessImageUpload(c echo.Context, uploadDir string, file 
 			zap.String("path", imagePath),
 			zap.Error(err),
 		)
-		return "", c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			Status:  "upload_failed",
-			Message: "Failed to save uploaded file",
-			Code:    http.StatusInternalServerError,
-		})
+		return "", errors.NewInternalError(fmt.Errorf("failed to save uploaded file: %w", err))
 	}
 
 	h.logger.Debug("Successfully saved uploaded file",

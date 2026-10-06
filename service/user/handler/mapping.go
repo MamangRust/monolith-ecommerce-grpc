@@ -5,8 +5,10 @@ import (
 	"time"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 )
 
 func normalizePage(page, pageSize int) (int, int) {
@@ -19,9 +21,9 @@ func normalizePage(page, pageSize int) (int, int) {
 	return page, pageSize
 }
 
-func createPaginationMeta(page, pageSize, totalRecords int) *pb.PaginationMeta {
+func createPaginationMeta(page, pageSize, totalRecords int) *pbcommon.PaginationMeta {
 	totalPages := int(math.Ceil(float64(totalRecords) / float64(pageSize)))
-	return &pb.PaginationMeta{
+	return &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
@@ -29,10 +31,10 @@ func createPaginationMeta(page, pageSize, totalRecords int) *pb.PaginationMeta {
 	}
 }
 
-func mapToProtoUserResponse(m interface{}) *pb.UserResponse {
+func mapToProtoUserResponse(m interface{}) *pbuser.UserResponse {
 	switch v := m.(type) {
 	case *db.User:
-		return &pb.UserResponse{
+		return &pbuser.UserResponse{
 			Id:        int32(v.UserID),
 			Firstname: v.Firstname,
 			Lastname:  v.Lastname,
@@ -41,7 +43,7 @@ func mapToProtoUserResponse(m interface{}) *pb.UserResponse {
 			UpdatedAt: v.UpdatedAt.Time.Format(time.RFC3339),
 		}
 	case *db.GetUsersRow:
-		return &pb.UserResponse{
+		return &pbuser.UserResponse{
 			Id:        int32(v.UserID),
 			Firstname: v.Firstname,
 			Lastname:  v.Lastname,
@@ -50,7 +52,7 @@ func mapToProtoUserResponse(m interface{}) *pb.UserResponse {
 			UpdatedAt: v.UpdatedAt.Time.Format(time.RFC3339),
 		}
 	case *db.GetUserByIDRow:
-		return &pb.UserResponse{
+		return &pbuser.UserResponse{
 			Id:        int32(v.UserID),
 			Firstname: v.Firstname,
 			Lastname:  v.Lastname,
@@ -59,7 +61,7 @@ func mapToProtoUserResponse(m interface{}) *pb.UserResponse {
 			UpdatedAt: v.UpdatedAt.Time.Format(time.RFC3339),
 		}
 	case *db.CreateUserRow:
-		return &pb.UserResponse{
+		return &pbuser.UserResponse{
 			Id:        int32(v.UserID),
 			Firstname: v.Firstname,
 			Lastname:  v.Lastname,
@@ -72,10 +74,10 @@ func mapToProtoUserResponse(m interface{}) *pb.UserResponse {
 	}
 }
 
-func mapToProtoUserResponseDeleteAt(m interface{}) *pb.UserResponseDeleteAt {
+func mapToProtoUserResponseDeleteAt(m interface{}) *pbuser.UserResponseDeleteAt {
 	switch v := m.(type) {
 	case *db.User:
-		return &pb.UserResponseDeleteAt{
+		return &pbuser.UserResponseDeleteAt{
 			Id:        int32(v.UserID),
 			Firstname: v.Firstname,
 			Lastname:  v.Lastname,
@@ -85,7 +87,7 @@ func mapToProtoUserResponseDeleteAt(m interface{}) *pb.UserResponseDeleteAt {
 			DeletedAt: &wrapperspb.StringValue{Value: v.DeletedAt.Time.Format(time.RFC3339)},
 		}
 	case *db.GetUsersActiveRow:
-		return &pb.UserResponseDeleteAt{
+		return &pbuser.UserResponseDeleteAt{
 			Id:        int32(v.UserID),
 			Firstname: v.Firstname,
 			Lastname:  v.Lastname,
@@ -95,7 +97,7 @@ func mapToProtoUserResponseDeleteAt(m interface{}) *pb.UserResponseDeleteAt {
 			DeletedAt: &wrapperspb.StringValue{Value: v.DeletedAt.Time.Format(time.RFC3339)},
 		}
 	case *db.GetUserTrashedRow:
-		return &pb.UserResponseDeleteAt{
+		return &pbuser.UserResponseDeleteAt{
 			Id:        int32(v.UserID),
 			Firstname: v.Firstname,
 			Lastname:  v.Lastname,
@@ -105,7 +107,7 @@ func mapToProtoUserResponseDeleteAt(m interface{}) *pb.UserResponseDeleteAt {
 			DeletedAt: &wrapperspb.StringValue{Value: v.DeletedAt.Time.Format(time.RFC3339)},
 		}
 	case *db.TrashUserRow:
-		return &pb.UserResponseDeleteAt{
+		return &pbuser.UserResponseDeleteAt{
 			Id:        int32(v.UserID),
 			Firstname: v.Firstname,
 			Lastname:  v.Lastname,
@@ -115,7 +117,7 @@ func mapToProtoUserResponseDeleteAt(m interface{}) *pb.UserResponseDeleteAt {
 			DeletedAt: &wrapperspb.StringValue{Value: v.DeletedAt.Time.Format(time.RFC3339)},
 		}
 	case *db.RestoreUserRow:
-		return &pb.UserResponseDeleteAt{
+		return &pbuser.UserResponseDeleteAt{
 			Id:        int32(v.UserID),
 			Firstname: v.Firstname,
 			Lastname:  v.Lastname,
@@ -128,10 +130,10 @@ func mapToProtoUserResponseDeleteAt(m interface{}) *pb.UserResponseDeleteAt {
 		return nil
 	}
 }
-func mapToProtoUserResponseWithPassword(m interface{}) *pb.UserResponseWithPassword {
+func mapToProtoUserResponseWithPassword(m interface{}) *pbuser.UserResponseWithPassword {
 	switch v := m.(type) {
 	case *db.User:
-		return &pb.UserResponseWithPassword{
+		return &pbuser.UserResponseWithPassword{
 			Id:        int32(v.UserID),
 			Firstname: v.Firstname,
 			Lastname:  v.Lastname,
@@ -141,10 +143,10 @@ func mapToProtoUserResponseWithPassword(m interface{}) *pb.UserResponseWithPassw
 			UpdatedAt: v.UpdatedAt.Time.Format(time.RFC3339),
 		}
 	case *db.GetUserByEmailWithPasswordRow:
-		return &pb.UserResponseWithPassword{
-			Id:        int32(v.UserID),
-			Email:     v.Email,
-			Password:  v.Password,
+		return &pbuser.UserResponseWithPassword{
+			Id:       int32(v.UserID),
+			Email:    v.Email,
+			Password: v.Password,
 		}
 	default:
 		return nil

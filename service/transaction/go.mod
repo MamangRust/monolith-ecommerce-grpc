@@ -1,12 +1,15 @@
-module github.com/MamangRust/monolith-ecommerce-grpc-transaction
+module github.com/MamangRust/monolith-ecommerce-transaction
 
 go 1.25.1
 
 require (
+	github.com/IBM/sarama v1.46.3
+	github.com/MamangRust/monolith-ecommerce-pb v0.0.0-00010101000000-000000000000
 	github.com/MamangRust/monolith-ecommerce-pkg v1.0.18
 	github.com/MamangRust/monolith-ecommerce-shared v1.0.20
 	github.com/jackc/pgx/v5 v5.9.1
 	github.com/spf13/viper v1.21.0
+	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.43.0
 	go.uber.org/zap v1.27.1
 	google.golang.org/grpc v1.80.0
@@ -14,7 +17,6 @@ require (
 )
 
 require (
-	github.com/IBM/sarama v1.46.3 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -87,4 +89,11 @@ require (
 	golang.org/x/text v0.35.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+
+replace (
+	github.com/MamangRust/monolith-ecommerce-pb => ../../pb
+	github.com/MamangRust/monolith-ecommerce-pkg => ../../pkg
+	github.com/MamangRust/monolith-ecommerce-shared => ../../shared
 )

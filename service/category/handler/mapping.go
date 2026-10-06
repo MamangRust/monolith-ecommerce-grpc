@@ -5,14 +5,15 @@ import (
 	"log"
 
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	pbcategory "github.com/MamangRust/monolith-ecommerce-pb/category"
 )
 
 func (h *Handler) mapToCategoryResponse(data interface{}) interface{} {
 	switch v := data.(type) {
 	case *db.GetCategoryByIDRow:
-		return &pb.CategoryResponse{
+		return &pbcategory.CategoryResponse{
 			Id:            int32(v.CategoryID),
 			Name:          v.Name,
 			Description:   *v.Description,
@@ -22,7 +23,7 @@ func (h *Handler) mapToCategoryResponse(data interface{}) interface{} {
 			UpdatedAt:     v.UpdatedAt.Time.Format("2006-01-02"),
 		}
 	case *db.GetCategoriesRow:
-		return &pb.CategoryResponse{
+		return &pbcategory.CategoryResponse{
 			Id:            int32(v.CategoryID),
 			Name:          v.Name,
 			Description:   *v.Description,
@@ -36,7 +37,7 @@ func (h *Handler) mapToCategoryResponse(data interface{}) interface{} {
 		if v.DeletedAt.Valid {
 			deletedAt = v.DeletedAt.Time.Format("2006-01-02")
 		}
-		return &pb.CategoryResponseDeleteAt{
+		return &pbcategory.CategoryResponseDeleteAt{
 			Id:            int32(v.CategoryID),
 			Name:          v.Name,
 			Description:   *v.Description,
@@ -51,7 +52,7 @@ func (h *Handler) mapToCategoryResponse(data interface{}) interface{} {
 		if v.DeletedAt.Valid {
 			deletedAt = v.DeletedAt.Time.Format("2006-01-02")
 		}
-		return &pb.CategoryResponseDeleteAt{
+		return &pbcategory.CategoryResponseDeleteAt{
 			Id:            int32(v.CategoryID),
 			Name:          v.Name,
 			Description:   *v.Description,
@@ -62,7 +63,7 @@ func (h *Handler) mapToCategoryResponse(data interface{}) interface{} {
 			DeletedAt:     &wrapperspb.StringValue{Value: deletedAt},
 		}
 	case *db.CreateCategoryRow:
-		return &pb.CategoryResponse{
+		return &pbcategory.CategoryResponse{
 			Id:            int32(v.CategoryID),
 			Name:          v.Name,
 			Description:   *v.Description,
@@ -72,7 +73,7 @@ func (h *Handler) mapToCategoryResponse(data interface{}) interface{} {
 			UpdatedAt:     v.UpdatedAt.Time.Format("2006-01-02"),
 		}
 	case *db.UpdateCategoryRow:
-		return &pb.CategoryResponse{
+		return &pbcategory.CategoryResponse{
 			Id:            int32(v.CategoryID),
 			Name:          v.Name,
 			Description:   *v.Description,
@@ -86,7 +87,7 @@ func (h *Handler) mapToCategoryResponse(data interface{}) interface{} {
 		if v.DeletedAt.Valid {
 			deletedAt = v.DeletedAt.Time.Format("2006-01-02")
 		}
-		return &pb.CategoryResponseDeleteAt{
+		return &pbcategory.CategoryResponseDeleteAt{
 			Id:            int32(v.CategoryID),
 			Name:          v.Name,
 			Description:   *v.Description,
@@ -97,40 +98,40 @@ func (h *Handler) mapToCategoryResponse(data interface{}) interface{} {
 			DeletedAt:     &wrapperspb.StringValue{Value: deletedAt},
 		}
 	case *db.GetMonthlyTotalPriceRow:
-		return &pb.CategoriesMonthlyTotalPriceResponse{
+		return &pbcategory.CategoriesMonthlyTotalPriceResponse{
 			Year:         v.Year,
 			Month:        v.Month,
 			TotalRevenue: int32(v.TotalRevenue),
 		}
 	case *db.GetMonthlyTotalPriceByIdRow:
-		return &pb.CategoriesMonthlyTotalPriceResponse{
+		return &pbcategory.CategoriesMonthlyTotalPriceResponse{
 			Year:         v.Year,
 			Month:        v.Month,
 			TotalRevenue: int32(v.TotalRevenue),
 		}
 	case *db.GetMonthlyTotalPriceByMerchantRow:
-		return &pb.CategoriesMonthlyTotalPriceResponse{
+		return &pbcategory.CategoriesMonthlyTotalPriceResponse{
 			Year:         v.Year,
 			Month:        v.Month,
 			TotalRevenue: int32(v.TotalRevenue),
 		}
 	case *db.GetYearlyTotalPriceRow:
-		return &pb.CategoriesYearlyTotalPriceResponse{
+		return &pbcategory.CategoriesYearlyTotalPriceResponse{
 			Year:         v.Year,
 			TotalRevenue: int32(v.TotalRevenue),
 		}
 	case *db.GetYearlyTotalPriceByIdRow:
-		return &pb.CategoriesYearlyTotalPriceResponse{
+		return &pbcategory.CategoriesYearlyTotalPriceResponse{
 			Year:         v.Year,
 			TotalRevenue: int32(v.TotalRevenue),
 		}
 	case *db.GetYearlyTotalPriceByMerchantRow:
-		return &pb.CategoriesYearlyTotalPriceResponse{
+		return &pbcategory.CategoriesYearlyTotalPriceResponse{
 			Year:         v.Year,
 			TotalRevenue: int32(v.TotalRevenue),
 		}
 	case *db.GetMonthlyCategoryRow:
-		return &pb.CategoryMonthPriceResponse{
+		return &pbcategory.CategoryMonthPriceResponse{
 			Month:        v.Month,
 			CategoryId:   int32(v.CategoryID),
 			CategoryName: v.CategoryName,
@@ -139,7 +140,7 @@ func (h *Handler) mapToCategoryResponse(data interface{}) interface{} {
 			TotalRevenue: int32(v.TotalRevenue),
 		}
 	case *db.GetMonthlyCategoryByMerchantRow:
-		return &pb.CategoryMonthPriceResponse{
+		return &pbcategory.CategoryMonthPriceResponse{
 			Month:        v.Month,
 			CategoryId:   int32(v.CategoryID),
 			CategoryName: v.CategoryName,
@@ -148,7 +149,7 @@ func (h *Handler) mapToCategoryResponse(data interface{}) interface{} {
 			TotalRevenue: int32(v.TotalRevenue),
 		}
 	case *db.GetMonthlyCategoryByIdRow:
-		return &pb.CategoryMonthPriceResponse{
+		return &pbcategory.CategoryMonthPriceResponse{
 			Month:        v.Month,
 			CategoryId:   int32(v.CategoryID),
 			CategoryName: v.CategoryName,
@@ -157,7 +158,7 @@ func (h *Handler) mapToCategoryResponse(data interface{}) interface{} {
 			TotalRevenue: int32(v.TotalRevenue),
 		}
 	case *db.GetYearlyCategoryRow:
-		return &pb.CategoryYearPriceResponse{
+		return &pbcategory.CategoryYearPriceResponse{
 			Year:               v.Year,
 			CategoryId:         int32(v.CategoryID),
 			CategoryName:       v.CategoryName,
@@ -167,7 +168,7 @@ func (h *Handler) mapToCategoryResponse(data interface{}) interface{} {
 			UniqueProductsSold: int32(v.UniqueProductsSold),
 		}
 	case *db.GetYearlyCategoryByMerchantRow:
-		return &pb.CategoryYearPriceResponse{
+		return &pbcategory.CategoryYearPriceResponse{
 			Year:               v.Year,
 			CategoryId:         int32(v.CategoryID),
 			CategoryName:       v.CategoryName,
@@ -177,7 +178,7 @@ func (h *Handler) mapToCategoryResponse(data interface{}) interface{} {
 			UniqueProductsSold: int32(v.UniqueProductsSold),
 		}
 	case *db.GetYearlyCategoryByIdRow:
-		return &pb.CategoryYearPriceResponse{
+		return &pbcategory.CategoryYearPriceResponse{
 			Year:               v.Year,
 			CategoryId:         int32(v.CategoryID),
 			CategoryName:       v.CategoryName,

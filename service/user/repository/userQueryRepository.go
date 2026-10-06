@@ -11,8 +11,6 @@ import (
 	"github.com/MamangRust/monolith-ecommerce-shared/errors/user_errors"
 )
 
-
-
 type userQueryRepository struct {
 	db *db.Queries
 }
@@ -38,7 +36,6 @@ func (r *userQueryRepository) FindAll(ctx context.Context, req *requests.FindAll
 		return nil, user_errors.ErrFindAllUsers.WithInternal(err)
 	}
 
-
 	return res, nil
 }
 
@@ -53,10 +50,8 @@ func (r *userQueryRepository) FindByID(ctx context.Context, user_id int) (*db.Ge
 		return nil, sharedErrors.ErrInternal.WithInternal(err)
 	}
 
-
 	return res, nil
 }
-
 
 func (r *userQueryRepository) FindByIDWithPassword(ctx context.Context, user_id int) (*db.GetUserByIDRow, error) {
 	res, err := r.db.GetUserByID(ctx, int32(user_id))
@@ -69,10 +64,8 @@ func (r *userQueryRepository) FindByIDWithPassword(ctx context.Context, user_id 
 		return nil, sharedErrors.ErrInternal.WithInternal(err)
 	}
 
-
 	return res, nil
 }
-
 
 func (r *userQueryRepository) FindActive(ctx context.Context, req *requests.FindAllUsers) ([]*db.GetUsersActiveRow, error) {
 	offset := (req.Page - 1) * req.PageSize
@@ -88,7 +81,6 @@ func (r *userQueryRepository) FindActive(ctx context.Context, req *requests.Find
 	if err != nil {
 		return nil, user_errors.ErrFindActiveUsers.WithInternal(err)
 	}
-
 
 	return res, nil
 }
@@ -108,7 +100,6 @@ func (r *userQueryRepository) FindTrashed(ctx context.Context, req *requests.Fin
 		return nil, user_errors.ErrFindTrashedUsers.WithInternal(err)
 	}
 
-
 	return res, nil
 }
 
@@ -123,10 +114,8 @@ func (r *userQueryRepository) FindByEmail(ctx context.Context, email string) (*d
 		return nil, sharedErrors.ErrInternal.WithInternal(err)
 	}
 
-
 	return res, nil
 }
-
 
 func (r *userQueryRepository) FindByEmailWithPassword(ctx context.Context, email string) (*db.GetUserByEmailWithPasswordRow, error) {
 	res, err := r.db.GetUserByEmailWithPassword(ctx, email)
@@ -138,7 +127,6 @@ func (r *userQueryRepository) FindByEmailWithPassword(ctx context.Context, email
 
 		return nil, sharedErrors.ErrInternal.WithInternal(err)
 	}
-
 
 	return res, nil
 }

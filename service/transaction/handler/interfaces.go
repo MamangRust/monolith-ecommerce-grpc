@@ -1,19 +1,21 @@
 package handler
 
-import "github.com/MamangRust/monolith-ecommerce-shared/pb"
+import (
+	pbtransaction "github.com/MamangRust/monolith-ecommerce-pb/transaction"
+)
 
 type TransactionQueryHandler interface {
-	pb.TransactionQueryServiceServer
+	pbtransaction.TransactionQueryServiceServer
 }
 
 type TransactionCommandHandler interface {
-	pb.TransactionCommandServiceServer
+	pbtransaction.TransactionCommandServiceServer
 }
 
 type TransactionStatsHandler interface {
-	pb.TransactionStatsServiceServer
+	pbtransaction.TransactionStatsServiceServer
 }
 
 type TransactionStatsByMerchantHandler interface {
-	pb.TransactionStatsByMerchantServiceServer
+	pbtransaction.TransactionStatsByMerchantServiceServer
 }

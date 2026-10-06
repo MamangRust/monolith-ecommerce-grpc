@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-order-item/repository"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/MamangRust/monolith-ecommerce-order-item/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type OrderItemRepositoryTestSuite struct {

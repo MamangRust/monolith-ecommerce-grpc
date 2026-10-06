@@ -4,16 +4,17 @@ import (
 	"context"
 	"testing"
 
-	policy_cache "github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-merchant_policy/service"
+	"github.com/stretchr/testify/suite"
+
+	policy_cache "github.com/MamangRust/monolith-ecommerce-merchant_policy/cache"
+	"github.com/MamangRust/monolith-ecommerce-merchant_policy/repository"
+	"github.com/MamangRust/monolith-ecommerce-merchant_policy/service"
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type MerchantPolicyServiceTestSuite struct {
@@ -38,7 +39,7 @@ func (s *MerchantPolicyServiceTestSuite) SetupSuite() {
 	mencache := policy_cache.NewMencache(cacheStore)
 	repos := repository.NewRepositories(
 		queries,
-		pb.NewMerchantQueryServiceClient(s.Conns["merchant"]),
+		pbmerchant.NewMerchantQueryServiceClient(s.Conns["merchant"]),
 	)
 
 	s.svc = service.NewService(&service.Deps{
@@ -122,7 +123,7 @@ func (s *MerchantPolicyServiceTestSuite) TestMerchantPolicyLifecycle() {
 	// 10. RestoreAll & DeleteAll
 	p1, _ := s.svc.MerchantPoliciesCommand.Create(ctx, &requests.CreateMerchantPolicyRequest{MerchantID: int(merchantID), PolicyType: "T1", Title: "T1", Description: "D1"})
 	p2, _ := s.svc.MerchantPoliciesCommand.Create(ctx, &requests.CreateMerchantPolicyRequest{MerchantID: int(merchantID), PolicyType: "T2", Title: "T2", Description: "D2"})
-	
+
 	s.svc.MerchantPoliciesCommand.Trash(ctx, int(p1.MerchantPolicyID))
 	s.svc.MerchantPoliciesCommand.Trash(ctx, int(p2.MerchantPolicyID))
 

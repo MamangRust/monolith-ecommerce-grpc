@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	review_cache "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/cache/review"
+	pbreview "github.com/MamangRust/monolith-ecommerce-pb/review"
+	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/review"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
+	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/review"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	"github.com/labstack/echo/v4"
 	"go.opentelemetry.io/otel/trace"
@@ -17,7 +17,7 @@ import (
 )
 
 type reviewQueryHandleApi struct {
-	client        pb.ReviewQueryServiceClient
+	client        pbreview.ReviewQueryServiceClient
 	logger        logger.LoggerInterface
 	mapper        apimapper.ReviewQueryResponseMapper
 	cache         review_cache.ReviewQueryCache
@@ -25,7 +25,7 @@ type reviewQueryHandleApi struct {
 }
 
 type reviewQueryHandleDeps struct {
-	client        pb.ReviewQueryServiceClient
+	client        pbreview.ReviewQueryServiceClient
 	router        *echo.Echo
 	logger        logger.LoggerInterface
 	mapper        apimapper.ReviewQueryResponseMapper
@@ -84,7 +84,7 @@ func (h *reviewQueryHandleApi) FindAll(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	grpcReq := &pb.FindAllReviewRequest{
+	grpcReq := &pbreview.FindAllReviewRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,
@@ -138,7 +138,7 @@ func (h *reviewQueryHandleApi) FindByProduct(c echo.Context) error {
 	}
 	search := c.QueryParam("search")
 
-	grpcReq := &pb.FindAllReviewProductRequest{
+	grpcReq := &pbreview.FindAllReviewProductRequest{
 		ProductId: int32(id),
 		Page:      int32(page),
 		PageSize:  int32(pageSize),
@@ -205,7 +205,7 @@ func (h *reviewQueryHandleApi) FindByMerchant(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	grpcReq := &pb.FindAllReviewMerchantRequest{
+	grpcReq := &pbreview.FindAllReviewMerchantRequest{
 		MerchantId: int32(id),
 		Page:       int32(page),
 		PageSize:   int32(pageSize),
@@ -264,7 +264,7 @@ func (h *reviewQueryHandleApi) FindByActive(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	grpcReq := &pb.FindAllReviewRequest{
+	grpcReq := &pbreview.FindAllReviewRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,
@@ -322,7 +322,7 @@ func (h *reviewQueryHandleApi) FindByTrashed(c echo.Context) error {
 		return c.JSON(http.StatusOK, cached)
 	}
 
-	grpcReq := &pb.FindAllReviewRequest{
+	grpcReq := &pbreview.FindAllReviewRequest{
 		Page:     int32(page),
 		PageSize: int32(pageSize),
 		Search:   search,

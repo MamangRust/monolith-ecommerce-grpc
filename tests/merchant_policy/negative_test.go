@@ -5,17 +5,17 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	apigatewaymiddlewares "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	pbmerchant_policy "github.com/MamangRust/monolith-ecommerce-pb/merchant_policy"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 )
 
 // gapi: non-existent merchant policy must map to codes.NotFound (404), not Internal.
 func (s *MerchantPolicyGapiTestSuite) TestMerchantPolicyGapiNotFound() {
 	ctx := context.Background()
-	_, err := s.queryClient.FindById(ctx, &pb.FindByIdMerchantPoliciesRequest{Id: 999999})
+	_, err := s.queryClient.FindById(ctx, &pbmerchant_policy.FindByIdMerchantPoliciesRequest{Id: 999999})
 	s.Require().Error(err)
 	st, ok := status.FromError(err)
 	s.Require().True(ok, "expected a gRPC status error")
@@ -24,7 +24,6 @@ func (s *MerchantPolicyGapiTestSuite) TestMerchantPolicyGapiNotFound() {
 
 // api: non-existent merchant policy must map to 404, invalid path ID to 400.
 func (s *MerchantPolicyApiTestSuite) TestMerchantPolicyApiNotFound() {
-	apigatewaymiddlewares.RegisterErrorHandler(s.echo)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/merchant-policy-query/999999", nil)
 	rec := httptest.NewRecorder()
@@ -33,7 +32,6 @@ func (s *MerchantPolicyApiTestSuite) TestMerchantPolicyApiNotFound() {
 }
 
 func (s *MerchantPolicyApiTestSuite) TestMerchantPolicyApiInvalidID() {
-	apigatewaymiddlewares.RegisterErrorHandler(s.echo)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/merchant-policy-query/abc", nil)
 	rec := httptest.NewRecorder()

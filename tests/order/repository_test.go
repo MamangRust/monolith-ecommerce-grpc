@@ -4,12 +4,18 @@ import (
 	"context"
 	"testing"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-order/repository"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/MamangRust/monolith-ecommerce-order/repository"
+	pbmerchant "github.com/MamangRust/monolith-ecommerce-pb/merchant"
+	pborder_item "github.com/MamangRust/monolith-ecommerce-pb/order_item"
+	pbproduct "github.com/MamangRust/monolith-ecommerce-pb/product"
+	pbshipping_address "github.com/MamangRust/monolith-ecommerce-pb/shipping_address"
+	pbtransaction "github.com/MamangRust/monolith-ecommerce-pb/transaction"
+	pbuser "github.com/MamangRust/monolith-ecommerce-pb/user"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type OrderRepositoryTestSuite struct {
@@ -31,15 +37,15 @@ func (s *OrderRepositoryTestSuite) SetupSuite() {
 
 	queries := db.New(s.DBPool())
 	s.repo = repository.NewRepositories(&repository.Deps{
-		DB:                 queries,
-		MerchantQuery:      pb.NewMerchantQueryServiceClient(s.Conns["merchant"]),
-		ProductQuery:       pb.NewProductQueryServiceClient(s.Conns["product"]),
-		ProductCommand:     pb.NewProductCommandServiceClient(s.Conns["product"]),
-		OrderItemQuery:     pb.NewOrderItemQueryServiceClient(s.Conns["order-item"]),
-		OrderItemCommand:   pb.NewOrderItemCommandServiceClient(s.Conns["order-item"]),
-		UserQuery:          pb.NewUserQueryServiceClient(s.Conns["user"]),
-		ShippingCommand:    pb.NewShippingCommandServiceClient(s.Conns["shipping-address"]),
-		TransactionCommand: pb.NewTransactionCommandServiceClient(s.Conns["transaction"]),
+		Db:                       queries,
+		MerchantQueryClient:      pbmerchant.NewMerchantQueryServiceClient(s.Conns["merchant"]),
+		ProductQueryClient:       pbproduct.NewProductQueryServiceClient(s.Conns["product"]),
+		ProductCommandClient:     pbproduct.NewProductCommandServiceClient(s.Conns["product"]),
+		OrderItemQueryClient:     pborder_item.NewOrderItemQueryServiceClient(s.Conns["order-item"]),
+		OrderItemCommandClient:   pborder_item.NewOrderItemCommandServiceClient(s.Conns["order-item"]),
+		UserQueryClient:          pbuser.NewUserQueryServiceClient(s.Conns["user"]),
+		ShippingCommandClient:    pbshipping_address.NewShippingCommandServiceClient(s.Conns["shipping-address"]),
+		TransactionCommandClient: pbtransaction.NewTransactionCommandServiceClient(s.Conns["transaction"]),
 	})
 }
 

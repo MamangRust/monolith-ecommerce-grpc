@@ -4,15 +4,17 @@ import (
 	"context"
 	"math"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-slider/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/MamangRust/monolith-ecommerce-shared/errors"
+	"github.com/MamangRust/monolith-ecommerce-slider/service"
+
+	pbcommon "github.com/MamangRust/monolith-ecommerce-pb/common"
+	pbslider "github.com/MamangRust/monolith-ecommerce-pb/slider"
 )
 
 type sliderQueryHandler struct {
-	pb.UnimplementedSliderQueryServiceServer
+	pbslider.UnimplementedSliderQueryServiceServer
 	sliderQuery service.SliderQueryService
 	logger      logger.LoggerInterface
 }
@@ -24,7 +26,7 @@ func NewSliderQueryHandler(sliderQuery service.SliderQueryService, logger logger
 	}
 }
 
-func (s *sliderQueryHandler) FindAll(ctx context.Context, request *pb.FindAllSliderRequest) (*pb.ApiResponsePaginationSlider, error) {
+func (s *sliderQueryHandler) FindAll(ctx context.Context, request *pbslider.FindAllSliderRequest) (*pbslider.ApiResponsePaginationSlider, error) {
 	page := int(request.GetPage())
 	pageSize := int(request.GetPageSize())
 	search := request.GetSearch()
@@ -47,21 +49,21 @@ func (s *sliderQueryHandler) FindAll(ctx context.Context, request *pb.FindAllSli
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoSliders := make([]*pb.SliderResponse, len(sliders))
+	protoSliders := make([]*pbslider.SliderResponse, len(sliders))
 	for i, slider := range sliders {
 		protoSliders[i] = MapToSliderResponseGetSlidersRow(slider)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
-	paginationMeta := &pb.PaginationMeta{
+	paginationMeta := &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
 		TotalRecords: int32(*totalRecords),
 	}
 
-	return &pb.ApiResponsePaginationSlider{
+	return &pbslider.ApiResponsePaginationSlider{
 		Status:     "success",
 		Message:    "Successfully fetched slider records",
 		Data:       protoSliders,
@@ -69,7 +71,7 @@ func (s *sliderQueryHandler) FindAll(ctx context.Context, request *pb.FindAllSli
 	}, nil
 }
 
-func (s *sliderQueryHandler) FindByActive(ctx context.Context, request *pb.FindAllSliderRequest) (*pb.ApiResponsePaginationSliderDeleteAt, error) {
+func (s *sliderQueryHandler) FindByActive(ctx context.Context, request *pbslider.FindAllSliderRequest) (*pbslider.ApiResponsePaginationSliderDeleteAt, error) {
 	page := int(request.GetPage())
 	pageSize := int(request.GetPageSize())
 	search := request.GetSearch()
@@ -92,21 +94,21 @@ func (s *sliderQueryHandler) FindByActive(ctx context.Context, request *pb.FindA
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoSliders := make([]*pb.SliderResponseDeleteAt, len(sliders))
+	protoSliders := make([]*pbslider.SliderResponseDeleteAt, len(sliders))
 	for i, slider := range sliders {
 		protoSliders[i] = MapToSliderResponseDeleteAtGetSlidersActiveRow(slider)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
-	paginationMeta := &pb.PaginationMeta{
+	paginationMeta := &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
 		TotalRecords: int32(*totalRecords),
 	}
 
-	return &pb.ApiResponsePaginationSliderDeleteAt{
+	return &pbslider.ApiResponsePaginationSliderDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched active slider records",
 		Data:       protoSliders,
@@ -114,7 +116,7 @@ func (s *sliderQueryHandler) FindByActive(ctx context.Context, request *pb.FindA
 	}, nil
 }
 
-func (s *sliderQueryHandler) FindByTrashed(ctx context.Context, request *pb.FindAllSliderRequest) (*pb.ApiResponsePaginationSliderDeleteAt, error) {
+func (s *sliderQueryHandler) FindByTrashed(ctx context.Context, request *pbslider.FindAllSliderRequest) (*pbslider.ApiResponsePaginationSliderDeleteAt, error) {
 	page := int(request.GetPage())
 	pageSize := int(request.GetPageSize())
 	search := request.GetSearch()
@@ -137,21 +139,21 @@ func (s *sliderQueryHandler) FindByTrashed(ctx context.Context, request *pb.Find
 		return nil, errors.ToGrpcError(err)
 	}
 
-	protoSliders := make([]*pb.SliderResponseDeleteAt, len(sliders))
+	protoSliders := make([]*pbslider.SliderResponseDeleteAt, len(sliders))
 	for i, slider := range sliders {
 		protoSliders[i] = MapToSliderResponseDeleteAtGetSlidersTrashedRow(slider)
 	}
 
 	totalPages := int(math.Ceil(float64(*totalRecords) / float64(pageSize)))
 
-	paginationMeta := &pb.PaginationMeta{
+	paginationMeta := &pbcommon.PaginationMeta{
 		CurrentPage:  int32(page),
 		PageSize:     int32(pageSize),
 		TotalPages:   int32(totalPages),
 		TotalRecords: int32(*totalRecords),
 	}
 
-	return &pb.ApiResponsePaginationSliderDeleteAt{
+	return &pbslider.ApiResponsePaginationSliderDeleteAt{
 		Status:     "success",
 		Message:    "Successfully fetched trashed slider records",
 		Data:       protoSliders,
@@ -159,7 +161,7 @@ func (s *sliderQueryHandler) FindByTrashed(ctx context.Context, request *pb.Find
 	}, nil
 }
 
-func (s *sliderQueryHandler) FindById(ctx context.Context, request *pb.FindByIdSliderRequest) (*pb.ApiResponseSlider, error) {
+func (s *sliderQueryHandler) FindById(ctx context.Context, request *pbslider.FindByIdSliderRequest) (*pbslider.ApiResponseSlider, error) {
 	id := int(request.GetId())
 
 	slider, err := s.sliderQuery.FindByID(ctx, id)
@@ -167,7 +169,7 @@ func (s *sliderQueryHandler) FindById(ctx context.Context, request *pb.FindByIdS
 		return nil, errors.ToGrpcError(err)
 	}
 
-	return &pb.ApiResponseSlider{
+	return &pbslider.ApiResponseSlider{
 		Status:  "success",
 		Message: "Successfully fetched slider by ID",
 		Data:    MapToSliderResponseGetSliderByIDRow(slider),

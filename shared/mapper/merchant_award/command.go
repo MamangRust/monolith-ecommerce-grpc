@@ -1,7 +1,7 @@
 package merchantawardapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant_award "github.com/MamangRust/monolith-ecommerce-pb/merchant_award"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
@@ -11,8 +11,10 @@ func NewMerchantAwardCommandResponseMapper() MerchantAwardCommandResponseMapper 
 	return &merchantAwardCommandResponseMapper{}
 }
 
-func (m *merchantAwardCommandResponseMapper) ToResponseMerchantAward(MerchantAward *pb.MerchantAwardResponse) *response.MerchantAwardResponse {
-	if MerchantAward == nil { return nil }
+func (m *merchantAwardCommandResponseMapper) ToResponseMerchantAward(MerchantAward *pbmerchant_award.MerchantAwardResponse) *response.MerchantAwardResponse {
+	if MerchantAward == nil {
+		return nil
+	}
 	return &response.MerchantAwardResponse{
 		ID:             int(MerchantAward.Id),
 		MerchantID:     int(MerchantAward.MerchantId),
@@ -27,7 +29,7 @@ func (m *merchantAwardCommandResponseMapper) ToResponseMerchantAward(MerchantAwa
 	}
 }
 
-func (m *merchantAwardCommandResponseMapper) ToResponsesMerchantAward(MerchantAwards []*pb.MerchantAwardResponse) []*response.MerchantAwardResponse {
+func (m *merchantAwardCommandResponseMapper) ToResponsesMerchantAward(MerchantAwards []*pbmerchant_award.MerchantAwardResponse) []*response.MerchantAwardResponse {
 	var mappedMerchantAwards []*response.MerchantAwardResponse
 	for _, MerchantAward := range MerchantAwards {
 		mappedMerchantAwards = append(mappedMerchantAwards, m.ToResponseMerchantAward(MerchantAward))
@@ -35,7 +37,7 @@ func (m *merchantAwardCommandResponseMapper) ToResponsesMerchantAward(MerchantAw
 	return mappedMerchantAwards
 }
 
-func (m *merchantAwardCommandResponseMapper) ToApiResponseMerchantAward(pbResponse *pb.ApiResponseMerchantAward) *response.ApiResponseMerchantAward {
+func (m *merchantAwardCommandResponseMapper) ToApiResponseMerchantAward(pbResponse *pbmerchant_award.ApiResponseMerchantAward) *response.ApiResponseMerchantAward {
 	return &response.ApiResponseMerchantAward{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,
@@ -43,8 +45,10 @@ func (m *merchantAwardCommandResponseMapper) ToApiResponseMerchantAward(pbRespon
 	}
 }
 
-func (m *merchantAwardCommandResponseMapper) ToResponseMerchantAwardDeleteAt(MerchantAward *pb.MerchantAwardResponseDeleteAt) *response.MerchantAwardResponseDeleteAt {
-	if MerchantAward == nil { return nil }
+func (m *merchantAwardCommandResponseMapper) ToResponseMerchantAwardDeleteAt(MerchantAward *pbmerchant_award.MerchantAwardResponseDeleteAt) *response.MerchantAwardResponseDeleteAt {
+	if MerchantAward == nil {
+		return nil
+	}
 	var deletedAt string
 	if MerchantAward.DeletedAt != nil {
 		deletedAt = MerchantAward.DeletedAt.Value
@@ -65,7 +69,7 @@ func (m *merchantAwardCommandResponseMapper) ToResponseMerchantAwardDeleteAt(Mer
 	}
 }
 
-func (m *merchantAwardCommandResponseMapper) ToResponsesMerchantAwardDeleteAt(MerchantAwards []*pb.MerchantAwardResponseDeleteAt) []*response.MerchantAwardResponseDeleteAt {
+func (m *merchantAwardCommandResponseMapper) ToResponsesMerchantAwardDeleteAt(MerchantAwards []*pbmerchant_award.MerchantAwardResponseDeleteAt) []*response.MerchantAwardResponseDeleteAt {
 	var mappedMerchantAwards []*response.MerchantAwardResponseDeleteAt
 	for _, MerchantAward := range MerchantAwards {
 		mappedMerchantAwards = append(mappedMerchantAwards, m.ToResponseMerchantAwardDeleteAt(MerchantAward))
@@ -73,7 +77,7 @@ func (m *merchantAwardCommandResponseMapper) ToResponsesMerchantAwardDeleteAt(Me
 	return mappedMerchantAwards
 }
 
-func (m *merchantAwardCommandResponseMapper) ToApiResponseMerchantAwardDeleteAt(pbResponse *pb.ApiResponseMerchantAwardDeleteAt) *response.ApiResponseMerchantAwardDeleteAt {
+func (m *merchantAwardCommandResponseMapper) ToApiResponseMerchantAwardDeleteAt(pbResponse *pbmerchant_award.ApiResponseMerchantAwardDeleteAt) *response.ApiResponseMerchantAwardDeleteAt {
 	return &response.ApiResponseMerchantAwardDeleteAt{
 		Status:  pbResponse.Status,
 		Message: pbResponse.Message,

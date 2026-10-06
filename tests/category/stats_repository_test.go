@@ -5,24 +5,25 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/repository"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/MamangRust/monolith-ecommerce-category/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type CategoryStatsRepositoryTestSuite struct {
 	tests.BaseTestSuite
-	repo          repository.CategoryStatsRepository
-	repoById      repository.CategoryStatsByIdRepository
+	repo           repository.CategoryStatsRepository
+	repoById       repository.CategoryStatsByIdRepository
 	repoByMerchant repository.CategoryStatsByMerchantRepository
-	testYear      int
-	testMonth     int
-	userID        int
-	merchantID    int
-	categoryID    int
-	productID     int
+	testYear       int
+	testMonth      int
+	userID         int
+	merchantID     int
+	categoryID     int
+	productID      int
 }
 
 func (s *CategoryStatsRepositoryTestSuite) SetupSuite() {

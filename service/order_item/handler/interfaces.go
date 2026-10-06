@@ -1,11 +1,13 @@
 package handler
 
-import "github.com/MamangRust/monolith-ecommerce-shared/pb"
+import (
+	pborder_item "github.com/MamangRust/monolith-ecommerce-pb/order_item"
+)
 
 type OrderItemQueryHandler interface {
-	pb.OrderItemQueryServiceServer
+	pborder_item.OrderItemQueryServiceServer
 }
 
 type OrderItemCommandHandler interface {
-	pb.OrderItemCommandServiceServer
+	pborder_item.OrderItemCommandServiceServer
 }

@@ -6,19 +6,18 @@ import (
 	"net/http/httptest"
 	"strings"
 
-	apigatewaymiddlewares "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
-	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	pbreview "github.com/MamangRust/monolith-ecommerce-pb/review"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 )
 
 // gapi: review has no FindById query RPC; Update on a non-existent review must
 // map to codes.NotFound (404), not Internal.
 func (s *ReviewGapiTestSuite) TestReviewGapiNotFound() {
 	ctx := context.Background()
-	_, err := s.commandClient.Update(ctx, &pb.UpdateReviewRequest{
+	_, err := s.commandClient.Update(ctx, &pbreview.UpdateReviewRequest{
 		ReviewId: 999999,
 		Rating:   5,
 		Comment:  "not found",
@@ -31,19 +30,17 @@ func (s *ReviewGapiTestSuite) TestReviewGapiNotFound() {
 
 // api: update on a non-existent review must map to 404, invalid path ID to 400.
 func (s *ReviewApiTestSuite) TestReviewApiNotFound() {
-	apigatewaymiddlewares.RegisterErrorHandler(s.echo)
 
 	// Valid body required — otherwise gateway validation (400) fires before the NotFound lookup.
 	body := strings.NewReader(`{"rating": 5, "comment": "not found"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/review-command/update/999999", body)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	s.echo.ServeHTTP(rec, req)
 	s.Equal(http.StatusNotFound, rec.Code, "update on non-existent review must be 404, got %d: %s", rec.Code, rec.Body.String())
 }
 
 func (s *ReviewApiTestSuite) TestReviewApiInvalidID() {
-	apigatewaymiddlewares.RegisterErrorHandler(s.echo)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/review-command/update/abc", nil)
 	rec := httptest.NewRecorder()

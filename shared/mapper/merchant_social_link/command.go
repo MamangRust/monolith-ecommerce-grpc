@@ -1,7 +1,8 @@
 package merchantsociallinkapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant_detail "github.com/MamangRust/monolith-ecommerce-pb/merchant_detail"
+	pbmerchant_social_link "github.com/MamangRust/monolith-ecommerce-pb/merchant_social_link"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
@@ -11,8 +12,10 @@ func NewMerchantSocialLinkCommandResponseMapper() MerchantSocialLinkCommandRespo
 	return &merchantSocialLinkCommandResponseMapper{}
 }
 
-func (m *merchantSocialLinkCommandResponseMapper) MapMerchantSocialLink(doc *pb.MerchantSocialMediaLinkResponse) *response.MerchantSocialLinkResponse {
-	if doc == nil { return nil }
+func (m *merchantSocialLinkCommandResponseMapper) MapMerchantSocialLink(doc *pbmerchant_detail.MerchantSocialMediaLinkResponse) *response.MerchantSocialLinkResponse {
+	if doc == nil {
+		return nil
+	}
 	return &response.MerchantSocialLinkResponse{
 		ID:               int(doc.Id),
 		MerchantDetailID: int(doc.MerchantDetailId),
@@ -21,7 +24,7 @@ func (m *merchantSocialLinkCommandResponseMapper) MapMerchantSocialLink(doc *pb.
 	}
 }
 
-func (m *merchantSocialLinkCommandResponseMapper) ToApiResponseMerchantSocialLink(doc *pb.ApiResponseMerchantSocial) *response.ApiResponseMerchantSocialLink {
+func (m *merchantSocialLinkCommandResponseMapper) ToApiResponseMerchantSocialLink(doc *pbmerchant_social_link.ApiResponseMerchantSocial) *response.ApiResponseMerchantSocialLink {
 	return &response.ApiResponseMerchantSocialLink{
 		Status:  doc.Status,
 		Message: doc.Message,

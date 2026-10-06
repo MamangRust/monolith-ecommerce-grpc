@@ -1,13 +1,14 @@
 package merchantsociallinkapimapper
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
+	pbmerchant_detail "github.com/MamangRust/monolith-ecommerce-pb/merchant_detail"
+	pbmerchant_social_link "github.com/MamangRust/monolith-ecommerce-pb/merchant_social_link"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/response"
 )
 
 type MerchantSocialLinkBaseResponseMapper interface {
-	MapMerchantSocialLink(doc *pb.MerchantSocialMediaLinkResponse) *response.MerchantSocialLinkResponse
-	ToApiResponseMerchantSocialLink(doc *pb.ApiResponseMerchantSocial) *response.ApiResponseMerchantSocialLink
+	MapMerchantSocialLink(doc *pbmerchant_detail.MerchantSocialMediaLinkResponse) *response.MerchantSocialLinkResponse
+	ToApiResponseMerchantSocialLink(doc *pbmerchant_social_link.ApiResponseMerchantSocial) *response.ApiResponseMerchantSocialLink
 }
 
 type MerchantSocialLinkQueryResponseMapper interface {

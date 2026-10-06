@@ -1,14 +1,15 @@
 package apps
 
 import (
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/handler"
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-category/service"
+	"github.com/MamangRust/monolith-ecommerce-category/cache"
+	"github.com/MamangRust/monolith-ecommerce-category/handler"
+	"github.com/MamangRust/monolith-ecommerce-category/repository"
+	"github.com/MamangRust/monolith-ecommerce-category/service"
 	"github.com/MamangRust/monolith-ecommerce-pkg/server"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/grpc"
+
+	pbcategory "github.com/MamangRust/monolith-ecommerce-pb/category"
 )
 
 func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
@@ -31,11 +32,11 @@ func NewServer(cfg *server.Config) (*server.GRPCServer, error) {
 	h := handler.NewHandler(&handler.Deps{Service: svc, Logger: srv.Logger})
 
 	srv.RegisterServices = func(gs *grpc.Server) {
-		pb.RegisterCategoryQueryServiceServer(gs, h.CategoryQuery)
-		pb.RegisterCategoryCommandServiceServer(gs, h.CategoryCommand)
-		pb.RegisterCategoryStatsServiceServer(gs, h.CategoryStats)
-		pb.RegisterCategoryStatsByIdServiceServer(gs, h.CategoryStatsById)
-		pb.RegisterCategoryStatsByMerchantServiceServer(gs, h.CategoryStatsByMerchant)
+		pbcategory.RegisterCategoryQueryServiceServer(gs, h.CategoryQuery)
+		pbcategory.RegisterCategoryCommandServiceServer(gs, h.CategoryCommand)
+		pbcategory.RegisterCategoryStatsServiceServer(gs, h.CategoryStats)
+		pbcategory.RegisterCategoryStatsByIdServiceServer(gs, h.CategoryStatsById)
+		pbcategory.RegisterCategoryStatsByMerchantServiceServer(gs, h.CategoryStatsByMerchant)
 	}
 
 	return srv, nil

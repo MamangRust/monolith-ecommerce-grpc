@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package pb;
+package pb.banner;
 
 import "google/protobuf/wrappers.proto";
 import "common/api.proto";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/banner";
 
 message FindByIdBannerRequest {
     int32 id = 1;
@@ -70,12 +70,12 @@ message ApiResponsePaginationBannerDeleteAt {
     string status = 1;
     string message = 2;
     repeated BannerResponseDeleteAt data = 3;
-    PaginationMeta pagination = 4;
+    pb.common.PaginationMeta pagination = 4;
 }
   
 message ApiResponsePaginationBanner {
     string status = 1;
     string message = 2;
     repeated BannerResponse data = 3;
-    PaginationMeta pagination = 4;
+    pb.common.PaginationMeta pagination = 4;
 }

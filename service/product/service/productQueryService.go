@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-product/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-product/repository"
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-product/cache"
+	"github.com/MamangRust/monolith-ecommerce-product/repository"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/errorhandler"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
@@ -14,7 +14,6 @@ import (
 
 	"go.uber.org/zap"
 )
-
 
 type productQueryService struct {
 	observability     observability.TraceLoggerObservability
@@ -84,7 +83,6 @@ func (s *productQueryService) FindAll(ctx context.Context, req *requests.FindAll
 		)
 	}
 
-
 	var totalCount int
 	if len(products) > 0 {
 		totalCount = int(products[0].TotalCount)
@@ -150,7 +148,6 @@ func (s *productQueryService) FindByMerchant(ctx context.Context, req *requests.
 			zap.Int("merchant_id", merchantId),
 		)
 	}
-
 
 	var totalCount int
 	if len(products) > 0 {
@@ -219,7 +216,6 @@ func (s *productQueryService) FindByCategory(ctx context.Context, req *requests.
 		)
 	}
 
-
 	var totalCount int
 	if len(products) > 0 {
 		totalCount = int(products[0].TotalCount)
@@ -265,7 +261,6 @@ func (s *productQueryService) FindByID(ctx context.Context, productID int) (*db.
 			zap.Int("productID", productID),
 		)
 	}
-
 
 	s.cache.SetCachedProduct(ctx, product)
 
@@ -319,7 +314,6 @@ func (s *productQueryService) FindActive(ctx context.Context, req *requests.Find
 			zap.Int("pageSize", pageSize),
 		)
 	}
-
 
 	var totalCount int
 	if len(products) > 0 {
@@ -382,7 +376,6 @@ func (s *productQueryService) FindTrashed(ctx context.Context, req *requests.Fin
 			zap.Int("pageSize", pageSize),
 		)
 	}
-
 
 	var totalCount int
 	if len(products) > 0 {

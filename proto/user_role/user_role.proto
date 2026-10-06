@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package pb.user_role;
+
+import "google/protobuf/empty.proto";
+import "role/role_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/user_role;user_role";
+
+message UserRoleResponse {
+  int32 user_role_id = 1;
+  int32 user_id = 2;
+  int32 role_id = 3;
+}
+
+message AssignRoleToUserRequest {
+  int32 user_id = 1;
+  int32 role_id = 2;
+}
+
+message RemoveRoleFromUserRequest {
+  int32 user_id = 1;
+  int32 role_id = 2;
+}
+
+message FindByIdUserRoleRequest {
+  int32 user_id = 1;
+}
+
+message ApiResponseUserRole{
+    string status = 1;
+    string message = 2;
+    UserRoleResponse data = 3;
+}
+
+service UserRoleService{
+    rpc FindByUserId(FindByIdUserRoleRequest) returns(pb.role.ApiResponsesRole){}
+
+    rpc AssignRoleToUser(AssignRoleToUserRequest) returns (ApiResponseUserRole) {}
+    rpc RemoveRoleFromUser(RemoveRoleFromUserRequest) returns (google.protobuf.Empty) {}
+}

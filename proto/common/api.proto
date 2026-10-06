@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package pb;
+option go_package = "github.com/MamangRust/monolith-ecommerce-pb/common";
 
-option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+package pb.common;
 
 message PaginationMeta{
   int32 current_page = 1;
@@ -17,4 +17,3 @@ message ErrorResponse{
   int32 code = 3;
   string type = 4;
 }
-

@@ -5,25 +5,25 @@ import (
 	"strconv"
 	"strings"
 
+	pbmerchant_document "github.com/MamangRust/monolith-ecommerce-pb/merchant_document"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 	"github.com/MamangRust/monolith-ecommerce-pkg/upload_image"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	sharedErrors "github.com/MamangRust/monolith-ecommerce-shared/errors"
 	apimapper "github.com/MamangRust/monolith-ecommerce-shared/mapper/merchant_documents"
-	pb "github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type merchantDocumentCommandHandlerApi struct {
-	client       pb.MerchantDocumentCommandServiceClient
+	client       pbmerchant_document.MerchantDocumentCommandServiceClient
 	logger       logger.LoggerInterface
 	mapper       apimapper.MerchantDocumentCommandResponseMapper
 	upload_image upload_image.ImageUploads
 }
 
 type merchantDocumentCommandHandleDeps struct {
-	client       pb.MerchantDocumentCommandServiceClient
+	client       pbmerchant_document.MerchantDocumentCommandServiceClient
 	router       *echo.Echo
 	logger       logger.LoggerInterface
 	mapper       apimapper.MerchantDocumentCommandResponseMapper
@@ -72,7 +72,7 @@ func (h *merchantDocumentCommandHandlerApi) Create(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.Create(ctx, &pb.CreateMerchantDocumentRequest{
+	res, err := h.client.Create(ctx, &pbmerchant_document.CreateMerchantDocumentRequest{
 		MerchantId:   int32(formData.MerchantID),
 		DocumentType: formData.DocumentType,
 		DocumentUrl:  formData.DocumentUrl,
@@ -114,7 +114,7 @@ func (h *merchantDocumentCommandHandlerApi) Update(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.Update(ctx, &pb.UpdateMerchantDocumentRequest{
+	res, err := h.client.Update(ctx, &pbmerchant_document.UpdateMerchantDocumentRequest{
 		DocumentId:   int32(id),
 		MerchantId:   int32(formData.MerchantID),
 		DocumentType: formData.DocumentType,
@@ -157,7 +157,7 @@ func (h *merchantDocumentCommandHandlerApi) UpdateStatus(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.UpdateStatus(ctx, &pb.UpdateMerchantDocumentStatusRequest{
+	res, err := h.client.UpdateStatus(ctx, &pbmerchant_document.UpdateMerchantDocumentStatusRequest{
 		DocumentId: int32(id),
 		MerchantId: int32(body.MerchantID),
 		Status:     body.Status,
@@ -188,7 +188,7 @@ func (h *merchantDocumentCommandHandlerApi) Trash(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.Trashed(ctx, &pb.TrashedMerchantDocumentRequest{DocumentId: int32(id)})
+	res, err := h.client.Trashed(ctx, &pbmerchant_document.TrashedMerchantDocumentRequest{DocumentId: int32(id)})
 	if err != nil {
 		return h.handleGrpcError(err, "Trash")
 	}
@@ -214,7 +214,7 @@ func (h *merchantDocumentCommandHandlerApi) Restore(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.Restore(ctx, &pb.RestoreMerchantDocumentRequest{DocumentId: int32(id)})
+	res, err := h.client.Restore(ctx, &pbmerchant_document.RestoreMerchantDocumentRequest{DocumentId: int32(id)})
 	if err != nil {
 		return h.handleGrpcError(err, "Restore")
 	}
@@ -240,7 +240,7 @@ func (h *merchantDocumentCommandHandlerApi) DeletePermanent(c echo.Context) erro
 	}
 
 	ctx := c.Request().Context()
-	res, err := h.client.DeletePermanent(ctx, &pb.DeleteMerchantDocumentPermanentRequest{DocumentId: int32(id)})
+	res, err := h.client.DeletePermanent(ctx, &pbmerchant_document.DeleteMerchantDocumentPermanentRequest{DocumentId: int32(id)})
 	if err != nil {
 		return h.handleGrpcError(err, "Delete")
 	}
@@ -305,7 +305,7 @@ func (h *merchantDocumentCommandHandlerApi) parseMerchantDocumentCreate(c echo.C
 		return formData, echo.NewHTTPError(http.StatusBadRequest, "Document file is required")
 	}
 
-	uploadedPath, err := h.upload_image.ProcessImageUpload(c, "uploads/merchant_document", file, true)
+	uploadedPath, err := h.upload_image.ProcessImageUpload("uploads/merchant_document", file, true)
 	if err != nil {
 		return formData, err
 	}
@@ -330,7 +330,7 @@ func (h *merchantDocumentCommandHandlerApi) parseMerchantDocumentUpdate(c echo.C
 
 	file, err := c.FormFile("document_url")
 	if err == nil {
-		uploadedPath, err := h.upload_image.ProcessImageUpload(c, "uploads/merchant_document/files", file, true)
+		uploadedPath, err := h.upload_image.ProcessImageUpload("uploads/merchant_document/files", file, true)
 		if err != nil {
 			return formData, err
 		}

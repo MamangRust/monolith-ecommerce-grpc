@@ -5,17 +5,17 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	apigatewaymiddlewares "github.com/MamangRust/monolith-ecommerce-grpc-apigateway/middlewares"
-	"github.com/MamangRust/monolith-ecommerce-shared/errors"
-	"github.com/MamangRust/monolith-ecommerce-shared/pb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	pbbanner "github.com/MamangRust/monolith-ecommerce-pb/banner"
+	"github.com/MamangRust/monolith-ecommerce-shared/errors"
 )
 
 // gapi: non-existent banner must map to codes.NotFound (404), not Internal.
 func (s *BannerGapiTestSuite) TestBannerGapiNotFound() {
 	ctx := context.Background()
-	_, err := s.queryClient.FindById(ctx, &pb.FindByIdBannerRequest{Id: 999999})
+	_, err := s.queryClient.FindById(ctx, &pbbanner.FindByIdBannerRequest{Id: 999999})
 	s.Require().Error(err)
 	st, ok := status.FromError(err)
 	s.Require().True(ok, "expected a gRPC status error")
@@ -24,7 +24,6 @@ func (s *BannerGapiTestSuite) TestBannerGapiNotFound() {
 
 // api: non-existent banner must map to 404, invalid path ID to 400.
 func (s *BannerApiTestSuite) TestBannerApiNotFound() {
-	apigatewaymiddlewares.RegisterErrorHandler(s.echo)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/banner-query/999999", nil)
 	rec := httptest.NewRecorder()
@@ -33,7 +32,6 @@ func (s *BannerApiTestSuite) TestBannerApiNotFound() {
 }
 
 func (s *BannerApiTestSuite) TestBannerApiInvalidID() {
-	apigatewaymiddlewares.RegisterErrorHandler(s.echo)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/banner-query/abc", nil)
 	rec := httptest.NewRecorder()

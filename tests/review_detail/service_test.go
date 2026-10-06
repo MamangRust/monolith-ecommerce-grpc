@@ -4,15 +4,16 @@ import (
 	"context"
 	"testing"
 
-	detail_cache "github.com/MamangRust/monolith-ecommerce-grpc-review-detail/cache"
-	"github.com/MamangRust/monolith-ecommerce-grpc-review-detail/repository"
-	"github.com/MamangRust/monolith-ecommerce-grpc-review-detail/service"
+	"github.com/stretchr/testify/suite"
+
 	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	detail_cache "github.com/MamangRust/monolith-ecommerce-review-detail/cache"
+	"github.com/MamangRust/monolith-ecommerce-review-detail/repository"
+	"github.com/MamangRust/monolith-ecommerce-review-detail/service"
 	"github.com/MamangRust/monolith-ecommerce-shared/cache"
 	"github.com/MamangRust/monolith-ecommerce-shared/domain/requests"
 	"github.com/MamangRust/monolith-ecommerce-shared/observability"
 	tests "github.com/MamangRust/monolith-ecommerce-test"
-	"github.com/stretchr/testify/suite"
 )
 
 type ReviewDetailServiceTestSuite struct {
@@ -132,7 +133,7 @@ func (s *ReviewDetailServiceTestSuite) TestReviewDetailLifecycle() {
 	// 11. RestoreAll & DeleteAll
 	d1, _ := s.svc.ReviewDetailCommand.Create(ctx, &requests.CreateReviewDetailRequest{ReviewID: reviewID, Type: "photo", Url: "D1", Caption: "C1"})
 	d2, _ := s.svc.ReviewDetailCommand.Create(ctx, &requests.CreateReviewDetailRequest{ReviewID: reviewID, Type: "video", Url: "D2", Caption: "C2"})
-	
+
 	s.svc.ReviewDetailCommand.Trash(ctx, int(d1.ReviewDetailID))
 	s.svc.ReviewDetailCommand.Trash(ctx, int(d2.ReviewDetailID))
 
